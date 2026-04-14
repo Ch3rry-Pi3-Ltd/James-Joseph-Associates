@@ -647,4 +647,57 @@ Do not commit `.env.local` or any secret values.
 
 </details>
 
+
+<details open>
+<summary><strong>4.4 Troubleshooting 404 on Vercel Deployment</strong></summary>
+
+If the local app works with:
+
+```powershell
+npm run dev
+```
+
+but the Vercel deployment shows:
+
+```text
+404: NOT_FOUND
+```
+
+the most likely cause is that the Vercel project was created before the Next.js starter existed. In that case, Vercel may have saved the project as **No framework detected** with generic output settings.
+
+Check the Vercel project settings:
+
+- Open the Vercel dashboard.
+- Open `james-joseph-associates`.
+- Go to **Settings**.
+- Go to **Build and Development Settings**.
+- Confirm:
+  - Framework Preset: `Next.js`
+  - Build Command: `npm run build`
+  - Install Command: `npm install`
+  - Output Directory: leave as the Vercel/Next.js default; do not force it to `public`
+  - Root Directory: `./`
+
+Then validate locally:
+
+```powershell
+npm run build
+```
+
+If the local build succeeds, deploy:
+
+```powershell
+vercel.cmd --prod
+```
+
+The local `npm run dev` page showing:
+
+```text
+To get started, edit the page.tsx file.
+```
+
+is not an error. It is the default Next.js starter UI.
+
+</details>
+
 </details>
