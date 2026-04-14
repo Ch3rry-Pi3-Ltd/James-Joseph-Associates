@@ -25,9 +25,10 @@ This should come first because the backend will be the system boundary for API c
 
 - [x] Create or confirm the **GitHub repository** that will hold the implementation.
 - [x] Create the **Vercel project** for the backend application.
-- [ ] Decide whether the initial backend will be:
+- [x] Deploy the initial **Next.js starter app** to Vercel.
+- [x] Decide whether the initial backend will be:
   - [ ] A dedicated backend-only Vercel project.
-  - [ ] A combined backend/frontend project with frontend routes deferred.
+  - [x] A combined backend/frontend project with frontend routes deferred.
 - [x] Define initial Vercel environments:
   - [x] Development.
   - [x] Preview/staging.
@@ -39,6 +40,32 @@ This should come first because the backend will be the system boundary for API c
   - [ ] Who owns Vercel access.
   - [ ] Who can deploy to production.
   - [ ] Who can manage secrets.
+
+</details>
+
+<details>
+<summary><strong>1A. Define and Set Up the Project Structure</strong></summary>
+
+This should happen before backend implementation so Python, LangChain v1, LangGraph, Supabase migrations, tests, fixtures, and future frontend work have clear ownership boundaries.
+
+- [x] Document the proposed project tree in `docs/project_structure.md`.
+- [ ] Confirm the final repository layout before creating implementation folders.
+- [ ] Add Python project metadata:
+  - [ ] `pyproject.toml`.
+  - [ ] `requirements.txt`, if needed for Vercel Python dependency installation.
+  - [ ] `pytest.ini`.
+  - [ ] `ruff.toml`.
+- [ ] Add thin Vercel Python entrypoints under `api/`.
+- [ ] Add the modular Python backend package under `backend/`.
+- [ ] Add Supabase migration structure under `supabase/`.
+- [ ] Add test structure under `tests/`.
+- [ ] Add safe sample data and evaluation fixtures under `fixtures/`.
+- [ ] Add local operational scripts under `scripts/`.
+- [ ] Add GitHub Actions workflow structure under `.github/workflows/`.
+- [ ] Verify the structure locally with:
+  - [ ] Python health endpoint test.
+  - [ ] Next.js build.
+  - [ ] Vercel deployment.
 
 </details>
 
@@ -299,6 +326,7 @@ The system should build toward useful automation while keeping high-risk actions
 Phase 1 should be considered complete only when the foundation can support a narrow but real workflow.
 
 - [ ] Vercel project exists and deployment path is documented.
+- [ ] Project structure is agreed and implemented.
 - [ ] Supabase project exists and central data role is documented.
 - [ ] Initial canonical data model is agreed.
 - [ ] Initial source-of-truth and provenance rules are documented.
