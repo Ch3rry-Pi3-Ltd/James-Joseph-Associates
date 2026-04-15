@@ -12,7 +12,7 @@ It gives the rest of the repository a stable way to verify:
 - tests can call the backend without needing Supabase, LangChain, or LangGraph
 - Vercel can serve the Python API entrypoint
 
-Keeping the health endpoint in its own modules makes the project easier to
+Keeping the health endpoint in its own module makes the project easier to
 extend because:
 
 - `backend.main` can focus on application assembly
@@ -43,7 +43,7 @@ This module contributes:
 
     GET /api/v1/health
 
-The `api/v1` prefix is applied by `backend.api.router`.
+The `/api/v1` prefix is applied by `backend.api.router`.
 
 Important boundaries
 --------------------
@@ -66,6 +66,7 @@ from backend.schemas.common import HealthResponse
 
 router = APIRouter(tags=["health"])
 
+
 @router.get("/health", response_model=HealthResponse)
 def get_health() -> HealthResponse:
     """
@@ -74,7 +75,7 @@ def get_health() -> HealthResponse:
     Returns
     -------
     HealthResponse
-        Simple response configuration that the FastAPI application is reachable.
+        Simple response confirming that the FastAPI application is reachable.
 
     Notes
     -----
@@ -82,7 +83,7 @@ def get_health() -> HealthResponse:
     - It does not check Supabase connectivity.
     - It does not check model provider connectivity.
     - It does not check Make.com integration status.
-    - It only confirms that the Python API app route registration works.
+    - It only confirms that the Python API app and route registration work.
 
     Example
     -------
@@ -100,5 +101,6 @@ def get_health() -> HealthResponse:
         service="james-joseph-associates-api",
         version="0.1.0",
     )
+
 
 __all__ = ["router"]

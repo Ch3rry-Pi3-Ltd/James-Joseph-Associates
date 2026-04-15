@@ -34,9 +34,9 @@ Notes
 -----
 - FastAPI applications are ASGI applications.
 - ASGI is the interface that lets servers such as Vercel or Uvicorn run the app.
-- Vercel imports the module-level `app` through `api.index`
+- Vercel imports the module-level `app` through `api.index`.
 - Tests can also import `app` through this module.
-- the `create_app` function is useful because it lets tests create a fresh app
+- The `create_app` function is useful because it lets tests create a fresh app
   instance later if needed.
 - Route registration is delegated to `backend.api.router`.
 
@@ -53,10 +53,10 @@ A typical request should move through the project like this:
 
 Later, individual endpoint modules will call into service modules such as:
 
-        backend.services.<services>
+        backend.services.<service>
 
 Those service modules can then coordinate database repositories, retrieval code,
-LangChain calls, LangChain workflows, audit logging, and other business logic.
+LangChain calls, LangGraph workflows, audit logging, and other business logic.
 
 Important boundaries
 --------------------
@@ -77,6 +77,7 @@ If any of that logic appears here, it probably belongs in a more specific module
 from fastapi import FastAPI
 
 from backend.api.router import api_router
+
 
 def create_app() -> FastAPI:
     """
@@ -100,7 +101,7 @@ def create_app() -> FastAPI:
     - tests can create or import the app quickly
     - local development starts faster
     - Vercel cold starts stay simpler
-    - expendisve clients can be initialised lazily only when needed
+    - expensive clients can be initialised lazily only when needed
 
     In plain language:
 
@@ -134,7 +135,7 @@ def create_app() -> FastAPI:
 
     return app
 
-# Vercel imports this module-level ASGI app through `api.index`
+# Vercel imports this module-level ASGI app through `api.index`.
 #   - Keeping the app at module scope is the normal deployment pattern
 #     for ASGI applications.
 #   - The app itself is lightweight; expensive clients should be created

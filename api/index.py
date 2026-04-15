@@ -47,7 +47,7 @@ Request flow
 A typical request should move through the project like this:
 
     Vercel
-        -> ap.index.app
+        -> api.index.app
         -> backend.main.create_app()
         -> backend.api.router
         -> backend.services.<services>
