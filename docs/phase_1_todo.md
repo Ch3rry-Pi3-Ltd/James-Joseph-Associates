@@ -49,23 +49,23 @@ This should come first because the backend will be the system boundary for API c
 This should happen before backend implementation so Python, LangChain v1, LangGraph, Supabase migrations, tests, fixtures, and future frontend work have clear ownership boundaries.
 
 - [x] Document the proposed project tree in `docs/project_structure.md`.
-- [ ] Confirm the final repository layout before creating implementation folders.
-- [ ] Add Python project metadata:
-  - [ ] `pyproject.toml`.
-  - [ ] `requirements.txt`, if needed for Vercel Python dependency installation.
-  - [ ] `pytest.ini`.
-  - [ ] `ruff.toml`.
-- [ ] Add thin Vercel Python entrypoints under `api/`.
-- [ ] Add the modular Python backend package under `backend/`.
+- [x] Confirm the initial foundation repository layout before creating implementation folders.
+- [x] Add Python project metadata:
+  - [x] `pyproject.toml`.
+  - [x] `requirements.txt`, if needed for Vercel Python dependency installation.
+  - [x] `pytest.ini`.
+  - [x] `ruff.toml`.
+- [x] Add thin Vercel Python entrypoints under `api/`.
+- [x] Add the modular Python backend package under `backend/`.
 - [ ] Add Supabase migration structure under `supabase/`.
-- [ ] Add test structure under `tests/`.
+- [x] Add test structure under `tests/`.
 - [ ] Add safe sample data and evaluation fixtures under `fixtures/`.
 - [ ] Add local operational scripts under `scripts/`.
 - [ ] Add GitHub Actions workflow structure under `.github/workflows/`.
-- [ ] Verify the structure locally with:
-  - [ ] Python health endpoint test.
-  - [ ] Next.js build.
-  - [ ] Vercel deployment.
+- [x] Verify the structure locally with:
+  - [x] Python health endpoint test.
+  - [x] Next.js build.
+  - [x] Vercel deployment.
 
 </details>
 
