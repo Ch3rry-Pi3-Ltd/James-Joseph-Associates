@@ -108,7 +108,7 @@ class Settings(BaseSettings):
         SERVICE_NAME
         API_VERSION
         ENVIRONMENT
-        DEBUG
+        APP_DEBUG
 
     Example
     -------
@@ -118,7 +118,7 @@ class Settings(BaseSettings):
         SERVICE_NAME="james-joseph-associates-api"
         API_VERSION="0.1.0"
         ENVIRONMENT="development"
-        DEBUG="false"
+        APP_DEBUG="false"
     """
 
     # Allow configuration from environment variables while keeping defaults
@@ -139,6 +139,12 @@ class Settings(BaseSettings):
 
     # Stable service identifier used by health responses and future monitoring
     service_name: str = Field(
+        default="james-joseph-associates-api",
+        validation_alias="SERVICE_NAME",
+    )
+
+    # Backend API version reported by FastAPI metadata and health checks
+    api_version: str = Field(
         default="0.1.0",
         validation_alias="API_VERSION",
     )
@@ -156,7 +162,7 @@ class Settings(BaseSettings):
     #     very specific, temporary reason to enable it.
     debug: bool = Field(
         default=False,
-        validation_alias="DEBUG",
+        validation_alias="APP_DEBUG",
     )
 
 @lru_cache(maxsize=1)

@@ -77,6 +77,7 @@ If any of that logic appears here, it probably belongs in a more specific module
 from fastapi import FastAPI
 
 from backend.api.router import api_router
+from backend.settings import get_settings
 
 
 def create_app() -> FastAPI:
@@ -122,12 +123,15 @@ def create_app() -> FastAPI:
         test_app = create_app()
     """
 
+    settings = get_settings()
+
     app = FastAPI(
         title="James Joseph Associates Intelligence API",
-        version="0.1.0",
+        version=settings.api_version,
         description=(
             "Backend API for the GraphRAG recruitment intelligence system."
         ),
+        debug=settings.debug,
     )
 
     # Register all project API routes in one place

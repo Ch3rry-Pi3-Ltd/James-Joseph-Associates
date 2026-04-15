@@ -63,6 +63,7 @@ split deeper checks into a separate readiness endpoint.
 from fastapi import APIRouter
 
 from backend.schemas.common import HealthResponse
+from backend.settings import get_settings
 
 # Create a router for health-related endpoints
 #   - This is imported into /backend/api/router.py
@@ -100,10 +101,12 @@ def get_health() -> HealthResponse:
         }
     """
 
+    settings = get_settings()
+
     return HealthResponse(
         status="ok",
         service="james-joseph-associates-api",
-        version="0.1.0",
+        version=settings.api_version,
     )
 
 
