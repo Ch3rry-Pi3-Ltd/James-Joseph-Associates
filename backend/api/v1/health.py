@@ -109,5 +109,4 @@ def get_health() -> HealthResponse:
         version=settings.api_version,
     )
 
-
 __all__ = ["router"]
