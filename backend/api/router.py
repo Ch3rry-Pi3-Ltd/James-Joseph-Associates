@@ -72,6 +72,7 @@ from fastapi import APIRouter
 from backend.api.v1.health import router as health_router
 
 # Group all public v1 API routes under the shared `/api/v1` prefix.
+#   - This is imported into /backend/main.py
 api_router = APIRouter(prefix="/api/v1")
 
 # Register versioned endpoint groups here as the API surface grows.

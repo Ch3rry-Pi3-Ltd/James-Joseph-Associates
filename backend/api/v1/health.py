@@ -64,9 +64,13 @@ from fastapi import APIRouter
 
 from backend.schemas.common import HealthResponse
 
+# Create a router for health-related endpoints
+#   - This is imported into /backend/api/router.py
+#   - Tag it as "health" in the generated API docs.
 router = APIRouter(tags=["health"])
 
-
+# Add GET /health to that router
+#   - This decorator attaches `/health` to this router.
 @router.get("/health", response_model=HealthResponse)
 def get_health() -> HealthResponse:
     """
