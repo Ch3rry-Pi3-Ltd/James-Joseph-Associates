@@ -105,8 +105,9 @@ def get_health() -> HealthResponse:
 
     return HealthResponse(
         status="ok",
-        service="james-joseph-associates-api",
+        service=settings.service_name,
         version=settings.api_version,
     )
+
 
 __all__ = ["router"]

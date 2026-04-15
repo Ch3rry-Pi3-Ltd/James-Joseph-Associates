@@ -126,7 +126,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="James Joseph Associates Intelligence API",
+        title=settings.app_name,
         version=settings.api_version,
         description=(
             "Backend API for the GraphRAG recruitment intelligence system."
