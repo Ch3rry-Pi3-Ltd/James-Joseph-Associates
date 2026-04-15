@@ -11,14 +11,10 @@ construction inside `backend.main`.
 A simple way to think about this is imagining Vercel getting an HTTP request:
 
     Browser / Make.com / API client
-            ->
-    Vercel or local server
-            ->
-    ASGI interface
-            ->
-    FastAPI app
-            ->
-    your route handler
+        -> Vercel or local server
+        -> ASGI interface
+        -> FastAPI app
+        -> your route handler
 
 Keeping this file small makes the project easier to maintain because:
 
@@ -30,7 +26,7 @@ Keeping this file small makes the project easier to maintain because:
 
 In plain language:
 
-- this module answers the question,
+- this module answers the question:
 
     "What should Vercel run when a request reaches the Python API?"
 
