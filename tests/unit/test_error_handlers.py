@@ -1,22 +1,39 @@
 """
 Unit tests for FastAPI exception handlers.
 
-These tests verify that framework-level validation errors are converted into the
-project's standard API error response shape.
+These tests call the exception handler functions directly.
 
-They focus on:
+The important question is:
 
-- serialising FastAPI validation details
-- returning HTTP 422 for request validation failures
-- returning the shared `ApiErrorResponse` shape
-- preserving safe validation details for clients
+    "If FastAPI gives us a validation error object, do our helper functions turn
+    it into the API error format we expect?"
 
-In plain language:
+This is different from the integration test.
 
-- this module answers the question:
+The integration test checks the full request flow:
 
-    "When FastAPI rejects a bad request, do we translate that failure into our
-    API error format?"
+    TestClient
+        -> FastAPI route
+        -> validation fails
+        -> custom handler runs
+        -> {"error": {...}}
+
+This unit test checks the smaller pieces directly:
+
+    RequestValidationError
+        -> serialise_validation_errors(...)
+        -> request_validation_exception_handler(...)
+        -> JSONResponse
+
+The expected output shape is:
+
+    {
+        "error": {
+            "code": "validation_error",
+            "message": "Request validation failed.",
+            "details": [...]
+        }
+    }
 """
 
 import json
@@ -34,20 +51,41 @@ def make_request() -> Request:
     """
     Build a minimal FastAPI request object for handler tests.
 
+    The validation handler accepts a `Request` because FastAPI exception handlers
+    are always called with both:
+
+        request
+        exception
+
+    Our current handler does not inspect the request, but the object still needs
+    to exist so the handler can be called with the same shape FastAPI uses.
+
     Returns
     -------
     Request
-        Request object with enough ASGI scope datafor the exception handler.
+        Minimal request object with enough ASGI scope data for the exception
+        handler.
+
+        The fake request represents:
+
+            POST /api/v1/example
 
     Notes
     -----
-    - The current validation handler does not inspect the request.
-    - FastAPI still passes a request object to exception handlers.
-    - This helper keeps the test setup explicit and reusable.
+    - This does not start a server.
+    - This does not call a real route.
+    - This only builds the request object needed to call the handler directly.
+    - The handler currently ignores the request, but future handlers may use it
+      for request IDs, paths, logging, or tracing.
 
-    In plain language:
+    Example
+    -------
+    The returned object is used like this:
 
-    - create the smallest fake request needed to call the handler directly
+        response = await request_validation_exception_handler(
+            request=make_request(),
+            exc=make_validation_exception(),
+        )
     """
 
     return Request(
@@ -63,6 +101,13 @@ def make_validation_exception() -> RequestValidationError:
     """
     Build a representative FastAPI request validation exception.
 
+    The exception describes a missing request-body field:
+
+        source_record_id
+
+    This mimics the kind of exception FastAPI raises when a client sends a JSON
+    body that does not match a Pydantic request model.
+
     Returns
     -------
     RequestValidationError
@@ -70,10 +115,27 @@ def make_validation_exception() -> RequestValidationError:
 
     Notes
     -----
-    - This mimics the kind of error FastAPI raises when request input fails
-      validation.
-    - The example says that `source_record_id` was expected in the JSON body but
-      was missing.
+    - This does not come from a real HTTP request.
+    - It is built directly so the unit test can focus on the handler.
+    - The integration test separately proves that FastAPI can produce this kind
+      of error during real request handling.
+    - The example is intentionally realistic because future ingestion routes
+      will likely require a source-system record identifier.
+
+    Error meaning
+    -------------
+    This detail:
+
+        {
+            "type": "missing",
+            "loc": ("body", "source_record_id"),
+            "msg": "Field required",
+            "input": {}
+        }
+
+    means:
+
+        "The request body was missing the required field `source_record_id`."
 
     In plain language:
 
@@ -96,11 +158,29 @@ def test_serialise_validation_errors_returns_plain_error_details() -> None:
     """
     Verify that FastAPI validation details are converted into dictionaries.
 
+    This test checks the small helper function that extracts safe validation
+    details from a `RequestValidationError`.
+
     Notes
     -----
     - FastAPI/Pydantic already provide structured error details.
     - The helper copies those details into plain dictionaries.
     - This gives the response builder a predictable list of error detail objects.
+    - The location remains a tuple at this helper stage because this test is
+      checking the direct Python structure, not the final JSON response.
+
+    Expected result
+    ---------------
+    The helper should return:
+
+        [
+            {
+                "type": "missing",
+                "loc": ("body", "source_record_id"),
+                "msg": "Field required",
+                "input": {}
+            }
+        ]
     """
 
     exc = make_validation_exception()
@@ -121,11 +201,19 @@ async def test_request_validation_handler_returns_http_422() -> None:
     """
     Verify that request validation failures return HTTP 422.
 
+    HTTP 422 means:
+
+        "The request was understood, but the content was invalid for this route."
+
+    That is the correct status for a JSON body that is syntactically valid but
+    missing required fields.
+
     Notes
     -----
-    - HTTP 422 means the request was syntactically valid but semantically
-      invalid for this endpoint.
-    - In FastAPI, this is the normal status code for request validation errors.
+    - The handler is async, so the test is async.
+    - `pytest.mark.anyio` lets pytest run the async test.
+    - This test checks only the response status code.
+    - The response body is checked in a separate test.
     """
 
     response = await request_validation_exception_handler(
@@ -140,11 +228,33 @@ async def test_request_validation_handler_returns_standard_error_shape() -> None
     """
     Verify that validation failures use the shared API error response shape.
 
+    This test checks the final JSON body returned by the handler.
+
     Notes
     -----
     - FastAPI's default validation response uses a top-level `detail` key.
     - This project uses a top-level `error` object instead.
     - That keeps future Make.com and frontend error handling consistent.
+    - JSON turns the Python tuple location into a JSON list.
+
+    Expected response shape
+    -----------------------
+    The response should look like:
+
+        {
+            "error": {
+                "code": "validation_error",
+                "message": "Request validation failed.",
+                "details": [
+                    {
+                        "type": "missing",
+                        "loc": ["body", "source_record_id"],
+                        "msg": "Field required",
+                        "input": {}
+                    }
+                ]
+            }
+        }
     """
 
     response = await request_validation_exception_handler(
@@ -170,10 +280,23 @@ async def test_request_validation_handler_does_not_return_fastapi_detail_shape()
     """
     Verify that the handler does not expose FastAPI's default error envelope.
 
+    FastAPI normally returns validation errors with this top-level shape:
+
+        {
+            "detail": [...]
+        }
+
+    The project API contract uses this shape instead:
+
+        {
+            "error": {...}
+        }
+
     Notes
     -----
-    - The default FastAPI validation response usually contains `detail`.
-    - Out public API contract should expose `error` instead.
+    - This test protects the public API contract.
+    - Make.com and future frontend clients should look for `error`.
+    - They should not need to know FastAPI's internal default error format.
     """
 
     response = await request_validation_exception_handler(
