@@ -75,8 +75,10 @@ If any of that logic appears here, it probably belongs in a more specific module
 """
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 
 from backend.api.router import api_router
+from backend.core.errors import request_validation_exception_handler
 from backend.settings import get_settings
 
 
@@ -132,6 +134,15 @@ def create_app() -> FastAPI:
             "Backend API for the GraphRAG recruitment intelligence system."
         ),
         debug=settings.debug,
+    )
+
+    # Route validation failures through our standard API error shape.
+    #   - FastAPI normally returns validation errors as {"detail": [...]}. This
+    #     project exposes errors as {"error": {...}} so clients and Make.com can
+    #     parse failures consistently.
+    app.add_exception_handler(
+        RequestValidationError,
+        request_validation_exception_handler,
     )
 
     # Register all project API routes in one place
