@@ -57,7 +57,7 @@ This should happen before backend implementation so Python, LangChain v1, LangGr
   - [x] `ruff.toml`.
 - [x] Add thin Vercel Python entrypoints under `api/`.
 - [x] Add the modular Python backend package under `backend/`.
-- [ ] Add Supabase migration structure under `supabase/`.
+- [x] Add Supabase migration structure under `supabase/`.
 - [x] Add test structure under `tests/`.
 - [ ] Add safe sample data and evaluation fixtures under `fixtures/`.
 - [ ] Add local operational scripts under `scripts/`.
