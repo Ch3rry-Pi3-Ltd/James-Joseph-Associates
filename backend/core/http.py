@@ -75,6 +75,7 @@ SOURCE_SYSTEM_HEADER = "X-Source-System"
 MAKE_RUN_ID_HEADER = "X-Make-Run-Id"
 REQUEST_ID_HEADER = "X-Request-Id"
 
+
 def normalise_header_value(value: str | None) -> str | None:
     """
     Convert a raw HTTP header value into a clean optional string.
@@ -123,24 +124,25 @@ def normalise_header_value(value: str | None) -> str | None:
     - treat empty values as missing
     """
 
-    # Missing headers should remain missing
+    # Missing headers should remain missing.
     #   - FastAPI returns `None` when a header is not present.
     #   - Keeping that as `None` lets callers distinguish missing metadata from
     #     real text values.
     if value is None:
         return None
-    
-    # Trim accidental whitespace from the header value
+
+    # Trim accidental whitespace from the header value.
     #   - This makes values like `" jobadder "` behave as `"jobadder"`.
     normalised_value = value.strip()
 
-    # Empty strings should not count as useful metadata
+    # Empty strings should not count as useful metadata.
     #   - A header containing only spaces should be treated the same as a missing
     #     header.
     if normalised_value == "":
         return None
-    
+
     return normalised_value
+
 
 def get_optional_header(request: Request, header_name: str) -> str | None:
     """
@@ -149,7 +151,7 @@ def get_optional_header(request: Request, header_name: str) -> str | None:
     Parameters
     ----------
     request : Request
-        FastAPI request object
+        FastAPI request object.
 
     header_name : str
         Name of the HTTP header to read.
@@ -190,11 +192,12 @@ def get_optional_header(request: Request, header_name: str) -> str | None:
     - return it if it contains useful text
     """
 
-    # Read the raw value from FastAPI's request headers
+    # Read the raw value from FastAPI's request headers.
     #   - `request.headers.get(...)` returns `None` if the header is missing.
     #   - We then pass the value through one normalisation function so all header
     #     reads follow the same whitespace and blank-value rules.
     return normalise_header_value(request.headers.get(header_name))
+
 
 def get_request_metadata(request: Request) -> dict[str, str]:
     """
@@ -273,19 +276,20 @@ def get_request_metadata(request: Request) -> dict[str, str]:
     ]
 
     for metadata_key, header_name in header_mappings:
-        # Read and clean the header value using the shared helper
+        # Read and clean the header value using the shared helper.
         #   - Missing headers return `None`.
         #   - Blank headers return `None`.
         #   - Useful values return a stripped string.
         value = get_optional_header(request=request, header_name=header_name)
 
-        # Only include metadata that was actually provided
+        # Only include metadata that was actually provided.
         #   - This keeps the returned dictionary compact.
         #   - It also avoids storing keys with meaningless empty values.
         if value is not None:
             metadata[metadata_key] = value
 
     return metadata
+
 
 __all__ = [
     "IDEMPOTENCY_KEY_HEADER",

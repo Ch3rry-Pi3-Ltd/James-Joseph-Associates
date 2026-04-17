@@ -9,19 +9,19 @@
 #
 # - GitHub checks the Python backend
 # - GitHub checks the Next.js app still builds
-# - broken tests, lint errors, or build failures block the change from looking health
+# - broken tests, lint errors, or build failures block the change from looking healthy
 
 name: CI
 
-# GitHub Actions is migrating JavaScript actions from Node 20 to Node 24
-#   - This variable opts this workflow into Node 24 early for JavaScript-based actions
-#     such as:
+# GitHub Actions is migrating JavaScript actions from Node 20 to Node 24.
+#   - This variable opts this workflow into Node 24 early for JavaScript-based
+#     actions such as:
 #   
 #       - actions/checkout
 #       - actions/setup-python
 #       - actions/setup-node
 #
-#   - This is separate from the Node.js version used to build the Next.js app.defaults:
+#   - This is separate from the Node.js version used to build the Next.js app.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -31,7 +31,7 @@ on:
     branches:
       - main
 
-# Cancel older CI runs for the same branch when a newer commit is pushed
+# Cancel older CI runs for the same branch when a newer commit is pushed.
 #   - This keeps GitHub Actions cleaner while you are making several commits quickly.
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,7 +41,7 @@ jobs:
   python:
     name: Python Backend
 
-    # Ubuntu is the normal default runner for Python CI
+    # Ubuntu is the normal default runner for Python CI.
     #   - The project is developed on Windows locally, but CI should still pass on
     #     Linux because Vercel deployments run in a Linux-like environment.
     runs-on: ubuntu-latest
@@ -75,7 +75,7 @@ jobs:
   nextjs:
     name: Next.js Build
 
-    # This job checks that the starter frontend still builds
+    # This job checks that the starter frontend still builds.
     #   - Even though the backend is the main focus right now, the repo is deployed
     #     as a combined Vercel project, so we should keep the Next.js build healthy.
     runs-on: ubuntu-latest
@@ -87,11 +87,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-            # Use the current long-term-support Node version
-            node-version: "22"
+          # Use the current long-term-support Node version.
+          node-version: "22"
 
-            # Cache npm dependencies between CI runs
-            cache: npm
+          # Cache npm dependencies between CI runs.
+          cache: npm
 
       - name: Install node dependencies
         run: |

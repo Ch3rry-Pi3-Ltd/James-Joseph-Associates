@@ -1,9 +1,7 @@
 """
-Unit tests for shaped HTTP helper functions.
+Unit tests for shared HTTP helper functions.
 
 These tests check the small request-header utilities in `backend.core.http`.
-
-These tests check the small request-header utilities in the `backend.core.http`.
 
 The important question is:
 
@@ -29,14 +27,14 @@ The expected behaviour is:
 - missing headers become `None`
 - blank headers become `None`
 - whitespace is trimmed from useful headers
-- recognisted metadata headers are returned with Python-friendly keys
+- recognised metadata headers are returned with Python-friendly keys
 - unrecognised headers are ignored
 
 In plain language:
 
 - this file checks the small HTTP helper tools
 - it does not test FastAPI routing
-- it does not test SupaBase
+- it does not test Supabase
 - it does not require real Make.com requests
 - it does not require any real data
 """
@@ -53,11 +51,12 @@ from backend.core.http import (
     normalise_header_value,
 )
 
+
 def make_request(headers: list[tuple[bytes, bytes]] | None = None) -> Request:
     """
     Build a minimal FastAPI request object for HTTP helper tests.
 
-    The helper function in `backend.core.http` expect a FastAPI `Request`
+    The helper functions in `backend.core.http` expect a FastAPI `Request`
     object because real endpoint code will receive a request from FastAPI.
 
     These tests do not need a real server or a real route. They only need a
@@ -102,11 +101,11 @@ def make_request(headers: list[tuple[bytes, bytes]] | None = None) -> Request:
 
     - build a fake request
     - attach fake headers
-    - pass it into the HTTP helper hunctions
+    - pass it into the HTTP helper functions
     """
 
-    # FastAPI's `Request` object is built from an ASGI scope
-    #   - The score is just a dictionary describing the incoming request.
+    # FastAPI's `Request` object is built from an ASGI scope.
+    #   - The scope is just a dictionary describing the incoming request.
     #   - For these tests, we only need the request type, method, path, and
     #     headers.
     return Request(
@@ -117,6 +116,7 @@ def make_request(headers: list[tuple[bytes, bytes]] | None = None) -> Request:
             "headers": headers or [],
         }
     )
+
 
 def test_normalise_header_value_returns_none_for_missing_value() -> None:
     """
@@ -129,7 +129,7 @@ def test_normalise_header_value_returns_none_for_missing_value() -> None:
     - Missing optional metadata should not become an empty string.
     - Returning `None` makes it clear that the client did not provide the value.
     - This behaviour is used by `get_optional_header` and
-      `get_request_metadata`
+      `get_request_metadata`.
 
     In plain language:
 
@@ -138,6 +138,7 @@ def test_normalise_header_value_returns_none_for_missing_value() -> None:
     """
 
     assert normalise_header_value(None) is None
+
 
 def test_normalise_header_value_returns_none_for_empty_string() -> None:
     """
@@ -164,6 +165,7 @@ def test_normalise_header_value_returns_none_for_empty_string() -> None:
 
     assert normalise_header_value("") is None
 
+
 def test_normalise_header_value_returns_none_for_whitespace_only_string() -> None:
     """
     Verify that whitespace-only header values are treated as missing.
@@ -189,6 +191,7 @@ def test_normalise_header_value_returns_none_for_whitespace_only_string() -> Non
 
     assert normalise_header_value("   ") is None
 
+
 def test_normalise_header_value_trims_useful_text() -> None:
     """
     Verify that useful header text is stripped of surrounding whitespace.
@@ -213,6 +216,7 @@ def test_normalise_header_value_trims_useful_text() -> None:
 
     assert normalise_header_value(" jobadder ") == "jobadder"
 
+
 def test_get_optional_header_returns_none_when_header_is_missing() -> None:
     """
     Verify that missing optional headers return `None`.
@@ -235,6 +239,7 @@ def test_get_optional_header_returns_none_when_header_is_missing() -> None:
     request = make_request()
 
     assert get_optional_header(request, SOURCE_SYSTEM_HEADER) is None
+
 
 def test_get_optional_header_returns_clean_header_value() -> None:
     """
@@ -269,6 +274,7 @@ def test_get_optional_header_returns_clean_header_value() -> None:
 
     assert get_optional_header(request, SOURCE_SYSTEM_HEADER) == "jobadder"
 
+
 def test_get_optional_header_is_case_insensitive() -> None:
     """
     Verify that HTTP header lookup is case-insensitive.
@@ -301,6 +307,7 @@ def test_get_optional_header_is_case_insensitive() -> None:
     )
 
     assert get_optional_header(request, "X-SOURCE-SYSTEM") == "jobadder"
+
 
 def test_get_request_metadata_returns_recognised_headers() -> None:
     """
@@ -358,6 +365,7 @@ def test_get_request_metadata_returns_recognised_headers() -> None:
         "request_id": "request-789",
     }
 
+
 def test_get_request_metadata_omits_missing_headers() -> None:
     """
     Verify that missing metadata headers are not included in the result.
@@ -390,6 +398,7 @@ def test_get_request_metadata_omits_missing_headers() -> None:
     assert metadata == {
         "source_system": "jobadder",
     }
+
 
 def test_get_request_metadata_omits_blank_headers() -> None:
     """
@@ -432,6 +441,7 @@ def test_get_request_metadata_omits_blank_headers() -> None:
         "request_id": "request-789",
     }
 
+
 def test_get_request_metadata_ignores_unrecognised_headers() -> None:
     """
     Verify that unrelated headers are ignored.
@@ -471,6 +481,7 @@ def test_get_request_metadata_ignores_unrecognised_headers() -> None:
     assert metadata == {
         "source_system": "jobadder",
     }
+
 
 def test_header_constants_match_public_header_names() -> None:
     """
