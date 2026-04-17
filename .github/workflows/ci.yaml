@@ -1,0 +1,90 @@
+# Continuous integration checks for the James Joseph Associates project.
+#
+# This workflow runs automatically on:
+#
+# - pull requests
+# - pushes to the main branch
+#
+# In plain language:
+#
+# - GitHub checks the Python backend
+# - GitHub checks the Next.js app still builds
+# - broken tests, lint errors, or build failures block the change from looking health
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# Cancel older CI runs for the same branch when a newer commit is pushed
+#   - This keeps GitHub Actions cleaner while you are making several commits quickly.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python Backend
+
+    # Ubuntu is the normal default runner for Python CI
+    #   - The project is developed on Windows locally, but CI should still pass on
+    #     Linux because Vercel deployments run in a Linux-like environment.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Match the local Python version currently used by the project
+          python-version: "3.12"
+
+          # Cache installed pip packages between CI runs.
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run Python linting
+        run: |
+          python -m ruff check .
+
+      - name: Run Python tests
+        run: |
+          python -m pytest
+
+  nextjs:
+    name: Next.js Build
+
+    # This job checks that the starter frontend still builds
+    #   - Even though the backend is the main focus right now, the repo is deployed
+    #     as a combined Vercel project, so we should keep the Next.js build healthy.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            # Use the current long-term-support Node version
+            node-version: "22"
+
+            # Cache npm dependencies between CI runs
+            cache: npm
+
+      - name: Install node dependencies
+        run: |
+          npm ci
+
+      - name: Build Next.js app
+        run: |
+          npm run build
