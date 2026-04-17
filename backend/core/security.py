@@ -2,7 +2,7 @@
 Shared security helpers for the James Joseph Associates intelligence API.
 
 This module contains small utilities for reading and validating API
-authorisation metadata authorisation metadata.
+authorisation metadata.
 
 It gives the rest of the repository a stable way to talk about:
 
@@ -24,18 +24,18 @@ In plain language:
 
 - this module answers the question:
 
-    "Did this request provide useable API credentials?"
+    "Did this request provide usable API credentials?"
 
 - it does not define API routes
 - it does not connect to Supabase
 - it does not validate users in a database
 - it does not implement a full login system
-- it does not decided route-level permissions yet
+- it does not decide route-level permissions yet
 
 Notes
 -----
 - This is a foundation module, not a complete authentication system.
-- The first likely protected caller is Make.com
+- The first likely protected caller is Make.com.
 - A simple bearer-token approach is enough for the early backend foundation.
 - Later, this module can grow to support user sessions, JWTs, API keys, service
   accounts, or role-based permissions.
@@ -52,6 +52,7 @@ from fastapi import Request
 AUTHORIZATION_HEADER = "Authorization"
 BEARER_AUTH_SCHEME = "Bearer"
 
+
 class SecurityFailureReason(StrEnum):
     """
     Machine-readable reason why request credentials could not be accepted.
@@ -66,7 +67,7 @@ class SecurityFailureReason(StrEnum):
         bearer-token format.
 
     UNSUPPORTED_AUTH_SCHEME : str
-        The `Authorization` header was present but it did not match the expected
+        The `Authorization` header used a scheme other than `Bearer`.
 
     EMPTY_BEARER_TOKEN : str
         The header used the `Bearer` scheme but did not include a token.
@@ -92,6 +93,7 @@ class SecurityFailureReason(StrEnum):
     UNSUPPORTED_AUTH_SCHEME = "unsupported_auth_scheme"
     EMPTY_BEARER_TOKEN = "empty_bearer_token"
     INVALID_BEARER_TOKEN = "invalid_bearer_token"
+
 
 @dataclass(frozen=True, slots=True)
 class BearerCredentials:
@@ -138,6 +140,7 @@ class BearerCredentials:
     scheme: str
     token: str
 
+
 @dataclass(frozen=True, slots=True)
 class SecurityCheckResult:
     """
@@ -176,6 +179,7 @@ class SecurityCheckResult:
     reason: SecurityFailureReason | None = None
     credentials: BearerCredentials | None = None
 
+
 def normalise_authorization_header(value: str | None) -> str | None:
     """
     Convert a raw `Authorization` header into a clean optional string.
@@ -192,7 +196,7 @@ def normalise_authorization_header(value: str | None) -> str | None:
     str | None
         Cleaned header value.
 
-        The returned value is:
+        The return value is:
 
         - a stripped string when the header contains useful text
         - `None` when the header is missing
@@ -223,26 +227,27 @@ def normalise_authorization_header(value: str | None) -> str | None:
     - treat empty values as missing
     """
 
-    # Missing headers should remain missing
+    # Missing headers should remain missing.
     #   - FastAPI returns `None` when a header is not present.
     #   - Keeping that as `None` lets callers identify the missing-auth case.
     if value is None:
         return None
-    
-    # Trim accidental whitespace from the full header
+
+    # Trim accidental whitespace from the full header.
     #   - This handles values like `" Bearer abc "` without changing the token
     #     itself beyond edge whitespace.
     normalised_value = value.strip()
 
-    # Empty strings should not count as credentials
+    # Empty strings should not count as credentials.
     #   - A header containing only spaces should behave like no header.
     if normalised_value == "":
         return None
-    
+
     return normalised_value
 
+
 def parse_bearer_credentials(
-        authorization_header: str | None,
+    authorization_header: str | None,
 ) -> BearerCredentials | SecurityFailureReason:
     """
     Parse bearer-token credentials from an `Authorization` header.
@@ -305,6 +310,12 @@ def parse_bearer_credentials(
     if normalised_header is None:
         return SecurityFailureReason.MISSING_AUTHORIZATION_HEADER
 
+    # A bare `Bearer` value tells us the caller knew the expected scheme but did
+    # not send a token.
+    #   - Treating this separately gives future API errors a more precise reason.
+    if normalised_header.lower() == BEARER_AUTH_SCHEME.lower():
+        return SecurityFailureReason.EMPTY_BEARER_TOKEN
+
     # Split into two parts only:
     #
     #   Bearer <token>
@@ -330,6 +341,7 @@ def parse_bearer_credentials(
         scheme=BEARER_AUTH_SCHEME,
         token=token,
     )
+
 
 def tokens_match(provided_token: str, expected_token: str) -> bool:
     """
@@ -371,9 +383,10 @@ def tokens_match(provided_token: str, expected_token: str) -> bool:
 
     return compare_digest(provided_token, expected_token)
 
+
 def check_bearer_token(
-        authorization_header: str | None,
-        expected_token: str,
+    authorization_header: str | None,
+    expected_token: str,
 ) -> SecurityCheckResult:
     """
     Check whether an `Authorization` header contains the expected bearer token.
@@ -412,7 +425,7 @@ def check_bearer_token(
 
     credentials_or_reason = parse_bearer_credentials(authorization_header)
 
-    # If parsing failed, return an unauthorised result with the exact reason
+    # If parsing failed, return an unauthorised result with the exact reason.
     #   - Examples include missing header, wrong scheme, or malformed value.
     if isinstance(credentials_or_reason, SecurityFailureReason):
         return SecurityCheckResult(
@@ -423,7 +436,7 @@ def check_bearer_token(
     credentials = credentials_or_reason
 
     # The header was parseable, so now check whether the supplied token matches
-    # the backend's configured token
+    # the backend's configured token.
     if not tokens_match(
         provided_token=credentials.token,
         expected_token=expected_token,
@@ -438,6 +451,7 @@ def check_bearer_token(
         is_authorised=True,
         credentials=credentials,
     )
+
 
 def check_request_bearer_token(
     request: Request,
