@@ -13,6 +13,18 @@
 
 name: CI
 
+# GitHub Actions is migrating JavaScript actions from Node 20 to Node 24
+#   - This variable opts this workflow into Node 24 early for JavaScript-based actions
+#     such as:
+#   
+#       - actions/checkout
+#       - actions/setup-python
+#       - actions/setup-node
+#
+#   - This is separate from the Node.js version used to build the Next.js app.defaults:
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   pull_request:
   push:
