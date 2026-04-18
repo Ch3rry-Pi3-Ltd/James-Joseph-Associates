@@ -1,8 +1,8 @@
 """
 Unit tests for backend application settings.
 
-This module verifies that `backend_settings` behaves predictably before more
-configuration is added for Supabase, model providers, Make.com, auth, and
+This module verifies that `backend.settings` behaves predictably before more
+configuration is added for Supabase, model providers, auth, and
 deployment-specific behaviour.
 
 It gives the rest of the repository a stable way to check:
@@ -11,6 +11,7 @@ It gives the rest of the repository a stable way to check:
 - environment variable overrides
 - cached settings behaviour
 - clearing the settings cache in tests
+- Make.com API token loading
 
 Keeping these tests small makes the configuration layer easier to trust because:
 
@@ -28,10 +29,12 @@ In plain language:
 - it does not test Supabase
 - it does not test Vercel
 - it does not test LangChain or LangGraph
+- it does not use a real Make.com token
 - it only tests local settings behaviour
 """
 
 from backend.settings import get_settings
+
 
 def test_settings_load_default_values() -> None:
     """
@@ -65,7 +68,8 @@ def test_settings_load_default_values() -> None:
     assert settings.environment == "development"
     assert settings.debug is False
 
-def test_settings_can_be_overriden_from_environment(monkeypatch) -> None:
+
+def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     """
     Verify that app-specific environment variables override defaults.
 
@@ -100,18 +104,66 @@ def test_settings_can_be_overriden_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("API_VERSION", "9.9.9")
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("APP_DEBUG", "true")
+    monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
 
     settings = get_settings()
 
     assert settings.app_name == "Test Intelligence API"
     assert settings.service_name == "test-service"
-    assert settings.api_version =="9.9.9"
+    assert settings.api_version == "9.9.9"
     assert settings.environment == "test"
     assert settings.debug is True
+    assert settings.make_api_token == "fake-make-token"
 
-    # Clear again, so later tests cannot accidentally reuse this overriden
+    # Clear again, so later tests cannot accidentally reuse this overridden
     # setting object from the cache
     get_settings.cache_clear()
+
+
+def test_make_api_token_defaults_to_empty_string(monkeypatch) -> None:
+    """
+    Verify that `MAKE_API_TOKEN` can safely be empty.
+
+    The Make.com token is a secret value.
+
+    In production, Vercel should provide it as an environment variable.
+
+    In local development and tests, it is useful for the value to default to an
+    empty string so protected Make.com endpoints fail closed instead of
+    accidentally accepting requests.
+
+    Parameters
+    ----------
+    monkeypatch
+        Pytest fixture used to override environment variables for this test.
+
+    Notes
+    -----
+    - This test does not use a real Make.com token.
+    - It deliberately sets the environment value to an empty string.
+    - That mirrors the safe "not configured yet" state.
+    - The protected Make.com endpoint checks for this and returns HTTP 401.
+
+    In plain language:
+
+    - no configured Make.com token
+    - settings loads an empty string
+    - protected Make.com routes should reject requests
+    """
+
+    get_settings.cache_clear()
+
+    # Force the token to be empty for this test.
+    #   - This avoids accidentally reading a real local token from `.env.local`.
+    #   - Environment variables override values loaded from `.env.local`.
+    monkeypatch.setenv("MAKE_API_TOKEN", "")
+
+    settings = get_settings()
+
+    assert settings.make_api_token == ""
+
+    get_settings.cache_clear()
+
 
 def test_settings_are_cached() -> None:
     """

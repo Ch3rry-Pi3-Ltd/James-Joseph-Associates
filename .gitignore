@@ -50,5 +50,6 @@ next-env.d.ts
 
 # local project docs
 local_docs/
+docs/Tech Stack for JJA.pdf
 .vercel
 .env*.local

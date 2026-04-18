@@ -5,7 +5,6 @@ This module contains small utilities for handling idempotency metadata.
 
 It gives the rest of the repository a stable way to talk about:
 
-- `Idempoetncy-Key` headers
 - `Idempotency-Key` headers
 - missing idempotency keys
 - blank idempotency keys

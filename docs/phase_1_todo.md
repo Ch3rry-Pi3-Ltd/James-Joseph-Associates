@@ -61,7 +61,7 @@ This should happen before backend implementation so Python, LangChain v1, LangGr
 - [x] Add test structure under `tests/`.
 - [ ] Add safe sample data and evaluation fixtures under `fixtures/`.
 - [ ] Add local operational scripts under `scripts/`.
-- [ ] Add GitHub Actions workflow structure under `.github/workflows/`.
+- [x] Add GitHub Actions workflow structure under `.github/workflows/`.
 - [x] Verify the structure locally with:
   - [x] Python health endpoint test.
   - [x] Next.js build.
@@ -165,9 +165,10 @@ This is the vector-store part of the GraphRAG foundation.
 
 The backend should own **business logic, intelligence, deduplication, retrieval, ranking, matching, and guardrails**.
 
-- [ ] Draft the Phase 1 REST API contract.
+- [x] Draft the Phase 1 REST API contract.
 - [ ] Define endpoint groups:
-  - [ ] Health/status.
+  - [x] Health/status.
+  - [x] Make.com protected test route.
   - [ ] Source-record ingestion.
   - [ ] Entity upsert/search.
   - [ ] Document ingestion/metadata.
@@ -176,10 +177,15 @@ The backend should own **business logic, intelligence, deduplication, retrieval,
   - [ ] Proposed workflow actions.
   - [ ] Approval decision capture.
 - [ ] Define request/response schemas.
-- [ ] Define validation and error conventions.
-- [ ] Define idempotency behaviour for ingestion endpoints.
+  - [x] Health response schema.
+  - [x] Shared API error response schema.
+  - [x] Make.com test event request/response schema.
+  - [ ] Source-record ingestion schemas.
+- [x] Define validation and error conventions.
+- [x] Define idempotency behaviour for protected Make.com POST requests.
+- [ ] Define idempotency behaviour for real ingestion endpoints.
 - [ ] Define authentication approach for:
-  - [ ] Make.com.
+  - [x] Make.com.
   - [ ] Internal admin users.
   - [ ] Future frontend.
   - [ ] Future MCP tools.
@@ -237,16 +243,17 @@ Phase 1 should prove one useful GraphRAG workflow rather than trying to solve ev
 
 Make.com should be the **external orchestration/action layer**, not the intelligence layer.
 
-- [ ] Choose the first Make.com workflow.
+- [x] Choose the first Make.com workflow.
 - [ ] Define trigger source:
   - [ ] CRM/ATS update.
   - [ ] Spreadsheet row update.
-  - [ ] Manual trigger.
+  - [x] Manual trigger.
   - [ ] Scheduled import.
   - [ ] Slack/task trigger.
-- [ ] Define backend endpoint called by Make.com.
-- [ ] Define Make.com payload format.
-- [ ] Define backend response format.
+- [x] Define backend endpoint called by Make.com.
+- [x] Define Make.com test payload format.
+- [x] Define backend test response format.
+- [ ] Define real source-system payload format.
 - [ ] Define approved downstream actions:
   - [ ] Create task.
   - [ ] Draft email.
@@ -254,8 +261,65 @@ Make.com should be the **external orchestration/action layer**, not the intellig
   - [ ] Update CRM/ATS record.
   - [ ] Start outreach workflow.
 - [ ] Define approval flow before high-impact actions.
-- [ ] Define retry and failure handling.
+- [x] Define retry key handling for the protected Make.com test endpoint.
+- [ ] Define retry and failure handling for real ingestion workflows.
+- [x] Define how Make.com run IDs are passed to the backend.
 - [ ] Define how Make.com run IDs are logged back into Supabase.
+
+Current status:
+
+- [x] Make.com can call the deployed Vercel backend.
+- [x] Make.com can send bearer-token authentication.
+- [x] Make.com can send JSON to the backend.
+- [x] Make.com can send a dynamic `Idempotency-Key` based on its execution ID.
+- [x] The backend accepts the protected test event.
+- [x] Integration tests cover the protected Make.com route.
+- [x] Make.com service coverage notes are documented in `docs/make_service_coverage.md`.
+- [x] Source-system discovery checklist is documented in `docs/source_system_discovery_checklist.md`.
+- [ ] Real client source-system access is available.
+- [ ] Real source-system sample payloads have been collected.
+- [ ] Real source-record ingestion is designed.
+
+</details>
+
+<details>
+<summary><strong>8A. Discover Client Source Systems</strong></summary>
+
+This step blocks real ingestion work.
+
+The backend foundation can accept Make.com requests, but we do not yet have
+access to the client's operational source systems or representative sample
+payloads.
+
+- [x] Identify likely high-value source systems from the client tech stack.
+- [x] Check which priority systems appear to have Make.com modules.
+- [x] Document ways to connect unsupported services:
+  - [x] HTTP/API.
+  - [x] Webhooks.
+  - [x] CSV or spreadsheet export.
+  - [x] File watchers.
+  - [x] Custom Make apps.
+  - [x] Manual discovery exports.
+- [x] Create source-system discovery checklist.
+- [x] Create JobAdder discovery playbook.
+- [ ] Get access to first source system.
+- [ ] Confirm first source system authentication method.
+- [ ] Run first safe source-system test in Make.com.
+- [ ] Capture redacted sample output from the first source system.
+- [ ] Identify stable source IDs.
+- [ ] Identify sensitive fields.
+- [ ] Decide the first real source-record type.
+
+Recommended first systems to inspect:
+
+1. JobAdder.
+2. LinkedHelper.
+3. Dropbox CV folders.
+4. Outlook CV attachments.
+5. Pipedrive legacy records.
+6. Google Sheets / Microsoft Excel legacy data.
+7. SourceBreaker.
+8. SourceWhale.
 
 </details>
 
@@ -267,10 +331,10 @@ CI/CD should be included from the first implementation phase.
 - [ ] Define GitHub branch strategy.
 - [ ] Define pull request requirements.
 - [ ] Define GitHub Actions checks:
-  - [ ] Linting.
+  - [x] Linting.
   - [ ] Type checks.
-  - [ ] Unit tests.
-  - [ ] Integration tests.
+  - [x] Unit tests.
+  - [x] Integration tests.
   - [ ] API contract checks.
   - [ ] LLM evaluation checks.
   - [ ] Documentation checks.
@@ -328,6 +392,9 @@ Phase 1 should be considered complete only when the foundation can support a nar
 - [ ] Vercel project exists and deployment path is documented.
 - [ ] Project structure is agreed and implemented.
 - [ ] Supabase project exists and central data role is documented.
+- [x] Make.com can securely call the backend.
+- [x] Backend foundation includes health, settings, error handling, security, idempotency, and Make.com test routing.
+- [x] Source-system access blocker is documented.
 - [ ] Initial canonical data model is agreed.
 - [ ] Initial source-of-truth and provenance rules are documented.
 - [ ] REST API contract is drafted.

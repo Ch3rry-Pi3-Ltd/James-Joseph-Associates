@@ -9,6 +9,13 @@ The goal is to avoid designing a tidy schema that does not match the shape, qual
 
 This document should guide collection of safe sample records from the first priority systems.
 
+Related planning notes:
+
+- `docs/make_service_coverage.md` records which services appear to have Make.com
+  modules and how unsupported services can still be connected.
+- `docs/source_system_discovery_checklist.md` provides the checklist to use once
+  access to each source system is available.
+
 </details>
 
 <details open>
@@ -31,6 +38,15 @@ Before writing it, we need to understand:
 - Which fields are sensitive.
 - Which fields are needed for the first matching workflow.
 - Which relationships can be inferred safely.
+
+Current blocker:
+
+- Make.com can now securely call the backend.
+- The backend has a protected Make.com test endpoint.
+- Real source-system access is not available yet.
+- Real sample payloads have not been collected yet.
+- Therefore, real source-record schemas and core entity migrations should wait
+  until discovery samples exist.
 
 </details>
 
@@ -273,5 +289,10 @@ Questions to resolve before finalising the core schema:
 - Is job-to-candidate matching confirmed as the first workflow?
 - What source IDs can support idempotent ingestion?
 - What sample data can safely be committed as fake fixtures later?
+- Which source system should be inspected first in Make.com?
+- Does JobAdder's community Make.com module expose the data we need?
+- Can LinkedHelper provide a CSV/API export with stable LinkedIn profile URLs?
+- Can Dropbox and Outlook provide safe limited CV/document samples without bulk
+  personal data exposure?
 
 </details>

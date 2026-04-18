@@ -12,7 +12,7 @@ It gives the rest of the repository a stable way to talk about:
 - whether debug behaviour is enabled
 - the Make.com API token used by protected Make.com endpoints
 
-Keeping settings in one places makes the project easier to understand because:
+Keeping settings in one place makes the project easier to understand because:
 
 - `backend.main` can read app metadata from a single source
 - health endpoints can report service metadata without hard-coded strings
@@ -48,7 +48,7 @@ This module should not contain:
 - business logic
 
 If a setting needs to create a real client or perform I/O, that work belongs in
-a decidicated integration module, not here.
+a dedicated integration module, not here.
 """
 
 from functools import lru_cache
@@ -133,7 +133,7 @@ class Settings(BaseSettings):
     # Allow configuration from environment variables while keeping defaults
     # for the first backend foundation slice
     #   - `extra="ignore"` means unrelated environment variables from Vercel,
-    #     Supabase, Next.js, or the local shall will not break settings loading.
+    #     Supabase, Next.js, or the local shell will not break settings loading.
     model_config = SettingsConfigDict(
         env_file=".env.local",
         env_file_encoding="utf-8",
