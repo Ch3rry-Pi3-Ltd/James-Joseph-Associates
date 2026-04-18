@@ -1,7 +1,7 @@
 """
 Foundation LangGraph workflow for the intelligence backend.
 
-This module defines the first tiny LanGraph workflow in the project.
+This module defines the first tiny LangGraph workflow in the project.
 
 It gives the rest of the repository a stable way to prove that:
 
@@ -55,7 +55,7 @@ The graph can be invoked with:
 
     result = foundation_graph.invoke(
         {
-            "input_message": "Hello from a test,"
+            "input_message": "Hello from a test",
             "output_message": "",
         }
     )
@@ -95,6 +95,7 @@ from backend.graphs.state import FoundationGraphState
 
 FOUNDATION_NODE_NAME: Final[str] = "build_output_message"
 
+
 def build_output_message(state: FoundationGraphState) -> dict[str, str]:
     """
     Build the foundation graph output message.
@@ -112,7 +113,7 @@ def build_output_message(state: FoundationGraphState) -> dict[str, str]:
     Returns
     -------
     dict[str, str]
-        Partial state update containing the new `output_message`
+        Partial state update containing the new `output_message`.
 
     Notes
     -----
@@ -212,7 +213,7 @@ def create_foundation_graph():
 
         build_output_message
 
-    The edges are :
+    The edges are:
 
         START -> build_output_message
         build_output_message -> END
@@ -220,7 +221,7 @@ def create_foundation_graph():
     That means:
 
     1. Start graph execution.
-    2. Run `build_output_message`
+    2. Run `build_output_message`.
     3. Stop graph execution.
 
     Why a factory function?
@@ -250,7 +251,7 @@ def create_foundation_graph():
 
     # Register the node function
     #   - The string name is how edges refer to this node.
-    #   - The function is what actually runs when the graph reaches the node
+    #   - The function is what actually runs when the graph reaches the node.
     graph_builder.add_node(
         node=FOUNDATION_NODE_NAME,
         action=build_output_message,
@@ -275,10 +276,11 @@ def create_foundation_graph():
     #   - The compiled graph is the runnable object used by tests and future code.
     return graph_builder.compile()
 
+
 # Compile one reusable foundation graph at module import time
 #   - This is fine for this tiny graph because it has no external clients,
 #     database connections, API keys, or expensive setup.
-#   - If future graph needs expensive resouces, prefer lazy construction or
+#   - If future graphs need expensive resources, prefer lazy construction or
 #     dependency injection instead.
 foundation_graph = create_foundation_graph()
 
@@ -286,5 +288,5 @@ __all__ = [
     "FOUNDATION_NODE_NAME",
     "build_output_message",
     "create_foundation_graph",
-    "foundation_graph"
+    "foundation_graph",
 ]
