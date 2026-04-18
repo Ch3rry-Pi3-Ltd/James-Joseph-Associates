@@ -10,6 +10,7 @@ It gives the rest of the repository a stable way to talk about:
 - the API version
 - the current runtime environment
 - whether debug behaviour is enabled
+- the Make.com API token used by protected Make.com endpoints
 
 Keeping settings in one places makes the project easier to understand because:
 
@@ -93,6 +94,12 @@ class Settings(BaseSettings):
 
         Debug mode should stay false in production.
 
+    make_api_token : str
+        Shared bearer token expected from Make.com.
+
+        This is used by protected Make.com-facing endpoints. The value should be
+        configured through environment variables and should never be committed.
+
     Notes
     -----
     - This class only describes configuration.
@@ -109,6 +116,7 @@ class Settings(BaseSettings):
         API_VERSION
         ENVIRONMENT
         APP_DEBUG
+        MAKE_API_TOKEN
 
     Example
     -------
@@ -119,6 +127,7 @@ class Settings(BaseSettings):
         API_VERSION="0.1.0"
         ENVIRONMENT="development"
         APP_DEBUG="false"
+        MAKE_API_TOKEN=""
     """
 
     # Allow configuration from environment variables while keeping defaults
@@ -163,6 +172,20 @@ class Settings(BaseSettings):
     debug: bool = Field(
         default=False,
         validation_alias="APP_DEBUG",
+    )
+
+    # Shared token for protected Make.com calls
+    #   - Make.com sends this as:
+    #
+    #       Authorization: Bearer <token>
+    #
+    #   - The environment variable stores only the raw token value, without the
+    #     `Bearer` prefix.
+    #   - An empty default means protected Make.com endpoints fail closed until a
+    #     real secret is configured.
+    make_api_token: str = Field(
+        default="",
+        validation_alias="MAKE_API_TOKEN",
     )
 
 @lru_cache(maxsize=1)

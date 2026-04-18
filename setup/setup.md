@@ -701,3 +701,312 @@ is not an error. It is the default Next.js starter UI.
 </details>
 
 </details>
+
+<details open>
+<summary><strong>5. Make.com Backend Connection Setup</strong></summary>
+
+Use this section to connect Make.com to the Vercel-hosted backend API.
+
+The connection pattern is:
+
+```text
+Make.com scenario
+    -> HTTP request
+    -> Vercel app
+    -> FastAPI backend
+```
+
+In plain language:
+
+- Make.com calls the backend using an HTTP module.
+- The public health endpoint can be called without a token.
+- Protected Make.com endpoints require a shared bearer token.
+- The token value must be stored in Vercel and Make.com, but not in GitHub.
+
+Important:
+
+- Do not commit the real token.
+- Do not paste the real token into documentation.
+- Do not include the real token in screenshots.
+- `.env.example` should contain only the variable name.
+- `.env.local` may contain the real value, but `.env.local` must remain ignored by Git.
+
+<details open>
+<summary><strong>5.1 Prove Make.com Can Reach the Backend</strong></summary>
+
+Create a simple Make.com HTTP module:
+
+```text
+HTTP -> Make a request
+```
+
+Use:
+
+```text
+Authentication type: No auth
+Method: GET
+URL: https://james-joseph-associates.vercel.app/api/v1/health
+Parse response: Yes
+```
+
+No headers, query parameters, or body are needed.
+
+Expected result:
+
+```text
+Status Code: 200
+```
+
+Expected response body:
+
+```json
+{
+  "status": "ok",
+  "service": "james-joseph-associates-api",
+  "version": "0.1.0"
+}
+```
+
+This proves:
+
+- Make.com can reach the deployed Vercel app.
+- The Vercel rewrite is working.
+- The FastAPI backend is reachable.
+- The versioned route path is correct.
+
+</details>
+
+<details open>
+<summary><strong>5.2 Generate the Make.com Backend API Token</strong></summary>
+
+Generate a long random token locally.
+
+Run this from the project terminal:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+This prints a value similar to:
+
+```text
+<raw-token>
+```
+
+This value is the shared secret between:
+
+```text
+Vercel backend
+Make.com HTTP module
+```
+
+In plain language:
+
+- Vercel stores the raw token.
+- Make.com sends the token in the `Authorization` header.
+- The backend checks that the incoming token matches the configured token.
+
+</details>
+
+<details open>
+<summary><strong>5.3 Add the Token to Vercel</strong></summary>
+
+Add the token to the Vercel project as an environment variable.
+
+Variable name:
+
+```text
+MAKE_API_TOKEN
+```
+
+Variable value:
+
+```text
+<the raw token>
+```
+
+Important:
+
+- Do not include `Bearer` in the Vercel value.
+- Vercel should store only the raw token.
+
+Correct Vercel value:
+
+```text
+MAKE_API_TOKEN=<raw-token>
+```
+
+Incorrect Vercel value:
+
+```text
+MAKE_API_TOKEN=Bearer <raw-token>
+```
+
+Recommended environments:
+
+- Preview
+- Production
+- Development, if using Vercel-managed local env pulls
+
+After adding or changing the Vercel environment variable, redeploy the project so
+the deployed backend can read the new value.
+
+</details>
+
+<details open>
+<summary><strong>5.4 Add the Token Locally</strong></summary>
+
+Add the same raw token to `.env.local`.
+
+Use:
+
+```env
+MAKE_API_TOKEN="<raw-token>"
+```
+
+Important:
+
+- Do not include `Bearer` in `.env.local`.
+- Do not commit `.env.local`.
+- Keep `.env.local` ignored by Git.
+
+`.env.example` should contain only:
+
+```env
+MAKE_API_TOKEN=""
+```
+
+</details>
+
+<details open>
+<summary><strong>5.5 Add the Token to Make.com</strong></summary>
+
+In the Make.com HTTP module, create an API key keychain.
+
+Recommended values:
+
+```text
+Name: JJA Backend API Token - Production
+API key placement: In the header
+API key parameter name: Authorization
+```
+
+For the key value, include the `Bearer` prefix:
+
+```text
+Bearer <raw-token>
+```
+
+Important:
+
+- Make.com includes `Bearer`.
+- Vercel and `.env.local` do not include `Bearer`.
+- There must be one space between `Bearer` and the token.
+
+Correct Make.com key value:
+
+```text
+Bearer <raw-token>
+```
+
+Incorrect Make.com key value:
+
+```text
+<raw-token>
+```
+
+</details>
+
+<details open>
+<summary><strong>5.6 Protected Make.com Test Endpoint</strong></summary>
+
+The protected Make.com test endpoint is:
+
+```text
+POST https://james-joseph-associates.vercel.app/api/v1/make/test-event
+```
+
+This endpoint is not a real source-record ingestion endpoint.
+
+It exists to prove:
+
+- Make.com can send a protected request.
+- The backend can check the bearer token.
+- The backend can require an `Idempotency-Key`.
+- The backend can read Make.com request metadata.
+- The backend can return a controlled response.
+
+Required headers:
+
+```text
+Authorization: Bearer <token>
+Idempotency-Key: make-<Make execution id>
+```
+
+Useful optional headers:
+
+```text
+X-Source-System: make
+X-Make-Run-Id: <Make execution id>
+X-Request-Id: make-<Make execution id>
+```
+
+For the first manual test, it is acceptable to use fixed values:
+
+```text
+Idempotency-Key: make-test-001
+X-Make-Run-Id: manual-test-001
+X-Request-Id: manual-test-001
+```
+
+For the saved Make.com scenario, use Make's dynamic `Execution id` variable
+instead.
+
+In Make.com, the saved header values should be:
+
+```text
+Idempotency-Key: make-[Execution id]
+X-Source-System: make
+X-Make-Run-Id: [Execution id]
+X-Request-Id: make-[Execution id]
+```
+
+Request body:
+
+```json
+{
+  "event_type": "manual_make_test",
+  "payload": {
+    "message": "Hello from Make.com"
+  }
+}
+```
+
+Expected successful response:
+
+```json
+{
+  "status": "accepted",
+  "message": "Make.com test event accepted.",
+  "event_type": "manual_make_test",
+  "idempotency_key": "make-<Make execution id>",
+  "payload_hash": "<sha256>",
+  "request_metadata": {
+    "source_system": "make",
+    "make_run_id": "<Make execution id>",
+    "request_id": "make-<Make execution id>"
+  }
+}
+```
+
+In plain language:
+
+- if this works, Make.com can securely talk to the backend
+- each real Make.com run should send a fresh idempotency key
+- using Make's `Execution id` gives each scenario run its own traceable key
+- the next step is a real source-record endpoint
+
+</details>
+
+</details>
+

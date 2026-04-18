@@ -46,6 +46,7 @@ Initial route groups:
 
 ```text
 GET  /api/v1/health
+POST /api/v1/make/test-event
 POST /api/v1/source-records
 GET  /api/v1/entities/search
 GET  /api/v1/entities/{entity_type}/{entity_id}/context
@@ -58,8 +59,9 @@ POST /api/v1/approvals
 Implementation status:
 
 ```text
-GET /api/v1/health -> implemented
-all other routes   -> planned
+GET  /api/v1/health          -> implemented
+POST /api/v1/make/test-event -> implemented for protected Make.com testing
+all other routes             -> planned
 ```
 
 </details>
@@ -82,7 +84,10 @@ X-Make-Run-Id: <make-scenario-run-id>
 Notes:
 
 - `Authorization` is required for non-health routes once auth is implemented.
+- Make.com protected routes use `Authorization: Bearer <MAKE_API_TOKEN>`.
+- Vercel stores only the raw `MAKE_API_TOKEN` value, without the `Bearer` prefix.
 - `Idempotency-Key` should be required for ingestion and action/approval routes.
+- `Idempotency-Key` is already required for the protected Make.com test endpoint.
 - `X-Make-Run-Id` is optional but useful when Make.com triggers a request.
 
 ## Entity Types
@@ -159,6 +164,96 @@ Status codes:
 ```text
 200 -> API app and route registration are alive.
 ```
+
+</details>
+
+<details>
+<summary><strong>5A. Make.com Test Event</strong></summary>
+
+## `POST /api/v1/make/test-event`
+
+Accepts a protected test event from Make.com.
+
+This endpoint exists to prove the integration path before real source-record
+ingestion begins.
+
+It checks:
+
+- bearer-token authentication
+- idempotency key presence
+- Make.com metadata headers
+- JSON request parsing
+- controlled JSON response formatting
+
+It does not:
+
+- store data
+- create candidates
+- create jobs
+- call Supabase
+- call LangChain
+- call LangGraph
+- run a real business workflow
+
+Required headers:
+
+```text
+Authorization: Bearer <token>
+Idempotency-Key: <stable-test-key>
+Content-Type: application/json
+```
+
+Useful optional headers:
+
+```text
+X-Source-System: make
+X-Make-Run-Id: <make-scenario-run-id>
+X-Request-Id: <request-id>
+```
+
+Request:
+
+```json
+{
+  "event_type": "manual_make_test",
+  "payload": {
+    "message": "Hello from Make.com"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "status": "accepted",
+  "message": "Make.com test event accepted.",
+  "event_type": "manual_make_test",
+  "idempotency_key": "make-test-001",
+  "payload_hash": "<sha256>",
+  "request_metadata": {
+    "source_system": "make",
+    "make_run_id": "test-run-001",
+    "request_id": "manual-test-001"
+  }
+}
+```
+
+Status codes:
+
+```text
+200 -> test event accepted
+401 -> missing, invalid, or unconfigured bearer token
+422 -> missing or blank idempotency key
+```
+
+Notes:
+
+- This is a proving endpoint only.
+- Once this works from Make.com, the next endpoint should be real source-record
+  ingestion.
+- The Make.com keychain should send `Authorization: Bearer <token>`.
+- Vercel should store the raw token as `MAKE_API_TOKEN`, without `Bearer`.
 
 </details>
 

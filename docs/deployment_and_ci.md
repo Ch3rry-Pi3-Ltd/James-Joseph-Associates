@@ -14,7 +14,9 @@ It gives the repository a stable place to document:
 - local production build checks
 - GitHub Actions CI behaviour
 - Vercel deployment flow
+- required deployment environment variables
 - health-check paths
+- Make.com protected test endpoint checks
 - known non-blocking local warnings
 
 In plain language:
@@ -81,6 +83,60 @@ client
     -> backend.api.router
     -> backend.api.v1.health
 ```
+
+</details>
+
+<details open>
+<summary><strong>2A. Required Environment Variables</strong></summary>
+
+The repository documents required environment variable names in:
+
+```text
+.env.example
+```
+
+The real values belong in:
+
+```text
+.env.local
+Vercel project environment variables
+```
+
+Do not commit real secret values.
+
+## Make.com Token
+
+Protected Make.com endpoints use:
+
+```text
+MAKE_API_TOKEN
+```
+
+This should contain only the raw token value.
+
+Correct:
+
+```text
+MAKE_API_TOKEN=<raw-token>
+```
+
+Incorrect:
+
+```text
+MAKE_API_TOKEN=Bearer <raw-token>
+```
+
+Make.com sends the same token with the `Bearer` prefix in the HTTP header:
+
+```text
+Authorization: Bearer <raw-token>
+```
+
+In plain language:
+
+- Vercel stores the raw token
+- Make.com sends `Bearer <token>`
+- the backend compares the incoming token with `MAKE_API_TOKEN`
 
 </details>
 
@@ -309,6 +365,20 @@ After deployment, the expected production smoke check is:
 
 ```text
 GET /api/v1/health -> 200
+```
+
+For protected Make.com routing, the expected deployment check is:
+
+```text
+POST /api/v1/make/test-event -> 200
+```
+
+That protected check requires:
+
+```text
+Authorization: Bearer <token>
+Idempotency-Key: <stable-test-key>
+Content-Type: application/json
 ```
 
 </details>

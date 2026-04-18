@@ -44,6 +44,7 @@ Route structure
 The intended route shape is:
 
     /api/v1/health
+    /api/v1/make/test-event
     /api/v1/entities
     /api/v1/documents
     /api/v1/retrieval
@@ -70,6 +71,7 @@ a specific endpoint module or service module.
 from fastapi import APIRouter
 
 from backend.api.v1.health import router as health_router
+from backend.api.v1.make import router as make_router
 
 # Group all public v1 API routes under the shared `/api/v1` prefix.
 #   - This is imported into /backend/main.py
@@ -77,5 +79,6 @@ api_router = APIRouter(prefix="/api/v1")
 
 # Register versioned endpoint groups here as the API surface grows.
 api_router.include_router(health_router)
+api_router.include_router(make_router)
 
 __all__ = ["api_router"]
