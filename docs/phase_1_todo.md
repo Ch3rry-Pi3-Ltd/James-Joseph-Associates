@@ -199,7 +199,7 @@ The backend should own **business logic, intelligence, deduplication, retrieval,
 LangChain and LangGraph should support controlled backend workflows, not unconstrained agent autonomy.
 
 - [ ] Define where **LangChain v1** is used:
-  - [ ] Model abstraction.
+  - [x] Model abstraction.
   - [ ] Tool abstraction.
   - [ ] Retriever abstraction.
   - [ ] Structured output parsing.
@@ -209,11 +209,27 @@ LangChain and LangGraph should support controlled backend workflows, not unconst
   - [ ] Evidence assembly.
   - [ ] Action proposal workflow.
   - [ ] Human approval checkpoints.
+- [x] Define foundation graph/workflow state.
 - [ ] Define Phase 1 graph/workflow states.
 - [ ] Define allowed tools.
 - [ ] Define tool permissions.
 - [ ] Define which actions require human approval.
+- [x] Define initial model provider/purpose/profile assumptions.
 - [ ] Define model provider fallback assumptions.
+
+Current status:
+
+- [x] LangGraph foundation state is implemented in `backend/graphs/state.py`.
+- [x] LangGraph foundation workflow is implemented in `backend/graphs/foundation.py`.
+- [x] LangGraph foundation tests are implemented in `tests/unit/test_graph_foundation.py`.
+- [x] LangGraph foundation is documented in `docs/langgraph_foundation.md`.
+- [x] LLM model profile foundation is implemented in `backend/llm/models.py`.
+- [x] LLM model profile tests are implemented in `tests/unit/test_llm_models.py`.
+- [x] LLM model foundation is documented in `docs/llm_foundation.md`.
+- [ ] Real LangChain provider clients are implemented.
+- [ ] Real LLM calls are implemented.
+- [ ] Real GraphRAG workflow states are defined.
+- [ ] Real candidate/job matching graph is implemented.
 
 </details>
 
