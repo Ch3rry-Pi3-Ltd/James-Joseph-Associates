@@ -116,6 +116,7 @@ def get_postgres_connection() -> psycopg.Connection:
         row_factory=dict_row,
     )
 
+
 @contextmanager
 def postgres_connection() -> Iterator[psycopg.Connection]:
     """
