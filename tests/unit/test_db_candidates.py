@@ -140,7 +140,7 @@ def test_get_candidate_profile_returns_dictionary_when_row_exists() -> None:
     """
 
     # This fake row mirrors the kind of dictionary-like data that psycopg can
-    # return when the connection uses `dict_row`.
+    # return when the connection uses `dict_row`
     mock_row = {
         "candidate_id": "33333333-3333-3333-3333-333333333331",
         "person_id": "22222222-2222-2222-2222-222222222221",
