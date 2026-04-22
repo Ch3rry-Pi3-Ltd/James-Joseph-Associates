@@ -10,6 +10,7 @@ It gives the rest of the repository a stable way to talk about:
 - the API version
 - the current runtime environment
 - whether debug behaviour is enabled
+- the Postgres connection string used for Supabase-backed database reads and writes
 - the Make.com API token used by protected Make.com endpoints
 
 Keeping settings in one place makes the project easier to understand because:
@@ -94,6 +95,13 @@ class Settings(BaseSettings):
 
         Debug mode should stay false in production.
 
+    postgres_url : str
+        Direct Postgres connection string for backend database access.
+
+        During the prototype stage, the backend will connect to the
+        Supabase-hosted Postgres database through this URL rather than through
+        the Supabase dashboard UI.
+
     make_api_token : str
         Shared bearer token expected from Make.com.
 
@@ -116,6 +124,7 @@ class Settings(BaseSettings):
         API_VERSION
         ENVIRONMENT
         APP_DEBUG
+        POSTGRES_URL
         MAKE_API_TOKEN
 
     Example
@@ -127,6 +136,7 @@ class Settings(BaseSettings):
         API_VERSION="0.1.0"
         ENVIRONMENT="development"
         APP_DEBUG="false"
+        POSTGRES_URL=""
         MAKE_API_TOKEN=""
     """
 
@@ -172,6 +182,17 @@ class Settings(BaseSettings):
     debug: bool = Field(
         default=False,
         validation_alias="APP_DEBUG",
+    )
+
+    # Direct Postgres connection string for backend database reads and writes
+    #   - This is expected to come from the Supabase/Vercel environment setup.
+    #   - The backend will use this for direct SQL access to prototype and
+    #     future canonical tables.
+    #   - An empty default keeps local settings loadable before a real database
+    #     connection is configured.
+    postgres_url: str = Field(
+        default="",
+        validation_alias="POSTGRES_URL",
     )
 
     # Shared token for protected Make.com calls

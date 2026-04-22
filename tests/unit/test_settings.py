@@ -11,6 +11,7 @@ It gives the rest of the repository a stable way to check:
 - environment variable overrides
 - cached settings behaviour
 - clearing the settings cache in tests
+- Postgres connection string loading
 - Make.com API token loading
 
 Keeping these tests small makes the configuration layer easier to trust because:
@@ -36,9 +37,14 @@ In plain language:
 from backend.settings import get_settings
 
 
-def test_settings_load_default_values() -> None:
+def test_settings_load_default_values(monkeypatch) -> None:
     """
     Verify that settings load safe defaults when no app-specific overrides exist.
+
+    Parameters
+    ----------
+    monkeypatch
+        Pytest fixture used to override environment variables for this test.
 
     Notes
     -----
@@ -60,6 +66,11 @@ def test_settings_load_default_values() -> None:
     #     cache before loading defaults.
     get_settings.cache_clear()
 
+    # Force the database URL to the unconfigured default for this test.
+    #   - Local `.env.local` values may contain a real Supabase/Postgres URL.
+    #   - Environment variables override values loaded from `.env.local`.
+    monkeypatch.setenv("POSTGRES_URL", "")
+
     settings = get_settings()
 
     assert settings.app_name == "James Joseph Associates Intelligence API"
@@ -67,6 +78,7 @@ def test_settings_load_default_values() -> None:
     assert settings.api_version == "0.1.0"
     assert settings.environment == "development"
     assert settings.debug is False
+    assert settings.postgres_url == ""
 
 
 def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
@@ -104,6 +116,7 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("API_VERSION", "9.9.9")
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("APP_DEBUG", "true")
+    monkeypatch.setenv("POSTGRES_URL", "postgresql://user:pass@localhost:5432/jja")
     monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
 
     settings = get_settings()
@@ -113,6 +126,7 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.api_version == "9.9.9"
     assert settings.environment == "test"
     assert settings.debug is True
+    assert settings.postgres_url == "postgresql://user:pass@localhost:5432/jja"
     assert settings.make_api_token == "fake-make-token"
 
     # Clear again, so later tests cannot accidentally reuse this overridden
