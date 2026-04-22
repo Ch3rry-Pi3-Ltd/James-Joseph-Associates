@@ -90,6 +90,23 @@ def get_postgres_connection() -> psycopg.Connection:
     - fail clearly if it is missing
     - open a connection to Postgres
     - return the live connection object
+
+    Example
+    -------
+    Open a direct connection and run a simple query:
+
+        from backend.db.connection import get_postgres_connection
+
+        connection = get_postgres_connection()
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1 AS ok")
+                row = cursor.fetchone()
+
+            assert row["ok"] == 1
+        finally:
+            connection.close()
     """
 
     settings = get_settings()

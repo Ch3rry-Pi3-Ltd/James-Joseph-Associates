@@ -78,6 +78,20 @@ def get_candidate_skills(candidate_id: str) -> list[dict[str, Any]]:
     - include the normalised skill details
     - include confidence and evidence
     - return a list, even if it is empty
+
+    Example
+    -------
+    Read the skills linked to one candidate:
+
+        from backend.db.skills import get_candidate_skills
+
+        skills = get_candidate_skills(
+            "33333333-3333-3333-3333-333333333331",
+        )
+
+        for skill in skills:
+            print(skill["skill_name"])
+            print(skill["confidence"])
     """
 
     query = """

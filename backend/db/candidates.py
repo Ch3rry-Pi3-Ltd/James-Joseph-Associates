@@ -110,6 +110,20 @@ def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     - include the linked person details
     - include the linked current company name if present
     - return one row or nothing
+
+    Example
+    -------
+    Read one candidate profile by canonical candidate ID:
+
+        from backend.db.candidates import get_candidate_profile
+
+        profile = get_candidate_profile(
+            "33333333-3333-3333-3333-333333333331",
+        )
+
+        if profile is not None:
+            print(profile["full_name"])
+            print(profile["current_company_name"])
     """
 
     query = """
