@@ -34,8 +34,8 @@ Notes
 - This module uses `psycopg`.
 - The backend connects directly to Postgres rather than through the Supabase
   dashboard UI.
-- The connection string should come from `POSTGRES_URL` in environment
-  variables, typically provided by the Supabase/Vercel setup.
+- The connection string should usually come from `POSTGRES_URL_NON_POOLING`,
+  with fallback to `POSTGRES_URL`.
 - Rows are returned with `dict_row` so later query code can read columns by
   name instead of tuple position.
 
@@ -74,7 +74,7 @@ def get_postgres_connection() -> psycopg.Connection:
     Raises
     ------
     RuntimeError
-        If `POSTGRES_URL` has not been configured.
+        If no usable Postgres connection string has been configured.
 
     Notes
     -----
@@ -116,9 +116,9 @@ def get_postgres_connection() -> psycopg.Connection:
     #     low-level connection error.
     if not settings.postgres_url:
         msg = (
-            "POSTGRES_URL is not configured. "
-            "Set the database connection string before opening Postgres "
-            "connections."
+            "No Postgres connection string is configured. "
+            "Set POSTGRES_URL_NON_POOLING or POSTGRES_URL before opening "
+            "Postgres connections."
         )
         raise RuntimeError(msg)
     

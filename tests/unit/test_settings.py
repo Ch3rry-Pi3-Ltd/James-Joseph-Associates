@@ -66,9 +66,10 @@ def test_settings_load_default_values(monkeypatch) -> None:
     #     cache before loading defaults.
     get_settings.cache_clear()
 
-    # Force the database URL to the unconfigured default for this test.
-    #   - Local `.env.local` values may contain a real Supabase/Postgres URL.
+    # Force the database URLs to the unconfigured default for this test.
+    #   - Local `.env.local` values may contain real Supabase/Postgres URLs.
     #   - Environment variables override values loaded from `.env.local`.
+    monkeypatch.setenv("POSTGRES_URL_NON_POOLING", "")
     monkeypatch.setenv("POSTGRES_URL", "")
 
     settings = get_settings()
@@ -116,7 +117,14 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("API_VERSION", "9.9.9")
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("APP_DEBUG", "true")
-    monkeypatch.setenv("POSTGRES_URL", "postgresql://user:pass@localhost:5432/jja")
+    monkeypatch.setenv(
+        "POSTGRES_URL_NON_POOLING",
+        "postgresql://user:pass@localhost:5432/jja",
+    )
+    monkeypatch.setenv(
+        "POSTGRES_URL",
+        "postgresql://ignored:ignored@localhost:5432/ignored",
+    )
     monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
 
     settings = get_settings()
@@ -175,6 +183,37 @@ def test_make_api_token_defaults_to_empty_string(monkeypatch) -> None:
     settings = get_settings()
 
     assert settings.make_api_token == ""
+
+    get_settings.cache_clear()
+
+
+def test_settings_prefer_non_pooling_postgres_url(monkeypatch) -> None:
+    """
+    Verify that the backend prefers `POSTGRES_URL_NON_POOLING` when both exist.
+
+    Notes
+    -----
+    - Supabase/Vercel may provide multiple Postgres URLs.
+    - The backend should prefer the non-pooling URL for direct `psycopg`
+      connections.
+    - This avoids accidentally choosing a URL with extra query parameters or
+      pooling behaviour that does not fit the current DB layer.
+    """
+
+    get_settings.cache_clear()
+
+    monkeypatch.setenv(
+        "POSTGRES_URL_NON_POOLING",
+        "postgresql://preferred:pass@localhost:5432/jja",
+    )
+    monkeypatch.setenv(
+        "POSTGRES_URL",
+        "postgresql://fallback:pass@localhost:5432/jja",
+    )
+
+    settings = get_settings()
+
+    assert settings.postgres_url == "postgresql://preferred:pass@localhost:5432/jja"
 
     get_settings.cache_clear()
 

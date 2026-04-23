@@ -55,7 +55,7 @@ a dedicated integration module, not here.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 EnvironmentName = Literal["development", "preview", "production", "test"]
@@ -98,9 +98,11 @@ class Settings(BaseSettings):
     postgres_url : str
         Direct Postgres connection string for backend database access.
 
-        During the prototype stage, the backend will connect to the
-        Supabase-hosted Postgres database through this URL rather than through
-        the Supabase dashboard UI.
+        The backend prefers the non-pooling Supabase connection string because
+        that is the safer default for direct `psycopg` connections.
+
+        If `POSTGRES_URL_NON_POOLING` is not available, the backend falls back
+        to `POSTGRES_URL`.
 
     make_api_token : str
         Shared bearer token expected from Make.com.
@@ -124,6 +126,7 @@ class Settings(BaseSettings):
         API_VERSION
         ENVIRONMENT
         APP_DEBUG
+        POSTGRES_URL_NON_POOLING
         POSTGRES_URL
         MAKE_API_TOKEN
 
@@ -136,6 +139,7 @@ class Settings(BaseSettings):
         API_VERSION="0.1.0"
         ENVIRONMENT="development"
         APP_DEBUG="false"
+        POSTGRES_URL_NON_POOLING=""
         POSTGRES_URL=""
         MAKE_API_TOKEN=""
     """
@@ -185,6 +189,8 @@ class Settings(BaseSettings):
     )
 
     # Direct Postgres connection string for backend database reads and writes
+    #   - Prefer the non-pooling Supabase URL for direct `psycopg` use.
+    #   - Fall back to `POSTGRES_URL` if the non-pooling value is not present.
     #   - This is expected to come from the Supabase/Vercel environment setup.
     #   - The backend will use this for direct SQL access to prototype and
     #     future canonical tables.
@@ -192,7 +198,10 @@ class Settings(BaseSettings):
     #     connection is configured.
     postgres_url: str = Field(
         default="",
-        validation_alias="POSTGRES_URL",
+        validation_alias=AliasChoices(
+            "POSTGRES_URL_NON_POOLING",
+            "POSTGRES_URL",
+        ),
     )
 
     # Shared token for protected Make.com calls
