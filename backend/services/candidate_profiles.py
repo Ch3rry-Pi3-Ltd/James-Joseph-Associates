@@ -1,5 +1,5 @@
 """
-Candidate profile service helpters for the intelligence backend.
+Candidate profile service helpers for the intelligence backend.
 
 This module combines small database read helpers into a higher-level candidate
 profile shape that later API routes, workflow steps, or service logic can use.
@@ -35,6 +35,7 @@ from typing import Any
 from backend.db.candidates import get_candidate_profile
 from backend.db.skills import get_candidate_skills
 
+
 def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     """
     Return one combined profile structure.
@@ -42,7 +43,7 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     Parameters
     ----------
     candidate_id : str
-        Canonical candidate UUID to lookup.
+        Canonical candidate UUID to look up.
 
     Returns
     -------
@@ -67,7 +68,7 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
 
         {
             "candidate": {...},
-            "skills": {...},
+            "skills": [...],
         }
 
     In plain language:
@@ -99,13 +100,14 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     #     extra database work.
     if candidate is None:
         return None
-    
+
     skills = get_candidate_skills(candidate_id)
 
     return {
         "candidate": candidate,
         "skills": skills,
     }
+
 
 __all__ = [
     "build_candidate_profile",
