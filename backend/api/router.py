@@ -45,6 +45,7 @@ The intended route shape is:
 
     /api/v1/health
     /api/v1/candidates/{candidate_id}/profile
+    /api/v1/integrations/jobadder/callback
     /api/v1/make/test-event
     /api/v1/entities
     /api/v1/documents
@@ -73,6 +74,7 @@ from fastapi import APIRouter
 
 from backend.api.v1.candidates import router as candidates_router
 from backend.api.v1.health import router as health_router
+from backend.api.v1.integrations import router as integrations_router
 from backend.api.v1.make import router as make_router
 
 # Group all public v1 API routes under the shared `/api/v1` prefix.
@@ -82,6 +84,7 @@ api_router = APIRouter(prefix="/api/v1")
 # Register versioned endpoint groups here as the API surface grows.
 api_router.include_router(health_router)
 api_router.include_router(candidates_router)
+api_router.include_router(integrations_router)
 api_router.include_router(make_router)
 
 __all__ = ["api_router"]

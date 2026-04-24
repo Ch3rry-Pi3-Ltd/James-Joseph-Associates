@@ -71,13 +71,13 @@ def test_get_job_profile_returns_none_when_row_is_missing() -> None:
     """
 
     # `MagicMock()` gives us a fake object that can pretend to be a real
-    # database cursor.
+    # database cursor
     #   - We can tell it what should happen when the code calls methods such as
     #     `fetchone()`.
     mock_cursor = MagicMock()
     mock_cursor.fetchone.return_value = None
 
-    # This fake object stands in for the database connection.
+    # This fake object stands in for the database connection
     #   - The real code does:
     #
     #       with connection.cursor() as cursor:
@@ -93,13 +93,13 @@ def test_get_job_profile_returns_none_when_row_is_missing() -> None:
     # `patch(...)` temporarily replaces the real object used inside
     # `backend.db.jobs`.
     #
-    # Important detail:
-    #   - We patch `backend.db.jobs.postgres_connection`
-    #   - not `backend.db.connection.postgres_connection`
+    #   - Important detail:
+    #       - We patch `backend.db.jobs.postgres_connection`
+    #       - not `backend.db.connection.postgres_connection`
     #
-    # because the function under test imports the helper into its own module
-    # namespace. The patch must therefore target the name as `jobs.py`
-    # sees it.
+    #     because the function under test imports the helper into its own module
+    #     namespace. The patch must therefore target the name as `jobs.py`
+    #     sees it.
     with patch(
         "backend.db.jobs.postgres_connection",
     ) as mock_postgres_connection:
@@ -206,8 +206,10 @@ def test_get_job_profile_executes_query_with_job_id() -> None:
     -----
     - This test does not try to validate the entire SQL string.
     - It checks the higher-value contract:
-      - SQL was executed
-      - the job ID was passed as a parameter
+
+        - SQL was executed
+        - the job ID was passed as a parameter
+    
     - That helps catch mistakes where the helper ignores the function argument.
 
     In plain language:
@@ -219,7 +221,7 @@ def test_get_job_profile_executes_query_with_job_id() -> None:
     job_id = "55555555-5555-5555-5555-555555555551"
 
     # Fake cursor used only so the helper can run without touching a real
-    # database.
+    # database
     #   - Returning `None` from `fetchone()` is enough here because this test is
     #     about the `execute(...)` call, not the returned row shape.
     mock_cursor = MagicMock()

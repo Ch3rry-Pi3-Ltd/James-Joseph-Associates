@@ -110,6 +110,22 @@ class Settings(BaseSettings):
         This is used by protected Make.com-facing endpoints. The value should be
         configured through environment variables and should never be committed.
 
+    jobadder_client_id : str
+        OAuth client ID for the registered JobAdder application.
+
+        This should come from the JobAdder developer portal after the
+        application is approved.
+
+    jobadder_client_secret : str
+        OAuth client secret for the registered JobAdder application.
+
+        This is a server-side secret and must never be committed.
+
+    jobadder_redirect_uri : str
+        Exact redirect URI registered for the JobAdder application.
+
+        This must match the callback URI used later during the OAuth flow.
+
     Notes
     -----
     - This class only describes configuration.
@@ -129,6 +145,9 @@ class Settings(BaseSettings):
         POSTGRES_URL_NON_POOLING
         POSTGRES_URL
         MAKE_API_TOKEN
+        JOBADDER_CLIENT_ID
+        JOBADDER_CLIENT_SECRET
+        JOBADDER_REDIRECT_URI
 
     Example
     -------
@@ -142,6 +161,9 @@ class Settings(BaseSettings):
         POSTGRES_URL_NON_POOLING=""
         POSTGRES_URL=""
         MAKE_API_TOKEN=""
+        JOBADDER_CLIENT_ID=""
+        JOBADDER_CLIENT_SECRET=""
+        JOBADDER_REDIRECT_URI=""
     """
 
     # Allow configuration from environment variables while keeping defaults
@@ -216,6 +238,36 @@ class Settings(BaseSettings):
     make_api_token: str = Field(
         default="",
         validation_alias="MAKE_API_TOKEN",
+    )
+
+    # OAuth client ID for the JobAdder developer application.
+    #   - This will be provided by the JobAdder developer portal once the app is
+    #     registered and approved.
+    #   - An empty default keeps local development safe until the credential is
+    #     intentionally configured.
+    jobadder_client_id: str = Field(
+        default="",
+        validation_alias="JOBADDER_CLIENT_ID",
+    )
+
+    # OAuth client secret for the JobAdder developer application.
+    #   - This is a backend-only secret and must never be exposed to client-side
+    #     code or committed to the repository.
+    #   - An empty default keeps the callback route in a safe "not configured"
+    #     state until the real secret is available.
+    jobadder_client_secret: str = Field(
+        default="",
+        validation_alias="JOBADDER_CLIENT_SECRET",
+    )
+
+    # Exact callback URI registered in the JobAdder developer portal.
+    #   - JobAdder requires the redirect URI used during OAuth to match one of
+    #     the application's authorised redirect URIs exactly.
+    #   - Keeping this in settings makes it explicit and easy to reuse when the
+    #     real token-exchange flow is added.
+    jobadder_redirect_uri: str = Field(
+        default="",
+        validation_alias="JOBADDER_REDIRECT_URI",
     )
 
 @lru_cache(maxsize=1)

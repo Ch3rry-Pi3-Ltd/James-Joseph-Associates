@@ -13,6 +13,7 @@ It gives the rest of the repository a stable way to check:
 - clearing the settings cache in tests
 - Postgres connection string loading
 - Make.com API token loading
+- JobAdder OAuth setting loading
 
 Keeping these tests small makes the configuration layer easier to trust because:
 
@@ -71,6 +72,9 @@ def test_settings_load_default_values(monkeypatch) -> None:
     #   - Environment variables override values loaded from `.env.local`.
     monkeypatch.setenv("POSTGRES_URL_NON_POOLING", "")
     monkeypatch.setenv("POSTGRES_URL", "")
+    monkeypatch.setenv("JOBADDER_CLIENT_ID", "")
+    monkeypatch.setenv("JOBADDER_CLIENT_SECRET", "")
+    monkeypatch.setenv("JOBADDER_REDIRECT_URI", "")
 
     settings = get_settings()
 
@@ -80,6 +84,9 @@ def test_settings_load_default_values(monkeypatch) -> None:
     assert settings.environment == "development"
     assert settings.debug is False
     assert settings.postgres_url == ""
+    assert settings.jobadder_client_id == ""
+    assert settings.jobadder_client_secret == ""
+    assert settings.jobadder_redirect_uri == ""
 
 
 def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
@@ -126,6 +133,12 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
         "postgresql://ignored:ignored@localhost:5432/ignored",
     )
     monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
+    monkeypatch.setenv("JOBADDER_CLIENT_ID", "fake-jobadder-client-id")
+    monkeypatch.setenv("JOBADDER_CLIENT_SECRET", "fake-jobadder-client-secret")
+    monkeypatch.setenv(
+        "JOBADDER_REDIRECT_URI",
+        "http://127.0.0.1:8000/api/v1/integrations/jobadder/callback",
+    )
 
     settings = get_settings()
 
@@ -136,6 +149,12 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.debug is True
     assert settings.postgres_url == "postgresql://user:pass@localhost:5432/jja"
     assert settings.make_api_token == "fake-make-token"
+    assert settings.jobadder_client_id == "fake-jobadder-client-id"
+    assert settings.jobadder_client_secret == "fake-jobadder-client-secret"
+    assert (
+        settings.jobadder_redirect_uri
+        == "http://127.0.0.1:8000/api/v1/integrations/jobadder/callback"
+    )
 
     # Clear again, so later tests cannot accidentally reuse this overridden
     # setting object from the cache
