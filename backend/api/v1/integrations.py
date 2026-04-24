@@ -186,7 +186,7 @@ def get_jobadder_oauth_callback(
     """
 
     # If JobAdder returns `error=...` in the callback query, the provider is
-    # telling us the authorization step did not complete successfully.
+    # telling us the authorization step did not complete successfully
     #   - Handle that before looking for a code.
     #   - The details are kept small and safe for debugging.
     if error is not None:
@@ -205,7 +205,7 @@ def get_jobadder_oauth_callback(
             details=details,
         )
 
-    # A successful callback should include a one-time `code`.
+    # A successful callback should include a one-time `code`
     #   - We do not expose the raw code back to the caller.
     #   - We do make it explicit when the callback reached the backend without
     #     the expected value.

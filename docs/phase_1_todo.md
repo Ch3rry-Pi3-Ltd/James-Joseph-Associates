@@ -168,6 +168,8 @@ The backend should own **business logic, intelligence, deduplication, retrieval,
 - [x] Draft the Phase 1 REST API contract.
 - [ ] Define endpoint groups:
   - [x] Health/status.
+  - [x] Candidate profile read route.
+  - [x] JobAdder OAuth callback receipt route.
   - [x] Make.com protected test route.
   - [ ] Source-record ingestion.
   - [ ] Entity upsert/search.
@@ -180,6 +182,8 @@ The backend should own **business logic, intelligence, deduplication, retrieval,
   - [x] Health response schema.
   - [x] Shared API error response schema.
   - [x] Make.com test event request/response schema.
+  - [x] Candidate profile response schema.
+  - [x] JobAdder OAuth callback response schema.
   - [ ] Source-record ingestion schemas.
 - [x] Define validation and error conventions.
 - [x] Define idempotency behaviour for protected Make.com POST requests.
@@ -295,6 +299,12 @@ Current status:
 - [ ] Real client source-system access is available.
 - [ ] Real source-system sample payloads have been collected.
 - [ ] Real source-record ingestion is designed.
+- [x] JobAdder developer application is registered.
+- [x] Local JobAdder callback URI is implemented.
+- [x] Live Vercel JobAdder callback URI is implemented.
+- [x] JobAdder OAuth environment variables are wired into backend settings.
+- [ ] Server-side JobAdder token exchange is implemented.
+- [ ] JobAdder token storage is implemented.
 
 </details>
 
@@ -319,7 +329,7 @@ payloads.
 - [x] Create source-system discovery checklist.
 - [x] Create JobAdder discovery playbook.
 - [ ] Get access to first source system.
-- [ ] Confirm first source system authentication method.
+- [x] Confirm first source system authentication method at a high level.
 - [ ] Run first safe source-system test in Make.com.
 - [ ] Capture redacted sample output from the first source system.
 - [ ] Identify stable source IDs.
@@ -336,6 +346,12 @@ Recommended first systems to inspect:
 6. Google Sheets / Microsoft Excel legacy data.
 7. SourceBreaker.
 8. SourceWhale.
+
+Current note:
+
+- JobAdder is still the leading first source system.
+- The application registration and callback plumbing are now in place.
+- The remaining blocker is the token exchange and first narrow API read.
 
 </details>
 

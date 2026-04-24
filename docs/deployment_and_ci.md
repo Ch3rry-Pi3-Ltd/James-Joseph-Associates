@@ -17,6 +17,7 @@ It gives the repository a stable place to document:
 - required deployment environment variables
 - health-check paths
 - Make.com protected test endpoint checks
+- JobAdder OAuth callback checks
 - known non-blocking local warnings
 
 In plain language:
@@ -137,6 +138,36 @@ In plain language:
 - Vercel stores the raw token
 - Make.com sends `Bearer <token>`
 - the backend compares the incoming token with `MAKE_API_TOKEN`
+
+## JobAdder OAuth Settings
+
+The backend now also expects:
+
+```text
+JOBADDER_CLIENT_ID
+JOBADDER_CLIENT_SECRET
+JOBADDER_REDIRECT_URI
+```
+
+For the currently deployed public callback route, the redirect URI should be:
+
+```text
+https://james-joseph-associates.vercel.app/api/v1/integrations/jobadder/callback
+```
+
+Notes:
+
+- these are backend-only values
+- they must not be exposed to client-side code
+- they must not be committed to the repository
+- local development may need:
+
+```powershell
+vercel env pull .env.local --environment=production
+```
+
+because Vercel sensitive environment variables were scoped to `Production` and
+`Preview`, not `Development`
 
 </details>
 
@@ -294,6 +325,7 @@ The important backend route for deployment checks is:
 
 ```text
 GET /api/v1/health
+GET /api/v1/integrations/jobadder/callback
 ```
 
 Expected response:
@@ -311,6 +343,18 @@ In plain language:
 - if this route returns `200`, the Python API app is reachable
 - if this route returns `404`, route registration or Vercel routing may be wrong
 - if the site cannot be reached, the Vercel deployment itself may have failed
+
+For the live JobAdder callback route, the current public path is:
+
+```text
+https://james-joseph-associates.vercel.app/api/v1/integrations/jobadder/callback
+```
+
+If visited directly without a real OAuth `code`, the expected result is a
+validation error saying the authorisation code is required.
+
+That is still a valid smoke check because it proves the callback route is live
+and wired correctly.
 
 </details>
 
@@ -365,6 +409,7 @@ After deployment, the expected production smoke check is:
 
 ```text
 GET /api/v1/health -> 200
+GET /api/v1/integrations/jobadder/callback -> validation_error if no code is supplied
 ```
 
 For protected Make.com routing, the expected deployment check is:

@@ -46,6 +46,8 @@ Initial route groups:
 
 ```text
 GET  /api/v1/health
+GET  /api/v1/candidates/{candidate_id}/profile
+GET  /api/v1/integrations/jobadder/callback
 POST /api/v1/make/test-event
 POST /api/v1/source-records
 GET  /api/v1/entities/search
@@ -60,8 +62,91 @@ Implementation status:
 
 ```text
 GET  /api/v1/health          -> implemented
+GET  /api/v1/candidates/{candidate_id}/profile -> implemented
+GET  /api/v1/integrations/jobadder/callback    -> implemented as callback-receipt step
 POST /api/v1/make/test-event -> implemented for protected Make.com testing
 all other routes             -> planned
+```
+
+</details>
+
+<details>
+<summary><strong>5B. JobAdder OAuth Callback</strong></summary>
+
+## `GET /api/v1/integrations/jobadder/callback`
+
+Receives the redirect back from JobAdder after the user approves access.
+
+This route currently exists to make the registered redirect URI real and
+testable.
+
+It does:
+
+- accept a JobAdder `code`
+- accept an optional `state`
+- handle provider-side `error` query parameters
+- report whether the backend has the minimum OAuth settings configured
+
+It does not yet:
+
+- exchange the code for tokens
+- store access or refresh tokens
+
+Successful callback shape:
+
+```json
+{
+  "status": "received",
+  "message": "JobAdder authorization callback received.",
+  "authorization_code_received": true,
+  "oauth_configuration_ready": true,
+  "state": "optional",
+  "next_step": "The callback route is live and the OAuth settings are present. The next step is to add the server-side token exchange and token storage."
+}
+```
+
+Provider-side error shape:
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "JobAdder authorization was not completed.",
+    "details": [
+      {
+        "provider": "jobadder",
+        "error": "access_denied"
+      }
+    ]
+  }
+}
+```
+
+Missing code shape:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "JobAdder authorization code is required.",
+    "details": [
+      {
+        "query_param": "code",
+        "reason": "missing_or_empty"
+      }
+    ]
+  }
+}
+```
+
+Notes:
+
+- this route is part of the OAuth plumbing, not the final JobAdder sync logic
+- it is a safe intermediate step before the real token exchange is added
+- the currently registered live callback host is:
+
+```text
+https://james-joseph-associates.vercel.app/api/v1/integrations/jobadder/callback
 ```
 
 </details>

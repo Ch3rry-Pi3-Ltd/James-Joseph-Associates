@@ -12,6 +12,27 @@ In plain language:
 - The goal is to capture safe, redacted examples of the data shape.
 - We should not bulk import or store real client data during discovery.
 
+## Current Position
+
+The project has now moved slightly beyond pure discovery.
+
+We have already:
+
+- used the client's admin login to inspect visible JobAdder fields and build a
+  first prototype canonical schema
+- registered a JobAdder developer application
+- created a real backend OAuth callback route
+- confirmed both local and live callback URLs are working
+
+What is still missing is:
+
+- the real server-side token exchange
+- token storage
+- the first real read from the JobAdder API
+
+So this playbook still matters, but the next discovery work should happen with
+the direct JobAdder developer application in mind, not only the Make.com angle.
+
 ## Current Assumption
 
 JobAdder is relevant because it may contain:
@@ -62,6 +83,22 @@ Do not:
 - update or mutate JobAdder records from Make.com
 
 During discovery, use read-only actions wherever possible.
+
+## OAuth Application Notes
+
+The current registered application details are documented separately in:
+
+```text
+docs/jobadder_oauth_setup.md
+```
+
+That document covers:
+
+- the developer application registration
+- useful company URLs
+- the redirect URIs
+- backend callback setup
+- local and Vercel environment notes
 
 ## Step 1: Confirm Access
 
@@ -474,4 +511,3 @@ JobAdder is ready for ingestion design when we have:
 - agreed first workflow
 
 Until then, keep JobAdder work in discovery mode.
-
