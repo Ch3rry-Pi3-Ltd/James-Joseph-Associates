@@ -220,13 +220,14 @@ def get_jobadder_oauth_callback(
     settings = get_settings()
 
     # The later token exchange will need all three values:
-    # - client ID
-    # - client secret
-    # - exact redirect URI
     #
-    # If any of these are missing, the route is still useful because the
-    # redirect URI is now real and testable, but the backend is not yet ready to
-    # complete the full OAuth flow.
+    #   - client ID
+    #   - client secret
+    #   - exact redirect URI
+    #
+    #   - If any of these are missing, the route is still useful because the
+    #     redirect URI is now real and testable, but the backend is not yet ready to
+    #     complete the full OAuth flow.
     oauth_configuration_ready = all(
         [
             settings.jobadder_client_id.strip() != "",
