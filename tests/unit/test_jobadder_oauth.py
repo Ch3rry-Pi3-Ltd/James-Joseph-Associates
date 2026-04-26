@@ -7,7 +7,7 @@ This module tests the small OAuth URL-building helpers in
 It gives the rest of the repository a stable way to check:
 
 - whether the backend correctly detects minimum JobAdder OAuth configuration
-- whether the authorisation URL is build correctly
+- whether the authorisation URL is built correctly
 - whether optional state values are included correctly
 - whether missing settings fail clearly
 - whether the helper can be tested without calling JobAdder
@@ -41,7 +41,8 @@ from backend.services.jobadder_oauth import (
 )
 from backend.settings import get_settings
 
-def test_has_jobadder_oauth_configuration_returns_when_minimum_values_exist(
+
+def test_has_jobadder_oauth_configuration_returns_true_when_minimum_values_exist(
     monkeypatch,
 ) -> None:
     """
@@ -67,6 +68,7 @@ def test_has_jobadder_oauth_configuration_returns_when_minimum_values_exist(
 
     get_settings.cache_clear()
 
+
 def test_has_jobadder_oauth_configuration_returns_false_when_values_are_missing(
     monkeypatch,
 ) -> None:
@@ -89,6 +91,7 @@ def test_has_jobadder_oauth_configuration_returns_false_when_values_are_missing(
     assert has_jobadder_oauth_configuration() is False
 
     get_settings.cache_clear()
+
 
 def test_build_jobadder_authorization_url_returns_expected_base_and_parameters(
     monkeypatch,
@@ -125,12 +128,13 @@ def test_build_jobadder_authorization_url_returns_expected_base_and_parameters(
     assert f"{parsed.scheme}://{parsed.netloc}{parsed.path}" == JOBADDER_AUTHORIZE_URL
     assert query["response_type"] == ["code"]
     assert query["client_id"] == ["fake-client-id"]
-    assert query ["scope"] == ["read write offline_access"]
+    assert query["scope"] == ["read write offline_access"]
     assert query["redirect_uri"] == [
         "https://example.com/api/v1/integrations/jobadder/callback"
     ]
 
     get_settings.cache_clear()
+
 
 def test_build_jobadder_authorization_url_includes_state_when_supplied(
     monkeypatch,
@@ -161,6 +165,7 @@ def test_build_jobadder_authorization_url_includes_state_when_supplied(
 
     get_settings.cache_clear()
 
+
 def test_build_jobadder_authorization_url_raises_when_required_settings_are_missing(
     monkeypatch,
 ) -> None:
@@ -188,5 +193,5 @@ def test_build_jobadder_authorization_url_raises_when_required_settings_are_miss
         )
     else:
         raise AssertionError("Expected ValueError to be raised.")
-    
+
     get_settings.cache_clear()

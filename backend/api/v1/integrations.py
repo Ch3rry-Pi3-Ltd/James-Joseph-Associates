@@ -7,6 +7,7 @@ backend and external systems such as JobAdder.
 It gives the rest of the repository a stable way to verify:
 
 - the backend has a real JobAdder OAuth callback path
+- the backend can build a real JobAdder approval URL
 - the registered redirect URI points at a live backend route
 - provider callback query parameters are handled safely
 - configuration readiness can be reported clearly during setup
@@ -24,12 +25,12 @@ In plain language:
 
 - this module answers the question:
 
-    "Does the backend have a real JobAdder OAuth callback route?"
+    "Does the backend have the pieces needed to start the JobAdder OAuth flow?"
 
 - it does not call the JobAdder token endpoint yet
 - it does not store access tokens yet
 - it does not create candidates or jobs
-- it only handles the callback request itself
+- it only handles the approval-link and callback HTTP steps
 """
 
 from typing import Any
@@ -38,7 +39,14 @@ from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 
 from backend.schemas.errors import ApiError, ApiErrorResponse
-from backend.schemas.integrations import JobAdderOAuthCallbackResponse
+from backend.schemas.integrations import (
+    JobAdderAuthorizationUrlResponse,
+    JobAdderOAuthCallbackResponse,
+)
+from backend.services.jobadder_oauth import (
+    build_jobadder_authorization_url,
+    has_jobadder_oauth_configuration,
+)
 from backend.settings import get_settings
 
 
@@ -93,6 +101,91 @@ def build_error_response(
     return JSONResponse(
         status_code=status_code,
         content=error_response.model_dump(),
+    )
+
+
+@router.get(
+    "/jobadder/authorize",
+    response_model=JobAdderAuthorizationUrlResponse,
+    responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder OAuth settings are not configured.",
+        }
+    },
+)
+def get_jobadder_authorization_url(
+    state: str | None = Query(
+        default="connect-jobadder-dev",
+        description="Optional opaque state value to include in the approval URL.",
+    ),
+) -> JobAdderAuthorizationUrlResponse | JSONResponse:
+    """
+    Return a ready-to-use JobAdder approval URL.
+
+    Parameters
+    ----------
+    state : str | None
+        Optional opaque value that JobAdder should return unchanged in the
+        callback later.
+
+    Returns
+    -------
+    JobAdderAuthorizationUrlResponse | JSONResponse
+        Success response containing the approval URL.
+
+        Standard API error response if the minimum JobAdder OAuth settings are
+        not configured.
+
+    Route
+    -----
+    This module contributes:
+
+        GET /api/v1/integrations/jobadder/authorize
+
+    Notes
+    -----
+    - This route does not redirect automatically.
+    - It returns the URL so it can be copied, inspected, logged, or surfaced in
+      a future UI.
+    - This is the first step in the OAuth flow.
+    - The client-side approver still needs to open the returned URL and approve
+      the app inside JobAdder.
+
+    Example
+    -------
+    A request might look like:
+
+        GET /api/v1/integrations/jobadder/authorize?state=connect-jobadder-dev
+
+    In plain language:
+
+    - build the approval link
+    - return it as JSON
+    - let the authorised JobAdder user open it
+    """
+
+    if not has_jobadder_oauth_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="JobAdder OAuth is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "JOBADDER_CLIENT_ID",
+                        "JOBADDER_REDIRECT_URI",
+                    ]
+                }
+            ],
+        )
+
+    authorization_url = build_jobadder_authorization_url(state=state)
+
+    return JobAdderAuthorizationUrlResponse(
+        authorization_url=authorization_url,
+        oauth_configuration_ready=True,
+        state=state,
     )
 
 
@@ -186,7 +279,7 @@ def get_jobadder_oauth_callback(
     """
 
     # If JobAdder returns `error=...` in the callback query, the provider is
-    # telling us the authorization step did not complete successfully
+    # telling us the authorisation step did not complete successfully.
     #   - Handle that before looking for a code.
     #   - The details are kept small and safe for debugging.
     if error is not None:
@@ -205,7 +298,7 @@ def get_jobadder_oauth_callback(
             details=details,
         )
 
-    # A successful callback should include a one-time `code`
+    # A successful callback should include a one-time `code`.
     #   - We do not expose the raw code back to the caller.
     #   - We do make it explicit when the callback reached the backend without
     #     the expected value.
@@ -220,14 +313,13 @@ def get_jobadder_oauth_callback(
     settings = get_settings()
 
     # The later token exchange will need all three values:
+    # - client ID
+    # - client secret
+    # - exact redirect URI
     #
-    #   - client ID
-    #   - client secret
-    #   - exact redirect URI
-    #
-    #   - If any of these are missing, the route is still useful because the
-    #     redirect URI is now real and testable, but the backend is not yet ready to
-    #     complete the full OAuth flow.
+    # If any of these are missing, the route is still useful because the
+    # redirect URI is now real and testable, but the backend is not yet ready
+    # to complete the full OAuth flow.
     oauth_configuration_ready = all(
         [
             settings.jobadder_client_id.strip() != "",

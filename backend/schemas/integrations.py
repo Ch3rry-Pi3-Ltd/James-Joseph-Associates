@@ -6,6 +6,7 @@ between this backend and external systems such as JobAdder.
 
 It gives the rest of the repository a stable way to talk about:
 
+- integration authorisation-link responses
 - integration callback responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
@@ -22,7 +23,7 @@ In plain language:
 
 - this module answers the question:
 
-    "What should integration callback responses look like?"
+    "What should integration OAuth responses look like?"
 
 - it does not call external APIs
 - it does not exchange OAuth tokens
@@ -33,6 +34,59 @@ In plain language:
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class JobAdderAuthorizationUrlResponse(BaseModel):
+    """
+    Response returned when the backend builds a JobAdder approval URL.
+
+    Attributes
+    ----------
+    authorization_url : str
+        Fully assembled JobAdder OAuth authorisation URL.
+
+    oauth_configuration_ready : bool
+        Whether the backend had the minimum settings needed to build the URL.
+
+    state : str | None
+        Optional opaque state value included in the URL.
+
+    Notes
+    -----
+    - This response is intentionally small.
+    - It exists to let the backend return one clean approval link for the client
+      to open.
+    - The URL itself still points at JobAdder, not at our backend.
+
+    Example
+    -------
+    A response might look like:
+
+        {
+            "authorization_url": "https://id.jobadder.com/connect/authorize?...",
+            "oauth_configuration_ready": true,
+            "state": "connect-jobadder-dev"
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    authorization_url: str = Field(
+        min_length=1,
+        description="Fully assembled JobAdder OAuth authorisation URL.",
+    )
+
+    oauth_configuration_ready: bool = Field(
+        description=(
+            "Whether the backend had the minimum settings needed to build the "
+            "URL."
+        ),
+    )
+
+    state: str | None = Field(
+        default=None,
+        description="Optional opaque state value included in the URL.",
+    )
 
 
 class JobAdderOAuthCallbackResponse(BaseModel):
@@ -118,4 +172,7 @@ class JobAdderOAuthCallbackResponse(BaseModel):
     )
 
 
-__all__ = ["JobAdderOAuthCallbackResponse"]
+__all__ = [
+    "JobAdderAuthorizationUrlResponse",
+    "JobAdderOAuthCallbackResponse",
+]

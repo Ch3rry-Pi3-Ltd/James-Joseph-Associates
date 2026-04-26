@@ -38,6 +38,7 @@ from backend.settings import get_settings
 
 JOBADDER_AUTHORIZE_URL = "https://id.jobadder.com/connect/authorize"
 
+
 def has_jobadder_oauth_configuration() -> bool:
     """
     Return whether the minimum JobAdder OAuth settings are present.
@@ -54,10 +55,8 @@ def has_jobadder_oauth_configuration() -> bool:
     -----
     - This check is intentionally narrow.
     - To build the authorisation URL, we only need:
-
-        - `JOBADDER_CLIENT_ID`
-        - `JOBADDER_REDIRECT_URI`
-
+      - `JOBADDER_CLIENT_ID`
+      - `JOBADDER_REDIRECT_URI`
     - The client secret is not needed until the later token-exchange step.
 
     In plain language:
@@ -72,6 +71,7 @@ def has_jobadder_oauth_configuration() -> bool:
         settings.jobadder_client_id.strip() != ""
         and settings.jobadder_redirect_uri.strip() != ""
     )
+
 
 def build_jobadder_authorization_url(
     *,
@@ -90,14 +90,14 @@ def build_jobadder_authorization_url(
         This is useful for later correlation and CSRF protection.
 
     scope : str
-        Space-sparated OAuth scopes to request.
+        Space-separated OAuth scopes to request.
 
         Defaults to:
 
             "read write offline_access"
 
         Notes:
-        - `offline_access` matters because JobAdder only returns a refreshed token
+        - `offline_access` matters because JobAdder only returns a refresh token
           when that scope is requested.
         - `read` and `write` are broad scopes. They can be narrowed later if the
           integration only needs a smaller set of permissions.
@@ -116,7 +116,7 @@ def build_jobadder_authorization_url(
     -----
     - This function does not call JobAdder.
     - It only constructs the URL the client-side approver will visit.
-    - The redirect URI  is the URL-encoded automatically through `urlencode(...)`
+    - The redirect URI is URL-encoded automatically through `urlencode(...)`.
 
     Example
     -------
@@ -142,14 +142,14 @@ def build_jobadder_authorization_url(
     client_id = settings.jobadder_client_id.strip()
     redirect_uri = settings.jobadder_redirect_uri.strip()
 
-    # Fail early if the minimum setup is not present
+    # Fail early if the minimum setup is not present.
     #   - The caller cannot build a correct approval URL without these values.
     if client_id == "" or redirect_uri == "":
         raise ValueError(
             "JobAdder OAuth is not configured. "
             "Set JOBADDER_CLIENT_ID and JOBADDER_REDIRECT_URI."
         )
-    
+
     query_params = {
         "response_type": "code",
         "client_id": client_id,
@@ -164,15 +164,16 @@ def build_jobadder_authorization_url(
 
     # `urlencode(...)` safely builds the query string.
     #   - Takes care of URL-encoding characters such as:
-    #   
+    #
     #       - spaces
     #       - slashes
     #       - colons
     #
-    #     inside values like the redirect URI and scope string.
+    # inside values like the redirect URI and scope string.
     encoded_query = urlencode(query_params)
 
     return f"{JOBADDER_AUTHORIZE_URL}?{encoded_query}"
+
 
 __all__ = [
     "JOBADDER_AUTHORIZE_URL",
