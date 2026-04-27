@@ -552,7 +552,7 @@ def get_jobadder_candidates_preview_route(
 
         return build_error_response(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            code="upstream_error",
+            code="internal_error",
             message="JobAdder candidate read failed.",
             details=details,
         )

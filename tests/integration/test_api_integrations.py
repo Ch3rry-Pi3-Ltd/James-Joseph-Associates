@@ -557,7 +557,7 @@ def test_jobadder_candidates_preview_returns_bad_gateway_when_jobadder_read_fail
 
     payload = response.json()
 
-    assert payload["error"]["code"] == "upstream_error"
+    assert payload["error"]["code"] == "internal_error"
     assert payload["error"]["message"] == "JobAdder candidate read failed."
     assert payload["error"]["details"] == [
         {"jobadder_account": 2236},
