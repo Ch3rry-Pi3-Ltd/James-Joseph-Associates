@@ -33,10 +33,14 @@ from fastapi.testclient import TestClient
 
 from backend.main import create_app
 from backend.settings import get_settings
+from backend.services.jobadder_api import JobAdderApiError
 from backend.services.jobadder_oauth import JobAdderOAuthExchangeError
 
 JOBADDER_AUTHORIZE_PATH = "/api/v1/integrations/jobadder/authorize"
 JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
+JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -394,4 +398,170 @@ def test_jobadder_callback_requires_authorization_code_when_no_provider_error_ex
     assert payload["error"]["message"] == "JobAdder authorization code is required."
     assert payload["error"]["details"] == [
         {"query_param": "code", "reason": "missing_or_empty"},
+    ]
+
+
+def test_jobadder_candidates_preview_returns_first_page_preview_successfully() -> None:
+    """
+    Verify that the new preview route loads the stored connection and returns a
+    small first-page candidate preview from the JobAdder API service helper.
+
+    Notes
+    -----
+    - This is the first route-level proof that the backend can take a stored
+      OAuth connection and turn it into an authenticated provider read.
+    - The database lookup and provider call are still mocked here because this
+      test is about FastAPI route wiring and response behaviour, not live
+      external I/O.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+    }
+
+    fake_preview = {
+        "items": [
+            {"candidateId": 1, "firstName": "Alice"},
+            {"candidateId": 2, "firstName": "Ben"},
+        ],
+        "item_count": 2,
+        "total_count": 25,
+        "links": {
+            "first": "https://api.jobadder.com/v2/candidates?page=1",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/candidates",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidates_preview",
+            return_value=fake_preview,
+        ) as mock_fetch_preview:
+            response = client.get(
+                JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE.format(
+                    jobadder_account=2236
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["item_count"] == 2
+    assert payload["total_count"] == 25
+    assert payload["links"] == {
+        "first": "https://api.jobadder.com/v2/candidates?page=1",
+    }
+    assert payload["candidates"] == [
+        {"candidateId": 1, "firstName": "Alice"},
+        {"candidateId": 2, "firstName": "Ben"},
+    ]
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_fetch_preview.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        item_limit=10,
+    )
+
+
+def test_jobadder_candidates_preview_returns_not_found_when_connection_is_missing() -> None:
+    """
+    Verify that the preview route fails clearly when the stored JobAdder
+    connection row does not exist.
+
+    In plain language:
+
+    - pretend there is no saved JobAdder connection for the supplied account
+    - call the route
+    - confirm it returns a clean 404 instead of attempting a provider read
+    """
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=None,
+    ):
+        response = client.get(
+            JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE.format(
+                jobadder_account=2236
+            )
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    payload = response.json()
+
+    assert payload["error"]["code"] == "not_found"
+    assert payload["error"]["message"] == "Stored JobAdder connection was not found."
+    assert payload["error"]["details"] == [
+        {"jobadder_account": 2236},
+    ]
+
+
+def test_jobadder_candidates_preview_returns_bad_gateway_when_jobadder_read_fails() -> None:
+    """
+    Verify that a provider-side failure during the candidate read is surfaced
+    clearly through the API route.
+
+    Notes
+    -----
+    - This covers the case where the stored connection exists locally, but the
+      upstream JobAdder API request itself fails.
+    - The route should preserve the useful provider context that the service
+      helper exposes, especially HTTP status and retry timing information.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidates_preview",
+            side_effect=JobAdderApiError(
+                "JobAdder candidate read failed.",
+                status_code=429,
+                retry_after="40",
+                endpoint_url="https://api.jobadder.com/v2/candidates",
+            ),
+        ):
+            response = client.get(
+                JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE.format(
+                    jobadder_account=2236
+                )
+            )
+
+    assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+    payload = response.json()
+
+    assert payload["error"]["code"] == "upstream_error"
+    assert payload["error"]["message"] == "JobAdder candidate read failed."
+    assert payload["error"]["details"] == [
+        {"jobadder_account": 2236},
+        {"provider_status_code": 429},
+        {"retry_after_seconds": "40"},
+        {"endpoint_url": "https://api.jobadder.com/v2/candidates"},
     ]
