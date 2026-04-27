@@ -11,6 +11,7 @@ It gives the rest of the repository a stable way to verify:
 - the registered redirect URI points at a live backend route
 - provider callback query parameters are handled safely
 - configuration readiness can be reported clearly during setup
+- the backend can make a first authenticated read against the JobAdder API
 
 Keeping integration endpoints in their own module makes the project easier to
 extend because:
@@ -29,8 +30,9 @@ In plain language:
 
 - it exchanges the returned JobAdder authorization code server-side
 - it saves the returned JobAdder token set in Postgres
+- it can perform a first authenticated JobAdder candidate-list preview read
 - it does not create candidates or jobs
-- it only handles the approval-link and OAuth callback HTTP steps
+- it handles the approval-link, OAuth callback, and first preview-read HTTP steps
 """
 
 from typing import Any
@@ -38,11 +40,19 @@ from typing import Any
 from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 
-from backend.db.jobadder_oauth import save_jobadder_oauth_connection
+from backend.db.jobadder_oauth import (
+    get_jobadder_oauth_connection,
+    save_jobadder_oauth_connection,
+)
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
     JobAdderAuthorizationUrlResponse,
+    JobAdderCandidatesPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
+)
+from backend.services.jobadder_api import (
+    JobAdderApiError,
+    fetch_jobadder_candidates_preview,
 )
 from backend.services.jobadder_oauth import (
     JobAdderOAuthExchangeError,
@@ -400,6 +410,167 @@ def get_jobadder_oauth_callback(
             "The JobAdder tokens were saved successfully. The next step is to "
             "make the first authenticated JobAdder API read."
         ),
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates-preview",
+    response_model=JobAdderCandidatesPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate read failed.",
+        },
+    },
+)
+def get_jobadder_candidates_preview_route(
+    jobadder_account: int,
+    item_limit: int = Query(
+        default=10,
+        ge=1,
+        le=25,
+        description=(
+            "Maximum number of candidate items to return from the first page of "
+            "the JobAdder response."
+        ),
+    ),
+) -> JobAdderCandidatesPreviewResponse | JSONResponse:
+    """
+    Return a small first-page preview of candidates from the connected JobAdder
+    account.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    item_limit : int
+        Maximum number of candidate items to return from the first page of the
+        JobAdder response.
+
+    Returns
+    -------
+    JobAdderCandidatesPreviewResponse | JSONResponse
+        First-page candidate preview when the stored connection exists and the
+        JobAdder API call succeeds.
+
+        Standard API error response when the stored connection cannot be found,
+        is missing required fields, or the provider read fails.
+
+    Route
+    -----
+    This module contributes:
+
+        GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
+
+    Notes
+    -----
+    - This is the first authenticated JobAdder API read endpoint.
+    - It is intentionally read-only.
+    - It uses the stored OAuth connection row to retrieve:
+        - `access_token`
+        - `api_url`
+        - `jobadder_instance`
+    - It then calls the JobAdder candidate list endpoint and returns a small
+      preview of the first page.
+
+    In plain language:
+
+    - load the stored JobAdder connection from the database
+    - use its saved token to call JobAdder
+    - return a small preview of candidate data
+    """
+
+    stored_connection = get_jobadder_oauth_connection(jobadder_account)
+
+    # If no stored JobAdder connection exists for this account, there is no
+    # safe way to build an authenticated provider request.
+    #   - Return 404 rather than attempting a provider call with invented or
+    #     missing credentials.
+    if stored_connection is None:
+        return build_error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="not_found",
+            message="Stored JobAdder connection was not found.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    raw_access_token = stored_connection.get("access_token")
+    raw_api_url = stored_connection.get("api_url")
+    raw_jobadder_instance = stored_connection.get("jobadder_instance")
+
+    # Fail clearly if the database row exists but is missing the fields required
+    # for an authenticated API read.
+    #   - That would indicate a persistence bug or an incomplete stored
+    #     connection rather than a provider-side problem.
+    if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored JobAdder connection is missing an access token.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored JobAdder connection is missing an API URL.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    try:
+        preview = fetch_jobadder_candidates_preview(
+            api_url=raw_api_url,
+            access_token=raw_access_token,
+            item_limit=item_limit,
+        )
+    except JobAdderApiError as exc:
+        # Keep provider-read failures distinct from local persistence or config
+        # problems.
+        #   - This route already proved the stored connection exists.
+        #   - A failure here means the upstream JobAdder API read itself did not
+        #     complete cleanly.
+        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.retry_after is not None:
+            details.append({"retry_after_seconds": exc.retry_after})
+
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="upstream_error",
+            message="JobAdder candidate read failed.",
+            details=details,
+        )
+
+    # The preview helper already normalises the provider response into a small
+    # local dictionary.
+    #   - This route's job is simply to expose that preview through the API in
+    #     one explicit typed response shape.
+    return JobAdderCandidatesPreviewResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=(
+            raw_jobadder_instance if isinstance(raw_jobadder_instance, str) else None
+        ),
+        api_url=raw_api_url,
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        links=preview["links"],
+        candidates=preview["items"],
     )
 
 

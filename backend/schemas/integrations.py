@@ -9,6 +9,7 @@ It gives the rest of the repository a stable way to talk about:
 - integration authorisation-link responses
 - integration callback responses
 - successful integration connection-save responses
+- first authenticated JobAdder API preview responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
 - keeping integration response shapes out of route modules
@@ -29,10 +30,11 @@ In plain language:
 - it does not call external APIs
 - it does not exchange OAuth tokens
 - it does not store secrets
+- it does not fetch JobAdder data directly
 - it only defines typed response shapes
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -188,7 +190,87 @@ class JobAdderOAuthConnectionSavedResponse(BaseModel):
     )
 
 
+class JobAdderCandidatesPreviewResponse(BaseModel):
+    """
+    Response returned when the backend performs the first authenticated
+    JobAdder candidate-list read.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    item_count : int
+        Number of candidate items returned in this preview response.
+
+    total_count : int | None
+        Provider-reported total item count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    candidates : list[dict[str, Any]]
+        Small first-page preview of candidate items returned by JobAdder.
+
+    Notes
+    -----
+    - This is intentionally a thin wrapper around the first provider response.
+    - At this stage we are proving authenticated API access, not yet defining
+      the final canonical candidate-ingestion model.
+    - The nested candidate items therefore remain flexible dictionaries.
+
+    In plain language:
+
+    - tell us which stored connection was used
+    - tell us how many candidate items came back
+    - return the first small candidate preview from JobAdder
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    item_count: int = Field(
+        ge=0,
+        description="Number of candidate items returned in this preview response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total candidate count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    candidates: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small first-page preview of candidate items from JobAdder.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
+    "JobAdderCandidatesPreviewResponse",
     "JobAdderOAuthConnectionSavedResponse",
 ]
