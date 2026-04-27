@@ -209,6 +209,12 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
             cursor.execute(sql, params)
             row = cursor.fetchone()
 
+        # Commit the write before the connection context closes.
+        #   - psycopg connections are transactional by default.
+        #   - Without an explicit commit here, the insert/update would be
+        #     rolled back when the connection is closed.
+        connection.commit()
+
     if row is None:
         raise RuntimeError("Failed to save JobAdder OAuth connection.")
     

@@ -160,6 +160,7 @@ def test_save_jobadder_oauth_connection_returns_saved_row_dictionary() -> None:
     assert isinstance(result, dict)
     assert result["jobadder_account"] == 123456
     assert result["refresh_token"] == "jobadder-refresh-token"
+    mock_connection.commit.assert_called_once()
 
 
 def test_save_jobadder_oauth_connection_executes_upsert_with_expected_parameters() -> None:
