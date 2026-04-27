@@ -56,3 +56,7 @@ docs/Tech Stack for JJA.pdf
 
 # Passwords
 passwords.txt
+
+# Supabase local CLI artifacts
+supabase/.temp/
+supabase/remote_public_schema.sql
