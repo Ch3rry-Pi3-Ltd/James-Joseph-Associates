@@ -8,6 +8,7 @@ It gives the rest of the repository a stable way to talk about:
 
 - integration authorisation-link responses
 - integration callback responses
+- successful integration connection-save responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
 - keeping integration response shapes out of route modules
@@ -89,24 +90,28 @@ class JobAdderAuthorizationUrlResponse(BaseModel):
     )
 
 
-class JobAdderOAuthCallbackResponse(BaseModel):
+class JobAdderOAuthConnectionSavedResponse(BaseModel):
     """
-    Response returned by the JobAdder OAuth callback route.
+    Response returned when the JobAdder OAuth callback completes successfully.
 
     Attributes
     ----------
-    status : Literal["received"]
-        Fixed status confirming that the callback route was reached.
+    status : Literal["connected"]
+        Fixed status confirming that the JobAdder connection was completed and
+        persisted.
 
     message : str
-        Short human-readable summary of what happened.
+        Short human-readable summary of the successful connection result.
 
-    authorization_code_received : bool
-        Whether the callback included a JobAdder `code` query parameter.
+    oauth_connection_id : str
+        Primary key of the saved OAuth connection row.
 
-    oauth_configuration_ready : bool
-        Whether the backend already has the minimum JobAdder OAuth settings
-        configured for the later token-exchange step.
+    jobadder_account : int
+        JobAdder account identifier returned by the provider and used as the
+        natural key for persistence.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value returned by the provider.
 
     state : str | None
         Optional opaque state value returned by JobAdder.
@@ -115,50 +120,61 @@ class JobAdderOAuthCallbackResponse(BaseModel):
         a connection attempt started by the backend.
 
     next_step : str
-        Short explanation of what still needs to happen next.
+        Short explanation of what should happen next after the connection was
+        saved.
 
     Notes
     -----
     - This response deliberately does not expose the raw authorisation code.
     - It also does not expose access tokens or refresh tokens.
-    - At this stage, the route exists mainly to give the registered redirect URI
-      a real backend target and to make callback testing explicit.
+    - It confirms that the backend completed the two important server-side
+      actions:
+
+        - exchange the code for tokens
+        - save the returned token set in Postgres
 
     Example
     -------
     A typical response looks like:
 
         {
-            "status": "received",
-            "message": "JobAdder authorization callback received.",
-            "authorization_code_received": true,
-            "oauth_configuration_ready": false,
+            "status": "connected",
+            "message": "JobAdder connection completed successfully.",
+            "oauth_connection_id": "11111111-1111-1111-1111-111111111111",
+            "jobadder_account": 123456,
+            "jobadder_instance": "jobadder-prod-au",
             "state": "connect-jobadder-dev",
-            "next_step": "Configure the JobAdder OAuth settings, then add the server-side token exchange and token storage."
+            "next_step": "The JobAdder tokens were saved successfully. The next step is to make the first authenticated JobAdder API read."
         }
     """
 
     # Keep the response strict so the callback contract does not drift quietly.
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["received"] = Field(
-        description="Fixed status confirming the callback route was reached.",
+    status: Literal["connected"] = Field(
+        description=(
+            "Fixed status confirming the JobAdder connection was completed and "
+            "saved."
+        ),
     )
 
     message: str = Field(
         min_length=1,
-        description="Safe human-readable summary of the callback result.",
+        description="Safe human-readable summary of the successful connection result.",
     )
 
-    authorization_code_received: bool = Field(
-        description="Whether the callback included a JobAdder authorization code.",
+    oauth_connection_id: str = Field(
+        min_length=1,
+        description="Primary key of the saved JobAdder OAuth connection row.",
     )
 
-    oauth_configuration_ready: bool = Field(
-        description=(
-            "Whether the backend already has the minimum JobAdder OAuth "
-            "settings configured for the next step."
-        ),
+    jobadder_account: int = Field(
+        description="JobAdder account identifier associated with the saved connection.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value returned by the provider.",
     )
 
     state: str | None = Field(
@@ -174,5 +190,5 @@ class JobAdderOAuthCallbackResponse(BaseModel):
 
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
-    "JobAdderOAuthCallbackResponse",
+    "JobAdderOAuthConnectionSavedResponse",
 ]

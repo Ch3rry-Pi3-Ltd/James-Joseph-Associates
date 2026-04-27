@@ -27,10 +27,10 @@ In plain language:
 
     "Does the backend have the pieces needed to start the JobAdder OAuth flow?"
 
-- it does not call the JobAdder token endpoint yet
-- it does not store access tokens yet
+- it exchanges the returned JobAdder authorization code server-side
+- it saves the returned JobAdder token set in Postgres
 - it does not create candidates or jobs
-- it only handles the approval-link and callback HTTP steps
+- it only handles the approval-link and OAuth callback HTTP steps
 """
 
 from typing import Any
@@ -38,16 +38,19 @@ from typing import Any
 from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 
+from backend.db.jobadder_oauth import save_jobadder_oauth_connection
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
     JobAdderAuthorizationUrlResponse,
-    JobAdderOAuthCallbackResponse,
+    JobAdderOAuthConnectionSavedResponse,
 )
 from backend.services.jobadder_oauth import (
+    JobAdderOAuthExchangeError,
     build_jobadder_authorization_url,
+    exchange_jobadder_authorization_code,
     has_jobadder_oauth_configuration,
+    has_jobadder_token_exchange_configuration,
 )
-from backend.settings import get_settings
 
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
@@ -191,8 +194,12 @@ def get_jobadder_authorization_url(
 
 @router.get(
     "/jobadder/callback",
-    response_model=JobAdderOAuthCallbackResponse,
+    response_model=JobAdderOAuthConnectionSavedResponse,
     responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder token-exchange settings are not configured.",
+        },
         400: {
             "model": ApiErrorResponse,
             "description": "JobAdder returned an OAuth error.",
@@ -200,6 +207,14 @@ def get_jobadder_authorization_url(
         422: {
             "model": ApiErrorResponse,
             "description": "Required callback query values were missing.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder token exchange failed.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "The JobAdder token set could not be saved.",
         },
     },
 )
@@ -220,7 +235,7 @@ def get_jobadder_oauth_callback(
         default=None,
         description="Optional OAuth error description returned by JobAdder.",
     ),
-) -> JobAdderOAuthCallbackResponse | JSONResponse:
+) -> JobAdderOAuthConnectionSavedResponse | JSONResponse:
     """
     Receive the JobAdder OAuth redirect callback.
 
@@ -242,8 +257,9 @@ def get_jobadder_oauth_callback(
 
     Returns
     -------
-    JobAdderOAuthCallbackResponse | JSONResponse
-        Success response confirming the callback route was reached.
+    JobAdderOAuthConnectionSavedResponse | JSONResponse
+        Success response confirming that the callback completed, the code was
+        exchanged, and the returned token set was saved.
 
         Standard API error response when the provider returned an OAuth error or
         when the callback is missing the expected query parameters.
@@ -256,13 +272,11 @@ def get_jobadder_oauth_callback(
 
     Notes
     -----
-    - This route is intentionally the first safe OAuth callback step.
-    - It exists so the JobAdder developer portal can point at a real backend
-      redirect URI right now.
-    - It does not exchange the authorization code yet because that would spend
-      the one-time code before token storage is in place.
-    - It does report whether the backend has the minimum OAuth settings already
-      configured for the later token-exchange step.
+    - This route is the server-side completion step of the OAuth flow.
+    - It receives the provider redirect, exchanges the one-time code for
+      tokens, and then saves the returned token set in Postgres.
+    - The response deliberately avoids exposing the raw authorization code or
+      any token values.
 
     Example
     -------
@@ -274,8 +288,9 @@ def get_jobadder_oauth_callback(
 
     - receive the provider redirect
     - reject explicit provider-side OAuth errors clearly
-    - confirm whether we received an authorization code
-    - report whether the backend is ready for the next OAuth step
+    - exchange the one-time code for tokens
+    - save the returned token set
+    - return a clean summary of the successful connection
     """
 
     # If JobAdder returns `error=...` in the callback query, the provider is
@@ -310,43 +325,81 @@ def get_jobadder_oauth_callback(
             details=[{"query_param": "code", "reason": "missing_or_empty"}],
         )
 
-    settings = get_settings()
-
-    # The later token exchange will need all three values:
+    # The token exchange needs:
     # - client ID
     # - client secret
     # - exact redirect URI
     #
-    # If any of these are missing, the route is still useful because the
-    # redirect URI is now real and testable, but the backend is not yet ready
-    # to complete the full OAuth flow.
-    oauth_configuration_ready = all(
-        [
-            settings.jobadder_client_id.strip() != "",
-            settings.jobadder_client_secret.strip() != "",
-            settings.jobadder_redirect_uri.strip() != "",
-        ]
-    )
-
-    next_step = (
-        "The callback route is live and the OAuth settings are present. The next "
-        "step is to add the server-side token exchange and token storage."
-        if oauth_configuration_ready
-        else (
-            "The callback route is live. The next step is to set "
-            "JOBADDER_CLIENT_ID, JOBADDER_CLIENT_SECRET, and "
-            "JOBADDER_REDIRECT_URI, then add the server-side token exchange and "
-            "token storage."
+    # Without these, the backend cannot safely complete the OAuth flow even if
+    # the callback route itself is reachable.
+    if not has_jobadder_token_exchange_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="JobAdder token exchange is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "JOBADDER_CLIENT_ID",
+                        "JOBADDER_CLIENT_SECRET",
+                        "JOBADDER_REDIRECT_URI",
+                    ]
+                }
+            ],
         )
-    )
 
-    return JobAdderOAuthCallbackResponse(
-        status="received",
-        message="JobAdder authorization callback received.",
-        authorization_code_received=True,
-        oauth_configuration_ready=oauth_configuration_ready,
+    try:
+        token_set = exchange_jobadder_authorization_code(code=code)
+    except JobAdderOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = []
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="JobAdder token exchange failed.",
+            details=details,
+        )
+
+    try:
+        saved_connection = save_jobadder_oauth_connection(token_set)
+    except (RuntimeError, ValueError) as exc:
+        details: list[dict[str, Any]] = [{"reason": str(exc)}]
+
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="JobAdder token exchange succeeded, but the connection could not be saved.",
+            details=details,
+        )
+
+    return JobAdderOAuthConnectionSavedResponse(
+        status="connected",
+        message="JobAdder connection completed successfully.",
+        oauth_connection_id=str(saved_connection["id"]),
+        jobadder_account=int(saved_connection["jobadder_account"]),
+        jobadder_instance=saved_connection.get("jobadder_instance"),
         state=state,
-        next_step=next_step,
+        next_step=(
+            "The JobAdder tokens were saved successfully. The next step is to "
+            "make the first authenticated JobAdder API read."
+        ),
     )
 
 
