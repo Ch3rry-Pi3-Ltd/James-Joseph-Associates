@@ -154,6 +154,58 @@ def test_fetch_jobadder_candidates_preview_returns_trimmed_preview(
     assert captured_request["timeout"] == 30.0
 
 
+def test_fetch_jobadder_candidates_preview_does_not_duplicate_v2_segment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the helper does not append a second `/v2` when the stored
+    JobAdder API URL already includes the version segment.
+
+    Notes
+    -----
+    - This protects against the exact production failure where the backend
+      built:
+
+          https://eu2api.jobadder.com/v2/v2/candidates
+
+    - The helper should instead normalise that to:
+
+          https://eu2api.jobadder.com/v2/candidates
+
+    In plain language:
+
+    - pretend the stored API URL already ends in `/v2`
+    - confirm the helper still builds one valid candidate-list endpoint
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [],
+                "totalCount": 0,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    preview = fetch_jobadder_candidates_preview(
+        api_url="https://eu2api.jobadder.com/v2",
+        access_token="jobadder-access-token",
+    )
+
+    assert preview["endpoint_url"] == "https://eu2api.jobadder.com/v2/candidates"
+    assert preview["item_count"] == 0
+    assert captured_request["url"] == "https://eu2api.jobadder.com/v2/candidates"
+
+
 def test_fetch_jobadder_candidates_preview_raises_for_provider_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

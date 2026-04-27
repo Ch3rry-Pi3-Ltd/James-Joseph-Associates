@@ -55,9 +55,13 @@ including:
 The OAuth token response also returns an `api` field, which is the API base URL
 associated with the connected JobAdder account.
 
-This helper therefore builds the first preview URL as:
+This helper therefore builds the first preview URL as one of:
 
     {API_URL}/v2/candidates
+
+or, when the stored API URL already ends in `/v2`:
+
+    {API_URL}/candidates
 
 Important boundaries
 --------------------
@@ -192,9 +196,10 @@ def fetch_jobadder_candidates_preview(
     api_url : str
         API base URL returned by JobAdder in the OAuth token response.
 
-        Example shape:
+        Example shapes:
 
             https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
 
     access_token : str
         Stored bearer token used for authenticated JobAdder API requests.
@@ -243,6 +248,15 @@ def fetch_jobadder_candidates_preview(
 
         {API_URL}/v2/candidates
 
+    However, some stored JobAdder `api` values already include the `/v2`
+    version segment. In that case, appending another `/v2` would produce an
+    invalid URL such as:
+
+        https://eu2api.jobadder.com/v2/v2/candidates
+
+    So this helper normalises the final URL and only adds the version segment
+    when it is not already present.
+
     That is a conservative first target because JobAdder's documentation shows
     candidate GETs under `/v2/candidates`, including list reads.
 
@@ -266,7 +280,19 @@ def fetch_jobadder_candidates_preview(
     if item_limit < 1:
         raise ValueError("JobAdder candidate preview item_limit must be at least 1.")
 
-    endpoint_url = f"{cleaned_api_url.rstrip('/')}/v2/candidates"
+    # The OAuth token response may return either:
+    #
+    # - a host-only API base such as `https://api.jobadder.com`
+    # - or an already-versioned base such as `https://eu2api.jobadder.com/v2`
+    #
+    # Normalise both shapes into one valid candidate-list endpoint and avoid
+    # generating the broken `.../v2/v2/candidates` form.
+    cleaned_api_base = cleaned_api_url.rstrip("/")
+
+    if cleaned_api_base.endswith("/v2"):
+        endpoint_url = f"{cleaned_api_base}/candidates"
+    else:
+        endpoint_url = f"{cleaned_api_base}/v2/candidates"
     headers = build_jobadder_api_headers(access_token=cleaned_access_token)
 
     try:
