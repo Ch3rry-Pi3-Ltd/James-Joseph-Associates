@@ -1,27 +1,29 @@
 """
 JobAdder OAuth helper functions for the intelligence backend.
 
-This module contains small helper functions for the two early JobAdder OAuth
+This module contains small helper functions for the three early JobAdder OAuth
 steps:
 
 - building the JobAdder approval URL
-- exchanging a one-time authorization code for tokens
+- exchanging a one-time authorisation code for tokens
+- refreshing an expired access token using the stored refresh token
 
 It gives the rest of the repository a stable way to talk about:
 
 - which JobAdder OAuth base URL we send users to
-- which query parameters are required for the approval-link step
 - which form fields are required for the token-exchange step
+- which form fields are required for the refresh-token step
 - how the backend can validate that the minimum settings exist before trying to
-  start the OAuth flow
+  start or continue the OAuth flow
 - how JobAdder token responses should be represented in Python
+- how the backend can decide whether a stored access token is expired
 
 Keeping this logic in its own module makes the project easier to grow because:
 
-- route handlers do not need to hand-build long URLs
+- route handlers do not need to hand-build long URLs or token payloads
 - OAuth-specific rules stay near each other
 - tests can target one small helper module at a time
-- later token-exchange and refresh-token logic can live nearby
+- later refresh scheduling or background maintenance can build on these helpers
 
 In plain language:
 
@@ -29,6 +31,7 @@ In plain language:
 
     "How does the backend build the JobAdder approval link?"
     "How does the backend swap a JobAdder code for tokens?"
+    "How does the backend refresh an expired access token?"
 
 - it does not define API routes
 - it does not store tokens
@@ -37,6 +40,7 @@ In plain language:
 """
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote, urlencode
 
@@ -51,7 +55,8 @@ JOBADDER_TOKEN_URL = "https://id.jobadder.com/connect/token"
 @dataclass(frozen=True)
 class JobAdderTokenSet:
     """
-    Normalised token response returned by JobAdder after a successful exchange.
+    Normalised token response returned by JobAdder after a successful exchange
+    or refresh.
 
     Attributes
     ----------
@@ -61,17 +66,14 @@ class JobAdderTokenSet:
     token_type : str
         OAuth token type returned by JobAdder.
 
-        In practice, this is expected to be `Bearer`, but the backend should read
-        the returned value rather than hard-code it.
+        In practice, this is expected to be `Bearer`, but the backend should
+        read the returned value rather than hard-code it.
 
     expires_in : int
         Token lifetime in seconds.
 
     refresh_token : str | None
         Longer-lived token used to request a new access token later.
-
-        This is especially important because JobAdder access tokens expire and
-        the integration should not require repeated manual reauthorisation.
 
     scope : str | None
         Scope string returned by the provider, if present.
@@ -96,16 +98,18 @@ class JobAdderTokenSet:
     scope: str | None
     raw_payload: dict[str, Any]
 
+
 class JobAdderOAuthExchangeError(RuntimeError):
     """
-    Raised when the backend cannot complete the JobAdder token exchange safely.
+    Raised when the backend cannot complete the JobAdder token exchange or
+    refresh safely.
 
     Attributes
     ----------
     message : str
         Safe human-readable explanation of what failed.
 
-    status_code: int | None
+    status_code : int | None
         HTTP status code returned by JobAdder, if a provider response existed.
 
     provider_error : str | None
@@ -145,7 +149,7 @@ class JobAdderOAuthExchangeError(RuntimeError):
         """
         Return the human-readable error message.
 
-        It plain language:
+        In plain language:
 
         - when this exception is printed
         - show the main message
@@ -172,7 +176,7 @@ def has_jobadder_oauth_configuration() -> bool:
     - To build the authorisation URL, we only need:
       - `JOBADDER_CLIENT_ID`
       - `JOBADDER_REDIRECT_URI`
-    - The client secret is not needed until the later token-exchange step.
+    - The client secret is not needed until the token-exchange or refresh step.
 
     In plain language:
 
@@ -190,20 +194,21 @@ def has_jobadder_oauth_configuration() -> bool:
 
 def has_jobadder_token_exchange_configuration() -> bool:
     """
-    Return whether the backend has enough configuration to exchange a code.
+    Return whether the backend has enough configuration to exchange or refresh
+    tokens.
 
     Returns
     -------
     bool
         `True` when the backend has all values required for the server-side
-        token exchange.
+        token exchange and refresh steps.
 
         `False` when one or more required settings are missing or empty.
 
     Notes
     -----
     - This check is stricter than `has_jobadder_oauth_configuration()`.
-    - The token-exchange step needs:
+    - The token-exchange and refresh steps need:
 
         - `JOBADDER_CLIENT_ID`
         - `JOBADDER_CLIENT_SECRET`
@@ -212,7 +217,7 @@ def has_jobadder_token_exchange_configuration() -> bool:
     In plain language:
 
     - building the login link needs fewer settings
-    - swapping the code for tokens needs all three
+    - swapping the code for tokens or refreshing them needs all three
     """
 
     settings = get_settings()
@@ -224,6 +229,7 @@ def has_jobadder_token_exchange_configuration() -> bool:
             settings.jobadder_redirect_uri.strip() != "",
         ]
     )
+
 
 def build_jobadder_authorization_url(
     *,
@@ -239,20 +245,8 @@ def build_jobadder_authorization_url(
         Optional opaque value that JobAdder should send back unchanged in the
         callback.
 
-        This is useful for later correlation and CSRF protection.
-
     scope : str
         Space-separated OAuth scopes to request.
-
-        Defaults to:
-
-            "read write offline_access"
-
-        Notes:
-        - `offline_access` matters because JobAdder only returns a refresh token
-          when that scope is requested.
-        - `read` and `write` are broad scopes. They can be narrowed later if the
-          integration only needs a smaller set of permissions.
 
     Returns
     -------
@@ -270,18 +264,6 @@ def build_jobadder_authorization_url(
     - It only constructs the URL the client-side approver will visit.
     - The redirect URI is URL-encoded automatically through `urlencode(...)`.
 
-    Example
-    -------
-    Build an approval URL with a simple state:
-
-        from backend.services.jobadder_oauth import build_jobadder_authorization_url
-
-        url = build_jobadder_authorization_url(
-            state="connect-jobadder-dev",
-        )
-
-        print(url)
-
     In plain language:
 
     - take the known settings
@@ -294,8 +276,6 @@ def build_jobadder_authorization_url(
     client_id = settings.jobadder_client_id.strip()
     redirect_uri = settings.jobadder_redirect_uri.strip()
 
-    # Fail early if the minimum setup is not present.
-    #   - The caller cannot build a correct approval URL without these values.
     if client_id == "" or redirect_uri == "":
         raise ValueError(
             "JobAdder OAuth is not configured. "
@@ -309,22 +289,9 @@ def build_jobadder_authorization_url(
         "redirect_uri": redirect_uri,
     }
 
-    # `state` is optional.
-    #   - Only include it when the caller has supplied a real value.
     if state is not None and state.strip() != "":
         query_params["state"] = state
 
-    # `urlencode(...)` safely builds the query string.
-    #   - Takes care of URL-encoding characters such as:
-    #
-    #       - spaces
-    #       - slashes
-    #       - colons
-    #
-    #     inside values like the redirect URI and scope string.
-    #
-    #   - `quote_via=quote` matters here because JobAdder appears to expect 
-    #     scopes to be encoded with `%20` between words rather than `+`.
     encoded_query = urlencode(query_params, quote_via=quote)
 
     return f"{JOBADDER_AUTHORIZE_URL}?{encoded_query}"
@@ -332,7 +299,8 @@ def build_jobadder_authorization_url(
 
 def build_jobadder_token_exchange_payload(*, code: str) -> dict[str, str]:
     """
-    Build the form payload required for the JobAdder token endpoint.
+    Build the form payload required for the JobAdder token endpoint when
+    exchanging an authorisation code.
 
     Parameters
     ----------
@@ -349,16 +317,9 @@ def build_jobadder_token_exchange_payload(*, code: str) -> dict[str, str]:
     ValueError
         If the backend is missing required configuration or the code is blank.
 
-    Notes
-    -----
-    - This function does not make the HTTP request.
-    - It exists so the form-building rules can be tested separately from the
-      HTTP exchange itself.
-    - The payload uses the standard OAuth authorization-code grant fields.
-
     In plain language:
 
-    - take the code and backend settings
+    - take the one-time code and backend settings
     - build the form data JobAdder expects
     """
 
@@ -371,14 +332,14 @@ def build_jobadder_token_exchange_payload(*, code: str) -> dict[str, str]:
 
     if cleaned_code == "":
         raise ValueError("JobAdder authorization code cannot be empty.")
-    
+
     if client_id == "" or client_secret == "" or redirect_uri == "":
         raise ValueError(
             "JobAdder token exchange is not configured. "
             "Set JOBADDER_CLIENT_ID, JOBADDER_CLIENT_SECRET, and "
-            "JOBADDER_REDIRECT_URI." 
+            "JOBADDER_REDIRECT_URI."
         )
-    
+
     return {
         "grant_type": "authorization_code",
         "code": cleaned_code,
@@ -387,18 +348,84 @@ def build_jobadder_token_exchange_payload(*, code: str) -> dict[str, str]:
         "redirect_uri": redirect_uri,
     }
 
+
+def build_jobadder_refresh_token_payload(*, refresh_token: str) -> dict[str, str]:
+    """
+    Build the form payload required for the JobAdder token endpoint when
+    refreshing an expired access token.
+
+    Parameters
+    ----------
+    refresh_token : str
+        Stored JobAdder refresh token.
+
+    Returns
+    -------
+    dict[str, str]
+        Form fields expected by the JobAdder token endpoint.
+
+    Raises
+    ------
+    ValueError
+        If the backend is missing required configuration or the refresh token is
+        blank.
+
+    Notes
+    -----
+    - JobAdder's OAuth docs show refresh requests using:
+        - `grant_type=refresh_token`
+        - `client_id`
+        - `client_secret`
+        - `refresh_token`
+    - The redirect URI is not needed for the refresh grant.
+
+    In plain language:
+
+    - take the stored refresh token and backend settings
+    - build the form data JobAdder expects for token refresh
+    """
+
+    settings = get_settings()
+
+    client_id = settings.jobadder_client_id.strip()
+    client_secret = settings.jobadder_client_secret.strip()
+    redirect_uri = settings.jobadder_redirect_uri.strip()
+    cleaned_refresh_token = refresh_token.strip()
+
+    if cleaned_refresh_token == "":
+        raise ValueError("JobAdder refresh token cannot be empty.")
+
+    # Keep the configuration requirement aligned with the rest of the OAuth
+    # helper surface.
+    #   - Even though the refresh request itself does not need the redirect URI,
+    #     this backend treats the full OAuth configuration as one coherent unit.
+    if client_id == "" or client_secret == "" or redirect_uri == "":
+        raise ValueError(
+            "JobAdder token refresh is not configured. "
+            "Set JOBADDER_CLIENT_ID, JOBADDER_CLIENT_SECRET, and "
+            "JOBADDER_REDIRECT_URI."
+        )
+
+    return {
+        "grant_type": "refresh_token",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": cleaned_refresh_token,
+    }
+
+
 def exchange_jobadder_authorization_code(
     *,
     code: str,
     timeout_seconds: float = 30.0,
 ) -> JobAdderTokenSet:
     """
-    Exchange a one-time JobAdder authorization code for tokens.
+    Exchange a one-time JobAdder authorisation code for tokens.
 
     Parameters
     ----------
     code : str
-        One-time authorization code returned by JobAdder.
+        One-time authorisation code returned by JobAdder.
 
     timeout_seconds : float
         HTTP timeout used for the provider request.
@@ -417,25 +444,9 @@ def exchange_jobadder_authorization_code(
         If JobAdder rejects the request, returns an invalid response, or cannot
         be reached safely.
 
-    Notes
-    -----
-    - This is a server-side step.
-    - The browser or client-side approver should never perform this exchange.
-    - The returned tokens should be stored securely before this helper is
-      wired directly into the public callback flow.
-
-    Why this helper exists
-    ----------------------
-    The callback route receives a temporary `code`, but that code is not useful
-    on its own. The backend must send it to JobAdder's token endpoint to obtain:
-
-    - `access_token`
-    - `refresh_token`
-    - expiry information
-
     In plain language:
 
-    - recieve the one-time code
+    - receive the one-time code
     - send it to JobAdder from the backend
     - get tokens back
     - return them in a normal Python shape
@@ -443,37 +454,185 @@ def exchange_jobadder_authorization_code(
 
     payload = build_jobadder_token_exchange_payload(code=code)
 
+    return _request_jobadder_token_set(
+        payload=payload,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder token exchange failed.",
+    )
+
+
+def refresh_jobadder_access_token(
+    *,
+    refresh_token: str,
+    timeout_seconds: float = 30.0,
+) -> JobAdderTokenSet:
+    """
+    Refresh an expired JobAdder access token using the stored refresh token.
+
+    Parameters
+    ----------
+    refresh_token : str
+        Stored JobAdder refresh token.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    JobAdderTokenSet
+        Normalised token response returned by JobAdder.
+
+    Raises
+    ------
+    ValueError
+        If the refresh token is blank or the backend is missing required
+        settings.
+
+    JobAdderOAuthExchangeError
+        If JobAdder rejects the refresh request, returns an invalid response, or
+        cannot be reached safely.
+
+    Why this helper exists
+    ----------------------
+    JobAdder access tokens expire after 60 minutes. The refresh token exists so
+    the backend can obtain a new access token without forcing the client to
+    repeat the full approval flow every hour.
+
+    In plain language:
+
+    - take the stored refresh token
+    - ask JobAdder for a new access token
+    - return the new token set in the same shape as the original exchange
+    """
+
+    payload = build_jobadder_refresh_token_payload(refresh_token=refresh_token)
+
+    return _request_jobadder_token_set(
+        payload=payload,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder token refresh failed.",
+    )
+
+
+def is_jobadder_access_token_expired(
+    *,
+    obtained_at: datetime | str | None,
+    expires_in_seconds: int | None,
+    safety_window_seconds: int = 60,
+) -> bool:
+    """
+    Return whether a stored JobAdder access token should be treated as expired.
+
+    Parameters
+    ----------
+    obtained_at : datetime | str | None
+        Timestamp recording when the token set was obtained.
+
+        This may be a database `datetime`, an ISO string, or `None`.
+
+    expires_in_seconds : int | None
+        Stored token lifetime in seconds.
+
+    safety_window_seconds : int
+        Number of seconds to subtract from the nominal expiry time.
+
+        This gives the backend a small buffer so it refreshes slightly before
+        the exact expiry point rather than racing it.
+
+    Returns
+    -------
+    bool
+        `True` when the token should be treated as expired or unreliable.
+
+        `False` when the token is still comfortably valid.
+
+    Notes
+    -----
+    - If the backend cannot parse the stored timing data safely, this helper
+      returns `True`.
+    - Failing closed is the correct behaviour here because attempting an API
+      read with a likely-expired token only adds noise and latency.
+
+    In plain language:
+
+    - work out when the token should expire
+    - subtract a small safety margin
+    - decide whether the backend should refresh before making an API call
+    """
+
+    if safety_window_seconds < 0:
+        raise ValueError(
+            "JobAdder token expiry safety_window_seconds cannot be negative."
+        )
+
+    obtained_at_dt = _normalise_datetime(obtained_at)
+
+    if obtained_at_dt is None or expires_in_seconds is None:
+        return True
+
+    try:
+        cleaned_expires_in_seconds = int(expires_in_seconds)
+    except (TypeError, ValueError):
+        return True
+
+    expiry_time = obtained_at_dt + timedelta(seconds=cleaned_expires_in_seconds)
+    refresh_cutoff = expiry_time - timedelta(seconds=safety_window_seconds)
+
+    return datetime.now(timezone.utc) >= refresh_cutoff
+
+
+def _request_jobadder_token_set(
+    *,
+    payload: dict[str, str],
+    timeout_seconds: float,
+    provider_failure_message: str,
+) -> JobAdderTokenSet:
+    """
+    Send one token-endpoint request to JobAdder and normalise the token result.
+
+    Parameters
+    ----------
+    payload : dict[str, str]
+        Form fields to send to the JobAdder token endpoint.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    provider_failure_message : str
+        Message to use when JobAdder returns an HTTP error response.
+
+    Returns
+    -------
+    JobAdderTokenSet
+        Normalised token response returned by JobAdder.
+
+    Raises
+    ------
+    JobAdderOAuthExchangeError
+        If JobAdder rejects the request, returns an invalid response, or cannot
+        be reached safely.
+    """
+
     try:
         response = httpx.post(
             JOBADDER_TOKEN_URL,
             data=payload,
             headers={
                 "Accept": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
             },
             timeout=timeout_seconds,
         )
     except httpx.HTTPError as exc:
-        # Network-level failures are different from provider-side OAuth failures
-        #   - If we never got a useable HTTP response, surface that clearly.
-        #   - The caller can later translate this into a stable API error.
         raise JobAdderOAuthExchangeError(
             "Could not reach the JobAdder token endpoint.",
         ) from exc
-    
+
     response_payload = _decode_jobadder_json_response(response)
 
-    # JobAdder may reject the token request for reasons such as:
-    #  
-    #   - expired code
-    #   - code already used
-    #   - redirect URI mismatch
-    #   - client credential mismatch
-    #
-    # When that happens, capture the provider details safely so later route code
-    # can report something clerer than a generic 500.
     if response.status_code >= 400:
         raise JobAdderOAuthExchangeError(
-            "JobAdder token exchange failed.",
+            provider_failure_message,
             status_code=response.status_code,
             provider_error=_safe_string(response_payload.get("error")),
             provider_error_description=_safe_string(
@@ -486,11 +645,8 @@ def exchange_jobadder_authorization_code(
     token_type = _safe_string(response_payload.get("token_type"))
     refresh_token = _safe_string(response_payload.get("refresh_token"))
     scope = _safe_string(response_payload.get("scope"))
-
     raw_expires_in = response_payload.get("expires_in")
 
-    # A success response is not actually useful unless the key fields are present 
-    #   - Fail fast if JobAdder returned something incomplete or unexpected.
     if access_token is None:
         raise JobAdderOAuthExchangeError(
             "JobAdder token response did not include an access token.",
@@ -504,7 +660,7 @@ def exchange_jobadder_authorization_code(
             status_code=response.status_code,
             response_body=response_payload,
         )
-    
+
     try:
         expires_in = int(raw_expires_in)
     except (TypeError, ValueError) as exc:
@@ -522,6 +678,7 @@ def exchange_jobadder_authorization_code(
         scope=scope,
         raw_payload=response_payload,
     )
+
 
 def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
     """
@@ -543,7 +700,6 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
     - The token endpoint is expected to return JSON.
     - If it does not, we still want safe debugging context rather than an
       unrelated JSON parsing exception.
-    - This helper stays private because it is just internal parsing glue.
 
     In plain language:
 
@@ -553,7 +709,6 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
 
     try:
         decoded = response.json()
-    
     except ValueError:
         return {
             "raw_text": response.text,
@@ -561,10 +716,57 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
 
     if isinstance(decoded, dict):
         return decoded
-    
+
     return {
         "decoded_json": decoded,
     }
+
+
+def _normalise_datetime(value: Any) -> datetime | None:
+    """
+    Convert a stored date/time value into a timezone-aware UTC datetime.
+
+    Parameters
+    ----------
+    value : Any
+        Raw value read from storage.
+
+    Returns
+    -------
+    datetime | None
+        Timezone-aware UTC datetime when parsing succeeds, otherwise `None`.
+
+    Notes
+    -----
+    - Database reads will usually return real `datetime` objects.
+    - Some tests or future callers may pass ISO strings instead.
+    - If a datetime is naive, this helper treats it as UTC.
+    """
+
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
+    if not isinstance(value, str):
+        return None
+
+    cleaned_value = value.strip()
+
+    if cleaned_value == "":
+        return None
+
+    try:
+        parsed_value = datetime.fromisoformat(cleaned_value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if parsed_value.tzinfo is None:
+        return parsed_value.replace(tzinfo=timezone.utc)
+
+    return parsed_value.astimezone(timezone.utc)
+
 
 def _safe_string(value: Any) -> str | None:
     """
@@ -585,11 +787,6 @@ def _safe_string(value: Any) -> str | None:
     -----
     - OAuth providers sometimes return null, blank strings, or unexpected types.
     - This helper keeps the string-cleaning rule consistent inside this module.
-
-    In plain language:
-
-    - if it is useful text, return it
-    - otherwise return none
     """
 
     if not isinstance(value, str):
@@ -609,8 +806,11 @@ __all__ = [
     "JobAdderOAuthExchangeError",
     "JobAdderTokenSet",
     "build_jobadder_authorization_url",
+    "build_jobadder_refresh_token_payload",
     "build_jobadder_token_exchange_payload",
     "exchange_jobadder_authorization_code",
     "has_jobadder_oauth_configuration",
     "has_jobadder_token_exchange_configuration",
+    "is_jobadder_access_token_expired",
+    "refresh_jobadder_access_token",
 ]
