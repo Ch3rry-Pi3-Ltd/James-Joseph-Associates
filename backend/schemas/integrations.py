@@ -269,8 +269,145 @@ class JobAdderCandidatesPreviewResponse(BaseModel):
     )
 
 
+class JobAdderCandidateDetailResponse(BaseModel):
+    """
+    Response returned when the backend fetches one full JobAdder candidate.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    candidate_id : int
+        JobAdder candidate identifier requested by the route.
+
+    candidate : dict[str, Any]
+        Full candidate object returned by JobAdder.
+
+    Notes
+    -----
+    - This response intentionally keeps the nested candidate flexible rather
+      than freezing the source shape prematurely.
+    - The immediate purpose is inspection and schema-mapping, not final
+      ingestion or long-term contract design.
+
+    In plain language:
+
+    - tell us which stored JobAdder connection was used
+    - tell us which candidate was requested
+    - return the full candidate object that JobAdder sent back
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    candidate_id: int = Field(
+        ge=1,
+        description="JobAdder candidate identifier requested by the route.",
+    )
+
+    candidate: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Full candidate object returned by JobAdder.",
+    )
+
+
+class JobAdderCandidateSkillsResponse(BaseModel):
+    """
+    Response returned when the backend fetches the structured skills tree for
+    one JobAdder candidate.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    candidate_id : int
+        JobAdder candidate identifier whose skills were requested.
+
+    category_count : int
+        Number of top-level skill categories returned by JobAdder.
+
+    links : dict[str, Any]
+        Provider navigation links when present.
+
+    categories : list[dict[str, Any]]
+        Structured skills category tree returned by JobAdder.
+
+    Notes
+    -----
+    - The OpenAPI spec documents candidate skills as a nested
+      category -> subcategory -> skill hierarchy.
+    - This response preserves that hierarchy so the backend can inspect how the
+      source system models skills before choosing a canonical representation.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    candidate_id: int = Field(
+        ge=1,
+        description="JobAdder candidate identifier whose skills were requested.",
+    )
+
+    category_count: int = Field(
+        ge=0,
+        description="Number of top-level skill categories returned by JobAdder.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider navigation links when present.",
+    )
+
+    categories: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Structured skills category tree returned by JobAdder.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
+    "JobAdderCandidateDetailResponse",
+    "JobAdderCandidateSkillsResponse",
     "JobAdderCandidatesPreviewResponse",
     "JobAdderOAuthConnectionSavedResponse",
 ]

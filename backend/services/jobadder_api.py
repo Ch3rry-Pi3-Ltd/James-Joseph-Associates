@@ -138,7 +138,8 @@ class JobAdderApiError(RuntimeError):
         """
 
         return self.message
-    
+
+
 def build_jobadder_api_headers(*, access_token: str) -> dict[str, str]:
     """
     Build the standard HTTP headers for a JobAdder API request.
@@ -178,6 +179,101 @@ def build_jobadder_api_headers(*, access_token: str) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {cleaned_access_token}",
         "Accept": "application/json",
+    }
+
+
+def fetch_jobadder_candidate_detail(
+    *,
+    api_url: str,
+    access_token: str,
+    candidate_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch one full candidate record from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+        Example shapes:
+
+            https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    candidate_id : int
+        JobAdder candidate identifier to fetch.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `candidate`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or candidate ID is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This is the next step after the first list preview read.
+    - It gives the backend access to the full documented candidate shape, which
+      is more useful for canonical-schema mapping than the thinner list record.
+    - The helper still remains read-only. It does not write to the database,
+      and it does not attempt any ingestion or mapping.
+
+    In plain language:
+
+    - build the candidate-detail URL
+    - call JobAdder with the stored token
+    - confirm the response body is one candidate object
+    - return that object in a small predictable wrapper
+    """
+
+    if candidate_id < 1:
+        raise ValueError("JobAdder candidate_id must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/candidates/{candidate_id}",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate read failed.",
+    )
+
+    # A candidate-detail read should yield one object, not a list wrapper. If
+    # the payload is not a dictionary, the route would have no safe way to
+    # reason about the returned record structure.
+    if not isinstance(response_payload, dict):
+        raise JobAdderApiError(
+            "JobAdder candidate read response did not include a candidate object.",
+            endpoint_url=endpoint_url,
+            response_body={"decoded_json": response_payload},
+        )
+
+    return {
+        "candidate": response_payload,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
     }
 
 
@@ -268,57 +364,20 @@ def fetch_jobadder_candidates_preview(
     - return a trimmed preview of that first page
     """
 
-    cleaned_api_url = api_url.strip()
-    cleaned_access_token = access_token.strip()
-
-    if cleaned_api_url == "":
-        raise ValueError("JobAdder API URL cannot be empty.")
-
-    if cleaned_access_token == "":
-        raise ValueError("JobAdder access token cannot be empty.")
-
     if item_limit < 1:
         raise ValueError("JobAdder candidate preview item_limit must be at least 1.")
 
-    # The OAuth token response may return either:
-    #
-    # - a host-only API base such as `https://api.jobadder.com`
-    # - or an already-versioned base such as `https://eu2api.jobadder.com/v2`
-    #
-    # Normalise both shapes into one valid candidate-list endpoint and avoid
-    # generating the broken `.../v2/v2/candidates` form.
-    cleaned_api_base = cleaned_api_url.rstrip("/")
-
-    if cleaned_api_base.endswith("/v2"):
-        endpoint_url = f"{cleaned_api_base}/candidates"
-    else:
-        endpoint_url = f"{cleaned_api_base}/v2/candidates"
-    headers = build_jobadder_api_headers(access_token=cleaned_access_token)
-
-    try:
-        response = httpx.get(
-            endpoint_url,
-            headers=headers,
-            timeout=timeout_seconds,
-        )
-    except httpx.HTTPError as exc:
-        raise JobAdderApiError(
-            "Could not reach the JobAdder API.",
-            endpoint_url=endpoint_url,
-        ) from exc
-
-    response_payload = _decode_jobadder_json_response(response)
-
-    # If JobAdder rejects the request, return one structured local exception
-    # rather than leaking raw provider handling into every route.
-    if response.status_code >= 400:
-        raise JobAdderApiError(
-            "JobAdder candidate read failed.",
-            status_code=response.status_code,
-            retry_after=_safe_string(response.headers.get("Retry-After")),
-            endpoint_url=endpoint_url,
-            response_body=response_payload,
-        )
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path="/candidates",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate read failed.",
+    )
 
     raw_items = response_payload.get("items")
 
@@ -327,7 +386,7 @@ def fetch_jobadder_candidates_preview(
     if not isinstance(raw_items, list):
         raise JobAdderApiError(
             "JobAdder candidate read response did not include an items list.",
-            status_code=response.status_code,
+            status_code=200,
             endpoint_url=endpoint_url,
             response_body=response_payload,
         )
@@ -358,6 +417,231 @@ def fetch_jobadder_candidates_preview(
         "endpoint_url": endpoint_url,
         "raw_payload": response_payload,
     }
+
+
+def fetch_jobadder_candidate_skills(
+    *,
+    api_url: str,
+    access_token: str,
+    candidate_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch the structured skills tree for one JobAdder candidate.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    candidate_id : int
+        JobAdder candidate identifier whose skills should be fetched.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `categories`
+        - `category_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or candidate ID is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - The OpenAPI spec documents a dedicated candidate-skills endpoint that
+      returns a category -> subcategory -> skill hierarchy.
+    - This is more useful than flat `skillTags` when the goal is to understand
+      the real source-system skills structure before designing ingestion.
+
+    In plain language:
+
+    - build the candidate-skills URL
+    - call JobAdder with the stored token
+    - confirm the response contains a category list
+    - return the structured skills tree in a predictable wrapper
+    """
+
+    if candidate_id < 1:
+        raise ValueError("JobAdder candidate_id must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/candidates/{candidate_id}/skills",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate skills read failed.",
+    )
+
+    raw_items = response_payload.get("items")
+
+    # The skills endpoint is documented as a category list representation. If
+    # `items` is missing or not a list, the backend should fail clearly rather
+    # than guessing at an unknown structure.
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder candidate skills response did not include a category list.",
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    return {
+        "categories": raw_items,
+        "category_count": len(raw_items),
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
+def _build_jobadder_api_endpoint(*, api_url: str, resource_path: str) -> str:
+    """
+    Build one normalised JobAdder API endpoint URL from a stored API base.
+
+    Parameters
+    ----------
+    api_url : str
+        Stored JobAdder API base URL.
+
+    resource_path : str
+        Resource path to append, such as `/candidates` or
+        `/candidates/123/skills`.
+
+    Returns
+    -------
+    str
+        Fully resolved JobAdder endpoint URL.
+
+    Raises
+    ------
+    ValueError
+        If the API URL or resource path is blank.
+
+    Notes
+    -----
+    - JobAdder may return API bases both with and without the `/v2` segment.
+    - Centralising the normalisation rule here ensures every helper uses the
+      same URL-building logic and avoids reintroducing the earlier `/v2/v2/...`
+      bug.
+    """
+
+    cleaned_api_url = api_url.strip()
+    cleaned_resource_path = resource_path.strip()
+
+    if cleaned_api_url == "":
+        raise ValueError("JobAdder API URL cannot be empty.")
+
+    if cleaned_resource_path == "":
+        raise ValueError("JobAdder resource_path cannot be empty.")
+
+    cleaned_api_base = cleaned_api_url.rstrip("/")
+    cleaned_path = cleaned_resource_path.lstrip("/")
+
+    if cleaned_api_base.endswith("/v2"):
+        return f"{cleaned_api_base}/{cleaned_path}"
+
+    return f"{cleaned_api_base}/v2/{cleaned_path}"
+
+
+def _request_jobadder_json(
+    *,
+    endpoint_url: str,
+    headers: dict[str, str],
+    timeout_seconds: float,
+    provider_failure_message: str,
+) -> dict[str, Any]:
+    """
+    Perform one authenticated JobAdder GET request and decode the JSON body.
+
+    Parameters
+    ----------
+    endpoint_url : str
+        Fully resolved JobAdder endpoint URL.
+
+    headers : dict[str, str]
+        Authenticated request headers to send.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    provider_failure_message : str
+        Message to use when JobAdder rejects the request with an HTTP error.
+
+    Returns
+    -------
+    dict[str, Any]
+        Decoded JSON dictionary returned by JobAdder.
+
+    Raises
+    ------
+    JobAdderApiError
+        If the provider request fails, returns an HTTP error, or produces a
+        non-dictionary JSON payload.
+
+    Notes
+    -----
+    - The service helpers in this module all perform the same transport work:
+      make one GET request, decode the JSON, and convert HTTP errors into one
+      local exception type.
+    - Keeping that shared logic here makes the individual endpoint helpers
+      easier to read and reduces the chance of subtle behavioural drift.
+    """
+
+    try:
+        response = httpx.get(
+            endpoint_url,
+            headers=headers,
+            timeout=timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise JobAdderApiError(
+            "Could not reach the JobAdder API.",
+            endpoint_url=endpoint_url,
+        ) from exc
+
+    response_payload = _decode_jobadder_json_response(response)
+
+    if response.status_code >= 400:
+        raise JobAdderApiError(
+            provider_failure_message,
+            status_code=response.status_code,
+            retry_after=_safe_string(response.headers.get("Retry-After")),
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    if not isinstance(response_payload, dict):
+        raise JobAdderApiError(
+            "JobAdder API response did not decode into an object.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body={"decoded_json": response_payload},
+        )
+
+    return response_payload
 
 
 def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
@@ -425,5 +709,7 @@ def _safe_string(value: Any) -> str | None:
 __all__ = [
     "JobAdderApiError",
     "build_jobadder_api_headers",
+    "fetch_jobadder_candidate_detail",
+    "fetch_jobadder_candidate_skills",
     "fetch_jobadder_candidates_preview",
 ]

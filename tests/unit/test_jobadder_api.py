@@ -45,6 +45,8 @@ import pytest
 from backend.services.jobadder_api import (
     JobAdderApiError,
     build_jobadder_api_headers,
+    fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
 )
 
@@ -330,3 +332,122 @@ def test_fetch_jobadder_candidates_preview_raises_for_network_failure(
 
     assert str(error) == "Could not reach the JobAdder API."
     assert error.endpoint_url == "https://api.jobadder.com/v2/candidates"
+
+
+def test_fetch_jobadder_candidate_detail_returns_candidate_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the candidate-detail helper returns one full candidate object.
+
+    In plain language:
+
+    - pretend JobAdder returned one candidate payload
+    - confirm the helper called the expected detail endpoint
+    - confirm the helper returned that candidate in a small predictable wrapper
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "candidateId": 123,
+                "firstName": "Alice",
+                "lastName": "Nguyen",
+                "email": "alice@example.com",
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    detail = fetch_jobadder_candidate_detail(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=123,
+    )
+
+    assert detail["candidate"] == {
+        "candidateId": 123,
+        "firstName": "Alice",
+        "lastName": "Nguyen",
+        "email": "alice@example.com",
+    }
+    assert detail["endpoint_url"] == "https://api.jobadder.com/v2/candidates/123"
+    assert captured_request["url"] == "https://api.jobadder.com/v2/candidates/123"
+
+
+def test_fetch_jobadder_candidate_skills_returns_category_tree(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the candidate-skills helper returns the structured category tree
+    documented by the JobAdder API.
+
+    In plain language:
+
+    - pretend JobAdder returned one category with one subcategory and one skill
+    - confirm the helper called the expected skills endpoint
+    - confirm the helper returned the structured category list cleanly
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {
+                        "categoryId": 1,
+                        "name": "Engineering",
+                        "subCategories": [
+                            {
+                                "subCategoryId": 2,
+                                "name": "Backend",
+                                "skills": [
+                                    {"skillId": 3, "name": "Python"},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    skills = fetch_jobadder_candidate_skills(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=123,
+    )
+
+    assert skills["category_count"] == 1
+    assert skills["categories"] == [
+        {
+            "categoryId": 1,
+            "name": "Engineering",
+            "subCategories": [
+                {
+                    "subCategoryId": 2,
+                    "name": "Backend",
+                    "skills": [
+                        {"skillId": 3, "name": "Python"},
+                    ],
+                }
+            ],
+        }
+    ]
+    assert skills["endpoint_url"] == "https://api.jobadder.com/v2/candidates/123/skills"
+    assert captured_request["url"] == "https://api.jobadder.com/v2/candidates/123/skills"

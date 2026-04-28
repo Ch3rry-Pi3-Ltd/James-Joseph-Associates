@@ -47,11 +47,15 @@ from backend.db.jobadder_oauth import (
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
     JobAdderAuthorizationUrlResponse,
+    JobAdderCandidateDetailResponse,
+    JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
+    fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
 )
 from backend.services.jobadder_oauth import (
@@ -116,6 +120,345 @@ def build_error_response(
     return JSONResponse(
         status_code=status_code,
         content=error_response.model_dump(),
+    )
+
+
+def _refresh_jobadder_stored_connection(
+    *,
+    jobadder_account: int,
+    refresh_token_value: Any,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Refresh the stored JobAdder token set and persist the replacement row.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used as the natural key for the stored
+        connection row.
+
+    refresh_token_value : Any
+        Raw refresh-token value read from the current stored connection row.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Updated stored connection row on success.
+
+        Standard API error response when the refresh token is missing, the
+        JobAdder refresh request fails, or the refreshed token set could not be
+        saved.
+
+    Notes
+    -----
+    - Every authenticated JobAdder read may need a token refresh in one of two
+      situations:
+        - proactively before the provider call when the token is already
+          expired
+        - reactively after a 401 response when the token looked valid but was
+          rejected upstream
+    - Keeping the refresh-and-save sequence in one helper prevents the read
+      routes from drifting apart in how they handle refresh failures.
+    """
+
+    if not isinstance(refresh_token_value, str) or refresh_token_value.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored JobAdder connection is missing a refresh token.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    try:
+        refreshed_token_set = refresh_jobadder_access_token(
+            refresh_token=refresh_token_value,
+        )
+    except JobAdderOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="JobAdder token refresh failed.",
+            details=details,
+        )
+
+    try:
+        return save_jobadder_oauth_connection(refreshed_token_set)
+    except (RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="JobAdder token refresh succeeded, but the refreshed connection could not be saved.",
+            details=[
+                {"jobadder_account": jobadder_account},
+                {"reason": str(exc)},
+            ],
+        )
+
+
+def _prepare_jobadder_connection_for_api_read(
+    *,
+    jobadder_account: int,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Load one stored JobAdder connection row and ensure it is ready for an API read.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Stored connection row that contains at least a usable `access_token`
+        and `api_url`.
+
+        Standard API error response when the stored connection is missing,
+        incomplete, or requires a refresh that fails.
+
+    Notes
+    -----
+    - This helper centralises the common pre-read checks used by every
+      authenticated JobAdder route.
+    - It also performs the proactive refresh step when the stored timing fields
+      indicate the access token is expired or too close to expiry.
+    """
+
+    stored_connection = get_jobadder_oauth_connection(jobadder_account)
+
+    if stored_connection is None:
+        return build_error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="not_found",
+            message="Stored JobAdder connection was not found.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    raw_access_token = stored_connection.get("access_token")
+    raw_api_url = stored_connection.get("api_url")
+    raw_refresh_token = stored_connection.get("refresh_token")
+    raw_obtained_at = stored_connection.get("obtained_at")
+    raw_expires_in_seconds = stored_connection.get("expires_in_seconds")
+
+    if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored JobAdder connection is missing an access token.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored JobAdder connection is missing an API URL.",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    if is_jobadder_access_token_expired(
+        obtained_at=raw_obtained_at,
+        expires_in_seconds=raw_expires_in_seconds,
+    ):
+        refreshed_connection = _refresh_jobadder_stored_connection(
+            jobadder_account=jobadder_account,
+            refresh_token_value=raw_refresh_token,
+        )
+
+        if isinstance(refreshed_connection, JSONResponse):
+            return refreshed_connection
+
+        refreshed_access_token = refreshed_connection.get("access_token")
+        refreshed_api_url = refreshed_connection.get("api_url")
+
+        if (
+            not isinstance(refreshed_access_token, str)
+            or refreshed_access_token.strip() == ""
+        ):
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed JobAdder connection is missing an access token.",
+                details=[{"jobadder_account": jobadder_account}],
+            )
+
+        if not isinstance(refreshed_api_url, str) or refreshed_api_url.strip() == "":
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed JobAdder connection is missing an API URL.",
+                details=[{"jobadder_account": jobadder_account}],
+            )
+
+        return refreshed_connection
+
+    return stored_connection
+
+
+def _perform_jobadder_read_with_refresh_retry(
+    *,
+    jobadder_account: int,
+    stored_connection: dict[str, Any],
+    read_callable,
+    provider_failure_message: str,
+) -> tuple[dict[str, Any], str, str | None] | JSONResponse:
+    """
+    Perform one JobAdder read and retry once with a refreshed token after 401.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used for error reporting and refresh saves.
+
+    stored_connection : dict[str, Any]
+        Stored JobAdder connection row that already passed the initial local
+        validation checks.
+
+    read_callable : callable
+        Small function that accepts keyword arguments `api_url` and
+        `access_token` and performs one provider read.
+
+    provider_failure_message : str
+        Safe route-level error message to use when the provider read fails.
+
+    Returns
+    -------
+    tuple[dict[str, Any], str, str | None] | JSONResponse
+        Tuple containing:
+
+        - the normalised read result returned by the service helper
+        - the API base URL used for the successful provider call
+        - the JobAdder instance value associated with the successful call
+
+        Standard API error response when the provider read fails definitively
+        or the refresh-and-retry path cannot recover.
+
+    Notes
+    -----
+    - This helper is intentionally route-agnostic. It does not care whether
+      the caller is asking for a preview list, a candidate detail, or a skills
+      hierarchy.
+    - The only special provider case it handles is 401, because that can often
+      be resolved by refreshing the access token once and retrying.
+    """
+
+    raw_access_token = stored_connection.get("access_token")
+    raw_api_url = stored_connection.get("api_url")
+    raw_refresh_token = stored_connection.get("refresh_token")
+    raw_jobadder_instance = stored_connection.get("jobadder_instance")
+
+    try:
+        read_result = read_callable(
+            api_url=raw_api_url,
+            access_token=raw_access_token,
+        )
+    except JobAdderApiError as exc:
+        if exc.status_code == 401:
+            refreshed_connection = _refresh_jobadder_stored_connection(
+                jobadder_account=jobadder_account,
+                refresh_token_value=raw_refresh_token,
+            )
+
+            if isinstance(refreshed_connection, JSONResponse):
+                return refreshed_connection
+
+            refreshed_access_token = refreshed_connection.get("access_token")
+            refreshed_api_url = refreshed_connection.get("api_url")
+            refreshed_jobadder_instance = refreshed_connection.get(
+                "jobadder_instance"
+            )
+
+            if (
+                not isinstance(refreshed_access_token, str)
+                or refreshed_access_token.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed JobAdder connection is missing an access token.",
+                    details=[{"jobadder_account": jobadder_account}],
+                )
+
+            if (
+                not isinstance(refreshed_api_url, str)
+                or refreshed_api_url.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed JobAdder connection is missing an API URL.",
+                    details=[{"jobadder_account": jobadder_account}],
+                )
+
+            try:
+                read_result = read_callable(
+                    api_url=refreshed_api_url,
+                    access_token=refreshed_access_token,
+                )
+            except JobAdderApiError as retry_exc:
+                details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+                if retry_exc.status_code is not None:
+                    details.append({"provider_status_code": retry_exc.status_code})
+
+                if retry_exc.retry_after is not None:
+                    details.append({"retry_after_seconds": retry_exc.retry_after})
+
+                if retry_exc.endpoint_url is not None:
+                    details.append({"endpoint_url": retry_exc.endpoint_url})
+
+                return build_error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    code="internal_error",
+                    message=provider_failure_message,
+                    details=details,
+                )
+
+            return (
+                read_result,
+                refreshed_api_url,
+                (
+                    refreshed_jobadder_instance
+                    if isinstance(refreshed_jobadder_instance, str)
+                    else None
+                ),
+            )
+
+        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.retry_after is not None:
+            details.append({"retry_after_seconds": exc.retry_after})
+
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message=provider_failure_message,
+            details=details,
+        )
+
+    return (
+        read_result,
+        raw_api_url,
+        raw_jobadder_instance if isinstance(raw_jobadder_instance, str) else None,
     )
 
 
@@ -501,299 +844,206 @@ def get_jobadder_candidates_preview_route(
     - return a small preview of candidate data
     """
 
-    stored_connection = get_jobadder_oauth_connection(jobadder_account)
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
 
-    # If no stored JobAdder connection exists for this account, there is no
-    # safe way to build an authenticated provider request.
-    #   - Return 404 rather than attempting a provider call with invented or
-    #     missing credentials.
-    if stored_connection is None:
-        return build_error_response(
-            status_code=status.HTTP_404_NOT_FOUND,
-            code="not_found",
-            message="Stored JobAdder connection was not found.",
-            details=[{"jobadder_account": jobadder_account}],
-        )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
 
-    raw_access_token = stored_connection.get("access_token")
-    raw_refresh_token = stored_connection.get("refresh_token")
-    raw_api_url = stored_connection.get("api_url")
-    raw_jobadder_instance = stored_connection.get("jobadder_instance")
-    raw_obtained_at = stored_connection.get("obtained_at")
-    raw_expires_in_seconds = stored_connection.get("expires_in_seconds")
-
-    # Fail clearly if the database row exists but is missing the fields required
-    # for an authenticated API read.
-    #   - That would indicate a persistence bug or an incomplete stored
-    #     connection rather than a provider-side problem.
-    if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
-        return build_error_response(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            code="internal_error",
-            message="The stored JobAdder connection is missing an access token.",
-            details=[{"jobadder_account": jobadder_account}],
-        )
-
-    if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
-        return build_error_response(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            code="internal_error",
-            message="The stored JobAdder connection is missing an API URL.",
-            details=[{"jobadder_account": jobadder_account}],
-        )
-
-    def refresh_stored_connection(
-        *,
-        refresh_token_value: Any,
-    ) -> dict[str, Any] | JSONResponse:
-        """
-        Refresh the stored JobAdder token set and persist the replacement row.
-
-        Parameters
-        ----------
-        refresh_token_value : Any
-            Raw refresh-token value read from the current stored connection row.
-
-        Returns
-        -------
-        dict[str, Any] | JSONResponse
-            Updated stored connection row on success.
-
-            Standard API error response when the refresh token is missing, the
-            JobAdder refresh request fails, or the refreshed token set could
-            not be saved.
-
-        Notes
-        -----
-        - The preview route may need refresh logic in two different places:
-            - proactively before the provider call when the token is already
-              expired
-            - reactively after a 401 response when the token looked valid but
-              was rejected upstream
-        - Keeping that work in one local helper avoids duplicating the refresh,
-          save, and error-shaping logic in both branches.
-
-        In plain language:
-
-        - take the stored refresh token
-        - ask JobAdder for a new access token
-        - save the refreshed token set back to Postgres
-        - return the updated stored connection row
-        """
-
-        if (
-            not isinstance(refresh_token_value, str)
-            or refresh_token_value.strip() == ""
-        ):
-            return build_error_response(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                code="internal_error",
-                message="The stored JobAdder connection is missing a refresh token.",
-                details=[{"jobadder_account": jobadder_account}],
-            )
-
-        try:
-            refreshed_token_set = refresh_jobadder_access_token(
-                refresh_token=refresh_token_value,
-            )
-        except JobAdderOAuthExchangeError as exc:
-            details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
-
-            if exc.status_code is not None:
-                details.append({"provider_status_code": exc.status_code})
-
-            if exc.provider_error is not None:
-                details.append({"provider_error": exc.provider_error})
-
-            if exc.provider_error_description is not None:
-                details.append(
-                    {"provider_error_description": exc.provider_error_description}
-                )
-
-            return build_error_response(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                code="approval_required",
-                message="JobAdder token refresh failed.",
-                details=details,
-            )
-
-        try:
-            return save_jobadder_oauth_connection(refreshed_token_set)
-        except (RuntimeError, ValueError) as exc:
-            return build_error_response(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                code="internal_error",
-                message="JobAdder token refresh succeeded, but the refreshed connection could not be saved.",
-                details=[
-                    {"jobadder_account": jobadder_account},
-                    {"reason": str(exc)},
-                ],
-            )
-
-    # Refresh proactively when the stored timing fields indicate the access
-    # token is already expired or too close to expiry.
-    #   - This avoids spending one doomed provider request on a token we
-    #     already know is stale.
-    #   - The expiry helper fails closed: if the stored timing data is missing
-    #     or cannot be parsed safely, it tells us to refresh first.
-    if is_jobadder_access_token_expired(
-        obtained_at=raw_obtained_at,
-        expires_in_seconds=raw_expires_in_seconds,
-    ):
-        refreshed_connection = refresh_stored_connection(
-            refresh_token_value=raw_refresh_token
-        )
-
-        if isinstance(refreshed_connection, JSONResponse):
-            return refreshed_connection
-
-        stored_connection = refreshed_connection
-        raw_access_token = stored_connection.get("access_token")
-        raw_refresh_token = stored_connection.get("refresh_token")
-        raw_api_url = stored_connection.get("api_url")
-        raw_jobadder_instance = stored_connection.get("jobadder_instance")
-
-        # A successful refresh should have produced a complete replacement
-        # connection row.
-        #   - Re-check the required fields explicitly rather than assuming the
-        #     database row is complete.
-        if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
-            return build_error_response(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                code="internal_error",
-                message="The refreshed JobAdder connection is missing an access token.",
-                details=[{"jobadder_account": jobadder_account}],
-            )
-
-        if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
-            return build_error_response(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                code="internal_error",
-                message="The refreshed JobAdder connection is missing an API URL.",
-                details=[{"jobadder_account": jobadder_account}],
-            )
-
-    try:
-        preview = fetch_jobadder_candidates_preview(
-            api_url=raw_api_url,
-            access_token=raw_access_token,
+    preview_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidates_preview(
+            api_url=api_url,
+            access_token=access_token,
             item_limit=item_limit,
-        )
-    except JobAdderApiError as exc:
-        # If JobAdder responds with 401 even after the proactive expiry check,
-        # try one refresh-and-retry cycle.
-        #   - This catches edge cases where the local expiry calculation looked
-        #     fine but the upstream provider still considers the token stale.
-        #   - We retry once only. If the refreshed token is also rejected, the
-        #     route should fail clearly rather than looping.
-        if exc.status_code == 401:
-            refreshed_connection = refresh_stored_connection(
-                refresh_token_value=raw_refresh_token
-            )
+        ),
+        provider_failure_message="JobAdder candidate read failed.",
+    )
 
-            if isinstance(refreshed_connection, JSONResponse):
-                return refreshed_connection
+    if isinstance(preview_result, JSONResponse):
+        return preview_result
 
-            refreshed_access_token = refreshed_connection.get("access_token")
-            refreshed_api_url = refreshed_connection.get("api_url")
-            refreshed_jobadder_instance = refreshed_connection.get(
-                "jobadder_instance"
-            )
+    preview, api_url, jobadder_instance = preview_result
 
-            if (
-                not isinstance(refreshed_access_token, str)
-                or refreshed_access_token.strip() == ""
-            ):
-                return build_error_response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    code="internal_error",
-                    message="The refreshed JobAdder connection is missing an access token.",
-                    details=[{"jobadder_account": jobadder_account}],
-                )
-
-            if (
-                not isinstance(refreshed_api_url, str)
-                or refreshed_api_url.strip() == ""
-            ):
-                return build_error_response(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    code="internal_error",
-                    message="The refreshed JobAdder connection is missing an API URL.",
-                    details=[{"jobadder_account": jobadder_account}],
-                )
-
-            try:
-                preview = fetch_jobadder_candidates_preview(
-                    api_url=refreshed_api_url,
-                    access_token=refreshed_access_token,
-                    item_limit=item_limit,
-                )
-            except JobAdderApiError as retry_exc:
-                details: list[dict[str, Any]] = [
-                    {"jobadder_account": jobadder_account}
-                ]
-
-                if retry_exc.status_code is not None:
-                    details.append({"provider_status_code": retry_exc.status_code})
-
-                if retry_exc.retry_after is not None:
-                    details.append({"retry_after_seconds": retry_exc.retry_after})
-
-                if retry_exc.endpoint_url is not None:
-                    details.append({"endpoint_url": retry_exc.endpoint_url})
-
-                return build_error_response(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    code="internal_error",
-                    message="JobAdder candidate read failed.",
-                    details=details,
-                )
-
-            raw_api_url = refreshed_api_url
-            raw_jobadder_instance = (
-                refreshed_jobadder_instance
-                if isinstance(refreshed_jobadder_instance, str)
-                else None
-            )
-        else:
-            # Keep other provider-read failures distinct from local persistence
-            # or configuration problems.
-            #   - At this point we have already proved the stored connection
-            #     exists and contains the fields needed to attempt the read.
-            #   - So a non-401 failure here is an upstream JobAdder read
-            #     problem, not a local OAuth-storage issue.
-            details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
-
-            if exc.status_code is not None:
-                details.append({"provider_status_code": exc.status_code})
-
-            if exc.retry_after is not None:
-                details.append({"retry_after_seconds": exc.retry_after})
-
-            if exc.endpoint_url is not None:
-                details.append({"endpoint_url": exc.endpoint_url})
-
-            return build_error_response(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                code="internal_error",
-                message="JobAdder candidate read failed.",
-                details=details,
-            )
-
-    # The preview helper already normalises the provider response into a small
-    # local dictionary.
-    #   - This route's job is simply to expose that preview through the API in
-    #     one explicit typed response shape.
     return JobAdderCandidatesPreviewResponse(
         jobadder_account=jobadder_account,
-        jobadder_instance=(
-            raw_jobadder_instance if isinstance(raw_jobadder_instance, str) else None
-        ),
-        api_url=raw_api_url,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
         item_count=preview["item_count"],
         total_count=preview["total_count"],
         links=preview["links"],
         candidates=preview["items"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}",
+    response_model=JobAdderCandidateDetailResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate detail read failed.",
+        },
+    },
+)
+def get_jobadder_candidate_detail_route(
+    jobadder_account: int,
+    candidate_id: int,
+) -> JobAdderCandidateDetailResponse | JSONResponse:
+    """
+    Return one full candidate record from the connected JobAdder account.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier to fetch.
+
+    Returns
+    -------
+    JobAdderCandidateDetailResponse | JSONResponse
+        Full candidate response when the stored connection exists and the
+        JobAdder API call succeeds.
+
+        Standard API error response when the stored connection cannot be found,
+        is missing required fields, the token refresh fails, or the provider
+        read fails.
+
+    Notes
+    -----
+    - This route exists for inspection and schema-mapping work.
+    - It exposes the full candidate object returned by JobAdder so the backend
+      can compare the real source payload with the canonical tables before
+      building ingestion logic.
+    """
+
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    detail_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidate_detail(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+        ),
+        provider_failure_message="JobAdder candidate detail read failed.",
+    )
+
+    if isinstance(detail_result, JSONResponse):
+        return detail_result
+
+    candidate_detail, api_url, jobadder_instance = detail_result
+
+    return JobAdderCandidateDetailResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        candidate_id=candidate_id,
+        candidate=candidate_detail["candidate"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills",
+    response_model=JobAdderCandidateSkillsResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate skills read failed.",
+        },
+    },
+)
+def get_jobadder_candidate_skills_route(
+    jobadder_account: int,
+    candidate_id: int,
+) -> JobAdderCandidateSkillsResponse | JSONResponse:
+    """
+    Return the structured candidate-skills hierarchy from JobAdder.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier whose skills should be fetched.
+
+    Returns
+    -------
+    JobAdderCandidateSkillsResponse | JSONResponse
+        Structured category tree when the stored connection exists and the
+        JobAdder API call succeeds.
+
+        Standard API error response when the stored connection cannot be found,
+        is missing required fields, the token refresh fails, or the provider
+        read fails.
+
+    Notes
+    -----
+    - The OpenAPI spec exposes candidate skills separately from the main
+      candidate detail payload.
+    - This route preserves that separate source-system view so the backend can
+      inspect the real category/subcategory/skill hierarchy before deciding how
+      to model skills canonically.
+    """
+
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    skills_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidate_skills(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+        ),
+        provider_failure_message="JobAdder candidate skills read failed.",
+    )
+
+    if isinstance(skills_result, JSONResponse):
+        return skills_result
+
+    candidate_skills, api_url, jobadder_instance = skills_result
+
+    return JobAdderCandidateSkillsResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        candidate_id=candidate_id,
+        category_count=candidate_skills["category_count"],
+        links=candidate_skills["links"],
+        categories=candidate_skills["categories"],
     )
 
 

@@ -42,6 +42,12 @@ JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
 JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview"
 )
+JOBADDER_CANDIDATE_DETAIL_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}"
+)
+JOBADDER_CANDIDATE_SKILLS_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -572,3 +578,164 @@ def test_jobadder_candidates_preview_returns_bad_gateway_when_jobadder_read_fail
         {"retry_after_seconds": "40"},
         {"endpoint_url": "https://api.jobadder.com/v2/candidates"},
     ]
+
+
+def test_jobadder_candidate_detail_returns_full_candidate_successfully() -> None:
+    """
+    Verify that the candidate-detail route returns one full candidate payload
+    from the JobAdder API helper.
+
+    In plain language:
+
+    - pretend the stored JobAdder connection exists
+    - pretend the provider helper returned one full candidate object
+    - confirm the route returns that object in the expected typed response
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_candidate_detail = {
+        "candidate": {
+            "candidateId": 13812978,
+            "firstName": "Tom",
+            "lastName": "Owens",
+            "email": "tom@example.com",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/candidates/13812978",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidate_detail",
+            return_value=fake_candidate_detail,
+        ) as mock_fetch_detail:
+            response = client.get(
+                JOBADDER_CANDIDATE_DETAIL_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    candidate_id=13812978,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["candidate_id"] == 13812978
+    assert payload["candidate"] == {
+        "candidateId": 13812978,
+        "firstName": "Tom",
+        "lastName": "Owens",
+        "email": "tom@example.com",
+    }
+
+    mock_fetch_detail.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=13812978,
+    )
+
+
+def test_jobadder_candidate_skills_returns_structured_skills_successfully() -> None:
+    """
+    Verify that the candidate-skills route returns the structured skills tree
+    from the JobAdder API helper.
+
+    In plain language:
+
+    - pretend the stored JobAdder connection exists
+    - pretend the provider helper returned one category tree
+    - confirm the route exposes that structure cleanly
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_skills = {
+        "categories": [
+            {
+                "categoryId": 1,
+                "name": "Engineering",
+                "subCategories": [
+                    {
+                        "subCategoryId": 2,
+                        "name": "Backend",
+                        "skills": [{"skillId": 3, "name": "Python"}],
+                    }
+                ],
+            }
+        ],
+        "category_count": 1,
+        "links": {},
+        "endpoint_url": "https://api.jobadder.com/v2/candidates/13812978/skills",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidate_skills",
+            return_value=fake_skills,
+        ) as mock_fetch_skills:
+            response = client.get(
+                JOBADDER_CANDIDATE_SKILLS_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    candidate_id=13812978,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["candidate_id"] == 13812978
+    assert payload["category_count"] == 1
+    assert payload["categories"] == [
+        {
+            "categoryId": 1,
+            "name": "Engineering",
+            "subCategories": [
+                {
+                    "subCategoryId": 2,
+                    "name": "Backend",
+                    "skills": [{"skillId": 3, "name": "Python"}],
+                }
+            ],
+        }
+    ]
+
+    mock_fetch_skills.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=13812978,
+    )
