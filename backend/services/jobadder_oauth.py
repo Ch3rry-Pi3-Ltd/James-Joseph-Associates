@@ -505,6 +505,10 @@ def refresh_jobadder_access_token(
     - return the new token set in the same shape as the original exchange
     """
 
+    # Build the refresh-grant payload separately from the HTTP request.
+    #   - That keeps the grant-type-specific field rules testable on their own.
+    #   - It also keeps the public helper readable: one step to build the
+    #     payload, one step to send it.
     payload = build_jobadder_refresh_token_payload(refresh_token=refresh_token)
 
     return _request_jobadder_token_set(
@@ -611,6 +615,14 @@ def _request_jobadder_token_set(
     JobAdderOAuthExchangeError
         If JobAdder rejects the request, returns an invalid response, or cannot
         be reached safely.
+
+    Notes
+    -----
+    - This private helper is shared by both:
+        - the authorisation-code exchange path
+        - the refresh-token path
+    - Keeping the HTTP request and response-normalisation rules in one place
+      prevents the two public helpers from drifting apart.
     """
 
     try:
@@ -741,6 +753,12 @@ def _normalise_datetime(value: Any) -> datetime | None:
     - Database reads will usually return real `datetime` objects.
     - Some tests or future callers may pass ISO strings instead.
     - If a datetime is naive, this helper treats it as UTC.
+
+    In plain language:
+
+    - accept a few realistic storage shapes
+    - turn them into one consistent UTC datetime form
+    - return none when the value cannot be trusted
     """
 
     if isinstance(value, datetime):

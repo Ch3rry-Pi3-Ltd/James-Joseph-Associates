@@ -60,6 +60,8 @@ from backend.services.jobadder_oauth import (
     exchange_jobadder_authorization_code,
     has_jobadder_oauth_configuration,
     has_jobadder_token_exchange_configuration,
+    is_jobadder_access_token_expired,
+    refresh_jobadder_access_token,
 )
 
 
@@ -463,7 +465,8 @@ def get_jobadder_candidates_preview_route(
         JobAdder API call succeeds.
 
         Standard API error response when the stored connection cannot be found,
-        is missing required fields, or the provider read fails.
+        is missing required fields, the token refresh fails, or the provider
+        read fails.
 
     Route
     -----
@@ -477,15 +480,24 @@ def get_jobadder_candidates_preview_route(
     - It is intentionally read-only.
     - It uses the stored OAuth connection row to retrieve:
         - `access_token`
+        - `refresh_token`
         - `api_url`
         - `jobadder_instance`
-    - It then calls the JobAdder candidate list endpoint and returns a small
-      preview of the first page.
+        - `obtained_at`
+        - `expires_in_seconds`
+    - If the stored access token is already expired, the route refreshes it
+      before making the provider call.
+    - If the stored access token looked valid but JobAdder still returns 401,
+      the route performs one refresh-and-retry attempt.
+    - That second path covers edge cases such as token clock drift, stale
+      stored access tokens, or provider-side timing mismatches.
 
     In plain language:
 
     - load the stored JobAdder connection from the database
-    - use its saved token to call JobAdder
+    - refresh the token first if needed
+    - use the working token to call JobAdder
+    - retry once with a refreshed token if JobAdder rejects the first attempt
     - return a small preview of candidate data
     """
 
@@ -504,8 +516,11 @@ def get_jobadder_candidates_preview_route(
         )
 
     raw_access_token = stored_connection.get("access_token")
+    raw_refresh_token = stored_connection.get("refresh_token")
     raw_api_url = stored_connection.get("api_url")
     raw_jobadder_instance = stored_connection.get("jobadder_instance")
+    raw_obtained_at = stored_connection.get("obtained_at")
+    raw_expires_in_seconds = stored_connection.get("expires_in_seconds")
 
     # Fail clearly if the database row exists but is missing the fields required
     # for an authenticated API read.
@@ -527,6 +542,137 @@ def get_jobadder_candidates_preview_route(
             details=[{"jobadder_account": jobadder_account}],
         )
 
+    def refresh_stored_connection(
+        *,
+        refresh_token_value: Any,
+    ) -> dict[str, Any] | JSONResponse:
+        """
+        Refresh the stored JobAdder token set and persist the replacement row.
+
+        Parameters
+        ----------
+        refresh_token_value : Any
+            Raw refresh-token value read from the current stored connection row.
+
+        Returns
+        -------
+        dict[str, Any] | JSONResponse
+            Updated stored connection row on success.
+
+            Standard API error response when the refresh token is missing, the
+            JobAdder refresh request fails, or the refreshed token set could
+            not be saved.
+
+        Notes
+        -----
+        - The preview route may need refresh logic in two different places:
+            - proactively before the provider call when the token is already
+              expired
+            - reactively after a 401 response when the token looked valid but
+              was rejected upstream
+        - Keeping that work in one local helper avoids duplicating the refresh,
+          save, and error-shaping logic in both branches.
+
+        In plain language:
+
+        - take the stored refresh token
+        - ask JobAdder for a new access token
+        - save the refreshed token set back to Postgres
+        - return the updated stored connection row
+        """
+
+        if (
+            not isinstance(refresh_token_value, str)
+            or refresh_token_value.strip() == ""
+        ):
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The stored JobAdder connection is missing a refresh token.",
+                details=[{"jobadder_account": jobadder_account}],
+            )
+
+        try:
+            refreshed_token_set = refresh_jobadder_access_token(
+                refresh_token=refresh_token_value,
+            )
+        except JobAdderOAuthExchangeError as exc:
+            details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+            if exc.status_code is not None:
+                details.append({"provider_status_code": exc.status_code})
+
+            if exc.provider_error is not None:
+                details.append({"provider_error": exc.provider_error})
+
+            if exc.provider_error_description is not None:
+                details.append(
+                    {"provider_error_description": exc.provider_error_description}
+                )
+
+            return build_error_response(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                code="approval_required",
+                message="JobAdder token refresh failed.",
+                details=details,
+            )
+
+        try:
+            return save_jobadder_oauth_connection(refreshed_token_set)
+        except (RuntimeError, ValueError) as exc:
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="JobAdder token refresh succeeded, but the refreshed connection could not be saved.",
+                details=[
+                    {"jobadder_account": jobadder_account},
+                    {"reason": str(exc)},
+                ],
+            )
+
+    # Refresh proactively when the stored timing fields indicate the access
+    # token is already expired or too close to expiry.
+    #   - This avoids spending one doomed provider request on a token we
+    #     already know is stale.
+    #   - The expiry helper fails closed: if the stored timing data is missing
+    #     or cannot be parsed safely, it tells us to refresh first.
+    if is_jobadder_access_token_expired(
+        obtained_at=raw_obtained_at,
+        expires_in_seconds=raw_expires_in_seconds,
+    ):
+        refreshed_connection = refresh_stored_connection(
+            refresh_token_value=raw_refresh_token
+        )
+
+        if isinstance(refreshed_connection, JSONResponse):
+            return refreshed_connection
+
+        stored_connection = refreshed_connection
+        raw_access_token = stored_connection.get("access_token")
+        raw_refresh_token = stored_connection.get("refresh_token")
+        raw_api_url = stored_connection.get("api_url")
+        raw_jobadder_instance = stored_connection.get("jobadder_instance")
+
+        # A successful refresh should have produced a complete replacement
+        # connection row.
+        #   - Re-check the required fields explicitly rather than assuming the
+        #     database row is complete.
+        if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed JobAdder connection is missing an access token.",
+                details=[{"jobadder_account": jobadder_account}],
+            )
+
+        if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed JobAdder connection is missing an API URL.",
+                details=[{"jobadder_account": jobadder_account}],
+            )
+
     try:
         preview = fetch_jobadder_candidates_preview(
             api_url=raw_api_url,
@@ -534,28 +680,105 @@ def get_jobadder_candidates_preview_route(
             item_limit=item_limit,
         )
     except JobAdderApiError as exc:
-        # Keep provider-read failures distinct from local persistence or config
-        # problems.
-        #   - This route already proved the stored connection exists.
-        #   - A failure here means the upstream JobAdder API read itself did not
-        #     complete cleanly.
-        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+        # If JobAdder responds with 401 even after the proactive expiry check,
+        # try one refresh-and-retry cycle.
+        #   - This catches edge cases where the local expiry calculation looked
+        #     fine but the upstream provider still considers the token stale.
+        #   - We retry once only. If the refreshed token is also rejected, the
+        #     route should fail clearly rather than looping.
+        if exc.status_code == 401:
+            refreshed_connection = refresh_stored_connection(
+                refresh_token_value=raw_refresh_token
+            )
 
-        if exc.status_code is not None:
-            details.append({"provider_status_code": exc.status_code})
+            if isinstance(refreshed_connection, JSONResponse):
+                return refreshed_connection
 
-        if exc.retry_after is not None:
-            details.append({"retry_after_seconds": exc.retry_after})
+            refreshed_access_token = refreshed_connection.get("access_token")
+            refreshed_api_url = refreshed_connection.get("api_url")
+            refreshed_jobadder_instance = refreshed_connection.get(
+                "jobadder_instance"
+            )
 
-        if exc.endpoint_url is not None:
-            details.append({"endpoint_url": exc.endpoint_url})
+            if (
+                not isinstance(refreshed_access_token, str)
+                or refreshed_access_token.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed JobAdder connection is missing an access token.",
+                    details=[{"jobadder_account": jobadder_account}],
+                )
 
-        return build_error_response(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            code="internal_error",
-            message="JobAdder candidate read failed.",
-            details=details,
-        )
+            if (
+                not isinstance(refreshed_api_url, str)
+                or refreshed_api_url.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed JobAdder connection is missing an API URL.",
+                    details=[{"jobadder_account": jobadder_account}],
+                )
+
+            try:
+                preview = fetch_jobadder_candidates_preview(
+                    api_url=refreshed_api_url,
+                    access_token=refreshed_access_token,
+                    item_limit=item_limit,
+                )
+            except JobAdderApiError as retry_exc:
+                details: list[dict[str, Any]] = [
+                    {"jobadder_account": jobadder_account}
+                ]
+
+                if retry_exc.status_code is not None:
+                    details.append({"provider_status_code": retry_exc.status_code})
+
+                if retry_exc.retry_after is not None:
+                    details.append({"retry_after_seconds": retry_exc.retry_after})
+
+                if retry_exc.endpoint_url is not None:
+                    details.append({"endpoint_url": retry_exc.endpoint_url})
+
+                return build_error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    code="internal_error",
+                    message="JobAdder candidate read failed.",
+                    details=details,
+                )
+
+            raw_api_url = refreshed_api_url
+            raw_jobadder_instance = (
+                refreshed_jobadder_instance
+                if isinstance(refreshed_jobadder_instance, str)
+                else None
+            )
+        else:
+            # Keep other provider-read failures distinct from local persistence
+            # or configuration problems.
+            #   - At this point we have already proved the stored connection
+            #     exists and contains the fields needed to attempt the read.
+            #   - So a non-401 failure here is an upstream JobAdder read
+            #     problem, not a local OAuth-storage issue.
+            details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+            if exc.status_code is not None:
+                details.append({"provider_status_code": exc.status_code})
+
+            if exc.retry_after is not None:
+                details.append({"retry_after_seconds": exc.retry_after})
+
+            if exc.endpoint_url is not None:
+                details.append({"endpoint_url": exc.endpoint_url})
+
+            return build_error_response(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                code="internal_error",
+                message="JobAdder candidate read failed.",
+                details=details,
+            )
 
     # The preview helper already normalises the provider response into a small
     # local dictionary.

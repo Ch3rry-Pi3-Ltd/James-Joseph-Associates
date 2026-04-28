@@ -394,6 +394,7 @@ def test_exchange_jobadder_authorization_code_returns_token_set_when_jobadder_ac
     }
     assert captured_request["headers"] == {
         "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
     }
     assert captured_request["timeout"] == 30.0
 

@@ -25,6 +25,7 @@ In plain language:
 """
 
 from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -422,6 +423,9 @@ def test_jobadder_candidates_preview_returns_first_page_preview_successfully() -
         "jobadder_instance": "eu2",
         "api_url": "https://api.jobadder.com",
         "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
     }
 
     fake_preview = {
@@ -532,6 +536,9 @@ def test_jobadder_candidates_preview_returns_bad_gateway_when_jobadder_read_fail
         "jobadder_instance": "eu2",
         "api_url": "https://api.jobadder.com",
         "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc) - timedelta(minutes=5),
+        "expires_in_seconds": 3600,
     }
 
     with patch(
