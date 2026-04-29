@@ -1,0 +1,746 @@
+"""
+Unit tests for JobAdder ingest-preparation helpers.
+
+This module tests the orchestration layer in
+`backend.services.jobadder_ingest`.
+
+Why these tests matter
+----------------------
+The lower-level JobAdder integration layers already prove smaller behaviours:
+
+- OAuth URL building
+- token exchange
+- token refresh
+- candidate reads
+- attachments reads
+
+This module tests the next layer up:
+
+    "Can the backend combine those smaller pieces into one clean
+    candidate-ingest preparation flow?"
+
+That orchestration matters because it is where the backend starts making
+business decisions such as:
+
+- when to refresh a token before reads
+- when to retry after a 401
+- how to identify resume-like attachments
+- how to select the latest likely CV
+- how to shape the internal ingest shell
+
+Scope of these tests
+--------------------
+These tests intentionally do not:
+
+- call the real JobAdder API
+- hit the real database
+- download any real CV files
+- run any LLM extraction
+
+Instead, they isolate the local Python orchestration logic by replacing:
+
+- stored-connection reads
+- refresh helpers
+- provider read callables
+
+with small fake functions.
+
+Example
+-------
+A typical orchestration call under test looks like:
+
+    build_jobadder_candidate_ingest_shell(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+and should return a structure containing:
+
+- the full candidate payload
+- the attachments payload
+- the selected latest resume attachment
+- a smaller ingest shell for later stages
+
+In plain language:
+
+- this module answers the question:
+
+    "Can we reliably prepare one candidate + CV source bundle
+    before CV download and parsing begin?"
+
+- it only tests local orchestration behaviour
+- it does not test external systems directly
+"""
+
+from datetime import datetime, timezone
+
+import pytest
+
+import backend.services.jobadder_ingest as jobadder_ingest
+from backend.services.jobadder_api import JobAdderApiError
+from backend.services.jobadder_ingest import (
+    JobAdderIngestPreparationError,
+    build_jobadder_candidate_ingest_shell,
+)
+
+
+def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resume(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the publShic orchestration helper returns the full candidate
+    bundle and correctly selects the latest resume attachment.
+
+    Notes
+    -----
+    - This test replaces the lower-level connection and provider-read helpers
+      with small fake functions.
+    - That keeps the test focused on the orchestration logic in
+      `build_jobadder_candidate_ingest_shell(...)` itself.
+    - The important behaviour here is not just "did it return something?" but:
+        - did it preserve the candidate payload?
+        - did it preserve the attachments list?
+        - did it identify only the resume-like attachments?
+        - did it pick the newest one?
+
+    Example
+    -------
+    We simulate a candidate with multiple attachments, including:
+
+    - an older resume PDF
+    - a newer resume PDF
+    - a non-resume document
+
+    and confirm the helper picks the newer resume.
+
+    In plain language:
+
+    - pretend the candidate read succeeded
+    - pretend the attachment read succeeded
+    - confirm the final result contains the expected latest CV reference
+    """
+
+    fake_connection = {
+        "access_token": "stored-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    fake_candidate_detail = {
+        "candidate": {
+            "candidateId": 16496678,
+            "firstName": "Roger",
+            "lastName": "Campbell",
+            "email": "the_rfc@hotmail.co.uk",
+            "mobile": "07934 890 708",
+            "status": "Active",
+            "skillTags": ["machine learning", "applied econometrics"],
+            "createdAt": "2025-07-10T16:01:10Z",
+            "updatedAt": "2026-04-20T10:02:24Z",
+        }
+    }
+
+    fake_candidate_attachments = {
+        "items": [
+            {
+                "attachmentId": 20953945,
+                "type": "Resume",
+                "category": "Resume",
+                "fileName": "Roger Campbell - CV 2024.pdf",
+                "fileType": "application/pdf",
+                "createdAt": "2025-12-01T09:00:00Z",
+                "links": {
+                    "self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/20953945"
+                },
+            },
+            {
+                "attachmentId": 21091489,
+                "type": "Resume",
+                "category": "Resume",
+                "fileName": "Roger Campbell - CV 2025.pdf",
+                "fileType": "application/pdf",
+                "createdAt": "2026-04-20T10:00:00Z",
+                "links": {
+                    "self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+                },
+            },
+            {
+                "attachmentId": 22000000,
+                "type": "Document",
+                "category": "Other",
+                "fileName": "Interview Notes.pdf",
+                "fileType": "application/pdf",
+                "createdAt": "2026-04-21T10:00:00Z",
+                "links": {
+                    "self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/22000000"
+                },
+            },
+        ],
+        "attachment_count": 3,
+        "links": {"self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments"},
+    }
+
+    captured_stage_names: list[str] = []
+
+    def fake_load_connection(*, jobadder_account: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        return fake_connection
+
+    def fake_read_with_retry(
+        *,
+        jobadder_account: int,
+        stored_connection: dict[str, object],
+        stage_name: str,
+        provider_failure_message: str,
+        read_callable,
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        captured_stage_names.append(stage_name)
+
+        assert jobadder_account == 2236
+        assert stored_connection == fake_connection
+
+        if stage_name == "candidate_read":
+            return fake_candidate_detail, fake_connection
+
+        if stage_name == "attachments_read":
+            return fake_candidate_attachments, fake_connection
+
+        raise AssertionError(f"Unexpected stage_name: {stage_name}")
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_load_jobadder_connection_for_ingest",
+        fake_load_connection,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_perform_jobadder_read_with_refresh_retry",
+        fake_read_with_retry,
+    )
+
+    result = build_jobadder_candidate_ingest_shell(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+    assert captured_stage_names == ["candidate_read", "attachments_read"]
+
+    assert result["source_system"] == "jobadder"
+    assert result["jobadder_account"] == 2236
+    assert result["jobadder_instance"] == "eu2"
+    assert result["api_url"] == "https://eu2api.jobadder.com/v2/"
+    assert result["source_candidate_id"] == 16496678
+
+    assert result["candidate"] == fake_candidate_detail["candidate"]
+
+    assert result["attachments"]["attachment_count"] == 3
+    assert result["attachments"]["resume_attachment_count"] == 2
+    assert result["attachments"]["items"] == fake_candidate_attachments["items"]
+
+    assert result["latest_resume"]["attachmentId"] == 21091489
+    assert result["latest_resume"]["fileName"] == "Roger Campbell - CV 2025.pdf"
+
+    assert result["ingest_shell"]["source_system"] == "jobadder"
+    assert result["ingest_shell"]["source_candidate_id"] == 16496678
+    assert result["ingest_shell"]["source_updated_at"] == "2026-04-20T10:02:24Z"
+
+    assert result["ingest_shell"]["core_identity"] == {
+        "first_name": "Roger",
+        "last_name": "Campbell",
+        "email": "the_rfc@hotmail.co.uk",
+        "mobile": "07934 890 708",
+    }
+
+    assert result["ingest_shell"]["jobadder_metadata"]["status"] == "Active"
+    assert result["ingest_shell"]["jobadder_metadata"]["skill_tags"] == [
+        "machine learning",
+        "applied econometrics",
+    ]
+
+    assert result["ingest_shell"]["resume_source"] == {
+        "provider": "jobadder_attachment",
+        "external_id": 21091489,
+        "file_name": "Roger Campbell - CV 2025.pdf",
+        "mime_type": "application/pdf",
+        "category": "Resume",
+        "type": "Resume",
+        "created_at": "2026-04-20T10:00:00Z",
+        "self_link": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+    }
+
+
+def test_build_jobadder_candidate_ingest_shell_returns_none_when_no_resume_like_attachment_exists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the public orchestration helper treats "no resume found" as a
+    normal outcome rather than an error.
+
+    Notes
+    -----
+    - This is a realistic case.
+    - A candidate may exist in JobAdder without a CV attachment.
+    - The ingest-preparation step should still return useful candidate data and
+      attachment metadata rather than crashing.
+
+    Example
+    -------
+    We simulate a candidate whose attachments are things like:
+
+    - notes
+    - miscellaneous documents
+    - non-resume files
+
+    and confirm the result contains:
+    - `latest_resume = None`
+    - `resume_source = None`
+
+    In plain language:
+
+    - pretend attachments exist
+    - but none of them look like a CV
+    - confirm the helper still returns a valid ingest bundle
+    """
+
+    fake_connection = {
+        "access_token": "stored-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    fake_candidate_detail = {
+        "candidate": {
+            "candidateId": 13816907,
+            "firstName": "Pavel",
+            "lastName": "Voronkin",
+            "email": "promethean.vp@gmail.com",
+            "mobile": "+44 7503 619821",
+            "updatedAt": "2025-09-05T07:36:44Z",
+        }
+    }
+
+    fake_candidate_attachments = {
+        "items": [
+            {
+                "attachmentId": 1001,
+                "type": "Document",
+                "category": "Other",
+                "fileName": "Interview Notes.txt",
+                "fileType": "text/plain",
+                "createdAt": "2026-01-01T10:00:00Z",
+                "links": {"self": "https://example.com/attachments/1001"},
+            }
+        ],
+        "attachment_count": 1,
+        "links": {},
+    }
+
+    def fake_load_connection(*, jobadder_account: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        return fake_connection
+
+    def fake_read_with_retry(
+        *,
+        jobadder_account: int,
+        stored_connection: dict[str, object],
+        stage_name: str,
+        provider_failure_message: str,
+        read_callable,
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        if stage_name == "candidate_read":
+            return fake_candidate_detail, fake_connection
+
+        if stage_name == "attachments_read":
+            return fake_candidate_attachments, fake_connection
+
+        raise AssertionError(f"Unexpected stage_name: {stage_name}")
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_load_jobadder_connection_for_ingest",
+        fake_load_connection,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_perform_jobadder_read_with_refresh_retry",
+        fake_read_with_retry,
+    )
+
+    result = build_jobadder_candidate_ingest_shell(
+        jobadder_account=2236,
+        candidate_id=13816907,
+    )
+
+    assert result["latest_resume"] is None
+    assert result["attachments"]["resume_attachment_count"] == 0
+    assert result["ingest_shell"]["resume_source"] is None
+
+
+def test_load_jobadder_connection_for_ingest_refreshes_proactively_when_token_is_expired(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the connection loader refreshes the stored JobAdder connection
+    before any provider read when the stored token is already expired.
+
+    Notes
+    -----
+    - This tests the proactive refresh path directly, rather than the whole
+      public orchestration helper.
+    - That keeps the test focused on one policy decision:
+        - should this helper return the stored row as-is?
+        - or should it refresh first?
+
+    Example
+    -------
+    We simulate:
+    - a stored connection row
+    - an expiry check that says "expired"
+    - a refresh helper that returns a refreshed connection
+
+    and confirm the refreshed row is what the helper returns.
+
+    In plain language:
+
+    - pretend the stored token is expired
+    - confirm the helper refreshes before any read starts
+    """
+
+    stored_connection = {
+        "access_token": "old-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "obtained_at": "2026-04-28T10:00:00Z",
+        "expires_in_seconds": 3600,
+    }
+
+    refreshed_connection = {
+        "access_token": "new-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "obtained_at": "2026-04-29T10:00:00Z",
+        "expires_in_seconds": 3600,
+    }
+
+    captured_refresh: dict[str, object] = {}
+
+    def fake_get_connection(jobadder_account: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        return stored_connection
+
+    def fake_is_expired(*, obtained_at, expires_in_seconds) -> bool:
+        assert obtained_at == "2026-04-28T10:00:00Z"
+        assert expires_in_seconds == 3600
+        return True
+
+    def fake_refresh_connection(*, jobadder_account: int, refresh_token_value: object):
+        captured_refresh["jobadder_account"] = jobadder_account
+        captured_refresh["refresh_token_value"] = refresh_token_value
+        return refreshed_connection
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "get_jobadder_oauth_connection",
+        fake_get_connection,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "is_jobadder_access_token_expired",
+        fake_is_expired,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_refresh_jobadder_connection_or_raise",
+        fake_refresh_connection,
+    )
+
+    result = jobadder_ingest._load_jobadder_connection_for_ingest(
+        jobadder_account=2236,
+    )
+
+    assert result == refreshed_connection
+    assert captured_refresh == {
+        "jobadder_account": 2236,
+        "refresh_token_value": "stored-refresh-token",
+    }
+
+
+def test_load_jobadder_connection_for_ingest_raises_when_connection_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the connection loader raises a clear local error when no stored
+    JobAdder OAuth connection exists for the requested account.
+
+    Example
+    -------
+    If the database returns `None` for account `2236`, this helper should raise
+    `JobAdderIngestPreparationError` with:
+    - `stage = "connection_load"`
+    - details containing the account ID
+
+    In plain language:
+
+    - pretend no stored connection exists
+    - confirm the helper raises a clear local error
+    """
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "get_jobadder_oauth_connection",
+        lambda jobadder_account: None,
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        jobadder_ingest._load_jobadder_connection_for_ingest(jobadder_account=2236)
+
+    error = exc_info.value
+
+    assert str(error) == "Stored JobAdder connection was not found."
+    assert error.stage == "connection_load"
+    assert error.details == [{"jobadder_account": 2236}]
+
+
+def test_load_jobadder_connection_for_ingest_raises_when_access_token_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the connection loader rejects a malformed stored connection row
+    before any provider read begins.
+
+    Notes
+    -----
+    - This is a local persistence validation test.
+    - It is not about provider behaviour.
+    - The helper should fail before it gets anywhere near JobAdder if the stored
+      row is incomplete.
+
+    Example
+    -------
+    We simulate a stored row with:
+    - blank `access_token`
+    - valid `api_url`
+
+    and confirm the helper raises `connection_load`.
+
+    In plain language:
+
+    - pretend the database row is incomplete
+    - confirm the helper fails locally and clearly
+    """
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "get_jobadder_oauth_connection",
+        lambda jobadder_account: {
+            "access_token": "   ",
+            "refresh_token": "stored-refresh-token",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "obtained_at": "2026-04-28T10:00:00Z",
+            "expires_in_seconds": 3600,
+        },
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        jobadder_ingest._load_jobadder_connection_for_ingest(jobadder_account=2236)
+
+    error = exc_info.value
+
+    assert str(error) == "The stored JobAdder connection is missing an access token."
+    assert error.stage == "connection_load"
+    assert error.details == [{"jobadder_account": 2236}]
+
+
+def test_perform_jobadder_read_with_refresh_retry_refreshes_once_after_401(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the shared read helper performs one refresh-and-retry cycle when
+    the first provider read fails with `401`.
+
+    Notes
+    -----
+    - This is the most important recovery path in the orchestration layer.
+    - The whole point is:
+        - first read fails with expired/stale token
+        - refresh succeeds
+        - retry succeeds
+    - The helper should then return:
+        - the successful read result
+        - the refreshed connection row
+
+    Example
+    -------
+    We simulate:
+    - first read -> `401`
+    - refresh helper -> refreshed connection
+    - second read -> success
+
+    In plain language:
+
+    - pretend the first token is rejected
+    - pretend refresh succeeds
+    - confirm the helper retries exactly once and returns success
+    """
+
+    stored_connection = {
+        "access_token": "old-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    refreshed_connection = {
+        "access_token": "new-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    captured_attempts: list[tuple[str, str]] = []
+
+    def fake_refresh_connection(*, jobadder_account: int, refresh_token_value: object):
+        assert jobadder_account == 2236
+        assert refresh_token_value == "stored-refresh-token"
+        return refreshed_connection
+
+    def fake_read_callable(*, api_url: str, access_token: str) -> dict[str, object]:
+        captured_attempts.append((api_url, access_token))
+
+        if access_token == "old-access-token":
+            raise JobAdderApiError(
+                "JobAdder candidate detail read failed.",
+                status_code=401,
+                endpoint_url=f"{api_url.rstrip('/')}/candidates/16496678",
+            )
+
+        return {"candidate": {"candidateId": 16496678}}
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_refresh_jobadder_connection_or_raise",
+        fake_refresh_connection,
+    )
+
+    result, winning_connection = jobadder_ingest._perform_jobadder_read_with_refresh_retry(
+        jobadder_account=2236,
+        stored_connection=stored_connection,
+        stage_name="candidate_read",
+        provider_failure_message="JobAdder candidate detail read failed.",
+        read_callable=fake_read_callable,
+    )
+
+    assert result == {"candidate": {"candidateId": 16496678}}
+    assert winning_connection == refreshed_connection
+    assert captured_attempts == [
+        ("https://eu2api.jobadder.com/v2/", "old-access-token"),
+        ("https://eu2api.jobadder.com/v2/", "new-access-token"),
+    ]
+
+
+def test_perform_jobadder_read_with_refresh_retry_raises_for_non_401_provider_failure() -> None:
+    """
+    Verify that the shared read helper does not try to refresh on non-401
+    provider failures.
+
+    Notes
+    -----
+    - A `404`, `429`, or `500` is not the same thing as "token probably
+      expired".
+    - This helper should only attempt automatic recovery for the one case where
+      a refresh is likely to help: `401`.
+
+    Example
+    -------
+    We simulate a `404` candidate read failure and confirm the helper raises
+    `JobAdderIngestPreparationError` directly without trying to refresh.
+
+    In plain language:
+
+    - pretend the provider returned a non-401 error
+    - confirm the helper surfaces that as a final failure
+    """
+
+    stored_connection = {
+        "access_token": "stored-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    def fake_read_callable(*, api_url: str, access_token: str) -> dict[str, object]:
+        raise JobAdderApiError(
+            "JobAdder candidate detail read failed.",
+            status_code=404,
+            endpoint_url="https://eu2api.jobadder.com/v2/candidates/99999999",
+            response_body={"message": "Not found"},
+        )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        jobadder_ingest._perform_jobadder_read_with_refresh_retry(
+            jobadder_account=2236,
+            stored_connection=stored_connection,
+            stage_name="candidate_read",
+            provider_failure_message="JobAdder candidate detail read failed.",
+            read_callable=fake_read_callable,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "JobAdder candidate detail read failed."
+    assert error.stage == "candidate_read"
+    assert error.status_code == 404
+    assert error.details == [
+        {"jobadder_account": 2236},
+        {"provider_status_code": 404},
+        {"endpoint_url": "https://eu2api.jobadder.com/v2/candidates/99999999"},
+    ]
+
+
+def test_select_latest_resume_attachment_uses_created_at_then_attachment_id() -> None:
+    """
+    Verify that resume selection prefers the newest timestamp and uses
+    attachment ID as a fallback tie-breaker.
+
+    Notes
+    -----
+    - This test directly exercises the selection rule.
+    - That keeps the ranking behaviour explicit and easy to change later if the
+      client's data teaches us a better rule.
+
+    Example
+    -------
+    We simulate two resume attachments with the same timestamp but different
+    attachment IDs. The helper should return the one with the higher numeric ID.
+
+    In plain language:
+
+    - pretend two resumes were uploaded at the same time
+    - confirm the helper still chooses deterministically
+    """
+
+    attachments = [
+        {
+            "attachmentId": 100,
+            "type": "Resume",
+            "category": "Resume",
+            "fileName": "resume-a.pdf",
+            "fileType": "application/pdf",
+            "createdAt": "2026-04-20T10:00:00Z",
+        },
+        {
+            "attachmentId": 200,
+            "type": "Resume",
+            "category": "Resume",
+            "fileName": "resume-b.pdf",
+            "fileType": "application/pdf",
+            "createdAt": "2026-04-20T10:00:00Z",
+        },
+    ]
+
+    selected = jobadder_ingest._select_latest_resume_attachment(attachments)
+
+    assert selected is not None
+    assert selected["attachmentId"] == 200
