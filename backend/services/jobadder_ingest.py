@@ -1,20 +1,20 @@
 """
-JobAdder candidate-ingest prepatation helpers.
+JobAdder candidate-ingest preparation helpers.
 
-This module sites one level above the raw JobAdder API read helpers.
+This module sits one level above the raw JobAdder API read helpers.
 
 Why this module exists
 ----------------------
 We already have lower-level pieces that can:
 
-- load the stored JobAdder OAuth connection from Postgrest
+- load the stored JobAdder OAuth connection from Postgres
 - refresh an expired JobAdder access token
 - fetch one candidate from JobAdder
 - fetch other JobAdder resources through small read-only service helpers
 
 The next problem is different:
 
-    "Can the backend taken several JobAdder reads and turn them into one
+    "Can the backend take several JobAdder reads and turn them into one
     internal ingest-ready payload shell?"
 
 That is what this module is for.
@@ -30,7 +30,7 @@ It does not:
 - write canonical candidate records
 - write document records
 - talk to Dropbox
-- talk to Azure Blob storage
+- talk to Azure Blob Storage
 
 It only prepares the raw source-side materials that later ingestion stages
 will need.
@@ -38,7 +38,7 @@ will need.
 Specifically, given a JobAdder account ID and a candidate ID, this module:
 
 1. loads the stored JobAdder OAuth connection
-2. makes sure the access token is usuable
+2. makes sure the access token is usable
 3. refreshes the token if needed
 4. fetches the full candidate record
 5. fetches the candidate's attachment list
@@ -52,11 +52,27 @@ This is the right first orchestration layer because it separates two concerns:
 - raw provider transport details
 - ingest preparation decisions
 
-The lower-level `backend.services.jobadder_api` module should stay focus on
+The lower-level `backend.services.jobadder_api` module should stay focused on
 single endpoint reads.
 
-This module should stay focused on combining those reads into something the rest
-of the backend can use.
+This module should stay focused on combining those reads into something the
+rest of the backend can use.
+
+Example
+-------
+Later, another service or route can call:
+
+    build_jobadder_candidate_ingest_shell(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+and receive a structure that contains:
+
+- the full JobAdder candidate payload
+- the candidate's attachments list
+- the best current guess at the latest resume attachment
+- a smaller ingest shell for later LLM/CV work
 
 In plain language:
 
@@ -80,13 +96,14 @@ from backend.db.jobadder_oauth import (
 from backend.services.jobadder_api import (
     JobAdderApiError,
     fetch_jobadder_candidate_attachments,
-    fetch_job_adder_candidate_detail,
+    fetch_jobadder_candidate_detail,
 )
 from backend.services.jobadder_oauth import (
     JobAdderOAuthExchangeError,
     is_jobadder_access_token_expired,
     refresh_jobadder_access_token,
 )
+
 
 class JobAdderIngestPreparationError(RuntimeError):
     """
@@ -112,6 +129,21 @@ class JobAdderIngestPreparationError(RuntimeError):
     details : list[dict[str, Any]]
         Small safe structured details that can help route handlers, logs, or
         tests explain what happened without leaking secrets.
+
+    Example
+    -------
+    A caller might catch this exception and inspect:
+
+        error.stage
+        error.status_code
+        error.details
+
+    to decide whether the failure came from:
+
+    - a missing local OAuth connection
+    - a failed refresh-token request
+    - a failed candidate read
+    - a failed attachments read
 
     Notes
     -----
@@ -139,6 +171,15 @@ class JobAdderIngestPreparationError(RuntimeError):
         """
         Return the human-readable error message only.
 
+        Example
+        -------
+        Converting the exception to a string:
+
+            str(error)
+
+        returns just the main safe explanation, while the richer structured
+        context stays on `error.stage`, `error.status_code`, and `error.details`.
+
         In plain language:
 
         - printing the exception should show the main explanation
@@ -146,14 +187,15 @@ class JobAdderIngestPreparationError(RuntimeError):
         """
 
         return self.message
-    
+
+
 def build_jobadder_candidate_ingest_shell(
     *,
     jobadder_account: int,
     candidate_id: int,
 ) -> dict[str, Any]:
     """
-    Build one internal JobAdder candidate-ingest prepatation payload.
+    Build one internal JobAdder candidate-ingest preparation payload.
 
     Parameters
     ----------
@@ -182,7 +224,27 @@ def build_jobadder_candidate_ingest_shell(
 
     JobAdderIngestPreparationError
         If the stored JobAdder connection cannot be loaded, refreshed, or used
-        to read the required JobAdder resource safely.
+        to read the required JobAdder resources safely.
+
+    Example
+    -------
+    A typical call looks like:
+
+        build_jobadder_candidate_ingest_shell(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    And a successful result contains keys such as:
+
+        {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+            "candidate": {...},
+            "attachments": {...},
+            "latest_resume": {...} or None,
+            "ingest_shell": {...},
+        }
 
     Notes
     -----
@@ -198,20 +260,27 @@ def build_jobadder_candidate_ingest_shell(
     - pick the most likely latest CV
     - return one clean bundle for the next ingestion step
     """
-    
+
     if jobadder_account < 1:
         raise ValueError("JobAdder jobadder_account must be at least 1.")
-    
+
     if candidate_id < 1:
         raise ValueError("JobAdder candidate_id must be at least 1.")
-    
+
     stored_connection = _load_jobadder_connection_for_ingest(
         jobadder_account=jobadder_account,
     )
 
-    # Use the same successful connection for both reads
-    #   - If the first read forces a refresh, we want the second read to reused
-    #     the refreshed token and API URL instead of repeating stale values.
+    # Use the same successful connection for both reads.
+    #
+    # Why this matters:
+    # - The first read may force a refresh because the stored access token has
+    #   expired.
+    # - If that happens, we want the second read to reuse the refreshed token
+    #   and refreshed API URL from the saved connection row.
+    # - Reusing the winning connection keeps the orchestration deterministic and
+    #   avoids accidentally mixing stale and fresh credentials in one ingest
+    #   preparation run.
     candidate_detail, successful_connection = _perform_jobadder_read_with_refresh_retry(
         jobadder_account=jobadder_account,
         stored_connection=stored_connection,
@@ -223,7 +292,7 @@ def build_jobadder_candidate_ingest_shell(
             candidate_id=candidate_id,
         ),
     )
-    
+
     candidate_attachments, successful_connection = _perform_jobadder_read_with_refresh_retry(
         jobadder_account=jobadder_account,
         stored_connection=successful_connection,
@@ -237,6 +306,15 @@ def build_jobadder_candidate_ingest_shell(
     )
 
     attachment_items = candidate_attachments.get("items", [])
+
+    # Filter first, then sort.
+    #
+    # This two-step approach is intentionally easy to read:
+    # - first decide which attachments even look like resumes
+    # - then decide which one is the latest among that smaller set
+    #
+    # That separation keeps the heuristics beginner-friendly and makes later
+    # debugging much easier when the client asks, "Why did we pick this file?"
     resume_attachments = [
         attachment
         for attachment in attachment_items
@@ -250,16 +328,22 @@ def build_jobadder_candidate_ingest_shell(
 
     # The top-level return includes two layers on purpose:
     #
-    #   1. rich source payloads:
-    #       - full candidate object
-    #       - full attachment list
+    # 1. rich source payloads:
+    #    - full candidate object
+    #    - full attachment list
     #
-    #   2. smaller ingest shell:
-    #       - the minimum structured metadata that downstream ingestion steps can
-    #         rely on without re-reading the entire source payload shape
+    # 2. smaller ingest shell:
+    #    - the minimum structured metadata that downstream ingestion steps can
+    #      rely on without re-reading the entire source payload shape
     #
-    # That split keeps the early experimentation easy while still encouraging a
-    # stable internal contract to emerge.
+    # The intuition here is important:
+    # - early in an integration, you still want the rich raw payloads because
+    #   you are learning what the source system really sends
+    # - but you also want to start defining a smaller internal contract that
+    #   later parsing, matching, and upsert code can depend on
+    #
+    # Returning both gives you flexibility now without forcing every later
+    # stage to stay coupled to the full JobAdder response structure forever.
     return {
         "source_system": "jobadder",
         "jobadder_account": jobadder_account,
@@ -301,6 +385,7 @@ def build_jobadder_candidate_ingest_shell(
         },
     }
 
+
 def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, Any]:
     """
     Load one stored JobAdder OAuth connection and make sure it is read-ready.
@@ -308,7 +393,7 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
     Parameters
     ----------
     jobadder_account : int
-        Jobadder account identifier used to locate the stored OAuth connection.
+        JobAdder account identifier used to locate the stored OAuth connection.
 
     Returns
     -------
@@ -318,13 +403,19 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
 
     Raises
     ------
-    JobAdderIngestPrepatationError
+    JobAdderIngestPreparationError
         If the stored connection does not exist, is missing required fields, or
         requires a refresh that cannot be completed.
 
+    Example
+    -------
+    If account `2236` has a valid stored connection, this helper returns that
+    connection row. If the token is expired, it refreshes the token first and
+    returns the refreshed saved row instead.
+
     Notes
     -----
-    - this helper mirrors the same backend bahaviour already used by the
+    - This helper mirrors the same backend behaviour already used by the
       integration routes:
         - load the stored connection
         - validate the local fields
@@ -339,46 +430,47 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
         raise JobAdderIngestPreparationError(
             "Stored JobAdder connection was not found.",
             stage="connection_load",
-            details=[
-                {
-                    "jobadder_account": jobadder_account
-                }
-            ],
+            details=[{"jobadder_account": jobadder_account}],
         )
-    
+
     raw_access_token = stored_connection.get("access_token")
     raw_api_url = stored_connection.get("api_url")
     raw_refresh_token = stored_connection.get("refresh_token")
     raw_obtained_at = stored_connection.get("obtained_at")
     raw_expires_in_seconds = stored_connection.get("expires_in_seconds")
 
-    if not isinstance(raw_access_token, str) or raw_access_token.string() == "":
+    # Validate local storage before making any provider call.
+    #
+    # This distinction is useful:
+    # - if local storage is incomplete, that is our problem
+    # - if JobAdder rejects a well-formed request later, that is an upstream
+    #   provider problem
+    #
+    # Keeping those two categories separate leads to much clearer debugging and
+    # much clearer user-facing error messages later.
+    if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
         raise JobAdderIngestPreparationError(
             "The stored JobAdder connection is missing an access token.",
             stage="connection_load",
-            details=[
-                {
-                    "jobadder_account": jobadder_account
-                }
-            ],
+            details=[{"jobadder_account": jobadder_account}],
         )
-    
+
     if not isinstance(raw_api_url, str) or raw_api_url.strip() == "":
         raise JobAdderIngestPreparationError(
             "The stored JobAdder connection is missing an API URL.",
-            stage="connect_load",
-            details=[
-                {
-                    "jobadder_account": jobadder_account
-                }
-            ],
+            stage="connection_load",
+            details=[{"jobadder_account": jobadder_account}],
         )
-    
+
     # Refresh proactively when the stored timing fields indicate the token is at
-    # or beyond its safe lifetime
-    #   - This avoids avoidable 401s and keeps ingestion work deterministic.
-    #   - Start with a token that is expected to be valid, rather than immediately
-    #     gambling on a near-expiry access token.
+    # or beyond its safe lifetime.
+    #
+    # The intuition:
+    # - a near-expiry token is a bad foundation for a multi-step ingest read
+    # - it is better to refresh once upfront than to let the first or second
+    #   provider call fail halfway through
+    # - starting with a token we expect to be valid makes later behaviour much
+    #   more predictable
     if is_jobadder_access_token_expired(
         obtained_at=raw_obtained_at,
         expires_in_seconds=raw_expires_in_seconds,
@@ -389,6 +481,7 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
         )
 
     return stored_connection
+
 
 def _refresh_jobadder_connection_or_raise(
     *,
@@ -415,7 +508,16 @@ def _refresh_jobadder_connection_or_raise(
     Raises
     ------
     JobAdderIngestPreparationError
-        If the refresh token is missing, the provider refresh fails, or the refreshed token set cannot be saved.
+        If the refresh token is missing, the provider refresh fails, or the
+        refreshed token set cannot be saved.
+
+    Example
+    -------
+    This helper is used in two situations:
+
+    - before the first provider read, when the token is already expired
+    - after a `401` response, when the token looked valid but JobAdder rejected
+      it anyway
 
     Notes
     -----
@@ -473,7 +575,19 @@ def _refresh_jobadder_connection_or_raise(
     refreshed_access_token = refreshed_connection.get("access_token")
     refreshed_api_url = refreshed_connection.get("api_url")
 
-    if not isinstance(refreshed_access_token, str) or refreshed_access_token.strip() == "":
+    # Re-validate the freshly saved row.
+    #
+    # That may feel defensive, but it is useful defensive code:
+    # - the refresh HTTP request may have succeeded
+    # - the save helper may have returned a row
+    # - and yet that row could still be missing a field we need
+    #
+    # Failing early here keeps later code simpler, because every later step can
+    # assume a refreshed connection is actually usable.
+    if (
+        not isinstance(refreshed_access_token, str)
+        or refreshed_access_token.strip() == ""
+    ):
         raise JobAdderIngestPreparationError(
             "The refreshed JobAdder connection is missing an access token.",
             stage="connection_refresh",
@@ -488,6 +602,7 @@ def _refresh_jobadder_connection_or_raise(
         )
 
     return refreshed_connection
+
 
 def _perform_jobadder_read_with_refresh_retry(
     *,
@@ -534,6 +649,22 @@ def _perform_jobadder_read_with_refresh_retry(
         If the provider read fails definitively or the refresh-and-retry path
         cannot recover from a 401.
 
+    Example
+    -------
+    This helper wraps both:
+
+    - candidate detail reads
+    - candidate attachments reads
+
+    so the caller does not need to duplicate the same:
+
+    - try read
+    - if 401, refresh
+    - retry once
+    - otherwise fail with structured context
+
+    logic in multiple places.
+
     Notes
     -----
     - Only 401 gets special handling here.
@@ -562,6 +693,14 @@ def _perform_jobadder_read_with_refresh_retry(
             refreshed_access_token = refreshed_connection.get("access_token")
             refreshed_api_url = refreshed_connection.get("api_url")
 
+            # Retry exactly once.
+            #
+            # Why exactly once?
+            # - one retry is enough to cover the meaningful token-expiry case
+            # - more than one retry starts to hide real problems
+            # - unbounded retries are especially dangerous in provider
+            #   integrations because they can produce confusing partial failure
+            #   behaviour and unnecessary upstream traffic
             try:
                 read_result = read_callable(
                     api_url=refreshed_api_url,
@@ -607,3 +746,314 @@ def _perform_jobadder_read_with_refresh_retry(
         ) from exc
 
     return read_result, stored_connection
+
+
+def _looks_like_resume_attachment(attachment: dict[str, Any]) -> bool:
+    """
+    Return whether one JobAdder attachment looks like a CV/resume.
+
+    Parameters
+    ----------
+    attachment : dict[str, Any]
+        One attachment object returned by JobAdder.
+
+    Returns
+    -------
+    bool
+        `True` when the attachment looks like a resume/CV candidate document.
+
+    Example
+    -------
+    This helper returns `True` for attachment shapes like:
+
+        {
+            "type": "Resume",
+            "category": "Resume",
+            "fileName": "Roger Campbell - CV 2025.pdf",
+            "fileType": "application/pdf",
+        }
+
+    and `False` for unrelated candidate attachments.
+
+    Notes
+    -----
+    - This helper uses a pragmatic heuristic rather than one fragile single
+      field.
+    - In real tenant data, resume-related signals may appear in:
+        - `type`
+        - `category`
+        - `fileName`
+        - `fileType`
+    - The goal here is not perfect semantic classification yet.
+    - The goal is to identify the most likely candidate resume attachment for
+      the next ingestion stage.
+    """
+
+    raw_type = attachment.get("type")
+    raw_category = attachment.get("category")
+    raw_file_name = attachment.get("fileName")
+    raw_file_type = attachment.get("fileType")
+
+    attachment_type = raw_type.strip().lower() if isinstance(raw_type, str) else ""
+    attachment_category = (
+        raw_category.strip().lower() if isinstance(raw_category, str) else ""
+    )
+    file_name = raw_file_name.strip().lower() if isinstance(raw_file_name, str) else ""
+    file_type = raw_file_type.strip().lower() if isinstance(raw_file_type, str) else ""
+
+    if attachment_type == "resume":
+        return True
+
+    if attachment_category == "resume":
+        return True
+
+    if "cv" in file_name or "resume" in file_name:
+        return True
+
+    if file_type == "application/pdf" and ("cv" in file_name or "resume" in file_name):
+        return True
+
+    return False
+
+
+def _select_latest_resume_attachment(
+    attachments: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """
+    Select the latest likely-resume attachment from a filtered attachment list.
+
+    Parameters
+    ----------
+    attachments : list[dict[str, Any]]
+        Attachments that have already passed the resume-likeliness filter.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Latest likely resume attachment, or `None` when no resume-like
+        attachment exists.
+
+    Example
+    -------
+    If a candidate has three resume-like attachments from different dates, this
+    helper returns the newest one according to the `createdAt` timestamp, with
+    attachment ID used as a fallback tie-breaker.
+
+    Notes
+    -----
+    - We prefer the latest attachment because candidates often upload multiple
+      CV revisions over time.
+    - We sort primarily by `createdAt` descending.
+    - When timestamps are equal or missing, we use the numeric attachment ID as
+      a stable fallback tie-breaker where possible.
+    """
+
+    if len(attachments) == 0:
+        return None
+
+    return sorted(
+        attachments,
+        key=_resume_attachment_sort_key,
+        reverse=True,
+    )[0]
+
+
+def _resume_attachment_sort_key(attachment: dict[str, Any]) -> tuple[datetime, int]:
+    """
+    Build a stable sort key for selecting the latest resume attachment.
+
+    Parameters
+    ----------
+    attachment : dict[str, Any]
+        One candidate resume attachment.
+
+    Returns
+    -------
+    tuple[datetime, int]
+        Sort key consisting of:
+        - parsed `createdAt` timestamp
+        - numeric attachment ID fallback
+
+    Example
+    -------
+    A more recent attachment such as:
+
+        {"createdAt": "2026-04-20T10:00:00Z", "attachmentId": 21091489}
+
+    sorts after an older one such as:
+
+        {"createdAt": "2025-12-01T09:00:00Z", "attachmentId": 20953945}
+
+    Notes
+    -----
+    - When `createdAt` is missing or invalid, this helper falls back to the
+      Unix epoch rather than raising.
+    - That keeps the selector deterministic even on messy source data.
+    """
+
+    created_at = _parse_optional_datetime(attachment.get("createdAt"))
+    attachment_id = _safe_int(attachment.get("attachmentId")) or 0
+
+    return created_at or datetime.fromtimestamp(0, tz=timezone.utc), attachment_id
+
+
+def _build_resume_source_reference(
+    latest_resume: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """
+    Build a smaller internal resume-source reference from one attachment object.
+
+    Parameters
+    ----------
+    latest_resume : dict[str, Any] | None
+        Selected latest resume attachment, if one was found.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Smaller internal resume-source reference, or `None` when no resume
+        attachment was found.
+
+    Example
+    -------
+    A successful result might look like:
+
+        {
+            "provider": "jobadder_attachment",
+            "external_id": 21091489,
+            "file_name": "Roger Campbell - CV 2025.pdf",
+            "mime_type": "application/pdf",
+            "category": "Resume",
+            "type": "Resume",
+            "created_at": "2026-04-20T10:00:00Z",
+            "self_link": "https://eu2api.jobadder.com/v2/candidates/.../attachments/21091489",
+        }
+
+    Notes
+    -----
+    - The top-level orchestration result already keeps the full attachment list.
+    - This helper exists so downstream ingestion steps have one smaller, more
+      stable structure to work with.
+    - That is the beginning of a provider-agnostic document-source contract
+      that can later support Dropbox or other file providers.
+    """
+
+    if latest_resume is None:
+        return None
+
+    raw_links = latest_resume.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    return {
+        "provider": "jobadder_attachment",
+        "external_id": latest_resume.get("attachmentId"),
+        "file_name": latest_resume.get("fileName"),
+        "mime_type": latest_resume.get("fileType"),
+        "category": latest_resume.get("category"),
+        "type": latest_resume.get("type"),
+        "created_at": latest_resume.get("createdAt"),
+        "self_link": links.get("self"),
+    }
+
+
+def _parse_optional_datetime(value: Any) -> datetime | None:
+    """
+    Convert a source-system timestamp value into a UTC datetime when possible.
+
+    Parameters
+    ----------
+    value : Any
+        Raw value from a JobAdder payload.
+
+    Returns
+    -------
+    datetime | None
+        Parsed UTC datetime when successful, otherwise `None`.
+
+    Example
+    -------
+    Input values such as:
+
+        "2026-04-20T10:02:24Z"
+
+    become timezone-aware UTC datetimes, while blank or malformed values become
+    `None`.
+    """
+
+    if not isinstance(value, str):
+        return None
+
+    cleaned_value = value.strip()
+
+    if cleaned_value == "":
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(cleaned_value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+
+    return parsed.astimezone(timezone.utc)
+
+
+def _safe_int(value: Any) -> int | None:
+    """
+    Convert a source-system value into an integer when safe to do so.
+
+    Parameters
+    ----------
+    value : Any
+        Raw value from a JobAdder payload.
+
+    Returns
+    -------
+    int | None
+        Parsed integer value, or `None` when the conversion is not safe.
+
+    Example
+    -------
+    The helper accepts values like:
+
+    - `123`
+    - `123.0`
+    - `"123"`
+
+    and returns `123`, while values like:
+
+    - `""`
+    - `"abc"`
+    - `None`
+
+    return `None`.
+    """
+
+    if isinstance(value, bool):
+        return None
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, float):
+        return int(value)
+
+    if not isinstance(value, str):
+        return None
+
+    cleaned_value = value.strip()
+
+    if cleaned_value == "":
+        return None
+
+    try:
+        return int(cleaned_value)
+    except ValueError:
+        return None
+
+
+__all__ = [
+    "JobAdderIngestPreparationError",
+    "build_jobadder_candidate_ingest_shell",
+]
