@@ -71,6 +71,8 @@ In plain language:
 """
 
 from datetime import datetime, timezone
+from typing import Any, Callable
+
 from backend.db.jobadder_oauth import (
     get_jobadder_oauth_connection,
     save_jobadder_oauth_connection,
@@ -373,11 +375,10 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
         )
     
     # Refresh proactively when the stored timing fields indicate the token is at
-    # or beyond its safe lifetime.
-    #   - This avoids avoidable 401s and keeps ingestion work deterministic:
-    #     
-    #     - start with a token that is expected to be valid, rather than immediately
-    #       gambling on a near-expiry access token.
+    # or beyond its safe lifetime
+    #   - This avoids avoidable 401s and keeps ingestion work deterministic.
+    #   - Start with a token that is expected to be valid, rather than immediately
+    #     gambling on a near-expiry access token.
     if is_jobadder_access_token_expired(
         obtained_at=raw_obtained_at,
         expires_in_seconds=raw_expires_in_seconds,
@@ -388,3 +389,221 @@ def _load_jobadder_connection_for_ingest(*, jobadder_account: int) -> dict[str, 
         )
 
     return stored_connection
+
+def _refresh_jobadder_connection_or_raise(
+    *,
+    jobadder_account: int,
+    refresh_token_value: Any,
+) -> dict[str, Any]:
+    """
+    Refresh the stored JobAdder token set and persist the replacement row.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used as the natural key for the stored
+        connection.
+
+    refresh_token_value : Any
+        Raw refresh-token value read from the current stored connection row.
+
+    Returns
+    -------
+    dict[str, Any]
+        Updated stored connection row after a successful refresh and save.
+
+    Raises
+    ------
+    JobAdderIngestPreparationError
+        If the refresh token is missing, the provider refresh fails, or the refreshed token set cannot be saved.
+
+    Notes
+    -----
+    - This helper centralises the refresh-and-save sequence for the ingest
+      orchestration layer.
+    - That matters because the same sequence may be needed:
+        - proactively before the first read
+        - reactively after a 401 response
+    """
+
+    if not isinstance(refresh_token_value, str) or refresh_token_value.strip() == "":
+        raise JobAdderIngestPreparationError(
+            "The stored JobAdder connection is missing a refresh token.",
+            stage="connection_refresh",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    try:
+        refreshed_token_set = refresh_jobadder_access_token(
+            refresh_token=refresh_token_value,
+        )
+    except JobAdderOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        raise JobAdderIngestPreparationError(
+            "JobAdder token refresh failed.",
+            stage="connection_refresh",
+            status_code=exc.status_code,
+            details=details,
+        ) from exc
+
+    try:
+        refreshed_connection = save_jobadder_oauth_connection(refreshed_token_set)
+    except (RuntimeError, ValueError) as exc:
+        raise JobAdderIngestPreparationError(
+            "JobAdder token refresh succeeded, but the refreshed connection could not be saved.",
+            stage="connection_refresh",
+            details=[
+                {"jobadder_account": jobadder_account},
+                {"reason": str(exc)},
+            ],
+        ) from exc
+
+    refreshed_access_token = refreshed_connection.get("access_token")
+    refreshed_api_url = refreshed_connection.get("api_url")
+
+    if not isinstance(refreshed_access_token, str) or refreshed_access_token.strip() == "":
+        raise JobAdderIngestPreparationError(
+            "The refreshed JobAdder connection is missing an access token.",
+            stage="connection_refresh",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    if not isinstance(refreshed_api_url, str) or refreshed_api_url.strip() == "":
+        raise JobAdderIngestPreparationError(
+            "The refreshed JobAdder connection is missing an API URL.",
+            stage="connection_refresh",
+            details=[{"jobadder_account": jobadder_account}],
+        )
+
+    return refreshed_connection
+
+def _perform_jobadder_read_with_refresh_retry(
+    *,
+    jobadder_account: int,
+    stored_connection: dict[str, Any],
+    stage_name: str,
+    provider_failure_message: str,
+    read_callable: Callable[..., dict[str, Any]],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """
+    Perform one JobAdder read and retry once with a refreshed token after 401.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used for refresh saves and error details.
+
+    stored_connection : dict[str, Any]
+        Stored JobAdder connection row that already passed the initial local
+        validation checks.
+
+    stage_name : str
+        Small label describing which orchestration stage is performing the read.
+
+    provider_failure_message : str
+        Safe human-readable message to use if the provider read ultimately
+        fails.
+
+    read_callable : Callable[..., dict[str, Any]]
+        Small function that accepts `api_url` and `access_token` keyword
+        arguments and performs one concrete provider read.
+
+    Returns
+    -------
+    tuple[dict[str, Any], dict[str, Any]]
+        Tuple containing:
+
+        - the normalised read result returned by the lower-level API helper
+        - the connection row that succeeded for that read
+
+    Raises
+    ------
+    JobAdderIngestPreparationError
+        If the provider read fails definitively or the refresh-and-retry path
+        cannot recover from a 401.
+
+    Notes
+    -----
+    - Only 401 gets special handling here.
+    - That is intentional:
+        - 401 often means the access token expired between reads
+        - other statuses such as 404 or 429 are different classes of failure
+          and should not trigger a blind refresh-and-retry loop
+    """
+
+    raw_access_token = stored_connection.get("access_token")
+    raw_api_url = stored_connection.get("api_url")
+    raw_refresh_token = stored_connection.get("refresh_token")
+
+    try:
+        read_result = read_callable(
+            api_url=raw_api_url,
+            access_token=raw_access_token,
+        )
+    except JobAdderApiError as exc:
+        if exc.status_code == 401:
+            refreshed_connection = _refresh_jobadder_connection_or_raise(
+                jobadder_account=jobadder_account,
+                refresh_token_value=raw_refresh_token,
+            )
+
+            refreshed_access_token = refreshed_connection.get("access_token")
+            refreshed_api_url = refreshed_connection.get("api_url")
+
+            try:
+                read_result = read_callable(
+                    api_url=refreshed_api_url,
+                    access_token=refreshed_access_token,
+                )
+            except JobAdderApiError as retry_exc:
+                details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+                if retry_exc.status_code is not None:
+                    details.append({"provider_status_code": retry_exc.status_code})
+
+                if retry_exc.retry_after is not None:
+                    details.append({"retry_after_seconds": retry_exc.retry_after})
+
+                if retry_exc.endpoint_url is not None:
+                    details.append({"endpoint_url": retry_exc.endpoint_url})
+
+                raise JobAdderIngestPreparationError(
+                    provider_failure_message,
+                    stage=stage_name,
+                    status_code=retry_exc.status_code,
+                    details=details,
+                ) from retry_exc
+
+            return read_result, refreshed_connection
+
+        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.retry_after is not None:
+            details.append({"retry_after_seconds": exc.retry_after})
+
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+
+        raise JobAdderIngestPreparationError(
+            provider_failure_message,
+            stage=stage_name,
+            status_code=exc.status_code,
+            details=details,
+        ) from exc
+
+    return read_result, stored_connection
