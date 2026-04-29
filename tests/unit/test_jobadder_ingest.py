@@ -72,8 +72,6 @@ In plain language:
 - it does not test external systems directly
 """
 
-from datetime import datetime, timezone
-
 import pytest
 
 import backend.services.jobadder_ingest as jobadder_ingest
