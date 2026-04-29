@@ -28,6 +28,15 @@ token response once the callback flow is fully wired.
 Keeping this logic in `backend.db` is consistent with the rest of the backend,
 where direct Postgres reads and writes already live in small helper modules.
 
+Example
+-------
+Typical usage in the rest of the backend looks like:
+
+    saved_connection = save_jobadder_oauth_connection(token_set)
+    stored_connection = get_jobadder_oauth_connection(
+        saved_connection["jobadder_account"]
+    )
+
 Important note
 --------------
 This module assumes a table exists for storing one JobAdder OAuth connection.
@@ -114,13 +123,32 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
     - update the existing record if this account already exists
     - return the saved row
     """
-
+    # Capture the moment this token set became "our current stored truth".
+    #
+    # This timestamp matters because `expires_in` is only a duration. Without
+    # also storing when the token was obtained, later code would have no way to
+    # work out whether the access token is still safe to use.
     obtained_at = datetime.now(timezone.utc)
 
+    # Pull the provider-specific companion fields out of the raw payload.
+    #
+    # `JobAdderTokenSet` models the standard OAuth fields directly, but
+    # JobAdder's response also carries integration-specific fields such as:
+    # - `api`
+    # - `instance`
+    # - `account`
+    #
+    # We keep those here because they are operationally important for later
+    # authenticated API reads.
     raw_api_url = token_set.raw_payload.get("api")
     raw_jobadder_instance = token_set.raw_payload.get("instance")
     raw_jobadder_account = token_set.raw_payload.get("account")
 
+    # Normalise the optional provider fields into the simple storage types we
+    # actually want in Postgres.
+    #
+    # Keeping this coercion explicit here is easier to reason about than trying
+    # to let SQL or implicit Python truthiness rules make these decisions later.
     api_url = raw_api_url if isinstance(raw_api_url, str) else None
     jobadder_instance = (
         raw_jobadder_instance if isinstance(raw_jobadder_instance, str) else None
@@ -147,7 +175,14 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
         raise ValueError(
             "JobAdder token set did not include a usable account identifier."
         )
-    
+
+    # Use one upsert statement rather than separate "select then insert/update"
+    # logic.
+    #
+    # The intuition:
+    # - a JobAdder account is the natural key for this connection row
+    # - reconnecting the same JobAdder account should update the same record
+    # - one SQL statement keeps the behaviour atomic and easier to test
     sql = """
         insert into jobadder_oauth_connections (
             access_token,
@@ -193,6 +228,13 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
             updated_at
     """
 
+    # Keep the SQL parameter mapping explicit so each stored column is easy to
+    # trace back to its Python source.
+    #
+    # This is deliberately a little verbose. That verbosity makes it much
+    # easier for a beginner to answer:
+    # - where did this column value come from?
+    # - is this the raw provider value or a normalised value?
     params = {
         "access_token": token_set.access_token,
         "refresh_token": token_set.refresh_token,
@@ -204,6 +246,13 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
         "jobadder_account": jobadder_account,
     }
 
+    # Execute the write in one transaction and fetch the returned row.
+    #
+    # The returned row is useful because it gives callers the exact persisted
+    # shape, including database-managed fields such as:
+    # - `id`
+    # - `created_at`
+    # - `updated_at`
     with postgres_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -215,9 +264,13 @@ def save_jobadder_oauth_connection(token_set: JobAdderTokenSet) -> dict[str, obj
         #     rolled back when the connection is closed.
         connection.commit()
 
+    # A missing returned row here indicates a write-path problem, not a
+    # "connection not found" situation. Treat it as a real runtime failure.
     if row is None:
         raise RuntimeError("Failed to save JobAdder OAuth connection.")
-    
+
+    # Return a plain dictionary so the rest of the backend can treat DB rows
+    # consistently without needing to care about cursor-row wrapper types.
     return dict(row)
 
 def get_jobadder_oauth_connection(jobadder_account: int) -> dict[str, object] | None:
@@ -241,13 +294,27 @@ def get_jobadder_oauth_connection(jobadder_account: int) -> dict[str, object] | 
     - Later refresh-token and disconnect logic will need a reliable way to load
       the stored connection before updating or removing it.
 
+    Example
+    -------
+    Calling:
+
+        get_jobadder_oauth_connection(2236)
+
+    returns either:
+
+    - a plain dictionary containing the stored row for JobAdder account `2236`
+    - or `None` when no such connection has been saved yet
+
     In plain language:
 
     - look up the stored JobAdder connection for one account
     - return it if found
     - otherwise return none
     """
-
+    # Keep the read query intentionally small and explicit.
+    #
+    # This helper is not trying to be a flexible query builder. Its job is just
+    # to fetch the one stored connection row for a known JobAdder account.
     sql = """
         select
             id,
@@ -269,14 +336,29 @@ def get_jobadder_oauth_connection(jobadder_account: int) -> dict[str, object] | 
         "jobadder_account": jobadder_account,
     }
 
+    # Execute one simple lookup and fetch at most one row.
+    #
+    # Because `jobadder_account` is treated as a natural key, callers expect
+    # either:
+    # - one row
+    # - or no row
     with postgres_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
             row = cursor.fetchone()
 
+    # Return `None` rather than raising when nothing is found.
+    #
+    # That keeps the helper easy to compose with higher layers that may want to
+    # decide for themselves whether "missing connection" should become:
+    # - a 404 response
+    # - a reconnect prompt
+    # - or some other flow
     if row is None:
         return None
 
+    # As with the save helper, return a plain dictionary so callers get one
+    # consistent Python shape from the persistence layer.
     return dict(row)
 
 __all__ = [

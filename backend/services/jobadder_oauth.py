@@ -25,6 +25,17 @@ Keeping this logic in its own module makes the project easier to grow because:
 - tests can target one small helper module at a time
 - later refresh scheduling or background maintenance can build on these helpers
 
+Example
+-------
+Typical usage in the rest of the backend looks like:
+
+    authorization_url = build_jobadder_authorization_url(state="connect-dev")
+    token_set = exchange_jobadder_authorization_code(code="abc123")
+    should_refresh = is_jobadder_access_token_expired(
+        obtained_at="2026-04-28T12:00:00Z",
+        expires_in_seconds=3600,
+    )
+
 In plain language:
 
 - this module answers the questions:
@@ -89,6 +100,19 @@ class JobAdderTokenSet:
     - This object is internal backend data, not a public API response model.
     - It is intentionally small but keeps the raw payload so we do not lose
       provider information too early.
+
+    Example
+    -------
+    A successful token exchange may be represented as:
+
+        JobAdderTokenSet(
+            access_token="...",
+            token_type="Bearer",
+            expires_in=3600,
+            refresh_token="...",
+            scope="read write offline_access",
+            raw_payload={...},
+        )
     """
 
     access_token: str
@@ -127,6 +151,20 @@ class JobAdderOAuthExchangeError(RuntimeError):
     - Route handlers can catch it later and convert it into the project's normal
       API error shape.
     - It should not carry secrets.
+
+    Example
+    -------
+    Callers may inspect:
+
+        error.status_code
+        error.provider_error
+        error.provider_error_description
+
+    to decide whether the failure came from:
+
+    - bad provider credentials
+    - an invalid refresh token
+    - a malformed provider response
     """
 
     def __init__(
@@ -178,6 +216,15 @@ def has_jobadder_oauth_configuration() -> bool:
       - `JOBADDER_REDIRECT_URI`
     - The client secret is not needed until the token-exchange or refresh step.
 
+    Example
+    -------
+    If:
+
+    - `JOBADDER_CLIENT_ID` is set
+    - `JOBADDER_REDIRECT_URI` is set
+
+    then this helper returns `True` even if the client secret is still missing.
+
     In plain language:
 
     - check whether we have enough config
@@ -213,6 +260,14 @@ def has_jobadder_token_exchange_configuration() -> bool:
         - `JOBADDER_CLIENT_ID`
         - `JOBADDER_CLIENT_SECRET`
         - `JOBADDER_REDIRECT_URI`
+
+    Example
+    -------
+    This helper returns `False` if any one of these is blank:
+
+    - client ID
+    - client secret
+    - redirect URI
 
     In plain language:
 
@@ -264,6 +319,16 @@ def build_jobadder_authorization_url(
     - It only constructs the URL the client-side approver will visit.
     - The redirect URI is URL-encoded automatically through `urlencode(...)`.
 
+    Example
+    -------
+    Calling:
+
+        build_jobadder_authorization_url(state="connect-jobadder-dev")
+
+    returns a URL of the form:
+
+        https://id.jobadder.com/connect/authorize?response_type=code&...
+
     In plain language:
 
     - take the known settings
@@ -271,6 +336,10 @@ def build_jobadder_authorization_url(
     - return the final approval link
     """
 
+    # Read and clean the required settings once up front.
+    #
+    # Keeping the local variables explicit makes the validation and URL-building
+    # logic easier to follow than repeatedly reaching into `settings` inline.
     settings = get_settings()
 
     client_id = settings.jobadder_client_id.strip()
@@ -282,6 +351,10 @@ def build_jobadder_authorization_url(
             "Set JOBADDER_CLIENT_ID and JOBADDER_REDIRECT_URI."
         )
 
+    # Build the base OAuth query shape first.
+    #
+    # The optional `state` parameter is added only when present so the returned
+    # URL does not accumulate empty query parameters unnecessarily.
     query_params = {
         "response_type": "code",
         "client_id": client_id,
@@ -317,12 +390,27 @@ def build_jobadder_token_exchange_payload(*, code: str) -> dict[str, str]:
     ValueError
         If the backend is missing required configuration or the code is blank.
 
+    Example
+    -------
+    Calling:
+
+        build_jobadder_token_exchange_payload(code="abc123")
+
+    returns a form payload that includes:
+
+    - `grant_type=authorization_code`
+    - the one-time `code`
+    - the configured client credentials
+    - the configured redirect URI
+
     In plain language:
 
     - take the one-time code and backend settings
     - build the form data JobAdder expects
     """
 
+    # Pull the three required configuration values into local names once so the
+    # validation and final payload shape remain easy to read.
     settings = get_settings()
 
     client_id = settings.jobadder_client_id.strip()
@@ -379,12 +467,29 @@ def build_jobadder_refresh_token_payload(*, refresh_token: str) -> dict[str, str
         - `refresh_token`
     - The redirect URI is not needed for the refresh grant.
 
+    Example
+    -------
+    Calling:
+
+        build_jobadder_refresh_token_payload(refresh_token="refresh-123")
+
+    returns a payload that includes:
+
+    - `grant_type=refresh_token`
+    - `client_id`
+    - `client_secret`
+    - `refresh_token`
+
     In plain language:
 
     - take the stored refresh token and backend settings
     - build the form data JobAdder expects for token refresh
     """
 
+    # Read the configuration once so the rules stay visually obvious:
+    # - one refresh token from storage
+    # - two provider credentials from settings
+    # - one redirect URI kept as part of the overall OAuth configuration check
     settings = get_settings()
 
     client_id = settings.jobadder_client_id.strip()
@@ -444,6 +549,14 @@ def exchange_jobadder_authorization_code(
         If JobAdder rejects the request, returns an invalid response, or cannot
         be reached safely.
 
+    Example
+    -------
+    A successful call:
+
+        exchange_jobadder_authorization_code(code="abc123")
+
+    returns a `JobAdderTokenSet` that can then be persisted in Postgres.
+
     In plain language:
 
     - receive the one-time code
@@ -452,6 +565,10 @@ def exchange_jobadder_authorization_code(
     - return them in a normal Python shape
     """
 
+    # Separate "build the payload" from "send the request".
+    #
+    # That split keeps the grant-specific field rules independently testable and
+    # makes this public helper read as a very simple two-step workflow.
     payload = build_jobadder_token_exchange_payload(code=code)
 
     return _request_jobadder_token_set(
@@ -557,6 +674,12 @@ def is_jobadder_access_token_expired(
     - Failing closed is the correct behaviour here because attempting an API
       read with a likely-expired token only adds noise and latency.
 
+    Example
+    -------
+    If a token was obtained at `12:00:00Z`, lasts `3600` seconds, and the
+    safety window is `60` seconds, then this helper will begin treating it as
+    expired at `12:59:00Z` rather than waiting for the exact final second.
+
     In plain language:
 
     - work out when the token should expire
@@ -564,6 +687,8 @@ def is_jobadder_access_token_expired(
     - decide whether the backend should refresh before making an API call
     """
 
+    # Reject negative safety windows because that would invert the meaning of
+    # the cutoff and make expiry behaviour harder to reason about.
     if safety_window_seconds < 0:
         raise ValueError(
             "JobAdder token expiry safety_window_seconds cannot be negative."
@@ -579,6 +704,14 @@ def is_jobadder_access_token_expired(
     except (TypeError, ValueError):
         return True
 
+    # Compute the nominal expiry time first, then step back by the safety
+    # window.
+    #
+    # The safety window is a practical engineering compromise:
+    # - provider clocks and application clocks are not always perfectly aligned
+    # - network latency exists
+    # - "refresh a little early" is more robust than "refresh at the last
+    #   possible second"
     expiry_time = obtained_at_dt + timedelta(seconds=cleaned_expires_in_seconds)
     refresh_cutoff = expiry_time - timedelta(seconds=safety_window_seconds)
 
@@ -623,8 +756,20 @@ def _request_jobadder_token_set(
         - the refresh-token path
     - Keeping the HTTP request and response-normalisation rules in one place
       prevents the two public helpers from drifting apart.
-    """
 
+    Example
+    -------
+    Both of these public helpers:
+
+        exchange_jobadder_authorization_code(...)
+        refresh_jobadder_access_token(...)
+
+    eventually delegate their provider request and response parsing here.
+    """
+    # Send one form-encoded POST request to JobAdder's token endpoint.
+    #
+    # This private helper is where the shared transport rules live so the two
+    # public grant flows do not quietly diverge over time.
     try:
         response = httpx.post(
             JOBADDER_TOKEN_URL,
@@ -653,6 +798,11 @@ def _request_jobadder_token_set(
             response_body=response_payload,
         )
 
+    # Pull the expected provider fields out into local names before validating
+    # them.
+    #
+    # That makes the validation rules explicit and keeps the final
+    # `JobAdderTokenSet(...)` construction compact and readable.
     access_token = _safe_string(response_payload.get("access_token"))
     token_type = _safe_string(response_payload.get("token_type"))
     refresh_token = _safe_string(response_payload.get("refresh_token"))
@@ -718,7 +868,10 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
     - try to read JSON
     - if that fails, return a small fallback dictionary
     """
-
+    # Prefer decoding JSON because that is the documented provider contract.
+    #
+    # If decoding fails, preserve a small text fallback so the caller can still
+    # surface meaningful debugging context.
     try:
         decoded = response.json()
     except ValueError:
@@ -760,7 +913,8 @@ def _normalise_datetime(value: Any) -> datetime | None:
     - turn them into one consistent UTC datetime form
     - return none when the value cannot be trusted
     """
-
+    # Handle native datetime objects first because that is the most direct and
+    # reliable storage shape we expect from database reads.
     if isinstance(value, datetime):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
@@ -775,6 +929,8 @@ def _normalise_datetime(value: Any) -> datetime | None:
     if cleaned_value == "":
         return None
 
+    # Handle ISO-like strings next. Replace the common trailing `Z` suffix with
+    # an explicit UTC offset so `fromisoformat(...)` can parse it directly.
     try:
         parsed_value = datetime.fromisoformat(cleaned_value.replace("Z", "+00:00"))
     except ValueError:
@@ -805,6 +961,14 @@ def _safe_string(value: Any) -> str | None:
     -----
     - OAuth providers sometimes return null, blank strings, or unexpected types.
     - This helper keeps the string-cleaning rule consistent inside this module.
+
+    Example
+    -------
+    These values become:
+
+        "  Bearer  " -> "Bearer"
+        ""           -> None
+        None         -> None
     """
 
     if not isinstance(value, str):

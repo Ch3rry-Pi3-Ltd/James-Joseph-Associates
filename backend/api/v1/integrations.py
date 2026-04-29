@@ -22,6 +22,16 @@ extend because:
 - future provider callbacks can follow the same local pattern
 - later token exchange and token storage can be added without mixing concerns
 
+Example
+-------
+This module now covers the first few live JobAdder integration steps:
+
+- `GET /api/v1/integrations/jobadder/authorize`
+- `GET /api/v1/integrations/jobadder/callback`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
+
 In plain language:
 
 - this module answers the question:
@@ -107,8 +117,26 @@ def build_error_response(
     - The response body uses the project's normal top-level error contract.
     - The helper builds the response shape only. It does not decide when an
       error should be returned.
-    """
 
+    Example
+    -------
+    A call such as:
+
+        build_error_response(
+            status_code=404,
+            code="not_found",
+            message="Stored JobAdder connection was not found.",
+            details=[{"jobadder_account": 2236}],
+        )
+
+    produces the standard API error envelope instead of making each route hand-
+    build its own JSON response.
+    """
+    # Build the typed error payload first so the response shape stays aligned
+    # with the rest of the project's schema layer.
+    #
+    # That keeps the route code free from ad hoc dictionary-building and makes
+    # later test assertions more consistent.
     error_response = ApiErrorResponse(
         error=ApiError(
             code=code,
@@ -159,8 +187,17 @@ def _refresh_jobadder_stored_connection(
           rejected upstream
     - Keeping the refresh-and-save sequence in one helper prevents the read
       routes from drifting apart in how they handle refresh failures.
-    """
 
+    Example
+    -------
+    This helper is used when:
+
+    - a stored token is already expired before the first provider read
+    - a provider read comes back with `401` and a refresh/retry is needed
+    """
+    # Validate the local refresh token first so a missing stored credential is
+    # reported as a local persistence problem, not blurred together with a
+    # provider-side OAuth failure.
     if not isinstance(refresh_token_value, str) or refresh_token_value.strip() == "":
         return build_error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -169,6 +206,12 @@ def _refresh_jobadder_stored_connection(
             details=[{"jobadder_account": jobadder_account}],
         )
 
+    # Ask JobAdder for a fresh token set, then persist it immediately if the
+    # provider call succeeds.
+    #
+    # Saving right away matters because the goal is not just to rescue the
+    # current request. The goal is also to leave the stored connection in a
+    # better state for the next request.
     try:
         refreshed_token_set = refresh_jobadder_access_token(
             refresh_token=refresh_token_value,
@@ -235,8 +278,26 @@ def _prepare_jobadder_connection_for_api_read(
       authenticated JobAdder route.
     - It also performs the proactive refresh step when the stored timing fields
       indicate the access token is expired or too close to expiry.
-    """
 
+    Example
+    -------
+    A route that needs to read from JobAdder can call:
+
+        stored_connection = _prepare_jobadder_connection_for_api_read(
+            jobadder_account=2236,
+        )
+
+    and either receive:
+
+    - a usable stored connection row
+    - or a ready-to-return `JSONResponse` error
+    """
+    # Start by loading the one stored connection row for this JobAdder account.
+    #
+    # Every later decision in this helper depends on that row:
+    # - whether the account has been connected at all
+    # - whether the required local fields exist
+    # - whether the token should be refreshed before the provider read
     stored_connection = get_jobadder_oauth_connection(jobadder_account)
 
     if stored_connection is None:
@@ -269,6 +330,12 @@ def _prepare_jobadder_connection_for_api_read(
             details=[{"jobadder_account": jobadder_account}],
         )
 
+    # Refresh proactively when the stored token timing data says the access
+    # token is already expired or too close to expiry.
+    #
+    # That reduces avoidable 401s and makes the later route logic easier to
+    # reason about because the "normal first attempt" starts from the best
+    # available credential state.
     if is_jobadder_access_token_expired(
         obtained_at=raw_obtained_at,
         expires_in_seconds=raw_expires_in_seconds,
@@ -303,6 +370,9 @@ def _prepare_jobadder_connection_for_api_read(
                 details=[{"jobadder_account": jobadder_account}],
             )
 
+        # Return the freshly saved row rather than the pre-refresh row so later
+        # code uses the same successful credential set the refresh step just
+        # produced.
         return refreshed_connection
 
     return stored_connection
@@ -353,20 +423,47 @@ def _perform_jobadder_read_with_refresh_retry(
       hierarchy.
     - The only special provider case it handles is 401, because that can often
       be resolved by refreshing the access token once and retrying.
-    """
 
+    Example
+    -------
+    Routes can pass small resource-specific lambdas such as:
+
+        lambda *, api_url, access_token: fetch_jobadder_candidates_preview(...)
+
+    or:
+
+        lambda *, api_url, access_token: fetch_jobadder_candidate_detail(...)
+
+    and let this helper own the shared:
+
+    - first read attempt
+    - one-time refresh-and-retry on 401
+    - standardised error response building
+    """
+    # Pull the relevant stored fields into local names once so the retry logic
+    # below reads clearly and does not repeatedly index into the connection
+    # dictionary.
     raw_access_token = stored_connection.get("access_token")
     raw_api_url = stored_connection.get("api_url")
     raw_refresh_token = stored_connection.get("refresh_token")
     raw_jobadder_instance = stored_connection.get("jobadder_instance")
 
     try:
+        # First attempt: use the connection exactly as prepared by the shared
+        # pre-read helper.
         read_result = read_callable(
             api_url=raw_api_url,
             access_token=raw_access_token,
         )
     except JobAdderApiError as exc:
         if exc.status_code == 401:
+            # `401` is the one provider failure we treat as potentially
+            # recoverable here.
+            #
+            # The intent is narrow and deliberate:
+            # - refresh once
+            # - retry once
+            # - if that still fails, surface the failure clearly
             refreshed_connection = _refresh_jobadder_stored_connection(
                 jobadder_account=jobadder_account,
                 refresh_token_value=raw_refresh_token,
@@ -403,6 +500,10 @@ def _perform_jobadder_read_with_refresh_retry(
                     details=[{"jobadder_account": jobadder_account}],
                 )
 
+            # Retry exactly once with the refreshed token set.
+            #
+            # More than one retry would start hiding genuine provider or data
+            # problems behind repeated automatic behaviour.
             try:
                 read_result = read_callable(
                     api_url=refreshed_api_url,
@@ -427,6 +528,9 @@ def _perform_jobadder_read_with_refresh_retry(
                     details=details,
                 )
 
+            # Return not just the successful read result, but also the API URL
+            # and JobAdder instance associated with the successful call so the
+            # route can echo the correct connection context back to the client.
             return (
                 read_result,
                 refreshed_api_url,
@@ -437,6 +541,15 @@ def _perform_jobadder_read_with_refresh_retry(
                 ),
             )
 
+        # Any non-401 provider failure is treated as final at this layer.
+        #
+        # Examples:
+        # - `404` usually means the resource does not exist
+        # - `429` means throttling
+        # - `500` likely means an upstream provider problem
+        #
+        # A token refresh does not meaningfully improve those cases, so we
+        # surface them directly with as much safe context as we can.
         details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
 
         if exc.status_code is not None:
@@ -522,7 +635,11 @@ def get_jobadder_authorization_url(
     - return it as JSON
     - let the authorised JobAdder user open it
     """
-
+    # Check configuration before trying to build the URL so setup problems are
+    # reported clearly and predictably.
+    #
+    # This route is often used very early in integration setup, so clean
+    # readiness feedback is part of its job.
     if not has_jobadder_oauth_configuration():
         return build_error_response(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -538,6 +655,10 @@ def get_jobadder_authorization_url(
             ],
         )
 
+    # Build the URL only after the readiness check succeeds.
+    #
+    # Keeping the readiness check and URL construction as separate steps makes
+    # the control flow easy to follow for anyone still learning the OAuth flow.
     authorization_url = build_jobadder_authorization_url(state=state)
 
     return JobAdderAuthorizationUrlResponse(
@@ -647,7 +768,10 @@ def get_jobadder_oauth_callback(
     - save the returned token set
     - return a clean summary of the successful connection
     """
-
+    # Provider-declared OAuth errors take precedence over everything else.
+    #
+    # If JobAdder says the authorisation step failed, there is no point trying
+    # to continue into the code-exchange flow.
     # If JobAdder returns `error=...` in the callback query, the provider is
     # telling us the authorisation step did not complete successfully.
     #   - Handle that before looking for a code.
@@ -703,6 +827,12 @@ def get_jobadder_oauth_callback(
             ],
         )
 
+    # Exchange the one-time authorisation code for a token set before touching
+    # local persistence.
+    #
+    # This keeps the stages conceptually clean:
+    # - first obtain a valid provider token set
+    # - then save it locally
     try:
         token_set = exchange_jobadder_authorization_code(code=code)
     except JobAdderOAuthExchangeError as exc:
@@ -729,6 +859,8 @@ def get_jobadder_oauth_callback(
             details=details,
         )
 
+    # Persist the successful token set immediately so the connection becomes
+    # usable for later authenticated API reads.
     try:
         saved_connection = save_jobadder_oauth_connection(token_set)
     except (RuntimeError, ValueError) as exc:
@@ -843,7 +975,11 @@ def get_jobadder_candidates_preview_route(
     - retry once with a refreshed token if JobAdder rejects the first attempt
     - return a small preview of candidate data
     """
-
+    # Start by loading or refreshing the stored connection into a read-ready
+    # shape.
+    #
+    # This keeps the route body focused on the resource being fetched rather
+    # than duplicating OAuth storage and refresh logic inline.
     stored_connection = _prepare_jobadder_connection_for_api_read(
         jobadder_account=jobadder_account
     )
@@ -851,6 +987,9 @@ def get_jobadder_candidates_preview_route(
     if isinstance(stored_connection, JSONResponse):
         return stored_connection
 
+    # Delegate the shared "read, maybe refresh, maybe retry" mechanics to the
+    # common helper so this route only needs to define the concrete resource
+    # read it wants.
     preview_result = _perform_jobadder_read_with_refresh_retry(
         jobadder_account=jobadder_account,
         stored_connection=stored_connection,
@@ -867,6 +1006,8 @@ def get_jobadder_candidates_preview_route(
 
     preview, api_url, jobadder_instance = preview_result
 
+    # Build the typed response model last, after all provider interaction and
+    # refresh handling has already succeeded.
     return JobAdderCandidatesPreviewResponse(
         jobadder_account=jobadder_account,
         jobadder_instance=jobadder_instance,
@@ -927,8 +1068,22 @@ def get_jobadder_candidate_detail_route(
     - It exposes the full candidate object returned by JobAdder so the backend
       can compare the real source payload with the canonical tables before
       building ingestion logic.
-    """
 
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/candidates/16496678
+
+    and returns:
+
+    - the JobAdder account context
+    - the API URL used
+    - the requested candidate ID
+    - the full candidate object
+    """
+    # Reuse the same shared connection-preparation helper as the preview route
+    # so all authenticated JobAdder reads start from the same credential rules.
     stored_connection = _prepare_jobadder_connection_for_api_read(
         jobadder_account=jobadder_account
     )
@@ -936,6 +1091,8 @@ def get_jobadder_candidate_detail_route(
     if isinstance(stored_connection, JSONResponse):
         return stored_connection
 
+    # This route's only resource-specific concern is "fetch one candidate
+    # detail". The shared retry helper owns the common token-recovery behaviour.
     detail_result = _perform_jobadder_read_with_refresh_retry(
         jobadder_account=jobadder_account,
         stored_connection=stored_connection,
@@ -1011,8 +1168,22 @@ def get_jobadder_candidate_skills_route(
     - This route preserves that separate source-system view so the backend can
       inspect the real category/subcategory/skill hierarchy before deciding how
       to model skills canonically.
-    """
 
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/candidates/16496678/skills
+
+    and returns:
+
+    - the JobAdder account context
+    - the requested candidate ID
+    - the category count
+    - the structured categories tree
+    """
+    # Prepare or refresh the stored connection before the provider read so this
+    # route behaves consistently with the preview and candidate-detail routes.
     stored_connection = _prepare_jobadder_connection_for_api_read(
         jobadder_account=jobadder_account
     )

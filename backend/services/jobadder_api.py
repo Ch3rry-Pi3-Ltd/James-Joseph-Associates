@@ -63,6 +63,19 @@ or, when the stored API URL already ends in `/v2`:
 
     {API_URL}/candidates
 
+Example
+-------
+Typical callers in the rest of the backend do not hand-build URLs directly.
+Instead, they call helpers such as:
+
+    fetch_jobadder_candidates_preview(
+        api_url="https://eu2api.jobadder.com/v2/",
+        access_token="...",
+        item_limit=10,
+    )
+
+and receive a small normalised wrapper rather than a raw `httpx.Response`.
+
 Important boundaries
 --------------------
 This module should not contain:
@@ -109,6 +122,20 @@ class JobAdderApiError(RuntimeError):
     - Route handlers can catch it and turn it into the project's standard API
       error shape.
     - It should never carry token values.
+
+    Example
+    -------
+    A caller may catch this exception and inspect:
+
+        error.status_code
+        error.retry_after
+        error.endpoint_url
+
+    to decide whether the failure was:
+
+    - a provider-side 401
+    - a throttling response
+    - a broken endpoint URL
     """
 
     def __init__(
@@ -164,6 +191,19 @@ def build_jobadder_api_headers(*, access_token: str) -> dict[str, str]:
     - This helper keeps bearer-token formatting out of route handlers.
     - The JobAdder API expects the token in the standard
       `Authorization: Bearer ...` header.
+
+    Example
+    -------
+    Calling:
+
+        build_jobadder_api_headers(access_token="abc123")
+
+    returns:
+
+        {
+            "Authorization": "Bearer abc123",
+            "Accept": "application/json",
+        }
 
     In plain language:
 
@@ -244,15 +284,32 @@ def fetch_jobadder_candidate_detail(
     - confirm the response body is one candidate object
     - return that object in a small predictable wrapper
     """
-
+    # Candidate IDs are source-system identifiers, so treat non-positive values
+    # as invalid caller input rather than trying to "make them work" later.
+    #
+    # Doing this up front keeps the lower-level URL builder and HTTP layer
+    # focused on real provider work instead of spending effort on obviously bad
+    # local inputs.
     if candidate_id < 1:
         raise ValueError("JobAdder candidate_id must be at least 1.")
 
+    # Build the endpoint through the shared URL normaliser.
+    #
+    # That matters because the stored JobAdder API base may already include
+    # `/v2`, and we do not want each public helper re-implementing slightly
+    # different URL-concatenation logic.
     endpoint_url = _build_jobadder_api_endpoint(
         api_url=api_url,
         resource_path=f"/candidates/{candidate_id}",
     )
     headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Use the shared request helper so that:
+    # - transport failures
+    # - HTTP status failures
+    # - JSON decoding failures
+    #
+    # all come back through one consistent local exception type.
     response_payload = _request_jobadder_json(
         endpoint_url=endpoint_url,
         headers=headers,
@@ -345,15 +402,29 @@ def fetch_jobadder_candidate_attachments(
     - confirm the response contains an attachment list
     - return that list in a small predictable wrapper
     """
-
+    # Attachment reads depend on a real candidate ID in exactly the same way as
+    # candidate-detail reads do, so fail fast on invalid caller input before
+    # any provider interaction starts.
     if candidate_id < 1:
         raise ValueError("JobAdder candidate_id must be at least 1.")
 
+    # Keep attachment endpoint construction on the same shared URL-normalisation
+    # path as every other JobAdder helper.
+    #
+    # That consistency is more important than it might look, because provider
+    # integrations tend to grow by accretion. Centralised URL rules reduce the
+    # chance of quietly reintroducing old path bugs.
     endpoint_url = _build_jobadder_api_endpoint(
         api_url=api_url,
         resource_path=f"/candidates/{candidate_id}/attachments",
     )
     headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Reuse the shared transport helper so the attachments read behaves like
+    # the other resource reads in:
+    # - error handling
+    # - timeout behaviour
+    # - JSON expectations
     response_payload = _request_jobadder_json(
         endpoint_url=endpoint_url,
         headers=headers,
@@ -472,15 +543,28 @@ def fetch_jobadder_candidates_preview(
     - confirm the response has a candidate `items` list
     - return a trimmed preview of that first page
     """
-
+    # The preview contract is explicitly "one or more items", so reject `0` or
+    # negative values before doing any provider work.
+    #
+    # That keeps the public behaviour easy to explain:
+    # the caller is asking for a preview size, not for a raw pagination probe.
     if item_limit < 1:
         raise ValueError("JobAdder candidate preview item_limit must be at least 1.")
 
+    # Normalise the final endpoint once in the shared URL builder.
+    #
+    # This is the same fix that prevents `/v2/v2/candidates` regressions, and
+    # it belongs in the shared path-building layer rather than inline string
+    # concatenation in each helper.
     endpoint_url = _build_jobadder_api_endpoint(
         api_url=api_url,
         resource_path="/candidates",
     )
     headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Delegate the transport and JSON decoding behaviour to the shared request
+    # helper so the preview logic can stay focused on list-shape validation and
+    # trimming.
     response_payload = _request_jobadder_json(
         endpoint_url=endpoint_url,
         headers=headers,
@@ -513,9 +597,12 @@ def fetch_jobadder_candidates_preview(
             total_count = None
 
     # Keep the first step intentionally small
-    #   - We fetch the provider's first page as-is.
-    #   - Then we trim the returned list locally so the API route can expose a
-    #     predictable small preview.
+    #
+    # The reasoning is worth making explicit:
+    # - we are not yet trying to implement a general pagination client
+    # - we only need a small inspection-friendly preview
+    # - trimming locally keeps the public route contract predictable even if the
+    #   provider's default page size is much larger
     items = raw_items[:item_limit]
 
     return {
@@ -586,15 +673,21 @@ def fetch_jobadder_candidate_skills(
     - confirm the response contains a category list
     - return the structured skills tree in a predictable wrapper
     """
-
+    # Structured skills are still tied to one concrete candidate record, so the
+    # same candidate-ID validation rule applies here too.
     if candidate_id < 1:
         raise ValueError("JobAdder candidate_id must be at least 1.")
 
+    # Keep the skill endpoint on the shared URL builder for the same reason as
+    # every other helper: one place to enforce the `/v2` normalisation rule.
     endpoint_url = _build_jobadder_api_endpoint(
         api_url=api_url,
         resource_path=f"/candidates/{candidate_id}/skills",
     )
     headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Reuse the shared request helper to keep transport behaviour and provider
+    # error handling aligned with the rest of the module.
     response_payload = _request_jobadder_json(
         endpoint_url=endpoint_url,
         headers=headers,
@@ -655,8 +748,35 @@ def _build_jobadder_api_endpoint(*, api_url: str, resource_path: str) -> str:
     - Centralising the normalisation rule here ensures every helper uses the
       same URL-building logic and avoids reintroducing the earlier `/v2/v2/...`
       bug.
-    """
 
+    Example
+    -------
+    These calls:
+
+        _build_jobadder_api_endpoint(
+            api_url="https://api.jobadder.com",
+            resource_path="/candidates",
+        )
+
+    and:
+
+        _build_jobadder_api_endpoint(
+            api_url="https://eu2api.jobadder.com/v2/",
+            resource_path="/candidates",
+        )
+
+    produce:
+
+        https://api.jobadder.com/v2/candidates
+        https://eu2api.jobadder.com/v2/candidates
+    """
+    # Normalise both inputs before joining them.
+    #
+    # The point is not just cosmetic trimming. It is to force every caller
+    # through one predictable path shape regardless of whether they supplied:
+    # - a trailing slash
+    # - a leading slash
+    # - an API base that already ends in `/v2`
     cleaned_api_url = api_url.strip()
     cleaned_resource_path = resource_path.strip()
 
@@ -717,8 +837,29 @@ def _request_jobadder_json(
       local exception type.
     - Keeping that shared logic here makes the individual endpoint helpers
       easier to read and reduces the chance of subtle behavioural drift.
-    """
 
+    Example
+    -------
+    Public helpers such as:
+
+        fetch_jobadder_candidate_detail(...)
+        fetch_jobadder_candidate_attachments(...)
+        fetch_jobadder_candidate_skills(...)
+
+    all delegate their transport work here so they can focus on validating the
+    resource-specific response shape instead of repeating HTTP boilerplate.
+    """
+    # Make exactly one GET request with the caller-supplied endpoint and
+    # headers.
+    #
+    # This helper exists precisely so the public resource functions do not each
+    # need to repeat the same:
+    # - `httpx.get(...)`
+    # - network exception conversion
+    # - JSON decoding
+    # - HTTP status handling
+    #
+    # sequence over and over.
     try:
         response = httpx.get(
             endpoint_url,
@@ -742,6 +883,10 @@ def _request_jobadder_json(
             response_body=response_payload,
         )
 
+    # A successful helper contract in this module is always "decoded JSON
+    # object". If the provider returns some other JSON top-level shape, surface
+    # that clearly rather than letting each public helper make different
+    # assumptions about it.
     if not isinstance(response_payload, dict):
         raise JobAdderApiError(
             "JobAdder API response did not decode into an object.",
@@ -773,8 +918,22 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
     - The JobAdder API is expected to return JSON.
     - If it does not, we still want controlled debugging context rather than an
       unrelated JSON parsing exception.
-    """
 
+    Example
+    -------
+    If JobAdder returns valid JSON, this helper returns the decoded object.
+
+    If JobAdder returns non-JSON text such as an HTML error page, this helper
+    returns:
+
+        {"raw_text": "..."}
+
+    so the caller still has safe context to report.
+    """
+    # Try JSON first because that is the provider contract we expect.
+    #
+    # If that fails, keep a small fallback wrapper instead of letting the raw
+    # JSON decoding error leak upward without context.
     try:
         decoded = response.json()
     except ValueError:
@@ -802,6 +961,14 @@ def _safe_string(value: Any) -> str | None:
     -------
     str | None
         Cleaned string value, or `None` when the field is missing or blank.
+
+    Example
+    -------
+    These inputs produce:
+
+        " 40 "   -> "40"
+        ""       -> None
+        None     -> None
     """
 
     if not isinstance(value, str):
