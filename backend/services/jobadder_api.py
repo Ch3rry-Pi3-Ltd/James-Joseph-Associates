@@ -91,6 +91,7 @@ This module should not contain:
 Those concerns belong in separate modules that depend on this one.
 """
 
+import re
 from typing import Any
 
 import httpx
@@ -454,6 +455,146 @@ def fetch_jobadder_candidate_attachments(
         "links": links,
         "endpoint_url": endpoint_url,
         "raw_payload": response_payload,
+    }
+
+
+def download_jobadder_candidate_attachment(
+    *,
+    api_url: str,
+    access_token: str,
+    candidate_id: int,
+    attachment_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Download one candidate attachment from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+        Example shapes:
+
+            https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    candidate_id : int
+        JobAdder candidate identifier that owns the attachment.
+
+    attachment_id : int
+        JobAdder attachment identifier to download.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `content_bytes`
+        - `content_type`
+        - `content_length`
+        - `file_name`
+        - `endpoint_url`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, candidate ID, or attachment ID is
+        invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request or the attachment cannot be reached
+        safely.
+
+    Notes
+    -----
+    - This helper is deliberately narrower than a future full document-storage
+      pipeline.
+    - It only performs the transient provider download step.
+    - It does not write the file anywhere.
+    - It does not parse PDF text.
+    - It does not decide whether the attachment should be retained long term.
+
+    Example
+    -------
+    A typical call looks like:
+
+        download_jobadder_candidate_attachment(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            candidate_id=16496678,
+            attachment_id=21091489,
+        )
+
+    and returns a dictionary of the form:
+
+        {
+            "content_bytes": b"...",
+            "content_type": "application/pdf",
+            "content_length": 123456,
+            "file_name": "Roger Campbell - CV 2025.pdf",
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+        }
+
+    In plain language:
+
+    - build the candidate-attachment download URL
+    - call JobAdder with the stored token
+    - return the file bytes plus the useful response metadata
+    """
+
+    # Both the parent candidate ID and the attachment ID are source-system
+    # identifiers. Treat invalid values as caller-input problems immediately
+    # rather than deferring them into confusing provider errors later.
+    if candidate_id < 1:
+        raise ValueError("JobAdder candidate_id must be at least 1.")
+
+    if attachment_id < 1:
+        raise ValueError("JobAdder attachment_id must be at least 1.")
+
+    # Keep the download endpoint on the same shared URL-normalisation path as
+    # the JSON resource helpers.
+    #
+    # That gives us one consistent rule for handling:
+    # - API bases that already include `/v2`
+    # - trailing slashes
+    # - resource paths with or without leading slashes
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/candidates/{candidate_id}/attachments/{attachment_id}",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Use a separate shared transport helper for binary content so the public
+    # attachment-download helper can stay focused on:
+    # - identifying the correct endpoint
+    # - validating the source identifiers
+    # - returning one small normalised wrapper
+    response = _request_jobadder_binary(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate attachment download failed.",
+    )
+
+    content_type = _safe_string(response.headers.get("Content-Type"))
+    content_length = _safe_int(response.headers.get("Content-Length"))
+    file_name = _extract_file_name_from_content_disposition(
+        response.headers.get("Content-Disposition")
+    )
+
+    return {
+        "content_bytes": response.content,
+        "content_type": content_type,
+        "content_length": content_length,
+        "file_name": file_name,
+        "endpoint_url": endpoint_url,
     }
 
 
@@ -898,6 +1039,99 @@ def _request_jobadder_json(
     return response_payload
 
 
+def _request_jobadder_binary(
+    *,
+    endpoint_url: str,
+    headers: dict[str, str],
+    timeout_seconds: float,
+    provider_failure_message: str,
+) -> httpx.Response:
+    """
+    Perform one authenticated JobAdder GET request for binary content.
+
+    Parameters
+    ----------
+    endpoint_url : str
+        Fully resolved JobAdder endpoint URL.
+
+    headers : dict[str, str]
+        Authenticated request headers to send.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    provider_failure_message : str
+        Message to use when JobAdder rejects the request with an HTTP error.
+
+    Returns
+    -------
+    httpx.Response
+        Successful raw HTTP response so the caller can access:
+
+        - `response.content`
+        - `response.headers`
+
+    Raises
+    ------
+    JobAdderApiError
+        If the provider request fails or JobAdder returns an HTTP error.
+
+    Notes
+    -----
+    - The JSON helpers in this module normalise successful responses into
+      dictionaries because their callers need decoded JSON objects.
+    - Binary downloads are different: the caller needs the raw bytes and the
+      response headers, so this helper returns the successful `httpx.Response`
+      object directly.
+
+    Example
+    -------
+    The public attachment-download helper calls this function and then reads:
+
+        response.content
+        response.headers["Content-Type"]
+        response.headers["Content-Disposition"]
+
+    to build a smaller binary-download wrapper for the rest of the backend.
+    """
+
+    # Keep the transport behaviour aligned with the JSON request helper:
+    # - one GET request
+    # - one local exception type
+    # - one place to convert transport and provider failures into a backend-
+    #   friendly error shape
+    try:
+        response = httpx.get(
+            endpoint_url,
+            headers=headers,
+            timeout=timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise JobAdderApiError(
+            "Could not reach the JobAdder API.",
+            endpoint_url=endpoint_url,
+        ) from exc
+
+    # If JobAdder rejects the binary request, still try to decode the response
+    # as JSON for safe debugging context.
+    #
+    # Many provider error responses remain JSON even when the success path
+    # would have been a file download, so reusing the JSON-fallback decoder here
+    # gives callers better diagnostics than a blank binary failure.
+    if response.status_code >= 400:
+        response_payload = _decode_jobadder_json_response(response)
+
+        raise JobAdderApiError(
+            provider_failure_message,
+            status_code=response.status_code,
+            retry_after=_safe_string(response.headers.get("Retry-After")),
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    return response
+
+
 def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
     """
     Decode a JobAdder API response body into a dictionary.
@@ -948,6 +1182,63 @@ def _decode_jobadder_json_response(response: httpx.Response) -> dict[str, Any]:
         "decoded_json": decoded,
     }
 
+
+def _extract_file_name_from_content_disposition(
+    content_disposition: Any,
+) -> str | None:
+    """
+    Extract a file name from an HTTP `Content-Disposition` header when present.
+
+    Parameters
+    ----------
+    content_disposition : Any
+        Raw `Content-Disposition` header value.
+
+    Returns
+    -------
+    str | None
+        Extracted file name, or `None` when the header is missing or does not
+        contain a usable `filename=...` value.
+
+    Example
+    -------
+    Given a header such as:
+
+        attachment; filename="Roger Campbell - CV 2025.pdf"
+
+    this helper returns:
+
+        Roger Campbell - CV 2025.pdf
+
+    Notes
+    -----
+    - This helper is intentionally conservative.
+    - It only handles the simple `filename=...` pattern because that is enough
+      for the current transient-download stage.
+    - If JobAdder later requires more advanced RFC 5987 parsing, that can be
+      added here in one place.
+    """
+
+    if not isinstance(content_disposition, str):
+        return None
+
+    match = re.search(
+        r'filename="?([^";]+)"?',
+        content_disposition,
+        flags=re.IGNORECASE,
+    )
+
+    if match is None:
+        return None
+
+    extracted_file_name = match.group(1).strip()
+
+    if extracted_file_name == "":
+        return None
+
+    return extracted_file_name
+
+
 def _safe_string(value: Any) -> str | None:
     """
     Convert a provider field into a stripped optional string.
@@ -982,9 +1273,63 @@ def _safe_string(value: Any) -> str | None:
     return cleaned_value
 
 
+def _safe_int(value: Any) -> int | None:
+    """
+    Convert a provider field into an optional integer safely.
+
+    Parameters
+    ----------
+    value : Any
+        Raw value read from a provider payload or header.
+
+    Returns
+    -------
+    int | None
+        Parsed integer value, or `None` when the provider field is missing,
+        blank, or unusable.
+
+    Example
+    -------
+    These values become:
+
+        "12345" -> 12345
+        " 42 "  -> 42
+        ""      -> None
+        None    -> None
+
+    Notes
+    -----
+    - This helper is mainly useful for HTTP headers such as `Content-Length`,
+      which arrive as strings but are semantically numeric.
+    """
+
+    if isinstance(value, bool):
+        return None
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, float):
+        return int(value)
+
+    if not isinstance(value, str):
+        return None
+
+    cleaned_value = value.strip()
+
+    if cleaned_value == "":
+        return None
+
+    try:
+        return int(cleaned_value)
+    except ValueError:
+        return None
+
+
 __all__ = [
     "JobAdderApiError",
     "build_jobadder_api_headers",
+    "download_jobadder_candidate_attachment",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_candidate_detail",
     "fetch_jobadder_candidate_skills",
