@@ -44,6 +44,7 @@ Specifically, given a JobAdder account ID and a candidate ID, this module:
 5. fetches the candidate's attachment list
 6. identifies the latest likely-resume attachment
 7. returns one normalised internal dictionary
+8. can optionally download the selected resume bytes transiently
 
 Why start here
 --------------
@@ -74,6 +75,19 @@ and receive a structure that contains:
 - the best current guess at the latest resume attachment
 - a smaller ingest shell for later LLM/CV work
 
+Later, another helper in this same module can take that one step further:
+
+    download_latest_jobadder_resume_for_candidate(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+and return:
+
+- the ingest shell
+- the selected resume metadata
+- the transient downloaded file bytes
+
 In plain language:
 
 - this module answers the question:
@@ -81,7 +95,7 @@ In plain language:
     "Can we get one candidate and their latest likely CV reference out of
     JobAdder in one clean step?"
 
-- it does not yet download the CV binary
+- it can now download the selected CV binary transiently
 - it does not yet parse the CV
 - it does not yet create or update canonical records
 """
@@ -95,6 +109,7 @@ from backend.db.jobadder_oauth import (
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
+    download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_attachments,
     fetch_jobadder_candidate_detail,
 )
@@ -449,6 +464,205 @@ def build_jobadder_candidate_ingest_shell(
             },
             "resume_source": _build_resume_source_reference(latest_resume),
         },
+    }
+
+
+def download_latest_jobadder_resume_for_candidate(
+    *,
+    jobadder_account: int,
+    candidate_id: int,
+) -> dict[str, Any]:
+    """
+    Download the latest likely-resume attachment for one JobAdder candidate.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier whose latest likely resume should be
+        downloaded.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `source_system`
+        - `jobadder_account`
+        - `jobadder_instance`
+        - `api_url`
+        - `source_candidate_id`
+        - `candidate`
+        - `latest_resume`
+        - `resume_source`
+        - `downloaded_resume`
+        - `ingest_shell`
+
+    Raises
+    ------
+    ValueError
+        If the JobAdder account ID or candidate ID is invalid.
+
+    JobAdderIngestPreparationError
+        If the stored JobAdder connection cannot be loaded, refreshed, or used
+        safely, or if no likely resume attachment exists for the candidate.
+
+    Example
+    -------
+    A typical call looks like:
+
+        download_latest_jobadder_resume_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    and a successful result contains:
+
+        {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+            "latest_resume": {...},
+            "resume_source": {...},
+            "downloaded_resume": {
+                "content_bytes": b"...",
+                "content_type": "application/pdf",
+                "content_length": 123456,
+                "file_name": "Roger Campbell - CV 2025.pdf",
+                "endpoint_url": "...",
+            },
+            "ingest_shell": {...},
+        }
+
+    Notes
+    -----
+    - This helper is intentionally still a transient retrieval step.
+    - It does not store the CV anywhere.
+    - It does not parse the PDF.
+    - It does not run an LLM.
+    - It exists to bridge the current gap between:
+        - "we can identify the right resume attachment"
+        - and
+        - "we can feed the real file bytes into later parsing logic"
+
+    In plain language:
+
+    - build the ingest shell first
+    - confirm a likely resume exists
+    - re-use the resume metadata already selected by the ingest shell
+    - download the actual attachment bytes
+    - return both the metadata and the transient file content
+    """
+
+    # Start from the existing ingest shell rather than reimplementing the
+    # candidate-read and attachments-read flow from scratch.
+    #
+    # This is an important boundary choice:
+    # - `build_jobadder_candidate_ingest_shell(...)` already knows how to:
+    #     - load the connection
+    #     - refresh if needed
+    #     - read candidate detail
+    #     - read attachments
+    #     - choose the latest likely resume
+    # - duplicating that logic here would create two orchestration paths that
+    #   could drift apart over time
+    ingest_bundle = build_jobadder_candidate_ingest_shell(
+        jobadder_account=jobadder_account,
+        candidate_id=candidate_id,
+    )
+
+    latest_resume = ingest_bundle.get("latest_resume")
+
+    # Treat "no resume found" as a clear, explicit orchestration failure for
+    # this helper.
+    #
+    # That is different from the earlier ingest-shell helper, where missing a
+    # resume is still a valid partial result.
+    #
+    # Here, the caller has asked specifically to download the latest resume, so
+    # returning success without a resume would be misleading.
+    if not isinstance(latest_resume, dict):
+        raise JobAdderIngestPreparationError(
+            "No likely JobAdder resume attachment was found for this candidate.",
+            stage="resume_selection",
+            details=[
+                {"jobadder_account": jobadder_account},
+                {"candidate_id": candidate_id},
+            ],
+        )
+
+    raw_attachment_id = latest_resume.get("attachmentId")
+    attachment_id = _safe_int(raw_attachment_id)
+
+    # Re-validate the selected attachment ID before attempting a binary
+    # download.
+    #
+    # The selection helper works with raw source payloads, so it is worth
+    # asserting here that the chosen attachment actually has a usable numeric
+    # identifier before we try to build a download URL from it.
+    if attachment_id is None or attachment_id < 1:
+        raise JobAdderIngestPreparationError(
+            "The selected JobAdder resume attachment is missing a usable attachment ID.",
+            stage="resume_selection",
+            details=[
+                {"jobadder_account": jobadder_account},
+                {"candidate_id": candidate_id},
+            ],
+        )
+
+    # Re-load a read-ready connection for the binary download step.
+    #
+    # This may look slightly repetitive because the ingest shell already
+    # completed earlier reads, but it is the safer choice for now:
+    # - it guarantees the binary download starts from a fresh read-ready
+    #   connection row
+    # - it keeps the helper resilient even if a token expires between the shell
+    #   preparation step and the attachment download step
+    # - it avoids coupling this public helper too tightly to the internal
+    #   intermediate connection objects used by the earlier orchestration
+    #   helpers
+    stored_connection = _load_jobadder_connection_for_ingest(
+        jobadder_account=jobadder_account,
+    )
+
+    downloaded_resume, successful_connection = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        stage_name="resume_download",
+        provider_failure_message="JobAdder candidate resume download failed.",
+        read_callable=lambda *, api_url, access_token: download_jobadder_candidate_attachment(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+            attachment_id=attachment_id,
+        ),
+    )
+
+    # Keep the successful connection context visible at the top level of the
+    # returned bundle.
+    #
+    # This mirrors the earlier ingest-shell structure and makes the final
+    # result easier to reason about:
+    # - which JobAdder account was used?
+    # - which instance was used?
+    # - which API base actually succeeded?
+    api_url = successful_connection["api_url"]
+    jobadder_instance = successful_connection.get("jobadder_instance")
+
+    return {
+        "source_system": "jobadder",
+        "jobadder_account": jobadder_account,
+        "jobadder_instance": (
+            jobadder_instance if isinstance(jobadder_instance, str) else None
+        ),
+        "api_url": api_url,
+        "source_candidate_id": candidate_id,
+        "candidate": ingest_bundle["candidate"],
+        "latest_resume": latest_resume,
+        "resume_source": ingest_bundle["ingest_shell"]["resume_source"],
+        "downloaded_resume": downloaded_resume,
+        "ingest_shell": ingest_bundle["ingest_shell"],
     }
 
 
@@ -1265,4 +1479,5 @@ def _safe_int(value: Any) -> int | None:
 __all__ = [
     "JobAdderIngestPreparationError",
     "build_jobadder_candidate_ingest_shell",
+    "download_latest_jobadder_resume_for_candidate",
 ]
