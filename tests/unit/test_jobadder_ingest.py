@@ -79,6 +79,7 @@ from backend.services.jobadder_api import JobAdderApiError
 from backend.services.jobadder_ingest import (
     JobAdderIngestPreparationError,
     build_jobadder_candidate_ingest_shell,
+    download_latest_jobadder_resume_for_candidate,
 )
 
 
@@ -86,7 +87,7 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
-    Verify that the publShic orchestration helper returns the full candidate
+    Verify that the public orchestration helper returns the full candidate
     bundle and correctly selects the latest resume attachment.
 
     Notes
@@ -742,3 +743,440 @@ def test_select_latest_resume_attachment_uses_created_at_then_attachment_id() ->
 
     assert selected is not None
     assert selected["attachmentId"] == 200
+
+
+def test_download_latest_jobadder_resume_for_candidate_returns_resume_bundle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the resume-download orchestration helper returns one combined
+    bundle containing:
+
+    - the previously prepared ingest data
+    - the selected resume metadata
+    - the downloaded attachment bytes
+
+    Notes
+    -----
+    - This test focuses on the boundary between:
+        - metadata-only ingest preparation
+        - and
+        - transient binary CV retrieval
+    - The key idea is that the helper should not recompute business meaning.
+      It should:
+        - trust the ingest-shell output
+        - validate the chosen attachment ID
+        - reload a read-ready connection
+        - download the selected file
+
+    Example
+    -------
+    We simulate:
+
+    - an ingest bundle that already selected a likely resume
+    - a fresh read-ready connection for the binary step
+    - a successful binary download result
+
+    and confirm the final return value contains both the source metadata and
+    the transient file payload.
+
+    In plain language:
+
+    - pretend the candidate and attachment selection already succeeded
+    - pretend the binary download succeeded
+    - confirm the helper returns one clean combined resume bundle
+    """
+
+    fake_ingest_bundle = {
+        "source_system": "jobadder",
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "source_candidate_id": 16496678,
+        "candidate": {
+            "candidateId": 16496678,
+            "firstName": "Roger",
+            "lastName": "Campbell",
+        },
+        "latest_resume": {
+            "attachmentId": 21091489,
+            "type": "Resume",
+            "category": "Resume",
+            "fileName": "Roger Campbell - CV 2025.pdf",
+            "fileType": "application/pdf",
+            "createdAt": "2026-04-20T10:00:00Z",
+            "links": {
+                "self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+            },
+        },
+        "ingest_shell": {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+            "resume_source": {
+                "provider": "jobadder_attachment",
+                "external_id": 21091489,
+                "file_name": "Roger Campbell - CV 2025.pdf",
+                "mime_type": "application/pdf",
+                "category": "Resume",
+                "type": "Resume",
+                "created_at": "2026-04-20T10:00:00Z",
+                "self_link": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+            },
+        },
+    }
+
+    refreshed_connection = {
+        "access_token": "fresh-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    downloaded_resume = {
+        "content_bytes": b"%PDF-1.7 test pdf bytes",
+        "content_type": "application/pdf",
+        "content_length": 24,
+        "file_name": "Roger Campbell - CV 2025.pdf",
+        "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+    }
+
+    captured_read_call: dict[str, object] = {}
+
+    def fake_build_ingest_shell(*, jobadder_account: int, candidate_id: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        assert candidate_id == 16496678
+        return fake_ingest_bundle
+
+    def fake_load_connection(*, jobadder_account: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        return refreshed_connection
+
+    def fake_read_with_retry(
+        *,
+        jobadder_account: int,
+        stored_connection: dict[str, object],
+        stage_name: str,
+        provider_failure_message: str,
+        read_callable,
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        assert jobadder_account == 2236
+        assert stored_connection == refreshed_connection
+        assert stage_name == "resume_download"
+        assert provider_failure_message == "JobAdder candidate resume download failed."
+
+        # Execute the supplied callable so the test proves the helper passes the
+        # selected attachment ID and the refreshed connection values through to
+        # the lower binary-download layer correctly.
+        read_result = read_callable(
+            api_url=stored_connection["api_url"],
+            access_token=stored_connection["access_token"],
+        )
+        return read_result, refreshed_connection
+
+    def fake_download_attachment(
+        *,
+        api_url: str,
+        access_token: str,
+        candidate_id: int,
+        attachment_id: int,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, object]:
+        captured_read_call["api_url"] = api_url
+        captured_read_call["access_token"] = access_token
+        captured_read_call["candidate_id"] = candidate_id
+        captured_read_call["attachment_id"] = attachment_id
+        captured_read_call["timeout_seconds"] = timeout_seconds
+        return downloaded_resume
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "build_jobadder_candidate_ingest_shell",
+        fake_build_ingest_shell,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_load_jobadder_connection_for_ingest",
+        fake_load_connection,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_perform_jobadder_read_with_refresh_retry",
+        fake_read_with_retry,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "download_jobadder_candidate_attachment",
+        fake_download_attachment,
+    )
+
+    result = download_latest_jobadder_resume_for_candidate(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+    assert result["source_system"] == "jobadder"
+    assert result["jobadder_account"] == 2236
+    assert result["jobadder_instance"] == "eu2"
+    assert result["api_url"] == "https://eu2api.jobadder.com/v2/"
+    assert result["source_candidate_id"] == 16496678
+    assert result["candidate"] == fake_ingest_bundle["candidate"]
+    assert result["latest_resume"] == fake_ingest_bundle["latest_resume"]
+    assert result["resume_source"] == fake_ingest_bundle["ingest_shell"]["resume_source"]
+    assert result["downloaded_resume"] == downloaded_resume
+    assert result["ingest_shell"] == fake_ingest_bundle["ingest_shell"]
+
+    assert captured_read_call == {
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "access_token": "fresh-access-token",
+        "candidate_id": 16496678,
+        "attachment_id": 21091489,
+        "timeout_seconds": 30.0,
+    }
+
+
+def test_download_latest_jobadder_resume_for_candidate_raises_when_no_resume_exists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the resume-download helper fails clearly when the ingest shell
+    did not identify any likely resume attachment.
+
+    Notes
+    -----
+    - This is a different policy from the earlier ingest-shell helper.
+    - There, "no resume found" is a valid partial result.
+    - Here, the caller explicitly asked to download a resume, so the helper
+      should fail rather than pretending the request succeeded.
+
+    Example
+    -------
+    We simulate an ingest bundle where:
+
+    - candidate data exists
+    - attachments may have been inspected
+    - but `latest_resume` is `None`
+
+    and confirm the helper raises `JobAdderIngestPreparationError` with the
+    `resume_selection` stage.
+
+    In plain language:
+
+    - pretend no likely CV was found upstream
+    - confirm the download helper stops immediately and clearly
+    """
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "build_jobadder_candidate_ingest_shell",
+        lambda *, jobadder_account, candidate_id: {
+            "candidate": {"candidateId": candidate_id},
+            "latest_resume": None,
+            "ingest_shell": {"resume_source": None},
+        },
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        download_latest_jobadder_resume_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "No likely JobAdder resume attachment was found for this candidate."
+    assert error.stage == "resume_selection"
+    assert error.details == [
+        {"jobadder_account": 2236},
+        {"candidate_id": 16496678},
+    ]
+
+
+def test_download_latest_jobadder_resume_for_candidate_raises_when_attachment_id_is_invalid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the resume-download helper re-validates the selected
+    attachment ID before attempting the binary download.
+
+    Notes
+    -----
+    - The ingest shell works with raw provider payloads.
+    - That means a "selected" resume could still carry a malformed
+      `attachmentId` field in bad source data or in a buggy future refactor.
+    - This test makes sure the helper fails locally and clearly before trying
+      to build a download URL from unusable data.
+
+    Example
+    -------
+    We simulate a selected resume object where:
+
+    - `latest_resume` exists
+    - but `attachmentId` is blank
+
+    and confirm the helper raises `resume_selection`.
+
+    In plain language:
+
+    - pretend a resume was selected
+    - but its attachment ID is unusable
+    - confirm the helper rejects it before any download starts
+    """
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "build_jobadder_candidate_ingest_shell",
+        lambda *, jobadder_account, candidate_id: {
+            "candidate": {"candidateId": candidate_id},
+            "latest_resume": {
+                "attachmentId": "   ",
+                "fileName": "Broken Resume.pdf",
+            },
+            "ingest_shell": {
+                "resume_source": {
+                    "provider": "jobadder_attachment",
+                    "external_id": None,
+                }
+            },
+        },
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        download_latest_jobadder_resume_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    error = exc_info.value
+
+    assert (
+        str(error)
+        == "The selected JobAdder resume attachment is missing a usable attachment ID."
+    )
+    assert error.stage == "resume_selection"
+    assert error.details == [
+        {"jobadder_account": 2236},
+        {"candidate_id": 16496678},
+    ]
+
+
+def test_download_latest_jobadder_resume_for_candidate_raises_when_binary_download_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that provider-side attachment-download failures are converted into
+    the ingest layer's orchestration error type with useful structured
+    context.
+
+    Notes
+    -----
+    - The binary download itself belongs to the lower API service layer.
+    - This orchestration helper should still surface a clean ingest-level error
+      when that lower layer ultimately fails.
+    - The important contract here is:
+        - preserve the high-level failure message
+        - preserve the stage label
+        - preserve the status code and endpoint context where available
+
+    Example
+    -------
+    We simulate:
+
+    - an ingest bundle with a valid selected resume
+    - a fresh connection for the download step
+    - a lower-layer read helper that raises `JobAdderIngestPreparationError`
+      after the binary download fails
+
+    and confirm the public helper surfaces that same structured orchestration
+    failure.
+
+    In plain language:
+
+    - pretend attachment download failed downstream
+    - confirm the public helper does not hide that failure
+    """
+
+    fake_ingest_bundle = {
+        "candidate": {"candidateId": 16496678},
+        "latest_resume": {
+            "attachmentId": 21091489,
+            "fileName": "Roger Campbell - CV 2025.pdf",
+        },
+        "ingest_shell": {
+            "resume_source": {
+                "provider": "jobadder_attachment",
+                "external_id": 21091489,
+            }
+        },
+    }
+
+    refreshed_connection = {
+        "access_token": "fresh-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+
+    expected_error = JobAdderIngestPreparationError(
+        "JobAdder candidate resume download failed.",
+        stage="resume_download",
+        status_code=404,
+        details=[
+            {"jobadder_account": 2236},
+            {"provider_status_code": 404},
+            {
+                "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+            },
+        ],
+    )
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "build_jobadder_candidate_ingest_shell",
+        lambda *, jobadder_account, candidate_id: fake_ingest_bundle,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_load_jobadder_connection_for_ingest",
+        lambda *, jobadder_account: refreshed_connection,
+    )
+
+    def fake_read_with_retry(
+        *,
+        jobadder_account: int,
+        stored_connection: dict[str, object],
+        stage_name: str,
+        provider_failure_message: str,
+        read_callable,
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        # This simulates the state after the lower shared retry helper has
+        # already concluded that the binary download definitively failed.
+        #
+        # In other words, the public helper is not expected to second-guess the
+        # structured orchestration error at this point. It should just surface
+        # it.
+        raise expected_error
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "_perform_jobadder_read_with_refresh_retry",
+        fake_read_with_retry,
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        download_latest_jobadder_resume_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "JobAdder candidate resume download failed."
+    assert error.stage == "resume_download"
+    assert error.status_code == 404
+    assert error.details == [
+        {"jobadder_account": 2236},
+        {"provider_status_code": 404},
+        {
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+        },
+    ]
