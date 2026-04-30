@@ -45,6 +45,7 @@ import pytest
 from backend.services.jobadder_api import (
     JobAdderApiError,
     build_jobadder_api_headers,
+    download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
@@ -451,3 +452,275 @@ def test_fetch_jobadder_candidate_skills_returns_category_tree(
     ]
     assert skills["endpoint_url"] == "https://api.jobadder.com/v2/candidates/123/skills"
     assert captured_request["url"] == "https://api.jobadder.com/v2/candidates/123/skills"
+
+
+def test_download_jobadder_candidate_attachment_returns_binary_content_and_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the binary attachment-download helper returns the downloaded
+    bytes and the useful response metadata in one small predictable wrapper.
+
+    Notes
+    -----
+    - This is the first JobAdder helper in the module that exercises a
+      successful non-JSON response path.
+    - That matters because attachment download is a different transport shape
+      from the earlier candidate and skills reads:
+        - the success path returns bytes
+        - the error path may still return JSON
+    - This test therefore checks both:
+        - the outbound request shape
+        - the returned binary-content wrapper
+
+    Example
+    -------
+    We simulate a successful PDF response with:
+
+    - `Content-Type: application/pdf`
+    - `Content-Length: 123`
+    - `Content-Disposition: attachment; filename="Roger Campbell - CV 2025.pdf"`
+
+    and confirm the helper extracts the filename and preserves the bytes.
+
+    In plain language:
+
+    - pretend JobAdder returned a PDF attachment
+    - confirm the helper called the correct endpoint
+    - confirm the helper returned the bytes and key metadata cleanly
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Length": "123",
+                "Content-Disposition": (
+                    'attachment; filename="Roger Campbell - CV 2025.pdf"'
+                ),
+            },
+            content=b"%PDF-1.7 fake-pdf-content",
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    attachment = download_jobadder_candidate_attachment(
+        api_url="https://eu2api.jobadder.com/v2/",
+        access_token="jobadder-access-token",
+        candidate_id=16496678,
+        attachment_id=21091489,
+    )
+
+    assert attachment["content_bytes"] == b"%PDF-1.7 fake-pdf-content"
+    assert attachment["content_type"] == "application/pdf"
+    assert attachment["content_length"] == 123
+    assert attachment["file_name"] == "Roger Campbell - CV 2025.pdf"
+    assert (
+        attachment["endpoint_url"]
+        == "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+    )
+
+    assert (
+        captured_request["url"]
+        == "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+    )
+    assert captured_request["headers"] == {
+        "Authorization": "Bearer jobadder-access-token",
+        "Accept": "application/json",
+    }
+    assert captured_request["timeout"] == 30.0
+
+
+def test_download_jobadder_candidate_attachment_returns_none_file_name_when_content_disposition_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the helper still succeeds when JobAdder does not provide a
+    `Content-Disposition` header with a filename.
+
+    Notes
+    -----
+    - Real file-download APIs do not always provide a clean filename header.
+    - The helper should still return the binary content and other response
+      metadata even if the file name is unavailable.
+
+    Example
+    -------
+    We simulate a successful PDF response with:
+
+    - `Content-Type`
+    - `Content-Length`
+    - but no `Content-Disposition`
+
+    and confirm the helper returns `file_name = None`.
+
+    In plain language:
+
+    - pretend JobAdder returned the file but not the filename header
+    - confirm the download still succeeds
+    """
+
+    def fake_get(url, headers, timeout):
+        return httpx.Response(
+            200,
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Length": "456",
+            },
+            content=b"%PDF-1.7 another-fake-pdf",
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    attachment = download_jobadder_candidate_attachment(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=16496678,
+        attachment_id=21091489,
+    )
+
+    assert attachment["content_bytes"] == b"%PDF-1.7 another-fake-pdf"
+    assert attachment["content_type"] == "application/pdf"
+    assert attachment["content_length"] == 456
+    assert attachment["file_name"] is None
+    assert (
+        attachment["endpoint_url"]
+        == "https://api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+    )
+
+
+def test_download_jobadder_candidate_attachment_raises_for_provider_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that a provider-side binary-download failure becomes the same local
+    structured exception type used by the JSON read helpers.
+
+    Notes
+    -----
+    - This is important because higher layers should not need one error
+      contract for JSON reads and another for binary downloads.
+    - Even though the success path is binary, the failure path often still
+      contains JSON provider details.
+
+    Example
+    -------
+    We simulate a `404` attachment-download failure and confirm the helper
+    raises `JobAdderApiError` with the expected endpoint and status code.
+
+    In plain language:
+
+    - pretend JobAdder rejected the attachment download
+    - confirm the helper raises one clear backend exception
+    """
+
+    def fake_get(url, headers, timeout):
+        return httpx.Response(
+            404,
+            json={"message": "Attachment not found"},
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(JobAdderApiError) as exc_info:
+        download_jobadder_candidate_attachment(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            candidate_id=16496678,
+            attachment_id=99999999,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "JobAdder candidate attachment download failed."
+    assert error.status_code == 404
+    assert (
+        error.endpoint_url
+        == "https://api.jobadder.com/v2/candidates/16496678/attachments/99999999"
+    )
+    assert error.response_body == {"message": "Attachment not found"}
+
+
+def test_download_jobadder_candidate_attachment_raises_for_network_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that transport-level failures during attachment download are surfaced
+    clearly.
+
+    Notes
+    -----
+    - This covers the case where the backend could not reach JobAdder at all.
+    - As with the JSON helpers, the caller should receive one clear local
+      exception rather than a raw `httpx` error.
+
+    Example
+    -------
+    We simulate a connection failure and confirm the helper raises
+    `JobAdderApiError` with the expected endpoint.
+
+    In plain language:
+
+    - pretend the backend could not reach JobAdder
+    - confirm the helper raises a connectivity error
+    """
+
+    def fake_get(url, headers, timeout):
+        raise httpx.ConnectError("Network failure")
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(JobAdderApiError) as exc_info:
+        download_jobadder_candidate_attachment(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            candidate_id=16496678,
+            attachment_id=21091489,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "Could not reach the JobAdder API."
+    assert (
+        error.endpoint_url
+        == "https://api.jobadder.com/v2/candidates/16496678/attachments/21091489"
+    )
+
+
+def test_download_jobadder_candidate_attachment_raises_when_attachment_id_is_invalid() -> None:
+    """
+    Verify that the helper rejects an invalid attachment ID before doing any
+    provider work.
+
+    Notes
+    -----
+    - This is a local caller-input validation test.
+    - The helper should fail immediately rather than constructing a bad
+      provider URL and leaving the error to some later HTTP layer.
+
+    Example
+    -------
+    Passing `attachment_id=0` should raise `ValueError`.
+
+    In plain language:
+
+    - pass an invalid attachment ID
+    - confirm the helper fails early
+    """
+
+    with pytest.raises(ValueError) as exc_info:
+        download_jobadder_candidate_attachment(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            candidate_id=16496678,
+            attachment_id=0,
+        )
+
+    assert str(exc_info.value) == "JobAdder attachment_id must be at least 1."
