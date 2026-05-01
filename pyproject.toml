@@ -10,6 +10,7 @@ dependencies = [
     "langgraph>=1.1.8",
     "psycopg[binary]>=3.3.3",
     "pydantic-settings>=2.13.1",
+    "pypdf>=6.10.2",
     "pytest>=9.0.3",
     "ruff>=0.15.10",
     "uvicorn>=0.44.0",

@@ -6,3 +6,4 @@ ruff
 uvicorn
 langgraph
 psycopg[binary]
+pypdf
