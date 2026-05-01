@@ -5,20 +5,29 @@ These tests verify the real FastAPI route wiring for:
 
     GET /api/v1/integrations/jobadder/authorize
     GET /api/v1/integrations/jobadder/callback
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills
 
 The important question is:
 
-    "Does the backend expose real JobAdder OAuth routes that behave clearly
-    during setup?"
+    "Does the backend expose real JobAdder integration routes that behave
+    clearly during setup and read operations?"
 
-That matters because the callback URI must be registered exactly in the
-JobAdder developer portal, and both routes need to point at live backend logic
-rather than invented placeholder paths.
+That matters because:
+
+- the callback URI must be registered exactly in the JobAdder developer portal
+- the OAuth setup routes need to point at live backend logic rather than
+  invented placeholder paths
+- the authenticated read routes need to turn stored JobAdder credentials into
+  predictable API responses for the rest of the product
 
 In plain language:
 
 - prove the authorisation URL route exists
 - prove the callback route exists
+- prove the authenticated candidate read routes are wired correctly
 - prove JobAdder OAuth error queries are handled clearly
 - prove a successful callback can exchange and save a JobAdder connection
 - prove failures are surfaced clearly at the exchange and persistence boundaries
@@ -44,6 +53,9 @@ JOBADDER_CANDIDATES_PREVIEW_PATH_TEMPLATE = (
 )
 JOBADDER_CANDIDATE_DETAIL_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}"
+)
+JOBADDER_CANDIDATE_NOTES_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes"
 )
 JOBADDER_CANDIDATE_SKILLS_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills"
@@ -649,6 +661,115 @@ def test_jobadder_candidate_detail_returns_full_candidate_successfully() -> None
         api_url="https://api.jobadder.com",
         access_token="jobadder-access-token",
         candidate_id=13812978,
+    )
+
+
+def test_jobadder_candidate_notes_returns_notes_successfully() -> None:
+    """
+    Verify that the candidate-notes route returns the dedicated JobAdder notes
+    payload cleanly.
+
+    Notes
+    -----
+    - This is the route-level proof that the backend can pull real candidate
+      notes rather than only exposing the notes link from the candidate record.
+    - The route still relies on mocks here because the purpose of this test is
+      FastAPI wiring and response contract behaviour, not live provider I/O.
+
+    Example
+    -------
+    We simulate:
+
+    - a stored JobAdder connection
+    - a provider helper returning one candidate note
+
+    and confirm the route exposes:
+
+    - account context
+    - candidate ID
+    - note count
+    - the notes list itself
+
+    In plain language:
+
+    - pretend the candidate notes read succeeded
+    - confirm the route returns the expected typed wrapper
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_notes = {
+        "notes": [
+            {
+                "noteId": "11111111-1111-1111-1111-111111111111",
+                "type": "General",
+                "textPartial": "Candidate called back",
+                "text": "Candidate called back and is available next Tuesday.",
+                "createdAt": "2026-04-30T10:00:00Z",
+            }
+        ],
+        "note_count": 1,
+        "total_count": 1,
+        "links": {
+            "self": "https://api.jobadder.com/v2/candidates/13812978/notes"
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/candidates/13812978/notes",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidate_notes",
+            return_value=fake_notes,
+        ) as mock_fetch_notes:
+            response = client.get(
+                JOBADDER_CANDIDATE_NOTES_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    candidate_id=13812978,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["candidate_id"] == 13812978
+    assert payload["note_count"] == 1
+    assert payload["total_count"] == 1
+    assert payload["links"] == {
+        "self": "https://api.jobadder.com/v2/candidates/13812978/notes"
+    }
+    assert payload["notes"] == [
+        {
+            "noteId": "11111111-1111-1111-1111-111111111111",
+            "type": "General",
+            "textPartial": "Candidate called back",
+            "text": "Candidate called back and is available next Tuesday.",
+            "createdAt": "2026-04-30T10:00:00Z",
+        }
+    ]
+
+    mock_fetch_notes.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=13812978,
+        item_limit=25,
     )
 
 

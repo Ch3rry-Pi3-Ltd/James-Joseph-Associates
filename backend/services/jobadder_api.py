@@ -1,15 +1,16 @@
 """
 JobAdder API read helpers for the intelligence backend.
 
-This module contains the first small service helpers for making authenticated
+This module contains the small service helpers for making authenticated
 read-only requests to the JobAdder API after OAuth has completed successfully.
 
 It gives the rest of the repository a stable way to talk about:
 
 - building the Authorization header for JobAdder API requests
 - using the stored JobAdder access token safely
-- calling one small read-only JobAdder endpoint
-- Normalising provider-side HTTP and payload errors into one local exception
+- calling specific read-only JobAdder endpoints
+- downloading candidate attachment bytes transiently
+- normalising provider-side HTTP and payload errors into one local exception
 - keeping external API request logic out of route handlers
 
 Why this module exists
@@ -27,54 +28,73 @@ The next proof point is different:
 
 That is what this module answers.
 
-Scope of this first step
-------------------------
-This module intentionally starts small.
+Current scope
+-------------
+This module still stays intentionally narrow, but it now covers the core
+read-side surfaces we need for the first ingestion pipeline:
 
-Rather than building a large general-purpose JobAdder client immediately, it
-implements one narrow, safe, read-only helper:
+- fetch a first-page preview of candidates
+- fetch one full candidate record
+- fetch candidate attachments
+- fetch candidate skills
+- fetch candidate notes
+- download one candidate attachment transiently
 
-- fetch a first-page preview of candidates from the authenticated JobAdder
-  account
-
-This is enough to prove:
+That is enough to prove:
 
 - the stored token is valid for API use
-- the stored `api` base URL returned by JobAdder is usuable
-- the backend can parse a real JobAdder response
-- we can inspect live payload structure before deciding how to ingest it
+- the stored `api` base URL returned by JobAdder is usable
+- the backend can parse real JobAdder collection and detail responses
+- the backend can retrieve related candidate resources such as notes
+- the backend can download the selected CV bytes for later text extraction
 
-Notes on the chosen endpoint
-----------------------------
+Notes on endpoint construction
+------------------------------
 JobAdder's official documentation shows candidate reads under `/v2/candidates`,
 including:
 
 - `GET https://api.jobadder.com/v2/candidates/{CANDIDATE_ID}`
 - list reads under `https://api.jobadder.com/v2/candidates?...`
+- related resources such as:
+  - `/candidates/{candidateId}/attachments`
+  - `/candidates/{candidateId}/notes`
+  - `/candidates/{candidateId}/skills`
 
 The OAuth token response also returns an `api` field, which is the API base URL
 associated with the connected JobAdder account.
 
-This helper therefore builds the first preview URL as one of:
+This module therefore centralises endpoint normalisation so every helper builds
+URLs consistently whether the stored API base looks like:
 
-    {API_URL}/v2/candidates
+    https://api.jobadder.com
 
-or, when the stored API URL already ends in `/v2`:
+or:
 
-    {API_URL}/candidates
+    https://eu2api.jobadder.com/v2/
 
 Example
 -------
 Typical callers in the rest of the backend do not hand-build URLs directly.
 Instead, they call helpers such as:
 
-    fetch_jobadder_candidates_preview(
+    fetch_jobadder_candidate_notes(
         api_url="https://eu2api.jobadder.com/v2/",
         access_token="...",
+        candidate_id=16496678,
         item_limit=10,
     )
 
-and receive a small normalised wrapper rather than a raw `httpx.Response`.
+or:
+
+    download_jobadder_candidate_attachment(
+        api_url="https://eu2api.jobadder.com/v2/",
+        access_token="...",
+        candidate_id=16496678,
+        attachment_id=21091489,
+    )
+
+and receive a small normalised wrapper rather than needing to work with raw
+`httpx` request details directly.
 
 Important boundaries
 --------------------
@@ -860,6 +880,183 @@ def fetch_jobadder_candidate_skills(
     }
 
 
+def fetch_jobadder_candidate_notes(
+    *,
+    api_url: str,
+    access_token: str,
+    candidate_id: int,
+    item_limit: int = 25,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch candidate notes from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+        Example shapes:
+
+            https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    candidate_id : int
+        JobAdder candidate identifier whose notes should be fetched.
+
+    item_limit : int
+        Maximum number of note items to request from JobAdder for this first
+        read.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `notes`
+        - `note_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, candidate ID, or item limit is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - The candidate detail payload does not carry full note bodies directly.
+    - Instead, JobAdder exposes candidate notes through a dedicated notes
+      endpoint.
+    - The OpenAPI spec also documents that the note list supports an extra
+      `Fields=text` query parameter. This matters because, by default, note
+      list items may only contain `textPartial` rather than the full note text.
+    - This helper therefore requests `Fields=text` deliberately so the backend
+      can inspect real note content rather than only truncated previews.
+
+    Example
+    -------
+    A typical call looks like:
+
+        fetch_jobadder_candidate_notes(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            candidate_id=16496678,
+            item_limit=10,
+        )
+
+    and returns a dictionary of the form:
+
+        {
+            "notes": [...],
+            "note_count": 2,
+            "total_count": 2,
+            "links": {...},
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/notes",
+            "raw_payload": {...},
+        }
+
+    In plain language:
+
+    - build the candidate-notes URL
+    - ask JobAdder for note records and include full note text when available
+    - confirm the response contains a notes list
+    - return that list in one predictable wrapper
+    """
+
+    # Candidate notes still belong to one concrete candidate record, so the
+    # same candidate-ID validation rule applies here as it does to candidate
+    # detail, skills, and attachments.
+    if candidate_id < 1:
+        raise ValueError("JobAdder candidate_id must be at least 1.")
+
+    # Keep the first notes read intentionally bounded. We want a safe
+    # inspection-friendly result before we later decide whether a wider sync,
+    # pagination loop, or incremental notes ingestion is needed.
+    if item_limit < 1:
+        raise ValueError("JobAdder candidate notes item_limit must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/candidates/{candidate_id}/notes",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Request `Fields=text` explicitly.
+    #
+    # This is a subtle but important point from the JobAdder docs:
+    # - the list representation exposes `textPartial` by default
+    # - full text is an opt-in additional field
+    #
+    # If we forget this, the backend may appear to "support notes" while only
+    # ever retrieving truncated note previews. That would be a bad foundation
+    # for mapping notes into the canonical system later.
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate notes read failed.",
+        params={
+            "Fields": ["text"],
+            "Limit": item_limit,
+        },
+    )
+
+    raw_items = response_payload.get("items")
+
+    # A candidate-notes read is only useful if JobAdder actually returns a
+    # notes list. If `items` is missing or malformed, fail clearly rather than
+    # making up a best-effort interpretation of an unknown payload shape.
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder candidate notes response did not include an items list.",
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    # Keep the provider-reported total count when it is usable, but do not let
+    # a malformed `totalCount` field poison an otherwise valid notes read.
+    #
+    # This is a good example of the distinction we want in integration code:
+    # - the `items` list is essential to the helper's contract
+    # - `totalCount` is useful metadata, but not structurally critical
+    #
+    # So we fail hard on a missing/malformed `items`, but degrade gracefully on
+    # a weird total-count field.
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
+    return {
+        "notes": raw_items,
+        "note_count": len(raw_items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
 def _build_jobadder_api_endpoint(*, api_url: str, resource_path: str) -> str:
     """
     Build one normalised JobAdder API endpoint URL from a stored API base.
@@ -942,6 +1139,7 @@ def _request_jobadder_json(
     headers: dict[str, str],
     timeout_seconds: float,
     provider_failure_message: str,
+    params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Perform one authenticated JobAdder GET request and decode the JSON body.
@@ -959,6 +1157,9 @@ def _request_jobadder_json(
 
     provider_failure_message : str
         Message to use when JobAdder rejects the request with an HTTP error.
+
+    params : dict[str, Any] | None
+        Optional query parameters to send with the provider request.
 
     Returns
     -------
@@ -986,6 +1187,7 @@ def _request_jobadder_json(
         fetch_jobadder_candidate_detail(...)
         fetch_jobadder_candidate_attachments(...)
         fetch_jobadder_candidate_skills(...)
+        fetch_jobadder_candidate_notes(...)
 
     all delegate their transport work here so they can focus on validating the
     resource-specific response shape instead of repeating HTTP boilerplate.
@@ -1002,11 +1204,26 @@ def _request_jobadder_json(
     #
     # sequence over and over.
     try:
-        response = httpx.get(
-            endpoint_url,
-            headers=headers,
-            timeout=timeout_seconds,
-        )
+        # Only pass query params when a caller actually supplied them.
+        #
+        # This keeps the common no-query case visually simple, while still
+        # allowing resource-specific helpers such as candidate notes to opt in
+        # to provider query features like:
+        # - `Fields=text`
+        # - `Limit=...`
+        if params is None:
+            response = httpx.get(
+                endpoint_url,
+                headers=headers,
+                timeout=timeout_seconds,
+            )
+        else:
+            response = httpx.get(
+                endpoint_url,
+                headers=headers,
+                params=params,
+                timeout=timeout_seconds,
+            )
     except httpx.HTTPError as exc:
         raise JobAdderApiError(
             "Could not reach the JobAdder API.",
@@ -1332,6 +1549,7 @@ __all__ = [
     "download_jobadder_candidate_attachment",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_candidate_detail",
+    "fetch_jobadder_candidate_notes",
     "fetch_jobadder_candidate_skills",
     "fetch_jobadder_candidates_preview",
 ]

@@ -9,7 +9,10 @@ It gives the rest of the repository a stable way to talk about:
 - integration authorisation-link responses
 - integration callback responses
 - successful integration connection-save responses
-- first authenticated JobAdder API preview responses
+- authenticated JobAdder preview responses
+- authenticated JobAdder candidate-detail responses
+- authenticated JobAdder candidate-skills responses
+- authenticated JobAdder candidate-notes responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
 - keeping integration response shapes out of route modules
@@ -25,7 +28,7 @@ In plain language:
 
 - this module answers the question:
 
-    "What should integration OAuth responses look like?"
+    "What should the integration routes return?"
 
 - it does not call external APIs
 - it does not exchange OAuth tokens
@@ -404,9 +407,106 @@ class JobAdderCandidateSkillsResponse(BaseModel):
     )
 
 
+class JobAdderCandidateNotesResponse(BaseModel):
+    """
+    Response returned when the backend fetches candidate notes from JobAdder.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    candidate_id : int
+        JobAdder candidate identifier whose notes were requested.
+
+    note_count : int
+        Number of note items returned in this response.
+
+    total_count : int | None
+        Provider-reported total note count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    notes : list[dict[str, Any]]
+        Candidate notes returned by JobAdder.
+
+    Notes
+    -----
+    - Candidate notes are exposed by JobAdder through a dedicated notes
+      endpoint rather than living inline inside the candidate detail object.
+    - This response intentionally preserves the nested note dictionaries as-is
+      for now because the immediate goal is inspection and mapping, not yet a
+      frozen canonical note schema.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "candidate_id": 16496678,
+            "note_count": 2,
+            "total_count": 2,
+            "links": {...},
+            "notes": [...],
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    candidate_id: int = Field(
+        ge=1,
+        description="JobAdder candidate identifier whose notes were requested.",
+    )
+
+    note_count: int = Field(
+        ge=0,
+        description="Number of candidate note items returned in this response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total note count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    notes: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Candidate notes returned by JobAdder.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
     "JobAdderCandidateDetailResponse",
+    "JobAdderCandidateNotesResponse",
     "JobAdderCandidateSkillsResponse",
     "JobAdderCandidatesPreviewResponse",
     "JobAdderOAuthConnectionSavedResponse",

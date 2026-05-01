@@ -47,6 +47,7 @@ from backend.services.jobadder_api import (
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
 )
@@ -452,6 +453,145 @@ def test_fetch_jobadder_candidate_skills_returns_category_tree(
     ]
     assert skills["endpoint_url"] == "https://api.jobadder.com/v2/candidates/123/skills"
     assert captured_request["url"] == "https://api.jobadder.com/v2/candidates/123/skills"
+
+
+def test_fetch_jobadder_candidate_notes_returns_notes_list_with_text_field_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the candidate-notes helper calls the dedicated JobAdder notes
+    endpoint and explicitly requests full note text.
+
+    Notes
+    -----
+    - This test matters because candidate detail does not carry the actual note
+      bodies directly.
+    - JobAdder's notes endpoint supports `Fields=text`, and that parameter is
+      easy to forget.
+    - If we omit it, the backend may only receive truncated note previews
+      (`textPartial`) instead of the real note text we eventually want to map.
+
+    Example
+    -------
+    We simulate a successful candidate-notes response and confirm that the
+    outbound provider request includes:
+
+    - `Fields=text`
+    - `Limit=<requested item limit>`
+
+    In plain language:
+
+    - pretend JobAdder returned one candidate note
+    - confirm the helper called the notes endpoint
+    - confirm the helper asked for the full text field, not just a preview
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, params, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["params"] = params
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {
+                        "noteId": "11111111-1111-1111-1111-111111111111",
+                        "type": "General",
+                        "textPartial": "Candidate called back",
+                        "text": "Candidate called back and is available next Tuesday.",
+                        "createdAt": "2026-04-30T10:00:00Z",
+                    }
+                ],
+                "totalCount": 1,
+                "links": {
+                    "self": "https://api.jobadder.com/v2/candidates/123/notes"
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    notes = fetch_jobadder_candidate_notes(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=123,
+        item_limit=10,
+    )
+
+    assert notes["note_count"] == 1
+    assert notes["total_count"] == 1
+    assert notes["links"] == {
+        "self": "https://api.jobadder.com/v2/candidates/123/notes"
+    }
+    assert notes["notes"] == [
+        {
+            "noteId": "11111111-1111-1111-1111-111111111111",
+            "type": "General",
+            "textPartial": "Candidate called back",
+            "text": "Candidate called back and is available next Tuesday.",
+            "createdAt": "2026-04-30T10:00:00Z",
+        }
+    ]
+    assert notes["endpoint_url"] == "https://api.jobadder.com/v2/candidates/123/notes"
+
+    assert captured_request["url"] == "https://api.jobadder.com/v2/candidates/123/notes"
+    assert captured_request["headers"] == {
+        "Authorization": "Bearer jobadder-access-token",
+        "Accept": "application/json",
+    }
+    assert captured_request["params"] == {
+        "Fields": ["text"],
+        "Limit": 10,
+    }
+    assert captured_request["timeout"] == 30.0
+
+
+def test_fetch_jobadder_candidate_notes_raises_when_items_list_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that a malformed candidate-notes success payload is rejected
+    clearly.
+
+    Notes
+    -----
+    - A 200 response is not enough by itself.
+    - The helper still needs the documented `items` list to reason about the
+      returned notes.
+
+    In plain language:
+
+    - pretend JobAdder returned HTTP 200
+    - but did not include a notes list
+    - confirm the helper fails clearly
+    """
+
+    def fake_get(url, headers, params, timeout):
+        return httpx.Response(
+            200,
+            json={
+                "totalCount": 1,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(JobAdderApiError) as exc_info:
+        fetch_jobadder_candidate_notes(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            candidate_id=123,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "JobAdder candidate notes response did not include an items list."
+    assert error.endpoint_url == "https://api.jobadder.com/v2/candidates/123/notes"
 
 
 def test_download_jobadder_candidate_attachment_returns_binary_content_and_metadata(

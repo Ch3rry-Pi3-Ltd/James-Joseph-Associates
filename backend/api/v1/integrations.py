@@ -30,6 +30,7 @@ This module now covers the first few live JobAdder integration steps:
 - `GET /api/v1/integrations/jobadder/callback`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
 
 In plain language:
@@ -58,6 +59,7 @@ from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateDetailResponse,
+    JobAdderCandidateNotesResponse,
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
@@ -65,6 +67,7 @@ from backend.schemas.integrations import (
 from backend.services.jobadder_api import (
     JobAdderApiError,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
 )
@@ -1115,6 +1118,136 @@ def get_jobadder_candidate_detail_route(
         api_url=api_url,
         candidate_id=candidate_id,
         candidate=candidate_detail["candidate"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes",
+    response_model=JobAdderCandidateNotesResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate notes read failed.",
+        },
+    },
+)
+def get_jobadder_candidate_notes_route(
+    jobadder_account: int,
+    candidate_id: int,
+    item_limit: int = Query(
+        default=25,
+        ge=1,
+        le=100,
+        description=(
+            "Maximum number of candidate note items to request from the first "
+            "JobAdder notes read."
+        ),
+    ),
+) -> JobAdderCandidateNotesResponse | JSONResponse:
+    """
+    Return candidate notes from the connected JobAdder account.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier whose notes should be fetched.
+
+    item_limit : int
+        Maximum number of note items to request in this first bounded read.
+
+    Returns
+    -------
+    JobAdderCandidateNotesResponse | JSONResponse
+        Candidate notes response when the stored connection exists and the
+        JobAdder API call succeeds.
+
+        Standard API error response when the stored connection cannot be
+        found, is missing required fields, the token refresh fails, or the
+        provider read fails.
+
+    Notes
+    -----
+    - Candidate notes are not returned as full note bodies inside the main
+      candidate-detail payload.
+    - JobAdder exposes them through a dedicated notes endpoint, and the API
+      docs indicate that full note text should be requested through the
+      `Fields=text` query parameter.
+    - This route therefore exists specifically to prove that the backend can
+      pull real candidate notes rather than only seeing a notes link.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/candidates/16496678/notes
+
+    and returns:
+
+    - the JobAdder account context
+    - the requested candidate ID
+    - a note count
+    - the note list returned by JobAdder
+
+    In plain language:
+
+    - load the stored JobAdder connection
+    - refresh the token if needed
+    - call the dedicated candidate-notes endpoint
+    - return the notes payload in one predictable wrapper
+    """
+
+    # Start from the same shared connection-preparation path used by the other
+    # authenticated JobAdder read routes so note retrieval inherits the same:
+    # - missing-connection handling
+    # - proactive refresh handling
+    # - local field validation
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    # Delegate the "read, maybe refresh, maybe retry once" mechanics to the
+    # shared route helper. This keeps the route focused on its actual resource:
+    # candidate notes.
+    notes_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidate_notes(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+            item_limit=item_limit,
+        ),
+        provider_failure_message="JobAdder candidate notes read failed.",
+    )
+
+    if isinstance(notes_result, JSONResponse):
+        return notes_result
+
+    candidate_notes, api_url, jobadder_instance = notes_result
+
+    return JobAdderCandidateNotesResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        candidate_id=candidate_id,
+        note_count=candidate_notes["note_count"],
+        total_count=candidate_notes["total_count"],
+        links=candidate_notes["links"],
+        notes=candidate_notes["notes"],
     )
 
 
