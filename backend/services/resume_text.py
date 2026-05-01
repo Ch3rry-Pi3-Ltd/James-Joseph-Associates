@@ -90,12 +90,12 @@ from typing import Any
 
 try:
     from pypdf import PdfReader
-
-except ImportError as exc:  # pagma: no cover - handled at runtime, not by logic
+except ImportError as exc:  # pragma: no cover - handled at runtime, not by logic
     raise RuntimeError(
         "The `pypdf` package is required for resume text extraction. "
         "Add `pypdf` to the project dependencies before using this module."
     ) from exc
+
 
 class ResumeTextExtractionError(RuntimeError):
     """
@@ -132,6 +132,13 @@ class ResumeTextExtractionError(RuntimeError):
     - empty input bytes
     - unreadable PDF structure
     - extraction that technically ran but produced no usable text
+
+    Notes
+    -----
+    - This exception is for backend control flow.
+    - It deliberately avoids carrying raw PDF bytes.
+    - Later route handlers or background jobs can convert it into the
+      project's standard error-reporting shape.
     """
 
     def __init__(
@@ -168,11 +175,12 @@ class ResumeTextExtractionError(RuntimeError):
         """
 
         return self.message
-    
+
+
 def extract_text_from_pdf_bytes(
     *,
-     content_bytes: bytes,
-     file_name: str | None = None,
+    content_bytes: bytes,
+    file_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Extract plain text from PDF resume bytes.
@@ -201,7 +209,7 @@ def extract_text_from_pdf_bytes(
     Raises
     ------
     ResumeTextExtractionError
-        If the input bytes empty, the PDF cannot be parsed, or no usable
+        If the input bytes are empty, the PDF cannot be parsed, or no usable
         text can be extracted.
 
     Example
@@ -212,7 +220,7 @@ def extract_text_from_pdf_bytes(
             content_bytes=downloaded_resume["content_bytes"],
             file_name=downloaded_resume.get("file_name"),
         )
-    
+
     and a successful result looks like:
 
         {
@@ -241,36 +249,38 @@ def extract_text_from_pdf_bytes(
     - return the text with small extraction metadata
     """
 
-    # Fail early on obviously unusable input
-    #   - This keeps the function honest about what it needs:
-    #     real document bytes.
-    #   - It also keeps downstream failures clearer. An empty-byte error should be
-    #     reported as an input problem, not as a mysterious "PDF parsing failed"
-    #     problem two layers later.
+    # Fail early on obviously unusable input.
+    #
+    # This keeps the function honest about what it needs:
+    # - real document bytes
+    #
+    # It also keeps downstream failures clearer. An empty-byte error should be
+    # reported as an input problem, not as a mysterious "PDF parsing failed"
+    # problem two layers later.
     if not isinstance(content_bytes, bytes):
         raise ResumeTextExtractionError(
             "Resume content must be provided as raw bytes.",
             stage="input_validation",
             details=[{"file_name": file_name}],
         )
-    
+
     if len(content_bytes) == 0:
         raise ResumeTextExtractionError(
             "Resume content bytes are empty.",
             stage="input_validation",
             details=[{"file_name": file_name}],
         )
-    
-    # Parse from an in-memory stream rather than writing a temporary file
-    #   - That matters for both simplicity and cost:
+
+    # Parse from an in-memory stream rather than writing a temporary file.
     #
-    #       - no filesystem churn
-    #       - no temp-file cleanup burden
-    #       - easier later use inside API handlers or background jobs
-    #   
-    #   - It also matches the current transient-document stragegy, where the PDF
-    #     is downloaded, processed, and then allowed to disappear unless later
-    #     product requirements say otherwise.
+    # That matters for both simplicity and cost:
+    # - no filesystem churn
+    # - no temp-file cleanup burden
+    # - easier later use inside API handlers or background jobs
+    #
+    # It also matches the current transient-document strategy, where the PDF is
+    # downloaded, processed, and then allowed to disappear unless later
+    # product requirements say otherwise.
     try:
         reader = PdfReader(BytesIO(content_bytes))
     except Exception as exc:
@@ -279,33 +289,35 @@ def extract_text_from_pdf_bytes(
             stage="pdf_parse",
             details=[{"file_name": file_name}],
         ) from exc
-    
+
     pages = reader.pages
     page_count = len(pages)
 
     # A PDF with zero pages is technically a parsed PDF object, but it is still
-    # unusable for resume extraction
-    #   - Surfacing this explicitly is better than returning empty text and forcing
-    #     later stages to guess whether the CV was blank, broken, or simply missing.
+    # unusable for resume extraction.
+    #
+    # Surfacing this explicitly is better than returning empty text and forcing
+    # later stages to guess whether the CV was blank, broken, or simply
+    # missing.
     if page_count == 0:
         raise ResumeTextExtractionError(
             "The resume PDF does not contain any pages.",
             stage="pdf_parse",
             details=[{"file_name": file_name}],
         )
-    
+
     extracted_page_texts: list[str] = []
 
     # Extract text page by page rather than trying to flatten everything in one
-    # opaque operation
-    #   - This is the more explainable design:
+    # opaque operation.
     #
-    #       - page-level extraction failures are easier to reason about
-    #       - later enhancements can preserve page boundaries if needed
-    #       - the code stays open to future metadata such as per-page text lengths
+    # This is the more explainable design:
+    # - page-level extraction failures are easier to reason about
+    # - later enhancements can preserve page boundaries if needed
+    # - the code stays open to future metadata such as per-page text lengths
     #
-    #   - Even though the first version only returns one combined string, keeping
-    #     page-wise processing here is the right foundation.
+    # Even though the first version only returns one combined string, keeping
+    # page-wise processing here is the right foundation.
     for page_index, page in enumerate(pages, start=1):
         try:
             raw_page_text = page.extract_text()
@@ -321,27 +333,28 @@ def extract_text_from_pdf_bytes(
 
         # Normalise each page immediately so that the final combined output is
         # less noisy and more stable for downstream prompt inputs.
-        #   - Resume PDFs often contain inconsistent whitespace:
         #
-        #       - double newlines
-        #       - trailing spaces
-        #       - empty lines from layout artifacts
+        # Resume PDFs often contain inconsistent whitespace:
+        # - double newlines
+        # - trailing spaces
+        # - empty lines from layout artifacts
         #
-        #   - Cleaning per page keeps that mess from compounding when the pages are
-        #     joined together later.
+        # Cleaning per page keeps that mess from compounding when the pages are
+        # joined together later.
         normalised_page_text = _normalise_extracted_page_text(raw_page_text)
 
         if normalised_page_text != "":
             extracted_page_texts.append(normalised_page_text)
 
-    # It is possible for a PDF to parse successfully but still yield no usable text
-    #   - Common causes include:
+    # It is possible for a PDF to parse successfully but still yield no usable
+    # text.
     #
-    #       - image-only scanned CVs
-    #       - highly unusual PDF structure
-    #       - extraction limitations in the underlying parser
+    # Common causes include:
+    # - image-only scanned CVs
+    # - highly unusual PDF structure
+    # - extraction limitations in the underlying parser
     #
-    #   - This is not the same thing as successful extraction, so fail clearly.
+    # This is not the same thing as successful extraction, so fail clearly.
     if len(extracted_page_texts) == 0:
         raise ResumeTextExtractionError(
             "The resume PDF did not yield any usable text.",
@@ -349,16 +362,16 @@ def extract_text_from_pdf_bytes(
             details=[
                 {"file_name": file_name},
                 {"page_count": page_count},
-            ]
+            ],
         )
-    
+
     # Join pages with a double newline so the later text still carries some
-    # structural hint that page boundaries existed
-    #   - That is a small but useful compromise:
+    # structural hint that page boundaries existed.
     #
-    #       - one plain string is easy to store and pass to an LLM
-    #       - double newlines preserve a little document rhythm
-    #       - we avoid over-engineering page segmentation in the first version
+    # That is a small but useful compromise:
+    # - one plain string is easy to store and pass to an LLM
+    # - double newlines preserve a little document rhythm
+    # - we avoid over-engineering page segmentation in the first version
     combined_text = "\n\n".join(extracted_page_texts).strip()
 
     if combined_text == "":
@@ -370,14 +383,15 @@ def extract_text_from_pdf_bytes(
                 {"page_count": page_count},
             ],
         )
-    
+
     return {
         "text": combined_text,
         "page_count": page_count,
         "extractor": "pypdf",
         "file_name": file_name,
-        "character_count": len(combined_text)
+        "character_count": len(combined_text),
     }
+
 
 def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     """
@@ -398,7 +412,7 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     -------
     A raw extracted page like:
 
-        "Roger Campbell\\n\\nSenior Data Scientist  \\n\\n"
+        "Roger Campbell\\n\\nSenior Data Scientist   \\n\\n"
 
     becomes something closer to:
 
@@ -407,7 +421,7 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     Notes
     -----
     - This helper is intentionally conservative.
-    - It removes obvious whitespace but does not attempt semantic
+    - It removes obvious whitespace noise but does not attempt semantic
       rewriting.
     - The goal is to make later extraction more stable, not to "improve" the
       candidate's wording.
@@ -415,25 +429,26 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
 
     if not isinstance(raw_page_text, str):
         return ""
-    
-    # Trim each line individually first
-    #   - This helps with the common PDF-extraction pattern where the text itself is
-    #     usable, but each line arrives padded with layout whitespace.
+
+    # Trim each line individually first.
+    #
+    # This helps with the common PDF-extraction pattern where the text itself
+    # is usable, but each line arrives padded with layout whitespace.
     raw_lines = raw_page_text.splitlines()
     stripped_lines = [line.strip() for line in raw_lines]
 
     cleaned_lines: list[str] = []
     previous_line_blank = False
 
-    # Collapse repeated blank lines while preserving single blank-line breaks
-    #   - That gives later LLM or rule-based extraction some natural separation
-    #     between sections such as:
+    # Collapse repeated blank lines while preserving single blank-line breaks.
     #
-    #       - summary
-    #       - experience
-    #       - education
+    # That gives later LLM or rule-based extraction some natural separation
+    # between sections such as:
+    # - summary
+    # - experience
+    # - education
     #
-    #     without leaving the output full of extraction noise.
+    # without leaving the output full of extraction noise.
     for line in stripped_lines:
         is_blank = line == ""
 
@@ -449,6 +464,7 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     normalised_text = "\n".join(cleaned_lines).strip()
 
     return normalised_text
+
 
 __all__ = [
     "ResumeTextExtractionError",
