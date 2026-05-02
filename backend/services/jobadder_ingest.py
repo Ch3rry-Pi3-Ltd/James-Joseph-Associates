@@ -45,6 +45,7 @@ Specifically, given a JobAdder account ID and a candidate ID, this module:
 6. identifies the latest likely-resume attachment
 7. returns one normalised internal dictionary
 8. can optionally download the selected resume bytes transiently
+9. can optionally extract plain text from the selected resume PDF bytes
 
 Why start here
 --------------
@@ -88,6 +89,20 @@ and return:
 - the selected resume metadata
 - the transient downloaded file bytes
 
+And a later helper in this same module can take that one stage further again:
+
+    extract_latest_jobadder_resume_text_for_candidate(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+and return:
+
+- the ingest shell
+- the selected resume metadata
+- the transient downloaded file bytes
+- the extracted resume text bundle
+
 In plain language:
 
 - this module answers the question:
@@ -96,7 +111,7 @@ In plain language:
     JobAdder in one clean step?"
 
 - it can now download the selected CV binary transiently
-- it does not yet parse the CV
+- it can now parse the selected CV into plain text
 - it does not yet create or update canonical records
 """
 
@@ -117,6 +132,10 @@ from backend.services.jobadder_oauth import (
     JobAdderOAuthExchangeError,
     is_jobadder_access_token_expired,
     refresh_jobadder_access_token,
+)
+from backend.services.resume_text import (
+    ResumeTextExtractionError,
+    extract_text_from_pdf_bytes,
 )
 
 
@@ -663,6 +682,167 @@ def download_latest_jobadder_resume_for_candidate(
         "resume_source": ingest_bundle["ingest_shell"]["resume_source"],
         "downloaded_resume": downloaded_resume,
         "ingest_shell": ingest_bundle["ingest_shell"],
+    }
+
+
+def extract_latest_jobadder_resume_text_for_candidate(
+    *,
+    jobadder_account: int,
+    candidate_id: int,
+) -> dict[str, Any]:
+    """
+    Download the latest likely JobAdder resume and extract plain text from it.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier whose latest likely resume should be
+        downloaded and parsed.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `source_system`
+        - `jobadder_account`
+        - `jobadder_instance`
+        - `api_url`
+        - `source_candidate_id`
+        - `candidate`
+        - `latest_resume`
+        - `resume_source`
+        - `downloaded_resume`
+        - `extracted_resume_text`
+        - `ingest_shell`
+
+    Raises
+    ------
+    ValueError
+        If the JobAdder account ID or candidate ID is invalid.
+
+    JobAdderIngestPreparationError
+        If the stored JobAdder connection cannot be loaded, refreshed, or used
+        safely, if no likely resume attachment exists, or if the downloaded PDF
+        cannot be turned into usable plain text.
+
+    Example
+    -------
+    A typical call looks like:
+
+        extract_latest_jobadder_resume_text_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    and a successful result contains:
+
+        {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+            "downloaded_resume": {...},
+            "extracted_resume_text": {
+                "text": "...",
+                "page_count": 2,
+                "extractor": "pypdf",
+                "file_name": "Roger Campbell - CV 2025.pdf",
+                "character_count": 5120,
+            },
+            "ingest_shell": {...},
+        }
+
+    Notes
+    -----
+    - This helper is the first complete JobAdder document-to-text bridge.
+    - It still stops before any LLM work.
+    - It still does not write anything to the database.
+    - Its job is narrower and more important than that:
+        - get the right candidate
+        - get the right resume
+        - get the resume bytes
+        - get usable plain text
+    - That is the last technical boundary before the first structured LLM
+      extraction stage.
+
+    In plain language:
+
+    - build the existing resume-download bundle
+    - pull the downloaded PDF bytes out of that bundle
+    - extract plain text from the PDF
+    - return both the file metadata and the extracted text together
+    """
+
+    # Start from the existing binary-download orchestration helper rather than
+    # rebuilding the same JobAdder read path again.
+    #
+    # That boundary matters because we already have one helper that knows how
+    # to:
+    # - identify the right resume
+    # - validate the attachment ID
+    # - download the file bytes
+    #
+    # Reusing it here keeps the responsibilities stacked cleanly:
+    # - ingest shell helper -> metadata only
+    # - resume download helper -> metadata + bytes
+    # - this helper -> metadata + bytes + text
+    resume_bundle = download_latest_jobadder_resume_for_candidate(
+        jobadder_account=jobadder_account,
+        candidate_id=candidate_id,
+    )
+
+    downloaded_resume = resume_bundle["downloaded_resume"]
+    raw_content_bytes = downloaded_resume.get("content_bytes")
+    raw_file_name = downloaded_resume.get("file_name")
+    file_name = raw_file_name if isinstance(raw_file_name, str) else None
+
+    # The text-extraction helper uses its own exception type because it sits at
+    # a different abstraction level from provider reads.
+    #
+    # This orchestration layer converts that document-parsing failure back into
+    # the JobAdder ingest error type so callers only need one high-level error
+    # family for the whole "candidate -> resume -> text" flow.
+    try:
+        extracted_resume_text = extract_text_from_pdf_bytes(
+            content_bytes=raw_content_bytes,
+            file_name=file_name,
+        )
+    except ResumeTextExtractionError as exc:
+        details: list[dict[str, Any]] = [
+            {"jobadder_account": jobadder_account},
+            {"candidate_id": candidate_id},
+            {"resume_text_stage": exc.stage},
+        ]
+
+        details.extend(exc.details)
+
+        raise JobAdderIngestPreparationError(
+            "JobAdder candidate resume text extraction failed.",
+            stage="resume_text_extraction",
+            details=details,
+        ) from exc
+
+    # Keep the final top-level shape parallel to the earlier helpers in this
+    # module.
+    #
+    # The consistency is deliberate:
+    # - callers should not need to relearn the bundle structure at each stage
+    # - later code can progressively depend on richer keys such as
+    #   `extracted_resume_text` without losing the earlier source context
+    return {
+        "source_system": resume_bundle["source_system"],
+        "jobadder_account": resume_bundle["jobadder_account"],
+        "jobadder_instance": resume_bundle["jobadder_instance"],
+        "api_url": resume_bundle["api_url"],
+        "source_candidate_id": resume_bundle["source_candidate_id"],
+        "candidate": resume_bundle["candidate"],
+        "latest_resume": resume_bundle["latest_resume"],
+        "resume_source": resume_bundle["resume_source"],
+        "downloaded_resume": downloaded_resume,
+        "extracted_resume_text": extracted_resume_text,
+        "ingest_shell": resume_bundle["ingest_shell"],
     }
 
 
@@ -1480,4 +1660,5 @@ __all__ = [
     "JobAdderIngestPreparationError",
     "build_jobadder_candidate_ingest_shell",
     "download_latest_jobadder_resume_for_candidate",
+    "extract_latest_jobadder_resume_text_for_candidate",
 ]

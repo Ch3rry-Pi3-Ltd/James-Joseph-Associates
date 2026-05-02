@@ -80,7 +80,9 @@ from backend.services.jobadder_ingest import (
     JobAdderIngestPreparationError,
     build_jobadder_candidate_ingest_shell,
     download_latest_jobadder_resume_for_candidate,
+    extract_latest_jobadder_resume_text_for_candidate,
 )
+from backend.services.resume_text import ResumeTextExtractionError
 
 
 def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resume(
@@ -1179,4 +1181,223 @@ def test_download_latest_jobadder_resume_for_candidate_raises_when_binary_downlo
         {
             "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489"
         },
+    ]
+
+
+def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the new text-extraction orchestration helper returns one
+    combined bundle containing:
+
+    - the earlier resume-download context
+    - the downloaded resume metadata
+    - the extracted plain text payload
+
+    Notes
+    -----
+    - This is the first full "candidate -> resume bytes -> resume text" test
+      at the JobAdder orchestration layer.
+    - The helper should not reimplement download logic itself.
+    - It should:
+        - reuse the resume-download bundle
+        - pass the downloaded bytes to the PDF text helper
+        - keep the overall return shape aligned with the earlier ingest helpers
+
+    Example
+    -------
+    We simulate:
+
+    - a successful resume-download bundle
+    - a successful PDF text extraction result
+
+    and confirm the helper returns both pieces in one combined structure.
+
+    In plain language:
+
+    - pretend the CV download already worked
+    - pretend the PDF text extraction worked
+    - confirm the helper returns one clean end-to-end text bundle
+    """
+
+    fake_resume_bundle = {
+        "source_system": "jobadder",
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "source_candidate_id": 16496678,
+        "candidate": {
+            "candidateId": 16496678,
+            "firstName": "Roger",
+            "lastName": "Campbell",
+        },
+        "latest_resume": {
+            "attachmentId": 21091489,
+            "fileName": "Roger Campbell - CV 2025.pdf",
+        },
+        "resume_source": {
+            "provider": "jobadder_attachment",
+            "external_id": 21091489,
+            "file_name": "Roger Campbell - CV 2025.pdf",
+            "mime_type": "application/pdf",
+        },
+        "downloaded_resume": {
+            "content_bytes": b"%PDF-1.7 fake pdf bytes",
+            "content_type": "application/pdf",
+            "content_length": 23,
+            "file_name": "Roger Campbell - CV 2025.pdf",
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+        },
+        "ingest_shell": {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+        },
+    }
+
+    fake_extracted_text = {
+        "text": "Roger Campbell\nSenior Data Scientist\nPython",
+        "page_count": 2,
+        "extractor": "pypdf",
+        "file_name": "Roger Campbell - CV 2025.pdf",
+        "character_count": 45,
+    }
+
+    captured_extract_call: dict[str, object] = {}
+
+    def fake_download_bundle(*, jobadder_account: int, candidate_id: int) -> dict[str, object]:
+        assert jobadder_account == 2236
+        assert candidate_id == 16496678
+        return fake_resume_bundle
+
+    def fake_extract_text(*, content_bytes: bytes, file_name: str | None) -> dict[str, object]:
+        captured_extract_call["content_bytes"] = content_bytes
+        captured_extract_call["file_name"] = file_name
+        return fake_extracted_text
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "download_latest_jobadder_resume_for_candidate",
+        fake_download_bundle,
+    )
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "extract_text_from_pdf_bytes",
+        fake_extract_text,
+    )
+
+    result = extract_latest_jobadder_resume_text_for_candidate(
+        jobadder_account=2236,
+        candidate_id=16496678,
+    )
+
+    assert result["source_system"] == "jobadder"
+    assert result["jobadder_account"] == 2236
+    assert result["jobadder_instance"] == "eu2"
+    assert result["api_url"] == "https://eu2api.jobadder.com/v2/"
+    assert result["source_candidate_id"] == 16496678
+    assert result["candidate"] == fake_resume_bundle["candidate"]
+    assert result["latest_resume"] == fake_resume_bundle["latest_resume"]
+    assert result["resume_source"] == fake_resume_bundle["resume_source"]
+    assert result["downloaded_resume"] == fake_resume_bundle["downloaded_resume"]
+    assert result["extracted_resume_text"] == fake_extracted_text
+    assert result["ingest_shell"] == fake_resume_bundle["ingest_shell"]
+
+    assert captured_extract_call == {
+        "content_bytes": b"%PDF-1.7 fake pdf bytes",
+        "file_name": "Roger Campbell - CV 2025.pdf",
+    }
+
+
+def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extraction_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that PDF text-extraction failures are converted into the ingest
+    layer's orchestration error type with useful structured context.
+
+    Notes
+    -----
+    - The lower PDF helper uses `ResumeTextExtractionError`.
+    - This higher JobAdder orchestration layer should translate that into
+      `JobAdderIngestPreparationError` so callers only need one main error
+      family for the whole candidate-resume-text flow.
+    - The translated error should still preserve the important parsing-stage
+      context.
+
+    Example
+    -------
+    We simulate:
+
+    - a successful resume-download bundle
+    - a failing PDF text extraction step
+
+    and confirm the public helper raises a structured ingest-level error with:
+
+    - `stage = "resume_text_extraction"`
+    - the original PDF-stage label preserved in details
+
+    In plain language:
+
+    - pretend the CV download worked
+    - pretend the PDF parser failed later
+    - confirm the helper surfaces that clearly at the ingest layer
+    """
+
+    fake_resume_bundle = {
+        "source_system": "jobadder",
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "source_candidate_id": 16496678,
+        "candidate": {"candidateId": 16496678},
+        "latest_resume": {"attachmentId": 21091489},
+        "resume_source": {"provider": "jobadder_attachment"},
+        "downloaded_resume": {
+            "content_bytes": b"bad pdf bytes",
+            "content_type": "application/pdf",
+            "content_length": 13,
+            "file_name": "Broken Resume.pdf",
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments/21091489",
+        },
+        "ingest_shell": {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+        },
+    }
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "download_latest_jobadder_resume_for_candidate",
+        lambda *, jobadder_account, candidate_id: fake_resume_bundle,
+    )
+
+    def fake_extract_text(*, content_bytes: bytes, file_name: str | None) -> dict[str, object]:
+        raise ResumeTextExtractionError(
+            "The resume PDF could not be parsed.",
+            stage="pdf_parse",
+            details=[{"file_name": "Broken Resume.pdf"}],
+        )
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "extract_text_from_pdf_bytes",
+        fake_extract_text,
+    )
+
+    with pytest.raises(JobAdderIngestPreparationError) as exc_info:
+        extract_latest_jobadder_resume_text_for_candidate(
+            jobadder_account=2236,
+            candidate_id=16496678,
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "JobAdder candidate resume text extraction failed."
+    assert error.stage == "resume_text_extraction"
+    assert error.details == [
+        {"jobadder_account": 2236},
+        {"candidate_id": 16496678},
+        {"resume_text_stage": "pdf_parse"},
+        {"file_name": "Broken Resume.pdf"},
     ]
