@@ -98,6 +98,57 @@ In plain language:
 - build a careful extraction prompt
 - ask the model for structured output
 - validate that output before the rest of the backend trusts it
+
+Interaction Map
+---------------
+The main interaction chain in this module is:
+
+1. `extract_jobadder_candidate_resume_profile(...)`
+   Top-level JobAdder convenience entrypoint. It fetches the prepared
+   candidate + resume-text bundle, then passes that bundle into the
+   structured extraction layer.
+
+2. `extract_latest_jobadder_resume_text_for_candidate(...)`
+   Upstream helper from `jobadder_ingest.py`. It returns candidate data,
+   notes, resume metadata, extracted resume text, and cleaned resume text.
+
+3. `extract_structured_candidate_profile_from_resume_bundle(...)`
+   Core extraction orchestrator in this file. It builds the prompt-ready
+   input, builds the prompts, invokes the model, validates the output, and
+   returns the final structured result.
+
+4. `build_resume_extraction_input_from_jobadder_bundle(...)`
+   Reduces the larger upstream bundle into the smaller, bounded extraction
+   input that the model actually needs.
+
+5. `build_resume_extraction_prompt(...)`
+   Builds the system prompt and user prompt from the prepared extraction
+   input.
+
+6. `_build_langchain_resume_extraction_chain(...)`
+   Combines the LangChain prompt and the structured-output model into one
+   runnable extraction chain.
+
+7. model invocation
+   Executes the chain and asks the model for one structured extraction
+   object.
+
+8. validation against `ResumeStructuredExtraction`
+   Confirms the returned output matches the schema expected by the rest of
+   the backend.
+
+9. final structured result returned
+   Returns one stable extraction payload containing metadata, prompt inputs,
+   and validated structured output.
+
+In plain language:
+
+- get the prepared JobAdder + CV bundle
+- reduce it to the important prompt-ready pieces
+- build the extraction prompts
+- call the structured model
+- validate the output
+- return something the rest of the backend can rely on
 """
 
 from dataclasses import asdict
