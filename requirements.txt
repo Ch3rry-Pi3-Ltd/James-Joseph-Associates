@@ -7,3 +7,6 @@ uvicorn
 langgraph
 psycopg[binary]
 pypdf
+langchain
+langchain-openai
+openai
