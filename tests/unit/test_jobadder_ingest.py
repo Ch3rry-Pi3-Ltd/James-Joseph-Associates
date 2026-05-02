@@ -181,6 +181,20 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
         "attachment_count": 3,
         "links": {"self": "https://eu2api.jobadder.com/v2/candidates/16496678/attachments"},
     }
+    fake_candidate_notes = {
+        "notes": [
+            {
+                "noteId": "note-1",
+                "type": "Email Reply",
+                "text": "Hi Roger,Ã‚\r\n\r\nThanks again...",
+                "createdAt": "2026-04-21T10:05:00Z",
+                "updatedAt": "2026-04-21T10:05:00Z",
+            }
+        ],
+        "note_count": 1,
+        "total_count": 1,
+        "links": {"self": "https://eu2api.jobadder.com/v2/candidates/16496678/notes"},
+    }
 
     captured_stage_names: list[str] = []
 
@@ -207,6 +221,9 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
         if stage_name == "attachments_read":
             return fake_candidate_attachments, fake_connection
 
+        if stage_name == "notes_read":
+            return fake_candidate_notes, fake_connection
+
         raise AssertionError(f"Unexpected stage_name: {stage_name}")
 
     monkeypatch.setattr(
@@ -225,7 +242,7 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
         candidate_id=16496678,
     )
 
-    assert captured_stage_names == ["candidate_read", "attachments_read"]
+    assert captured_stage_names == ["candidate_read", "attachments_read", "notes_read"]
 
     assert result["source_system"] == "jobadder"
     assert result["jobadder_account"] == 2236
@@ -238,6 +255,19 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
     assert result["attachments"]["attachment_count"] == 3
     assert result["attachments"]["resume_attachment_count"] == 2
     assert result["attachments"]["items"] == fake_candidate_attachments["items"]
+    assert result["notes"]["note_count"] == 1
+    assert result["notes"]["total_count"] == 1
+    assert result["notes"]["items"] == fake_candidate_notes["notes"]
+    assert result["notes"]["cleaned_items"] == [
+        {
+            "note_id": "note-1",
+            "type": "Email Reply",
+            "created_at": "2026-04-21T10:05:00Z",
+            "updated_at": "2026-04-21T10:05:00Z",
+            "text": "Hi Roger,Ã‚\r\n\r\nThanks again...",
+            "cleaned_text": "Hi Roger,\n\nThanks again...",
+        }
+    ]
 
     assert result["latest_resume"]["attachmentId"] == 21091489
     assert result["latest_resume"]["fileName"] == "Roger Campbell - CV 2025.pdf"
@@ -257,6 +287,16 @@ def test_build_jobadder_candidate_ingest_shell_returns_candidate_and_latest_resu
     assert result["ingest_shell"]["jobadder_metadata"]["skill_tags"] == [
         "machine learning",
         "applied econometrics",
+    ]
+    assert result["ingest_shell"]["candidate_notes"] == [
+        {
+            "note_id": "note-1",
+            "type": "Email Reply",
+            "created_at": "2026-04-21T10:05:00Z",
+            "updated_at": "2026-04-21T10:05:00Z",
+            "text": "Hi Roger,Ã‚\r\n\r\nThanks again...",
+            "cleaned_text": "Hi Roger,\n\nThanks again...",
+        }
     ]
 
     assert result["ingest_shell"]["resume_source"] == {
@@ -337,6 +377,12 @@ def test_build_jobadder_candidate_ingest_shell_returns_none_when_no_resume_like_
         "attachment_count": 1,
         "links": {},
     }
+    fake_candidate_notes = {
+        "notes": [],
+        "note_count": 0,
+        "total_count": 0,
+        "links": {},
+    }
 
     def fake_load_connection(*, jobadder_account: int) -> dict[str, object]:
         assert jobadder_account == 2236
@@ -355,6 +401,9 @@ def test_build_jobadder_candidate_ingest_shell_returns_none_when_no_resume_like_
 
         if stage_name == "attachments_read":
             return fake_candidate_attachments, fake_connection
+
+        if stage_name == "notes_read":
+            return fake_candidate_notes, fake_connection
 
         raise AssertionError(f"Unexpected stage_name: {stage_name}")
 
@@ -376,6 +425,9 @@ def test_build_jobadder_candidate_ingest_shell_returns_none_when_no_resume_like_
 
     assert result["latest_resume"] is None
     assert result["attachments"]["resume_attachment_count"] == 0
+    assert result["notes"]["note_count"] == 0
+    assert result["notes"]["cleaned_items"] == []
+    assert result["ingest_shell"]["candidate_notes"] == []
     assert result["ingest_shell"]["resume_source"] is None
 
 
@@ -800,6 +852,13 @@ def test_download_latest_jobadder_resume_for_candidate_returns_resume_bundle(
             "firstName": "Roger",
             "lastName": "Campbell",
         },
+        "notes": {
+            "items": [],
+            "cleaned_items": [],
+            "note_count": 0,
+            "total_count": 0,
+            "links": {},
+        },
         "latest_resume": {
             "attachmentId": 21091489,
             "type": "Resume",
@@ -922,6 +981,7 @@ def test_download_latest_jobadder_resume_for_candidate_returns_resume_bundle(
     assert result["api_url"] == "https://eu2api.jobadder.com/v2/"
     assert result["source_candidate_id"] == 16496678
     assert result["candidate"] == fake_ingest_bundle["candidate"]
+    assert result["notes"] == fake_ingest_bundle["notes"]
     assert result["latest_resume"] == fake_ingest_bundle["latest_resume"]
     assert result["resume_source"] == fake_ingest_bundle["ingest_shell"]["resume_source"]
     assert result["downloaded_resume"] == downloaded_resume
@@ -972,8 +1032,15 @@ def test_download_latest_jobadder_resume_for_candidate_raises_when_no_resume_exi
         "build_jobadder_candidate_ingest_shell",
         lambda *, jobadder_account, candidate_id: {
             "candidate": {"candidateId": candidate_id},
+            "notes": {
+                "items": [],
+                "cleaned_items": [],
+                "note_count": 0,
+                "total_count": 0,
+                "links": {},
+            },
             "latest_resume": None,
-            "ingest_shell": {"resume_source": None},
+            "ingest_shell": {"candidate_notes": [], "resume_source": None},
         },
     )
 
@@ -1029,11 +1096,19 @@ def test_download_latest_jobadder_resume_for_candidate_raises_when_attachment_id
         "build_jobadder_candidate_ingest_shell",
         lambda *, jobadder_account, candidate_id: {
             "candidate": {"candidateId": candidate_id},
+            "notes": {
+                "items": [],
+                "cleaned_items": [],
+                "note_count": 0,
+                "total_count": 0,
+                "links": {},
+            },
             "latest_resume": {
                 "attachmentId": "   ",
                 "fileName": "Broken Resume.pdf",
             },
             "ingest_shell": {
+                "candidate_notes": [],
                 "resume_source": {
                     "provider": "jobadder_attachment",
                     "external_id": None,
@@ -1099,11 +1174,19 @@ def test_download_latest_jobadder_resume_for_candidate_raises_when_binary_downlo
 
     fake_ingest_bundle = {
         "candidate": {"candidateId": 16496678},
+        "notes": {
+            "items": [],
+            "cleaned_items": [],
+            "note_count": 0,
+            "total_count": 0,
+            "links": {},
+        },
         "latest_resume": {
             "attachmentId": 21091489,
             "fileName": "Roger Campbell - CV 2025.pdf",
         },
         "ingest_shell": {
+            "candidate_notes": [],
             "resume_source": {
                 "provider": "jobadder_attachment",
                 "external_id": 21091489,
@@ -1232,6 +1315,13 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
             "firstName": "Roger",
             "lastName": "Campbell",
         },
+        "notes": {
+            "items": [],
+            "cleaned_items": [],
+            "note_count": 0,
+            "total_count": 0,
+            "links": {},
+        },
         "latest_resume": {
             "attachmentId": 21091489,
             "fileName": "Roger Campbell - CV 2025.pdf",
@@ -1256,11 +1346,11 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     }
 
     fake_extracted_text = {
-        "text": "Roger Campbell\nSenior Data Scientist\nPython",
+        "text": "Roger CampbellÃ‚\nSenior Data Scientist\nPython",
         "page_count": 2,
         "extractor": "pypdf",
         "file_name": "Roger Campbell - CV 2025.pdf",
-        "character_count": 45,
+        "character_count": 46,
     }
 
     captured_extract_call: dict[str, object] = {}
@@ -1297,10 +1387,18 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     assert result["api_url"] == "https://eu2api.jobadder.com/v2/"
     assert result["source_candidate_id"] == 16496678
     assert result["candidate"] == fake_resume_bundle["candidate"]
+    assert result["notes"] == fake_resume_bundle["notes"]
     assert result["latest_resume"] == fake_resume_bundle["latest_resume"]
     assert result["resume_source"] == fake_resume_bundle["resume_source"]
     assert result["downloaded_resume"] == fake_resume_bundle["downloaded_resume"]
-    assert result["extracted_resume_text"] == fake_extracted_text
+    assert result["extracted_resume_text"] == {
+        "text": "Roger CampbellÃ‚\nSenior Data Scientist\nPython",
+        "cleaned_text": "Roger Campbell\nSenior Data Scientist\nPython",
+        "page_count": 2,
+        "extractor": "pypdf",
+        "file_name": "Roger Campbell - CV 2025.pdf",
+        "character_count": 46,
+    }
     assert result["ingest_shell"] == fake_resume_bundle["ingest_shell"]
 
     assert captured_extract_call == {
@@ -1351,6 +1449,13 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
         "api_url": "https://eu2api.jobadder.com/v2/",
         "source_candidate_id": 16496678,
         "candidate": {"candidateId": 16496678},
+        "notes": {
+            "items": [],
+            "cleaned_items": [],
+            "note_count": 0,
+            "total_count": 0,
+            "links": {},
+        },
         "latest_resume": {"attachmentId": 21091489},
         "resume_source": {"provider": "jobadder_attachment"},
         "downloaded_resume": {
@@ -1363,6 +1468,7 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
         "ingest_shell": {
             "source_system": "jobadder",
             "source_candidate_id": 16496678,
+            "candidate_notes": [],
         },
     }
 

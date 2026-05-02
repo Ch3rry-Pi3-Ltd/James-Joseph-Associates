@@ -42,10 +42,11 @@ Specifically, given a JobAdder account ID and a candidate ID, this module:
 3. refreshes the token if needed
 4. fetches the full candidate record
 5. fetches the candidate's attachment list
-6. identifies the latest likely-resume attachment
-7. returns one normalised internal dictionary
-8. can optionally download the selected resume bytes transiently
-9. can optionally extract plain text from the selected resume PDF bytes
+6. fetches the candidate's notes
+7. identifies the latest likely-resume attachment
+8. returns one normalised internal dictionary
+9. can optionally download the selected resume bytes transiently
+10. can optionally extract plain text from the selected resume PDF bytes
 
 Why start here
 --------------
@@ -73,6 +74,7 @@ and receive a structure that contains:
 
 - the full JobAdder candidate payload
 - the candidate's attachments list
+- the candidate's notes list
 - the best current guess at the latest resume attachment
 - a smaller ingest shell for later LLM/CV work
 
@@ -127,6 +129,7 @@ from backend.services.jobadder_api import (
     download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_attachments,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_notes,
 )
 from backend.services.jobadder_oauth import (
     JobAdderOAuthExchangeError,
@@ -136,6 +139,10 @@ from backend.services.jobadder_oauth import (
 from backend.services.resume_text import (
     ResumeTextExtractionError,
     extract_text_from_pdf_bytes,
+)
+from backend.services.text_cleaning import (
+    clean_jobadder_note_text,
+    clean_resume_text,
 )
 
 
@@ -156,6 +163,7 @@ class JobAdderIngestPreparationError(RuntimeError):
         - `connection_refresh`
         - `candidate_read`
         - `attachments_read`
+        - `notes_read`
 
     status_code : int | None
         Upstream HTTP status code when the failure came from JobAdder.
@@ -178,6 +186,7 @@ class JobAdderIngestPreparationError(RuntimeError):
     - a failed refresh-token request
     - a failed candidate read
     - a failed attachments read
+    - a failed notes read
 
     Notes
     -----
@@ -248,6 +257,7 @@ def build_jobadder_candidate_ingest_shell(
         - the stored JobAdder account context
         - the full JobAdder candidate payload
         - the full candidate attachments payload
+        - the full candidate notes payload
         - the latest likely-resume attachment reference, if found
         - a smaller ingest-ready shell for downstream stages
 
@@ -276,6 +286,7 @@ def build_jobadder_candidate_ingest_shell(
             "source_candidate_id": 16496678,
             "candidate": {...},
             "attachments": {...},
+            "notes": {...},
             "latest_resume": {...} or None,
             "ingest_shell": {...},
         }
@@ -291,6 +302,7 @@ def build_jobadder_candidate_ingest_shell(
 
     - get the candidate
     - get their attachments
+    - get their notes
     - pick the most likely latest CV
     - return one clean bundle for the next ingestion step
     """
@@ -359,6 +371,28 @@ def build_jobadder_candidate_ingest_shell(
         ),
     )
 
+    # Pull candidate notes into the same ingest bundle rather than treating
+    # them as a separate later concern.
+    #
+    # That is important because notes often carry:
+    # - recruiter/candidate communication history
+    # - hiring context
+    # - free-text facts that may matter later for matching or outreach
+    #
+    # In other words, notes are part of the candidate ingestion story, not an
+    # optional sidecar.
+    candidate_notes, successful_connection = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=successful_connection,
+        stage_name="notes_read",
+        provider_failure_message="JobAdder candidate notes read failed.",
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidate_notes(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+        ),
+    )
+
     # Pull the flat attachment list out of the normalised response wrapper.
     #
     # The lower-level API helper deliberately returns a wrapper rather than a
@@ -385,6 +419,8 @@ def build_jobadder_candidate_ingest_shell(
         if _looks_like_resume_attachment(attachment)
     ]
     latest_resume = _select_latest_resume_attachment(resume_attachments)
+    note_items = candidate_notes.get("notes", [])
+    cleaned_candidate_notes = _build_cleaned_candidate_note_items(note_items)
 
     # Pull the successful candidate object and connection metadata into local
     # names before building the final return shape.
@@ -431,6 +467,13 @@ def build_jobadder_candidate_ingest_shell(
             "attachment_count": candidate_attachments.get("attachment_count", 0),
             "resume_attachment_count": len(resume_attachments),
             "links": candidate_attachments.get("links", {}),
+        },
+        "notes": {
+            "items": note_items,
+            "cleaned_items": cleaned_candidate_notes,
+            "note_count": candidate_notes.get("note_count", 0),
+            "total_count": candidate_notes.get("total_count"),
+            "links": candidate_notes.get("links", {}),
         },
         "latest_resume": latest_resume,
         "ingest_shell": {
@@ -481,6 +524,13 @@ def build_jobadder_candidate_ingest_shell(
                 "created_at": candidate_payload.get("createdAt"),
                 "updated_at": candidate_payload.get("updatedAt"),
             },
+            # Keep a smaller cleaned note-text bundle inside the ingest shell
+            # so later stages do not need to parse the full raw note payload
+            # just to reason over note text.
+            #
+            # The raw note payload remains available at the top level for audit
+            # and debugging work.
+            "candidate_notes": cleaned_candidate_notes,
             "resume_source": _build_resume_source_reference(latest_resume),
         },
     }
@@ -514,6 +564,7 @@ def download_latest_jobadder_resume_for_candidate(
         - `api_url`
         - `source_candidate_id`
         - `candidate`
+        - `notes`
         - `latest_resume`
         - `resume_source`
         - `downloaded_resume`
@@ -542,6 +593,7 @@ def download_latest_jobadder_resume_for_candidate(
         {
             "source_system": "jobadder",
             "source_candidate_id": 16496678,
+            "notes": {...},
             "latest_resume": {...},
             "resume_source": {...},
             "downloaded_resume": {
@@ -678,6 +730,7 @@ def download_latest_jobadder_resume_for_candidate(
         "api_url": api_url,
         "source_candidate_id": candidate_id,
         "candidate": ingest_bundle["candidate"],
+        "notes": ingest_bundle["notes"],
         "latest_resume": latest_resume,
         "resume_source": ingest_bundle["ingest_shell"]["resume_source"],
         "downloaded_resume": downloaded_resume,
@@ -713,6 +766,7 @@ def extract_latest_jobadder_resume_text_for_candidate(
         - `api_url`
         - `source_candidate_id`
         - `candidate`
+        - `notes`
         - `latest_resume`
         - `resume_source`
         - `downloaded_resume`
@@ -743,9 +797,11 @@ def extract_latest_jobadder_resume_text_for_candidate(
         {
             "source_system": "jobadder",
             "source_candidate_id": 16496678,
+            "notes": {...},
             "downloaded_resume": {...},
             "extracted_resume_text": {
                 "text": "...",
+                "cleaned_text": "...",
                 "page_count": 2,
                 "extractor": "pypdf",
                 "file_name": "Roger Campbell - CV 2025.pdf",
@@ -772,7 +828,8 @@ def extract_latest_jobadder_resume_text_for_candidate(
     - build the existing resume-download bundle
     - pull the downloaded PDF bytes out of that bundle
     - extract plain text from the PDF
-    - return both the file metadata and the extracted text together
+    - clean that extracted text for later reasoning
+    - return both the file metadata and the text together
     """
 
     # Start from the existing binary-download orchestration helper rather than
@@ -824,6 +881,17 @@ def extract_latest_jobadder_resume_text_for_candidate(
             details=details,
         ) from exc
 
+    # Keep both the raw extracted text and the cleaned text together.
+    #
+    # The cleaned text is the likely input for later LLM work, but keeping the
+    # raw extraction output alongside it is still useful for:
+    # - debugging PDF parsing quality
+    # - auditing what the parser produced before cleanup
+    # - tuning the text-cleaning rules later
+    extracted_resume_text["cleaned_text"] = clean_resume_text(
+        extracted_resume_text["text"]
+    )
+
     # Keep the final top-level shape parallel to the earlier helpers in this
     # module.
     #
@@ -838,6 +906,7 @@ def extract_latest_jobadder_resume_text_for_candidate(
         "api_url": resume_bundle["api_url"],
         "source_candidate_id": resume_bundle["source_candidate_id"],
         "candidate": resume_bundle["candidate"],
+        "notes": resume_bundle["notes"],
         "latest_resume": resume_bundle["latest_resume"],
         "resume_source": resume_bundle["resume_source"],
         "downloaded_resume": downloaded_resume,
@@ -1534,6 +1603,81 @@ def _build_resume_source_reference(
         "created_at": latest_resume.get("createdAt"),
         "self_link": links.get("self"),
     }
+
+
+def _build_cleaned_candidate_note_items(
+    note_items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Build a smaller candidate-notes bundle that preserves both raw and cleaned text.
+
+    Parameters
+    ----------
+    note_items : list[dict[str, Any]]
+        Raw note objects returned by the JobAdder notes helper.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Smaller note dictionaries containing the fields most useful for later
+        ingestion and LLM work.
+
+    Example
+    -------
+    A raw JobAdder note object such as:
+
+        {
+            "noteId": "...",
+            "type": "Email Reply",
+            "text": "Hi Roger,Ã‚\\r\\n\\r\\nThanks...",
+            "createdAt": "2026-04-17T12:01:11Z",
+        }
+
+    becomes something closer to:
+
+        {
+            "note_id": "...",
+            "type": "Email Reply",
+            "created_at": "2026-04-17T12:01:11Z",
+            "updated_at": None,
+            "text": "Hi Roger,Ã‚\\r\\n\\r\\nThanks...",
+            "cleaned_text": "Hi Roger,\\n\\nThanks...",
+        }
+
+    Notes
+    -----
+    - This helper deliberately keeps both raw and cleaned text.
+    - Raw text remains useful for audit/debug work.
+    - Cleaned text is the likely input for later extraction and reasoning.
+    """
+
+    cleaned_items: list[dict[str, Any]] = []
+
+    # Build a smaller, more stable note shape for downstream use.
+    #
+    # The raw JobAdder note payload may contain many fields, but later stages
+    # usually care most about:
+    # - a stable note ID
+    # - note type
+    # - timestamps
+    # - raw note text
+    # - cleaned note text
+    for note in note_items:
+        raw_text = note.get("text")
+        note_text = raw_text if isinstance(raw_text, str) else ""
+
+        cleaned_items.append(
+            {
+                "note_id": note.get("noteId"),
+                "type": note.get("type"),
+                "created_at": note.get("createdAt"),
+                "updated_at": note.get("updatedAt"),
+                "text": note_text,
+                "cleaned_text": clean_jobadder_note_text(note_text),
+            }
+        )
+
+    return cleaned_items
 
 
 def _parse_optional_datetime(value: Any) -> datetime | None:
