@@ -92,6 +92,12 @@ and receive a structure containing:
 - the model profile used
 - the validated structured extraction output
 
+For example, a later caller might inspect:
+
+    result["structured_extraction"]["current_title"]
+    result["structured_extraction"]["skills"]
+    result["structured_extraction"]["employment_history"]
+
 In plain language:
 
 - take the prepared JobAdder + CV bundle
@@ -511,6 +517,14 @@ def build_default_openai_resume_extraction_chat_model(
             max_output_tokens=1600,
         )
 
+    That returned `chat_model` can then be passed directly into:
+
+        extract_jobadder_candidate_resume_profile(
+            jobadder_account=2236,
+            candidate_id=16496678,
+            chat_model=chat_model,
+        )
+
     In plain language:
 
     - build a usable default chat model
@@ -586,6 +600,12 @@ def extract_jobadder_candidate_resume_profile(
         result["prompt_bundle"]
         result["structured_extraction"]
 
+    And the validated extraction output can then be read via fields such as:
+
+        result["structured_extraction"]["current_employer"]
+        result["structured_extraction"]["emails"]
+        result["structured_extraction"]["skills"]
+
     In plain language:
 
     - fetch the prepared JobAdder + CV text bundle
@@ -649,6 +669,17 @@ def extract_structured_candidate_profile_from_resume_bundle(
 
     That is useful later when the source is not JobAdder but the prepared
     bundle shape is equivalent.
+
+    A successful result then contains:
+
+        {
+            "source_system": "jobadder",
+            "source_candidate_id": 16496678,
+            "model_profile": {...},
+            "extraction_input": {...},
+            "prompt_bundle": {...},
+            "structured_extraction": {...},
+        }
     """
 
     extraction_input = build_resume_extraction_input_from_jobadder_bundle(
@@ -672,6 +703,13 @@ def extract_structured_candidate_profile_from_resume_bundle(
     # in one chain-shaped object.
     #
     # Even so, we still validate the final result ourselves before returning it.
+    #
+    # That second validation step is not redundant ceremony. It protects the
+    # service boundary from:
+    # - provider/library behaviour differences
+    # - malformed model output that is "almost right"
+    # - future refactors where the chain may stop returning a fully validated
+    #   Pydantic object directly
     try:
         raw_result = extraction_chain.invoke({})
     except Exception as exc:
@@ -686,6 +724,12 @@ def extract_structured_candidate_profile_from_resume_bundle(
             ],
         ) from exc
 
+    # Some structured-output paths may already hand back an instantiated
+    # `ResumeStructuredExtraction`.
+    #
+    # Others may hand back a plain dictionary-like object. Supporting both
+    # keeps this orchestration layer robust to small library-level behaviour
+    # differences without loosening the final schema contract.
     if isinstance(raw_result, ResumeStructuredExtraction):
         structured_extraction = raw_result
     else:
@@ -774,6 +818,12 @@ def build_resume_extraction_input_from_jobadder_bundle(
             "cleaned_candidate_notes": [...],
         }
 
+    More concretely, the helper should:
+
+    - prefer `extracted_resume_text["cleaned_text"]` over raw text
+    - convert the larger candidate payload into a smaller candidate snapshot
+    - convert the larger notes payload into smaller prompt-ready note items
+
     In plain language:
 
     - take the big upstream bundle
@@ -824,6 +874,12 @@ def build_resume_extraction_input_from_jobadder_bundle(
             ],
         )
 
+    # The notes payload may contain both:
+    # - raw source note items
+    # - cleaned prompt-facing note items
+    #
+    # At this stage we want the cleaned form. The extraction layer should not
+    # have to repeat note-cleaning work that the ingest layer already did.
     cleaned_note_items = notes_payload.get("cleaned_items", [])
     prompt_ready_notes = _build_prompt_ready_candidate_notes(
         note_items=cleaned_note_items,
@@ -889,6 +945,12 @@ def build_resume_extraction_prompt(
             "user_prompt": "Extract a structured candidate-enrichment object from the following material....",
         }
 
+    More concretely:
+
+    - the `system_prompt` should contain the extraction rules and quality bar
+    - the `user_prompt` should contain the actual candidate context, resume
+      context, cleaned notes, and cleaned resume text
+
     In plain language:
 
     - one prompt explains the rules
@@ -951,6 +1013,9 @@ Rules:
     # - validate
     # - compare across runs
     # - debug when extraction quality is weak
+    #
+    # In other words, the prompt should read more like a disciplined work
+    # packet than a chat message.
     user_prompt = f"""
 Extract a structured candidate-enrichment object from the following material.
 
@@ -1018,6 +1083,11 @@ def _build_langchain_resume_extraction_chain(
 
         prompt -> structured model -> validated object
 
+    More concretely, the chain is built from:
+
+        ChatPromptTemplate.from_messages([...])
+        chat_model.with_structured_output(ResumeStructuredExtraction)
+
     In plain language:
 
     - format the messages
@@ -1039,6 +1109,10 @@ def _build_langchain_resume_extraction_chain(
     # smallest part that materially improves the extraction boundary:
     # - schema-aware model invocation
     # - cleaner prompt + model composition
+    #
+    # The important design point is that the rest of this service does not need
+    # to know the provider-specific mechanics of how structured output is
+    # requested. It only needs a runnable chain that honors the schema.
     structured_model = chat_model.with_structured_output(ResumeStructuredExtraction)
 
     return prompt | structured_model
@@ -1079,6 +1153,10 @@ def _build_candidate_context_snapshot(candidate: dict[str, Any]) -> dict[str, An
             "created_at": "2025-07-10T16:01:10Z",
             "updated_at": "2026-04-20T10:02:24Z",
         }
+
+    This is intentionally smaller than the full JobAdder candidate object. The
+    model does not need every upstream field just to extract employer, title,
+    skills, and history.
     """
 
     return {
@@ -1132,6 +1210,9 @@ def _build_resume_context_snapshot(
             "character_count": 5120,
             "extractor": "pypdf",
         }
+
+    This is enough to give the model document context without leaking raw bytes
+    or lower-level transport details into the prompt layer.
     """
 
     latest_resume = latest_resume or {}
@@ -1185,10 +1266,20 @@ def _build_prompt_ready_candidate_notes(
             "updated_at": "2026-04-06T08:51:06Z",
             "cleaned_text": "Hi Roger, Great to hear from you....",
         }
+
+    That is intentionally smaller than the full upstream notes payload. The
+    model mainly needs:
+
+    - note type
+    - timestamps
+    - cleaned note text
     """
 
     prompt_ready_notes: list[dict[str, Any]] = []
 
+    # Limit first, then cleanly project each kept note into the smaller prompt
+    # shape. That keeps the transformation easy to read and makes it obvious
+    # where note-count control happens.
     for note in note_items[:max_note_count]:
         note_text = note.get("cleaned_text") or note.get("text") or ""
 
@@ -1235,6 +1326,10 @@ def _truncate_text(text: str, *, max_characters: int) -> str:
     returns a shortened string ending with:
 
         "[TRUNCATED FOR PROMPT]"
+
+    The returned marker is intentional. It makes later debugging easier because
+    a reader can tell the text was deliberately shortened rather than assuming
+    the source document simply ended there.
     """
 
     if len(text) <= max_characters:
@@ -1268,6 +1363,12 @@ def _serialise_model_profile(profile: ModelProfile) -> dict[str, Any]:
             "temperature": 0.0,
             "max_output_tokens": 2200,
         }
+
+    That plain dictionary can then be:
+
+    - returned from a route
+    - logged
+    - asserted in tests
     """
 
     return asdict(profile)
