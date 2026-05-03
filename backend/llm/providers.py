@@ -3,7 +3,8 @@ LLM provider helpers for the intelligence backend.
 
 This module is the bridge between:
 
-- local model descriptions in `backend.llm.models`, and
+- local model descriptions in `backend.llm.models`
+- and
 - real LangChain chat-model clients that can make provider calls
 
 Why this module exists
@@ -27,7 +28,7 @@ The next problem is different:
     "Given one local `ModelProfile`, how does the backend build a real
     provider-backed LangChain chat model?"
 
-This is what this module is for.
+That is what this module is for.
 
 Why this matters
 ----------------
@@ -60,7 +61,7 @@ This first version is intentionally modest.
 
 It does:
 
-- validate local `ModelProfile` calues before client creation
+- validate local `ModelProfile` values before client creation
 - dispatch by provider
 - build a `ChatOpenAI` client for OpenAI-backed profiles
 - fail clearly for providers that are described locally but not implemented yet
@@ -75,7 +76,7 @@ It does not:
 - implement Nemotron transport yet
 - implement Perplexity transport yet
 
-That boundary is deliberate. The immediate goal is clean, reliable provider
+That boundary is deliberate. The immediate goal is a clean, reliable provider
 factory, not a full multi-provider routing layer.
 
 Example
@@ -113,14 +114,18 @@ from langchain_openai import ChatOpenAI
 
 from backend.llm.models import ModelProfile, ModelProvider
 
+
 class LLMProviderConfigurationError(RuntimeError):
     """
-    Raised when the backend cannot build a useable LLM provider client.
+    Raised when the backend cannot build a usable LLM provider client.
 
     Attributes
     ----------
     message : str
-        Safe human-readble label describing the failed configuration stage.
+        Safe human-readable explanation of what failed.
+
+    stage : str
+        Small machine-readable label describing the failed configuration stage.
 
         Common values in this module include:
 
@@ -156,7 +161,7 @@ class LLMProviderConfigurationError(RuntimeError):
 
     - one exception family for provider-factory failures
     - stage labels explain where the failure came from
-    - details helps tests and callers reason about the failure
+    - details help tests and callers reason about the failure
     """
 
     def __init__(
@@ -189,7 +194,8 @@ class LLMProviderConfigurationError(RuntimeError):
         """
 
         return self.message
-    
+
+
 def build_langchain_chat_model(
     *,
     profile: ModelProfile,
@@ -295,6 +301,7 @@ def build_langchain_chat_model(
             {"model_name": profile.model_name},
         ],
     )
+
 
 def build_openai_chat_model(
     *,
@@ -427,6 +434,7 @@ def build_openai_chat_model(
         client_kwargs["api_key"] = api_key
 
     return ChatOpenAI(**client_kwargs)
+
 
 def _validate_model_profile_for_provider_client(profile: ModelProfile) -> None:
     """
