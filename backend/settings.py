@@ -12,6 +12,8 @@ It gives the rest of the repository a stable way to talk about:
 - whether debug behaviour is enabled
 - the Postgres connection string used for Supabase-backed database reads and writes
 - the Make.com API token used by protected Make.com endpoints
+- the OpenAI API key used by the shared LLM provider layer
+- the default timeout used for backend LLM provider calls
 
 Keeping settings in one place makes the project easier to understand because:
 
@@ -126,6 +128,20 @@ class Settings(BaseSettings):
 
         This must match the callback URI used later during the OAuth flow.
 
+    openai_api_key : str
+        OpenAI API key used by the backend LLM provider layer.
+
+        This should come from environment configuration and must never be
+        committed. An empty default keeps local settings loadable before the
+        model provider is intentionally configured.
+
+    llm_timeout_seconds : float
+        Shared timeout to use for backend LLM provider calls.
+
+        This setting belongs here because it is runtime configuration, not
+        provider-construction logic. The provider module can read or receive
+        this value later when building real model clients.
+
     Notes
     -----
     - This class only describes configuration.
@@ -148,6 +164,8 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_ID
         JOBADDER_CLIENT_SECRET
         JOBADDER_REDIRECT_URI
+        OPENAI_API_KEY
+        LLM_TIMEOUT_SECONDS
 
     Example
     -------
@@ -164,6 +182,8 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_ID=""
         JOBADDER_CLIENT_SECRET=""
         JOBADDER_REDIRECT_URI=""
+        OPENAI_API_KEY=""
+        LLM_TIMEOUT_SECONDS="60"
     """
 
     # Allow configuration from environment variables while keeping defaults
@@ -268,6 +288,30 @@ class Settings(BaseSettings):
     jobadder_redirect_uri: str = Field(
         default="",
         validation_alias="JOBADDER_REDIRECT_URI",
+    )
+
+    # Shared OpenAI API key for the backend LLM provider layer.
+    #   - This is runtime configuration, not provider logic.
+    #   - Keeping the key in settings makes it easy for:
+    #       - local development
+    #       - deployment environments
+    #       - tests that need to override the configured value
+    #   - An empty default keeps the application loadable before the LLM layer
+    #     is intentionally configured.
+    openai_api_key: str = Field(
+        default="",
+        validation_alias="OPENAI_API_KEY",
+    )
+
+    # Shared timeout for backend LLM provider calls.
+    #   - This is intentionally configuration rather than client construction.
+    #   - A single settings-backed timeout helps keep model-calling behaviour
+    #     consistent across extraction and future LLM-backed services.
+    #   - The default is conservative enough for structured extraction work
+    #     without being unbounded.
+    llm_timeout_seconds: float = Field(
+        default=60.0,
+        validation_alias="LLM_TIMEOUT_SECONDS",
     )
 
 @lru_cache(maxsize=1)

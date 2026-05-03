@@ -14,6 +14,8 @@ It gives the rest of the repository a stable way to check:
 - Postgres connection string loading
 - Make.com API token loading
 - JobAdder OAuth setting loading
+- OpenAI API key loading
+- shared LLM timeout loading
 
 Keeping these tests small makes the configuration layer easier to trust because:
 
@@ -84,6 +86,8 @@ def test_settings_load_default_values(monkeypatch) -> None:
     assert settings.environment == "development"
     assert settings.debug is False
     assert settings.postgres_url == ""
+    assert settings.openai_api_key == ""
+    assert settings.llm_timeout_seconds == 60.0
     assert settings.jobadder_client_id == ""
     assert settings.jobadder_client_secret == ""
     assert settings.jobadder_redirect_uri == ""
@@ -139,6 +143,8 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
         "JOBADDER_REDIRECT_URI",
         "http://127.0.0.1:8000/api/v1/integrations/jobadder/callback",
     )
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-openai-key")
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "45")
 
     settings = get_settings()
 
@@ -149,6 +155,8 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.debug is True
     assert settings.postgres_url == "postgresql://user:pass@localhost:5432/jja"
     assert settings.make_api_token == "fake-make-token"
+    assert settings.openai_api_key == "sk-test-openai-key"
+    assert settings.llm_timeout_seconds == 45.0
     assert settings.jobadder_client_id == "fake-jobadder-client-id"
     assert settings.jobadder_client_secret == "fake-jobadder-client-secret"
     assert (

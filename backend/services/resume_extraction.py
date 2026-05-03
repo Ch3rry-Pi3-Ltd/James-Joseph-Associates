@@ -162,10 +162,10 @@ import json
 from typing import Any
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field, ValidationError
 
 from backend.llm.models import ModelProfile, ModelProvider, ModelPurpose
+from backend.llm.providers import build_langchain_chat_model
 from backend.services.jobadder_ingest import (
     extract_latest_jobadder_resume_text_for_candidate,
 )
@@ -471,7 +471,7 @@ def build_default_openai_resume_extraction_chat_model(
     model_name: str = DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name,
     temperature: float = DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.temperature,
     max_output_tokens: int = DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.max_output_tokens,
-) -> ChatOpenAI:
+) -> Any:
     """
     Build the default LangChain chat model for resume extraction.
 
@@ -488,20 +488,23 @@ def build_default_openai_resume_extraction_chat_model(
 
     Returns
     -------
-    ChatOpenAI
-        LangChain chat model configured for structured extraction work.
+    Any
+        LangChain-compatible chat model configured for structured extraction
+        work.
 
     Notes
     -----
-    - This helper is intentionally simple.
-    - It assumes provider credentials are supplied through the runtime
-      environment.
-    - A future dedicated provider module can replace or wrap this helper later
-      if the backend needs:
-        - multi-provider routing
-        - custom retries
-        - usage tracking
-        - central model factories
+    - This helper remains in the module because it is a convenient public
+      entrypoint for callers that simply want "the default extraction model".
+    - It no longer constructs `ChatOpenAI` directly.
+    - Instead, it delegates to `backend.llm.providers`, which now owns:
+        - provider dispatch
+        - shared `ModelProfile` validation
+        - provider-client construction
+    - That keeps the extraction module focused on:
+        - input shaping
+        - prompt construction
+        - structured output validation
 
     Example
     -------
@@ -527,15 +530,26 @@ def build_default_openai_resume_extraction_chat_model(
 
     In plain language:
 
-    - build a usable default chat model
+    - build the default extraction model
+    - do it through the shared provider factory
     - keep provider-transport details out of the extraction orchestration
     """
 
-    return ChatOpenAI(
-        model=model_name,
+    # Build a fresh profile here so callers can override the model parameters
+    # for this helper without mutating the module-level default profile object.
+    #
+    # The actual provider-client construction now lives in
+    # `backend.llm.providers`. That means this helper is just a convenience
+    # wrapper, not a parallel source of provider logic.
+    profile = ModelProfile(
+        provider=ModelProvider.OPENAI,
+        model_name=model_name,
+        purpose=ModelPurpose.EXTRACTION,
         temperature=temperature,
-        max_tokens=max_output_tokens,
+        max_output_tokens=max_output_tokens,
     )
+
+    return build_langchain_chat_model(profile=profile)
 
 
 def extract_jobadder_candidate_resume_profile(
