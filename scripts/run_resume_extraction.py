@@ -105,6 +105,7 @@ In plain language:
 - inspect the result
 - optionally save the full payload for later analysis
 """
+# ruff: noqa: E402
 
 from __future__ import annotations
 
@@ -113,6 +114,24 @@ import json
 from pathlib import Path
 import sys
 from typing import Any
+
+# When Python runs a file directly from `scripts/`, it places the `scripts/`
+# directory on `sys.path`, not the repository root.
+#
+# This project's import graph starts from the repo root, for example:
+# - `backend.llm.providers`
+# - `backend.services.resume_extraction`
+#
+# So a direct invocation such as:
+#
+#     uv run python scripts/run_resume_extraction.py ...
+#
+# needs one small bootstrap step to ensure the repository root is importable.
+# Doing it here keeps the script self-contained and matches the way an operator
+# will naturally try to run it from the project root.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.llm.models import ModelProfile, ModelProvider, ModelPurpose
 from backend.llm.providers import (
@@ -415,6 +434,8 @@ def build_console_summary(result: dict[str, Any]) -> str:
     latest_resume = extraction_input.get("latest_resume", {})
 
     skills = structured.get("skills", [])
+    tools_and_platforms = structured.get("tools_and_platforms", [])
+    certifications = structured.get("certifications", [])
     emails = structured.get("emails", [])
     phones = structured.get("phones", [])
     evidence_notes = structured.get("evidence_notes", [])
@@ -438,6 +459,8 @@ def build_console_summary(result: dict[str, Any]) -> str:
         f"Emails: {', '.join(emails) if emails else '(none)'}",
         f"Phones: {', '.join(phones) if phones else '(none)'}",
         f"Skills: {', '.join(skills) if skills else '(none)'}",
+        f"Tools/platforms: {', '.join(tools_and_platforms) if tools_and_platforms else '(none)'}",
+        f"Certifications: {', '.join(certifications) if certifications else '(none)'}",
         f"Employment entries: {len(employment_history)}",
         f"Education entries: {len(education)}",
         f"Evidence notes: {len(evidence_notes)}",

@@ -142,6 +142,55 @@ def test_clean_jobadder_note_text_preserves_content_while_cleaning_noise() -> No
     assert cleaned_text == "Hi Roger,\n\nThanks again...\n\nWarmest Regards,\nTom"
 
 
+def test_clean_jobadder_note_text_strips_signature_disclaimer_and_reply_chain_noise() -> None:
+    """
+    Verify that the JobAdder note cleaner removes the most common email-derived
+    clutter that would otherwise dominate the later extraction prompt.
+
+    Notes
+    -----
+    - This test covers the stronger note-cleaning path added after the first
+      live extraction review.
+    - The aim is not perfect email parsing.
+    - The aim is to keep the main recruiter/candidate message while removing:
+      - trailing signature blocks
+      - legal disclaimers
+      - quoted reply-chain content
+
+    Example
+    -------
+    A long email-derived note such as:
+
+        "Hi Roger ...\\n\\nWarmest Regards,\\nTom\\nT: ...\\n\\nFrom: Roger ..."
+
+    should be reduced to the meaningful main message only.
+
+    In plain language:
+
+    - keep the real note body
+    - strip the repetitive email clutter underneath it
+    """
+
+    raw_text = (
+        "Hi Roger,\r\n\r\n"
+        "I'm just checking if this email is coming through for you?\r\n\r\n"
+        "Warmest Regards,\r\n\r\n"
+        "Tom\r\n"
+        "T: 0203-371-0617\r\n"
+        "E: tom.owens@example.com\r\n\r\n"
+        "This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed.\r\n\r\n"
+        "From: Roger Campbell <the_rfc@hotmail.co.uk>\r\n"
+        "Sent: 04 March 2026 12:48\r\n"
+        "To: Tom Owens <tom.owens@example.com>\r\n"
+    )
+
+    cleaned_text = text_cleaning.clean_jobadder_note_text(raw_text)
+
+    assert cleaned_text == (
+        "Hi Roger,\n\nI'm just checking if this email is coming through for you?"
+    )
+
+
 def test_clean_common_text_returns_empty_string_for_non_string_input() -> None:
     """
     Verify that the shared common-cleanup helper rejects non-string input

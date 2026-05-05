@@ -161,6 +161,7 @@ from dataclasses import asdict
 import json
 from typing import Any
 
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field, ValidationError
 
@@ -322,7 +323,20 @@ class ResumeStructuredExtraction(BaseModel):
         Phone numbers found in the source material.
 
     skills : list[str]
-        Important technical, domain, or tooling skills.
+        Concise high-signal core skills or domain strengths.
+
+    tools_and_platforms : list[str]
+        Concrete tools, frameworks, cloud platforms, or products.
+
+    certifications : list[str]
+        Certifications clearly supported by the source material.
+
+    linkedin_url : str | None
+        Explicit LinkedIn URL when visible in the source text.
+
+    portfolio_references : list[str]
+        Named portfolio or project-link references mentioned in the source
+        material, even when the actual URL text is not visible.
 
     education : list[EducationHistoryItem]
         Extracted education history.
@@ -353,7 +367,11 @@ class ResumeStructuredExtraction(BaseModel):
             location="London",
             emails=["the_rfc@hotmail.co.uk"],
             phones=["07934 890 708"],
-            skills=["Python", "Machine Learning", "NLP", "SQL"],
+            skills=["Machine Learning", "NLP", "Statistical Inference"],
+            tools_and_platforms=["Python", "SQL", "Azure ML", "Jenkins"],
+            certifications=["AWS Certified Cloud Practitioner"],
+            linkedin_url="https://www.linkedin.com/in/example/",
+            portfolio_references=["MLOps & LLMOps", "Data Engineering"],
             education=[],
             employment_history=[],
             evidence_notes=[
@@ -379,6 +397,10 @@ class ResumeStructuredExtraction(BaseModel):
     emails: list[str] = Field(default_factory=list)
     phones: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
+    tools_and_platforms: list[str] = Field(default_factory=list)
+    certifications: list[str] = Field(default_factory=list)
+    linkedin_url: str | None = Field(default=None)
+    portfolio_references: list[str] = Field(default_factory=list)
     education: list[EducationHistoryItem] = Field(default_factory=list)
     employment_history: list[EmploymentHistoryItem] = Field(default_factory=list)
     evidence_notes: list[str] = Field(default_factory=list)
@@ -1012,12 +1034,16 @@ Rules:
 2. Prefer factual extraction over guesswork.
 3. Use null when a field is genuinely unclear.
 4. Do not invent employers, titles, dates, qualifications, or contact details.
-5. Skills should be concise, deduplicated, and practically useful.
-6. Employment history should be ordered from most recent to oldest when possible.
-7. Education should include only entries reasonably supported by the source.
-8. Evidence notes should explain what source material supports the extraction.
-9. Ambiguity notes should explain uncertainty, contradictions, or missing context.
-10. Return data that matches the requested schema exactly.
+5. `skills` should contain concise, high-signal core skills or domains only. Keep it deduplicated and reasonably bounded.
+6. `tools_and_platforms` should contain concrete tools, frameworks, cloud platforms, and products. Keep it deduplicated and reasonably bounded.
+7. `certifications` should include clearly supported certifications when present in the source.
+8. `linkedin_url` should only be populated when the actual URL text is visible in the source. If the resume says "click here" without the URL, leave it null.
+9. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
+10. Employment history should be ordered from most recent to oldest when possible.
+11. Education should include only entries reasonably supported by the source.
+12. Evidence notes should explain what source material supports the extraction.
+13. Ambiguity notes should explain uncertainty, contradictions, or missing context.
+14. Return data that matches the requested schema exactly.
 """.strip()
 
     # The user prompt is intentionally structured instead of conversational.
@@ -1109,10 +1135,21 @@ def _build_langchain_resume_extraction_chain(
     - ask for a schema-shaped response
     """
 
+    # These prompts are already fully rendered strings, not templates that
+    # still need variable substitution.
+    #
+    # That distinction matters because the user prompt contains JSON-shaped
+    # content with many `{...}` braces. If we pass that string to LangChain as
+    # a normal f-string-style template, LangChain tries to interpret those
+    # braces as template variables and fails before the model call even starts.
+    #
+    # Using concrete message objects tells LangChain:
+    # - the prompt text is final
+    # - do not parse it as a parameterized template
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system_prompt),
-            ("human", user_prompt),
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt),
         ]
     )
 
@@ -1180,7 +1217,7 @@ def _build_candidate_context_snapshot(candidate: dict[str, Any]) -> dict[str, An
         "email": candidate.get("email"),
         "mobile": candidate.get("mobile"),
         "location": candidate.get("location"),
-        "status": candidate.get("status"),
+        "status": _normalise_candidate_status(candidate.get("status")),
         "skill_tags": candidate.get("skillTags", []),
         "created_at": candidate.get("createdAt"),
         "updated_at": candidate.get("updatedAt"),
@@ -1314,6 +1351,38 @@ def _build_prompt_ready_candidate_notes(
         )
 
     return prompt_ready_notes
+
+
+def _normalise_candidate_status(status: Any) -> str | None:
+    """
+    Convert the upstream JobAdder candidate status into a prompt-friendly value.
+
+    Parameters
+    ----------
+    status : Any
+        Upstream candidate status value, which may be either a string or a
+        richer JobAdder object.
+
+    Returns
+    -------
+    str | None
+        Candidate status name when one can be extracted safely.
+
+    Notes
+    -----
+    The extraction prompt does not benefit from the full JobAdder status
+    object. It mainly needs the human-readable status label.
+    """
+
+    if isinstance(status, str):
+        return status
+
+    if isinstance(status, dict):
+        status_name = status.get("name")
+        if isinstance(status_name, str) and status_name.strip() != "":
+            return status_name
+
+    return None
 
 
 def _truncate_text(text: str, *, max_characters: int) -> str:

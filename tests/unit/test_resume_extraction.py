@@ -133,7 +133,12 @@ def _build_fake_resume_text_bundle() -> dict[str, Any]:
             "email": "the_rfc@hotmail.co.uk",
             "mobile": "07934 890 708",
             "location": "London",
-            "status": "Active",
+            "status": {
+                "statusId": 11783,
+                "name": "Active",
+                "active": True,
+                "default": True,
+            },
             "skillTags": ["machine learning", "NLP", "Python"],
             "createdAt": "2025-07-10T16:01:10Z",
             "updatedAt": "2026-04-20T10:02:24Z",
@@ -505,7 +510,11 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
                 "location": "London",
                 "emails": ["the_rfc@hotmail.co.uk"],
                 "phones": ["07934 890 708"],
-                "skills": ["Python", "Machine Learning", "NLP", "SQL"],
+                "skills": ["Machine Learning", "NLP"],
+                "tools_and_platforms": ["Python", "SQL", "LangChain"],
+                "certifications": ["AWS Certified Cloud Practitioner"],
+                "linkedin_url": None,
+                "portfolio_references": ["MLOps & LLMOps"],
                 "education": [
                     {
                         "institution": "University of Warwick",
@@ -589,10 +598,16 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
     assert result["structured_extraction"]["current_title"] == "Senior Data Scientist"
     assert result["structured_extraction"]["emails"] == ["the_rfc@hotmail.co.uk"]
     assert result["structured_extraction"]["skills"] == [
-        "Python",
         "Machine Learning",
         "NLP",
+    ]
+    assert result["structured_extraction"]["tools_and_platforms"] == [
+        "Python",
         "SQL",
+        "LangChain",
+    ]
+    assert result["structured_extraction"]["certifications"] == [
+        "AWS Certified Cloud Practitioner"
     ]
 
 
@@ -729,6 +744,10 @@ def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_out
                 "emails": "the_rfc@hotmail.co.uk",
                 "phones": ["07934 890 708"],
                 "skills": ["Python"],
+                "tools_and_platforms": [],
+                "certifications": [],
+                "linkedin_url": None,
+                "portfolio_references": [],
                 "education": [],
                 "employment_history": [],
                 "evidence_notes": [],
@@ -929,6 +948,10 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
         "emails": ["the_rfc@hotmail.co.uk"],
         "phones": ["07934 890 708"],
         "skills": ["Python", "Machine Learning"],
+        "tools_and_platforms": ["LangChain", "Azure ML"],
+        "certifications": ["AWS Certified Cloud Practitioner"],
+        "linkedin_url": None,
+        "portfolio_references": ["MLOps & LLMOps"],
         "education": [
             {
                 "institution": "University of Warwick",
@@ -963,3 +986,5 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
     assert result.education[0].institution == "University of Warwick"
     assert result.employment_history[0].employer == "Pirum"
     assert result.skills == ["Python", "Machine Learning"]
+    assert result.tools_and_platforms == ["LangChain", "Azure ML"]
+    assert result.certifications == ["AWS Certified Cloud Practitioner"]

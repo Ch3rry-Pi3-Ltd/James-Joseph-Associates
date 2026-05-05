@@ -205,15 +205,21 @@ def clean_jobadder_note_text(raw_text: Any) -> str:
 
     cleaned_text = _clean_common_text(raw_text)
 
-    # Notes can be especially noisy because they often come from email bodies.
+    # JobAdder notes are often copied from email traffic. In practice that
+    # means much of the prompt budget can get wasted on:
+    # - legal disclaimers
+    # - full signature blocks
+    # - repeated quoted reply chains
     #
-    # Even so, this helper should remain conservative for now:
-    # - keep the structure readable
-    # - avoid advanced signature stripping
-    # - avoid pruning reply chains heuristically too early
+    # We still keep this conservative:
+    # - preserve the main visible message body
+    # - strip only the most common boilerplate patterns
     #
-    # That more aggressive cleanup should come later, once we have enough real
-    # tenant data to justify the rule.
+    # The goal is not perfect email parsing. The goal is to stop clearly
+    # irrelevant note noise from crowding out the useful recruiter/candidate
+    # content before it reaches the extraction model.
+    cleaned_text = _strip_jobadder_email_boilerplate(cleaned_text)
+
     return _collapse_repeated_blank_lines(cleaned_text)
 
 
@@ -374,6 +380,133 @@ def _collapse_repeated_blank_lines(raw_text: str) -> str:
     # Reassemble the cleaned lines into one string and trim any accidental
     # whitespace around the edges of the final result.
     return "\n".join(cleaned_lines).strip()
+
+
+def _strip_jobadder_email_boilerplate(raw_text: str) -> str:
+    """
+    Remove common email-derived boilerplate from JobAdder note text.
+
+    Parameters
+    ----------
+    raw_text : str
+        Already-cleaned note text.
+
+    Returns
+    -------
+    str
+        Note text with common disclaimer, signature, and reply-chain boilerplate
+        removed when those patterns are clear.
+
+    Notes
+    -----
+    - This helper stays deliberately heuristic and conservative.
+    - It targets only recurring note noise that materially harms prompt quality.
+    - If no recognizable boilerplate is present, the original text is returned.
+
+    Example
+    -------
+    A note body such as:
+
+        "Hi Roger, ...\\n\\nWarmest Regards,\\n\\nTom\\n\\nT: ...\\n\\nFrom: Roger ..."
+
+    is reduced toward:
+
+        "Hi Roger, ..."
+
+    In plain language:
+
+    - keep the main message
+    - drop the obvious email clutter underneath it
+    """
+
+    if raw_text == "":
+        return ""
+
+    cleaned_text = _strip_common_email_disclaimer(raw_text)
+    cleaned_text = _strip_common_email_signature(cleaned_text)
+    cleaned_text = _strip_common_reply_chain(cleaned_text)
+    return cleaned_text.strip()
+
+
+def _strip_common_email_disclaimer(raw_text: str) -> str:
+    """
+    Remove the common legal disclaimer block seen in email-derived notes.
+    """
+
+    disclaimer_markers = [
+        "\nThis email and any files transmitted with it are confidential",
+        "\nThis message contains confidential information and is intended only",
+        "\nIf you are not the intended recipient you are notified that",
+    ]
+
+    cut_points = [
+        raw_text.find(marker)
+        for marker in disclaimer_markers
+        if raw_text.find(marker) != -1
+    ]
+
+    if not cut_points:
+        return raw_text
+
+    return raw_text[: min(cut_points)].rstrip()
+
+
+def _strip_common_email_signature(raw_text: str) -> str:
+    """
+    Remove a trailing email signature block when it is clearly present.
+    """
+
+    lines = raw_text.split("\n")
+    contact_markers = ("T:", "M:", "E:", "L:", "W:", "A:")
+    valedictions = {
+        "warmest regards,",
+        "kind regards,",
+        "best regards,",
+        "regards,",
+        "warm regards,",
+    }
+
+    for index, line in enumerate(lines):
+        if line.strip().lower() not in valedictions:
+            continue
+
+        # Only treat the valediction as the start of a removable signature when
+        # the following lines actually look like a contact block. This avoids
+        # stripping every casual "Regards," in short genuine notes.
+        trailing_lines = lines[index + 1 : index + 8]
+        if any(
+            candidate_line.startswith(contact_markers)
+            or "www." in candidate_line.lower()
+            or "@" in candidate_line
+            for candidate_line in trailing_lines
+        ):
+            return "\n".join(lines[:index]).rstrip()
+
+    return raw_text
+
+
+def _strip_common_reply_chain(raw_text: str) -> str:
+    """
+    Remove the start of a quoted email reply chain when it is clearly present.
+    """
+
+    reply_markers = [
+        "\nFrom: ",
+        "\nSent from Outlook for Android",
+        "\n-----Original Message-----",
+        "\nOriginal Message",
+    ]
+
+    cut_points = []
+    for marker in reply_markers:
+        marker_index = raw_text.find(marker)
+        if marker_index > 0:
+            cut_points.append(marker_index)
+
+    if not cut_points:
+        return raw_text
+
+    return raw_text[: min(cut_points)].rstrip()
 
 
 __all__ = [
