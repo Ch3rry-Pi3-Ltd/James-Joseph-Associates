@@ -20,12 +20,7 @@
       "email": "the_rfc@hotmail.co.uk",
       "mobile": "07934 890 708",
       "location": null,
-      "status": {
-        "statusId": 11783,
-        "name": "Active",
-        "active": true,
-        "default": true
-      },
+      "status": "Active",
       "skill_tags": [
         "applied econometrics",
         "machine learning"
@@ -49,7 +44,7 @@
         "type": "Email Reply",
         "created_at": "2026-04-17T12:01:11Z",
         "updated_at": "2026-04-17T12:01:11Z",
-        "cleaned_text": "Hi Roger,\n\nI'm just checking if this email is coming through for you?\n\nI still can't find the invoice so if you can re-send I can get it paid for you this afternoon :)\n\nWarmest Regards,\n\nTom\n\nTom Owens\n\nBusiness Development Director\n\nT:  0203-371-0617\n\nM: 07545175393\n\nE:  tom.owens@jamesjosephassociates.co.uk\n\nL:  www.linkedin.com/in/toowens/\n\nW: www.jamesjosephassociates.co.uk\n\nA: James Joseph Associates Limited,150-162 City Road,City Of London,EC1V 2NX\n\nThis email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. If you have received this email in error please notify the system manager. This message contains confidential information and is intended only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy this e-mail. Please notify the sender immediately by e-mail if you have received this e-mail by mistake and delete this e-mail from your system. If you are not the intended recipient you are notified that disclosing, copying, distributing or taking any action in reliance on the contents of this information is strictly prohibited.\n\nFrom: Roger Campbell <the_rfc@hotmail.co.uk>\nSent: 04 March 2026 12:48\nTo: Tom Owens <tom.owens@jamesjosephassociates.co.uk>\nSubject: CV\n\nHi Tom,\n\nHere's my CV. Thanks again for today\n\nIf you see anything that may benefit your own business, feel free to ask and you can have it pro bono as you're Big Jim's lad\n\nR"
+        "cleaned_text": "Hi Roger,\n\nI'm just checking if this email is coming through for you?\n\nI still can't find the invoice so if you can re-send I can get it paid for you this afternoon :)\n\nWarmest Regards,\n\nTom\n\nTom Owens\n\nBusiness Development Director\n\nT:  0203-371-0617\n\nM: 07545175393\n\nE:  tom.owens@jamesjosephassociates.co.uk\n\nL:  www.linkedin.com/in/toowens/\n\nW: www.jamesjosephassociates.co.uk\n\nA: James Joseph Associates Limited,150-162 City Road,City Of London,EC1V 2NX"
       },
       {
         "note_id": "79d7b82f-3d11-4e2a-86bd-d68efdc09e0a",
@@ -63,14 +58,14 @@
         "type": "Email Received",
         "created_at": "2026-04-02T17:52:41Z",
         "updated_at": "2026-04-02T17:52:41Z",
-        "cleaned_text": "Hi Tom,\n\nThanks for getting back to me. That sounds good, I'd be happy to have a chat with them\n\nKeep me posted,\n\nR\n\nSent from Outlook for Android\nFrom: Tom Owens <tom.owens@jamesjosephassociates.co.uk>\nSent: Thursday, April 2, 2026 4:01:15 PM\nTo: Roger Campbell <the_rfc@hotmail.co.uk>\nSubject: Re: CV\n\nHi Roger,\n\nI need to be on another call at 4pm but I tried calling a second ago as I promised I'd update you any movement Re: Pirum\n\nIf you are still looking for something there is some positive news there. Firstly, the manager apologised for the delay (Usual problem he's snowed under with manual work and managing a team etc.)\n\nThat said they really like your profile and the ideas you suggested for solving their problems. He is on holiday next week but they have a meeting with the PE investors w/c the who have been pressuring them to come up with ways to utilise AI (It will increase the value of the firm for the next funding round) and they are meeting them on the 15th and are going to discuss your experience with a view to getting approval to kickoff some greenfield AI based projects.\n\nI am scheduled to speak with him again on the 17th.\n\nWhat are your thoughts Roger, would you still be open to speaking to them? :)\n\nWarmest Regards,\n\nTom\n\nTom Owens\n\nBusiness Development Director\n\nT:  0203-371-0617\n\nM: 07545175393\n\nE:  tom.owens@jamesjosephassociates.co.uk\n\nL:  www.linkedin.com/in/toowens/\n\nW: www.jamesjosephassociates.co.uk\n\nA: James Joseph Associates Limited,150-162 City Road,City Of London,EC1V 2NX\n\nThis email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. If you have received this email in error please notify the system manager. This message contains confidential information and is intended only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy this e-mail. Please notify the sender immediately by e-mail if you have received this e-mail by mistake and delete this e-mail from your system. If you are not the intended recipient you are notified that disclosing, copying, distributing or taking any action in reliance on the contents of this information is strictly prohibited.\n\nFrom: Roger Campbell <the_rfc@hotmail.co.uk>\nSent: 04 March 2026 12:48\nTo: Tom Owens <tom.owens@jamesjosephassociates.co.uk>\nSubject: CV\n\nHi Tom,\n\nHere's my CV. Thanks again for today\n\nIf you see anything that may benefi\n\n[TRUNCATED FOR PROMPT]"
+        "cleaned_text": "Hi Tom,\n\nThanks for getting back to me. That sounds good, I'd be happy to have a chat with them\n\nKeep me posted,\n\nR"
       },
       {
         "note_id": "ae2fdf35-c45f-44b4-bcb6-3bc910eb2e1f",
         "type": "Email Sent",
         "created_at": "2026-04-02T15:01:15Z",
         "updated_at": "2026-04-02T15:01:15Z",
-        "cleaned_text": "Hi Roger,\n\nI need to be on another call at 4pm but I tried calling a second ago as I promised I'd update you any movement Re: Pirum\n\nIf you are still looking for something there is some positive news there. Firstly, the manager apologised for the delay (Usual problem he's snowed under with manual work and managing a team etc.)\n\nThat said they really like your profile and the ideas you suggested for solving their problems. He is on holiday next week but they have a meeting with the PE investors w/c the who have been pressuring them to come up with ways to utilise AI (It will increase the value of the firm for the next funding round) and they are meeting them on the 15th and are going to discuss your experience with a view to getting approval to kickoff some greenfield AI based projects.\n\nI am scheduled to speak with him again on the 17th.\n\nWhat are your thoughts Roger, would you still be open to speaking to them? :)\n\nWarmest Regards,\n\nTom\n\nTom Owens\n\nBusiness Development Director\n\nT:  0203-371-0617\n\nM: 07545175393\n\nE:  tom.owens@jamesjosephassociates.co.uk\n\nL:  www.linkedin.com/in/toowens/\n\nW: www.jamesjosephassociates.co.uk\n\nA: James Joseph Associates Limited,150-162 City Road,City Of London,EC1V 2NX\n\nThis email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. If you have received this email in error please notify the system manager. This message contains confidential information and is intended only for the individual named. If you are not the named addressee you should not disseminate, distribute or copy this e-mail. Please notify the sender immediately by e-mail if you have received this e-mail by mistake and delete this e-mail from your system. If you are not the intended recipient you are notified that disclosing, copying, distributing or taking any action in reliance on the contents of this information is strictly prohibited.\n\nFrom: Roger Campbell <the_rfc@hotmail.co.uk>\nSent: 04 March 2026 12:48\nTo: Tom Owens <tom.owens@jamesjosephassociates.co.uk>\nSubject: CV\n\nHi Tom,\n\nHere's my CV. Thanks again for today\n\nIf you see anything that may benefit your own business, feel free to ask and you can have it pro bono as you're Big Jim's lad\n\nR"
+        "cleaned_text": "Hi Roger,\n\nI need to be on another call at 4pm but I tried calling a second ago as I promised I'd update you any movement Re: Pirum\n\nIf you are still looking for something there is some positive news there. Firstly, the manager apologised for the delay (Usual problem he's snowed under with manual work and managing a team etc.)\n\nThat said they really like your profile and the ideas you suggested for solving their problems. He is on holiday next week but they have a meeting with the PE investors w/c the who have been pressuring them to come up with ways to utilise AI (It will increase the value of the firm for the next funding round) and they are meeting them on the 15th and are going to discuss your experience with a view to getting approval to kickoff some greenfield AI based projects.\n\nI am scheduled to speak with him again on the 17th.\n\nWhat are your thoughts Roger, would you still be open to speaking to them? :)\n\nWarmest Regards,\n\nTom\n\nTom Owens\n\nBusiness Development Director\n\nT:  0203-371-0617\n\nM: 07545175393\n\nE:  tom.owens@jamesjosephassociates.co.uk\n\nL:  www.linkedin.com/in/toowens/\n\nW: www.jamesjosephassociates.co.uk\n\nA: James Joseph Associates Limited,150-162 City Road,City Of London,EC1V 2NX"
       },
       {
         "note_id": "2034ccc1-1832-4270-863c-d35a2dcf6bec",
@@ -84,7 +79,7 @@
   "structured_extraction": {
     "current_employer": "Ch3rry Pi3 Ltd",
     "current_title": "Co-Founder & AI/ML Consultant",
-    "professional_summary": "Senior Data Scientist and AI/ML consultant with experience delivering end-to-end machine learning, LLM, MLOps, and advanced analytics solutions across energy, medical, and technology sectors. Has built production-grade data and AI systems using Palantir Foundry, Azure, and AWS, and has contract and consultancy experience.",
+    "professional_summary": "Senior Data Scientist and AI/ML consultant with experience delivering end-to-end machine learning, LLM, MLOps, and analytics solutions across energy, medical, and technology sectors. Hands-on experience with production-grade data and AI systems using Palantir Foundry, Azure, AWS, and modern ML tooling.",
     "location": null,
     "emails": [
       "the_rfc@hotmail.co.uk",
@@ -95,15 +90,19 @@
     ],
     "skills": [
       "Machine Learning",
-      "LLMs",
+      "Data Science",
       "MLOps",
       "LLMOps",
-      "Applied Econometrics",
+      "Advanced Analytics",
+      "Econometrics",
       "Statistical Inference",
       "Time Series Analysis",
       "Forecasting",
       "Predictive Modelling",
-      "Causality",
+      "NLP",
+      "Data Engineering"
+    ],
+    "tools_and_platforms": [
       "Python",
       "R",
       "SQL",
@@ -116,19 +115,41 @@
       "Microsoft Azure",
       "AWS",
       "Google Cloud Platform",
-      "Databricks",
+      "Azure Data Factory",
+      "Azure Databricks",
+      "Azure ML",
       "Terraform",
+      "Git",
+      "GitHub Actions",
+      "GitLab",
       "Docker",
       "Kubernetes",
       "Jenkins",
       "ArgoCD",
-      "Git",
-      "GitHub Actions",
-      "GitLab",
       "Power BI",
       "Tableau",
-      "Dash/Plotly",
-      "Data Engineering"
+      "Dash",
+      "Plotly"
+    ],
+    "certifications": [
+      "AWS Certified Cloud Practitioner",
+      "AZ-900: Microsoft Azure Fundamentals",
+      "AI-900: Microsoft Azure AI Fundamentals",
+      "DP-900: Microsoft Azure Data Fundamentals",
+      "Cloud Essentials+",
+      "AgilePM Foundation",
+      "IBM Data Science",
+      "IBM Machine Learning",
+      "IBM Applied AI",
+      "IBM AI Engineering"
+    ],
+    "linkedin_url": null,
+    "portfolio_references": [
+      "MLOps & LLMOps",
+      "Microsoft Azure",
+      "Data Engineering",
+      "Leet-Cheat",
+      "GP AI Assistant"
     ],
     "education": [
       {
@@ -163,7 +184,7 @@
         "start_date": "August 2025",
         "end_date": "Present",
         "is_current": true,
-        "summary": "Provides AI/ML consultancy and technical mentorship, building scalable ML and LLM solutions. Resume cites work on an educational coding/ML platform and a GP AI clinical decision-support assistant."
+        "summary": "Provides AI/ML consultancy and mentorship, building scalable ML and LLM solutions. Resume cites projects including Leet-Cheat and GP AI Assistant with responsibilities spanning system design, data modelling, AI logic, full-stack development, and architectural planning."
       },
       {
         "employer": "BP (via Grayce & Harvey Nash)",
@@ -171,7 +192,7 @@
         "start_date": "June 2022",
         "end_date": "April 2025",
         "is_current": false,
-        "summary": "Led data science work in a production optimisation team, building end-to-end ML solutions, automating pipelines with Azure Data Factory, Databricks, and Palantir Foundry, and deploying models with Azure ML and Jenkins."
+        "summary": "Led data science work in production optimisation, building end-to-end ML solutions, automating pipelines with Azure Data Factory, Azure Databricks, and Palantir Foundry, and productionising models with Azure ML and Jenkins. Delivered forecasting, regression, NLP, and dashboard outputs."
       },
       {
         "employer": "Jobs22",
@@ -179,24 +200,28 @@
         "start_date": "June 2021",
         "end_date": "October 2021",
         "is_current": false,
-        "summary": "Data Analyst role listed as remote."
+        "summary": null
       }
     ],
     "evidence_notes": [
-      "JobAdder metadata provides personal email the_rfc@hotmail.co.uk and mobile 07934 890 708.",
-      "Resume header includes the same personal email and mobile, plus company email roger@ch3rry-pi3.com.",
-      "Resume professional summary states he is a Senior Data Scientist with 4 years’ experience in machine learning, LLM, and advanced analytics, and mentions MLOps/LLMOps and platforms including Palantir Foundry, Azure, and AWS.",
-      "Resume states current role as 'Co-Founder & AI/ML Consultant | Ch3rry Pi3 Ltd | AUGUST 2025 – PRESENT'.",
-      "Resume employment section lists prior roles at BP (via Grayce & Harvey Nash) and Jobs22 with dates.",
-      "Resume education section lists MSc Data Science at University of St Andrews as ongoing, plus completed degrees in Mathematics, Economics, and PPE.",
-      "Candidate notes mention he 'did the entire data setup including teraform deploment, system building, production and data ops etc and the data science side too at BP' and that ML engineer work is of interest, supporting BP scope and technical breadth."
+      "JobAdder metadata provides personal email the_rfc@hotmail.co.uk and mobile 07934 890 708, which also appear in the resume contact block.",
+      "Resume headline states 'Senior Data Scientist with 4 years’ experience delivering end-to-end machine learning, LLM, and advanced analytics solutions'.",
+      "Resume states 'Co-Founder of Ch3rry Pi3 Ltd' and lists current role 'Co-Founder & AI/ML Consultant | Ch3rry Pi3 Ltd | August 2025 – Present'.",
+      "Resume lists prior employment at 'BP (via Grayce & Harvey Nash)' as 'Senior Data Scientist (Contractor)' from June 2022 to April 2025.",
+      "Resume lists an earlier role 'Data Analyst | Jobs22 | Remote' from June 2021 to October 2021.",
+      "Resume skills section explicitly includes ML, MLOps, LLMOps, Econometrics, Statistical Inference, Time Series Analysis, Forecasting, Predictive Modelling, LangChain, LangGraph, TensorFlow, PyTorch, Azure, AWS, GCP, Databricks, Terraform, Python, R, SQL, PySpark, Docker, Kubernetes, Jenkins, ArgoCD, Power BI, Tableau, and Dash/Plotly.",
+      "Resume education section lists MSc Data Science at University of St Andrews as current, BSc (Hons) Mathematics at Open University, MSc Economics at University of Birmingham, and BA (Hons) Politics, Philosophy & Economics at Open University.",
+      "Resume certifications section explicitly lists AWS Certified Cloud Practitioner, AZ-900, AI-900, DP-900, Cloud Essentials+, AgilePM Foundation, IBM Data Science, IBM Machine Learning, IBM Applied AI, and IBM AI Engineering.",
+      "Resume portfolio section names portfolio areas 'MLOps & LLMOps', 'Microsoft Azure', and 'Data Engineering', but the actual URLs are hidden behind 'Click here'.",
+      "Phone note from 2026-03-23 states he 'did the entire data setup including teraform deploment, system building, production and data ops etc and the data science side too at BP' and that 'He get AI and can do that too', supporting broad end-to-end delivery experience."
     ],
     "ambiguity_notes": [
-      "Location is not reliably stated as a current candidate location; resume contains mixed work/education locations and modalities such as Hybrid, Remote, St Andrews, Scotland, Birmingham, UK, and Remote, UK.",
-      "Current title could also be described more broadly as 'Senior Data Scientist' from the resume summary, but the most explicit current employment title is 'Co-Founder & AI/ML Consultant'.",
-      "Company email roger@ch3rry-pi3.com appears in the resume header, but it is unclear whether it should be treated as a primary personal contact versus business contact.",
-      "No explicit current employer/location confirmation appears in the recruiter notes beyond resume evidence.",
-      "Certifications were present in the resume but are not included because the schema does not contain a certifications field."
+      "Location is not clearly stated as the candidate's current location; resume references hybrid, remote, and study locations, so location is left null.",
+      "LinkedIn URL is not populated because the resume only says 'LinkedIn: click here' without showing the actual URL.",
+      "Company website and company LinkedIn are referenced as 'click here' only, so no URLs can be extracted.",
+      "Current role timing may overlap with the end of the BP contract and ongoing MSc study, but the resume supports Ch3rry Pi3 Ltd as the current employer.",
+      "The resume claims 4 years of experience, but the visible employment history is relatively short and may not capture all experience; no unsupported roles were added.",
+      "Several listed items under certifications, especially IBM-branded items, may be courses or badges rather than formal certifications, but they are included because they are presented under the resume's 'Certifications' section."
     ]
   }
 }

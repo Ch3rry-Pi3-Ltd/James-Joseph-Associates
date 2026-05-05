@@ -583,6 +583,43 @@ def write_json_output(*, payload: dict[str, Any], output_path: Path) -> None:
     )
 
 
+def _print_json_safely(payload: dict[str, Any]) -> None:
+    """
+    Print JSON to stdout while tolerating narrow Windows console encodings.
+
+    Parameters
+    ----------
+    payload : dict[str, Any]
+        JSON-ready payload to print.
+
+    Notes
+    -----
+    - The saved JSON file should preserve Unicode faithfully.
+    - The console, however, may be using a narrower code page that cannot
+      render every character found in live recruiter notes or candidate text.
+    - This helper therefore falls back to a replacement-safe encoding when
+      direct `print(...)` would fail.
+    """
+
+    rendered_json = json.dumps(payload, indent=2, ensure_ascii=False)
+
+    try:
+        print(rendered_json)
+    except UnicodeEncodeError:
+        safe_stdout = getattr(sys.stdout, "buffer", None)
+        if safe_stdout is None:
+            print(rendered_json.encode("ascii", errors="replace").decode("ascii"))
+            return
+
+        safe_stdout.write(
+            rendered_json.encode(
+                getattr(sys.stdout, "encoding", "utf-8") or "utf-8",
+                errors="replace",
+            )
+        )
+        safe_stdout.write(b"\n")
+
+
 def run_live_resume_extraction(args: argparse.Namespace) -> dict[str, Any]:
     """
     Run one live JobAdder resume extraction from parsed CLI arguments.
@@ -724,7 +761,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.print_full_json:
             print("")
-            print(json.dumps(json_payload, indent=2, ensure_ascii=False))
+            _print_json_safely(json_payload)
 
         return 0
 

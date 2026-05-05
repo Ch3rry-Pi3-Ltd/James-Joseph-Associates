@@ -473,11 +473,13 @@ def _strip_common_email_signature(raw_text: str) -> str:
         # Only treat the valediction as the start of a removable signature when
         # the following lines actually look like a contact block. This avoids
         # stripping every casual "Regards," in short genuine notes.
-        trailing_lines = lines[index + 1 : index + 8]
+        #
+        # Be slightly generous in how far we scan because real email signatures
+        # often include blank spacer lines and one or two title/name lines
+        # before the obvious contact markers appear.
+        trailing_lines = lines[index + 1 : index + 16]
         if any(
-            candidate_line.startswith(contact_markers)
-            or "www." in candidate_line.lower()
-            or "@" in candidate_line
+            _line_looks_like_signature_contact(candidate_line, contact_markers)
             for candidate_line in trailing_lines
         ):
             return "\n".join(lines[:index]).rstrip()
@@ -507,6 +509,28 @@ def _strip_common_reply_chain(raw_text: str) -> str:
         return raw_text
 
     return raw_text[: min(cut_points)].rstrip()
+
+
+def _line_looks_like_signature_contact(
+    line: str,
+    contact_markers: tuple[str, ...],
+) -> bool:
+    """
+    Return whether a line looks like part of an email signature contact block.
+
+    Notes
+    -----
+    This helper normalises whitespace before checking the line because copied
+    email signatures often contain non-breaking spaces and irregular padding.
+    """
+
+    stripped_line = line.replace("\xa0", " ").strip()
+
+    return (
+        stripped_line.startswith(contact_markers)
+        or "www." in stripped_line.lower()
+        or "@" in stripped_line
+    )
 
 
 __all__ = [
