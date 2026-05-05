@@ -284,6 +284,140 @@ def test_build_openai_chat_model_accepts_explicit_api_key() -> None:
     assert isinstance(result, ChatOpenAI)
 
 
+def test_build_openai_chat_model_uses_settings_fallbacks_when_arguments_are_omitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the OpenAI-specific builder falls back to backend settings when
+    the caller omits both `api_key` and `timeout_seconds`.
+
+    Notes
+    -----
+    - This test is about the provider layer's own fallback logic, not about the
+      real `ChatOpenAI` constructor.
+    - So it replaces both:
+        - `get_settings()`
+        - `ChatOpenAI`
+      with small fakes.
+    - That keeps the test focused on one question:
+        - did the provider helper resolve the right values before constructing
+          the client?
+
+    Example
+    -------
+    We fake backend settings like:
+
+        openai_api_key = "sk-from-settings"
+        llm_timeout_seconds = 33.0
+
+    then call:
+
+        build_openai_chat_model(profile=profile)
+
+    and confirm those settings-backed values are passed into the client
+    constructor.
+
+    In plain language:
+
+    - omit the explicit arguments on purpose
+    - fake the settings object
+    - prove the provider helper uses settings as its fallback path
+    """
+
+    profile = _build_openai_test_profile()
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeSettings:
+        openai_api_key = "sk-from-settings"
+        llm_timeout_seconds = 33.0
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "ChatOpenAI", FakeChatOpenAI)
+
+    result = build_openai_chat_model(profile=profile)
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs == {
+        "model": "gpt-5.4-mini",
+        "temperature": 0.0,
+        "max_tokens": 500,
+        "timeout": 33.0,
+        "api_key": "sk-from-settings",
+    }
+
+
+def test_build_openai_chat_model_prefers_explicit_arguments_over_settings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that explicit runtime arguments override backend settings when both
+    are available.
+
+    Notes
+    -----
+    - This precedence rule is important because services and tests sometimes
+      need to supply one-off values without mutating global settings.
+    - If explicit values did not win, the provider layer would be much harder
+      to reason about in integration code.
+
+    Example
+    -------
+    We fake backend settings with:
+
+        openai_api_key = "sk-from-settings"
+        llm_timeout_seconds = 99.0
+
+    then call:
+
+        build_openai_chat_model(
+            profile=profile,
+            api_key="sk-explicit",
+            timeout_seconds=12.5,
+        )
+
+    and confirm the explicit values are the ones passed into the client
+    constructor.
+
+    In plain language:
+
+    - provide both settings and explicit arguments
+    - confirm the explicit arguments win
+    """
+
+    profile = _build_openai_test_profile()
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeSettings:
+        openai_api_key = "sk-from-settings"
+        llm_timeout_seconds = 99.0
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "ChatOpenAI", FakeChatOpenAI)
+
+    result = build_openai_chat_model(
+        profile=profile,
+        api_key="sk-explicit",
+        timeout_seconds=12.5,
+    )
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs == {
+        "model": "gpt-5.4-mini",
+        "temperature": 0.0,
+        "max_tokens": 500,
+        "timeout": 12.5,
+        "api_key": "sk-explicit",
+    }
+
+
 def test_build_langchain_chat_model_dispatches_openai_profile_to_openai_builder(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

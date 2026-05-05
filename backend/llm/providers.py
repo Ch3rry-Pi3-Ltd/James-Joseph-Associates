@@ -113,6 +113,7 @@ from typing import Any
 from langchain_openai import ChatOpenAI
 
 from backend.llm.models import ModelProfile, ModelProvider
+from backend.settings import get_settings
 
 
 class LLMProviderConfigurationError(RuntimeError):
@@ -200,7 +201,7 @@ def build_langchain_chat_model(
     *,
     profile: ModelProfile,
     api_key: str | None = None,
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float | None = None,
 ) -> Any:
     """
     Build a LangChain-compatible chat model from one local `ModelProfile`.
@@ -219,8 +220,11 @@ def build_langchain_chat_model(
         If omitted, the provider SDK is expected to resolve credentials from the
         runtime environment using its normal conventions.
 
-    timeout_seconds : float
-        Request timeout to apply to the provider client.
+    timeout_seconds : float | None
+        Optional explicit request timeout to apply to the provider client.
+
+        If omitted, the provider layer falls back to the shared backend
+        settings value.
 
     Returns
     -------
@@ -243,6 +247,8 @@ def build_langchain_chat_model(
       provider-specific builder.
     - Even though the repo knows about several providers in `ModelProvider`,
       this module only implements the OpenAI transport at the moment.
+    - Explicit runtime arguments still win. Settings are only used as fallback
+      defaults when those arguments are omitted.
 
     Example
     -------
@@ -261,6 +267,12 @@ def build_langchain_chat_model(
     A later service can then do something like:
 
         chain = prompt | chat_model.with_structured_output(MySchema)
+
+    If the caller omits `api_key` and `timeout_seconds`, the provider layer can
+    fall back to shared backend settings:
+
+        settings.openai_api_key
+        settings.llm_timeout_seconds
 
     In plain language:
 
@@ -307,7 +319,7 @@ def build_openai_chat_model(
     *,
     profile: ModelProfile,
     api_key: str | None = None,
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float | None = None,
 ) -> ChatOpenAI:
     """
     Build a `ChatOpenAI` client from one OpenAI-backed `ModelProfile`.
@@ -325,10 +337,13 @@ def build_openai_chat_model(
         Optional explicit OpenAI API key.
 
         If omitted, `ChatOpenAI` is expected to resolve credentials from the
-        environment in the usual SDK-supported way.
+        configured backend settings first, then from the environment in the
+        usual SDK-supported way.
 
-    timeout_seconds : float
-        Request timeout to apply to the client.
+    timeout_seconds : float | None
+        Optional explicit request timeout to apply to the client.
+
+        If omitted, the shared backend settings value is used.
 
     Returns
     -------
@@ -370,9 +385,14 @@ def build_openai_chat_model(
             timeout_seconds=45.0,
         )
 
+    Or rely on the shared backend settings:
+
+        chat_model = build_openai_chat_model(profile=profile)
+
     In plain language:
 
     - make sure the profile really is for OpenAI
+    - resolve API key / timeout from explicit arguments or settings
     - pass the profile settings into `ChatOpenAI`
     - return the configured client
     """
@@ -389,14 +409,45 @@ def build_openai_chat_model(
             ],
         )
 
-    if timeout_seconds <= 0:
+    settings = get_settings()
+
+    # Explicit runtime arguments win. When they are omitted, fall back to the
+    # shared backend settings so the rest of the codebase has one consistent
+    # place to configure provider credentials and timeouts.
+    resolved_timeout_seconds = (
+        timeout_seconds
+        if timeout_seconds is not None
+        else settings.llm_timeout_seconds
+    )
+
+    if api_key is not None:
+        # Keep explicit caller input distinct from settings fallback.
+        #
+        # A blank explicit key is a real configuration mistake and should raise
+        # clearly. It should not be silently reinterpreted as "just try the
+        # environment instead", because that would hide a bad call site.
+        resolved_api_key = api_key
+    else:
+        resolved_api_key = settings.openai_api_key
+
+        # Empty strings from settings are not useful explicit API keys.
+        # Converting them to `None` preserves the documented fallback
+        # behaviour: if settings do not provide a key, the underlying SDK may
+        # still resolve one from environment variables.
+        if (
+            isinstance(resolved_api_key, str)
+            and resolved_api_key.strip() == ""
+        ):
+            resolved_api_key = None
+
+    if resolved_timeout_seconds <= 0:
         raise LLMProviderConfigurationError(
             "The provider timeout must be greater than zero seconds.",
             stage="provider_configuration",
             details=[
                 {"provider": profile.provider},
                 {"model_name": profile.model_name},
-                {"timeout_seconds": timeout_seconds},
+                {"timeout_seconds": resolved_timeout_seconds},
             ],
         )
 
@@ -413,7 +464,7 @@ def build_openai_chat_model(
         "model": profile.model_name,
         "temperature": profile.temperature,
         "max_tokens": profile.max_output_tokens,
-        "timeout": timeout_seconds,
+        "timeout": resolved_timeout_seconds,
     }
 
     # Passing the API key is optional because the SDK can often resolve it from
@@ -421,8 +472,8 @@ def build_openai_chat_model(
     # - tests
     # - special runtime wiring
     # - future service containers with nonstandard secret plumbing
-    if api_key is not None:
-        if not _is_non_empty_string(api_key):
+    if resolved_api_key is not None:
+        if not _is_non_empty_string(resolved_api_key):
             raise LLMProviderConfigurationError(
                 "The supplied OpenAI API key must be a non-empty string.",
                 stage="provider_configuration",
@@ -431,7 +482,7 @@ def build_openai_chat_model(
                     {"model_name": profile.model_name},
                 ],
             )
-        client_kwargs["api_key"] = api_key
+        client_kwargs["api_key"] = resolved_api_key
 
     return ChatOpenAI(**client_kwargs)
 
