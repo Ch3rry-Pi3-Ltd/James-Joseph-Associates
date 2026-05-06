@@ -151,6 +151,16 @@ def clean_resume_text(raw_text: Any) -> str:
     # Resume text often benefits from keeping a little more vertical structure
     # than email-style text.
     #
+    # We also repair a small set of clearly broken section headings that appear
+    # in real PDF extraction output. This is intentionally narrow:
+    # - fix obvious heading fragmentation such as `Exp eri enc e`
+    # - avoid broad "remove spaces from words" logic that could damage meaning
+    #
+    # The current problem is real and recurring in live resume text. The
+    # conservative fix is to normalise only the known heading patterns rather
+    # than trying to solve arbitrary OCR/PDF corruption in one pass.
+    cleaned_text = _repair_common_pdf_heading_spacing(cleaned_text)
+
     # We therefore keep the next step deliberately simple:
     # - preserve single blank-line section breaks
     # - remove repeated empty-line noise
@@ -380,6 +390,79 @@ def _collapse_repeated_blank_lines(raw_text: str) -> str:
     # Reassemble the cleaned lines into one string and trim any accidental
     # whitespace around the edges of the final result.
     return "\n".join(cleaned_lines).strip()
+
+
+def _repair_common_pdf_heading_spacing(raw_text: str) -> str:
+    """
+    Repair common resume-section headings broken by PDF extraction spacing.
+
+    Parameters
+    ----------
+    raw_text : str
+        Already-cleaned resume text.
+
+    Returns
+    -------
+    str
+        Resume text with a small set of known fragmented headings normalised.
+
+    Notes
+    -----
+    - This helper is intentionally narrow.
+    - It targets only heading-style lines that are clearly degraded by PDF
+      extraction, for example:
+        - `Exp eri enc e`
+        - `Sk i l ls`
+        - `Ed uc a t i o n`
+    - It does not attempt generic word reconstruction across the full resume,
+      because that would risk changing valid content.
+
+    Example
+    -------
+    A value such as:
+
+        "Exp eri enc e\\nAUGUST 2025 - PRESENT"
+
+    becomes:
+
+        "Experience\\nAUGUST 2025 - PRESENT"
+
+    In plain language:
+
+    - fix the obviously broken section headings
+    - leave ordinary resume text alone
+    """
+
+    if raw_text == "":
+        return ""
+
+    normalised_headings = {
+        "experience": "Experience",
+        "skills": "Skills",
+        "education": "Education",
+        "portfolio": "Portfolio",
+        "certifications": "Certifications",
+    }
+
+    repaired_lines: list[str] = []
+
+    for line in raw_text.split("\n"):
+        stripped_line = line.strip()
+
+        # Only treat short, heading-like lines as candidates. This avoids
+        # turning normal sentence content into false positives.
+        if len(stripped_line) <= 32:
+            letters_only = "".join(
+                character for character in stripped_line if character.isalpha()
+            ).lower()
+
+            if letters_only in normalised_headings:
+                repaired_lines.append(normalised_headings[letters_only])
+                continue
+
+        repaired_lines.append(line)
+
+    return "\n".join(repaired_lines)
 
 
 def _strip_jobadder_email_boilerplate(raw_text: str) -> str:

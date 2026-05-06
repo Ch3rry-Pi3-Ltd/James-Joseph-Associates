@@ -103,6 +103,44 @@ def test_clean_resume_text_normalises_newlines_and_removes_mojibake() -> None:
     assert cleaned_text == "Roger Campbell\n\nSenior Data Scientist\n\nPython"
 
 
+def test_clean_resume_text_repairs_common_pdf_heading_spacing() -> None:
+    """
+    Verify that the resume-text cleaner repairs the specific heading-spacing
+    corruption we have seen in live PDF extraction output.
+
+    Notes
+    -----
+    - This is a targeted fix, not a generic OCR reconstruction system.
+    - The intent is to repair clearly broken section headings such as:
+      - `Exp eri enc e`
+      - `Sk i l ls`
+      - `Ed uc a t i o n`
+    - These fragments are real prompt noise and should be normalised before the
+      extraction model sees them.
+
+    Example
+    -------
+    A raw value such as:
+
+        "Exp eri enc e\\nSk i l ls\\nEd uc a t i o n"
+
+    should become:
+
+        "Experience\\nSkills\\nEducation"
+
+    In plain language:
+
+    - fix the known broken headings
+    - leave the rest of the resume structure intact
+    """
+
+    raw_text = "Exp eri enc e\r\nSk i l ls\r\nEd uc a t i o n"
+
+    cleaned_text = text_cleaning.clean_resume_text(raw_text)
+
+    assert cleaned_text == "Experience\nSkills\nEducation"
+
+
 def test_clean_jobadder_note_text_preserves_content_while_cleaning_noise() -> None:
     """
     Verify that the JobAdder note cleaner removes obvious text noise but keeps
@@ -247,6 +285,41 @@ def test_clean_common_text_normalises_newlines_trims_lines_and_removes_known_gar
     cleaned_text = text_cleaning._clean_common_text(raw_text)
 
     assert cleaned_text == "Hello\n\nWorld"
+
+
+def test_repair_common_pdf_heading_spacing_does_not_flatten_normal_content() -> None:
+    """
+    Verify that the heading-repair helper does not aggressively rewrite normal
+    resume content.
+
+    Notes
+    -----
+    - The new spacing fix must stay conservative.
+    - It should normalise broken section headings, but it should not rewrite
+      ordinary lines such as:
+        - `Data Science & AI`
+        - `Open University`
+        - short sentence content
+
+    Example
+    -------
+    A value such as:
+
+        "Data Science & AI\\nOpen University"
+
+    should be returned unchanged.
+
+    In plain language:
+
+    - prove the fix is narrowly targeted
+    - avoid accidental over-cleaning
+    """
+
+    raw_text = "Data Science & AI\nOpen University"
+
+    cleaned_text = text_cleaning._repair_common_pdf_heading_spacing(raw_text)
+
+    assert cleaned_text == "Data Science & AI\nOpen University"
 
 
 def test_collapse_repeated_blank_lines_preserves_single_section_breaks() -> None:

@@ -521,6 +521,12 @@ def test_build_openrouter_chat_model_uses_settings_fallbacks_when_arguments_are_
         "timeout": 22.0,
         "api_key": "sk-or-test",
         "base_url": "https://openrouter.ai/api/v1",
+        "extra_body": {
+            "reasoning": {
+                "effort": "none",
+                "exclude": True,
+            },
+        },
     }
 
 
@@ -561,6 +567,12 @@ def test_build_openrouter_chat_model_prefers_explicit_arguments_over_settings(
         "timeout": 12.5,
         "api_key": "sk-or-explicit",
         "base_url": "https://openrouter.ai/api/v1",
+        "extra_body": {
+            "reasoning": {
+                "effort": "none",
+                "exclude": True,
+            },
+        },
     }
 
 

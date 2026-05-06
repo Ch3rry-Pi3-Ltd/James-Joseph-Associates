@@ -67,6 +67,7 @@ In plain language:
 - confirm the output shape is trustworthy
 """
 
+import json
 from typing import Any
 
 import pytest
@@ -451,6 +452,8 @@ def test_build_resume_extraction_prompt_returns_system_and_user_prompt() -> None
 
     assert "careful recruitment data-extraction assistant" in prompt_bundle["system_prompt"]
     assert "Do not invent employers, titles, dates, qualifications, or contact details." in prompt_bundle["system_prompt"]
+    assert "`projects` should contain only clearly supported major projects or initiatives." in prompt_bundle["system_prompt"]
+    assert "Do not copy broad resume-wide skill lists into every project." in prompt_bundle["system_prompt"]
 
     assert "Candidate context" in prompt_bundle["user_prompt"]
     assert "Cleaned candidate notes" in prompt_bundle["user_prompt"]
@@ -533,18 +536,39 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
                         "summary": "Built applied machine learning systems.",
                     }
                 ],
+                "projects": [
+                    {
+                        "name": "Market surveillance ML workflow",
+                        "employer": "Pirum",
+                        "role": "Senior Data Scientist",
+                        "start_date": "2023",
+                        "end_date": None,
+                        "is_current": True,
+                        "summary": "Built an applied machine learning workflow for trading operations.",
+                        "outcomes": ["Improved operational decision support."],
+                        "tools_and_platforms": ["Python", "SQL"],
+                        "domains": ["Trading", "Machine Learning"],
+                    }
+                ],
                 "evidence_notes": [
                     "Resume headline identifies the candidate as a Senior Data Scientist."
                 ],
                 "ambiguity_notes": [],
             }
 
-    def fake_build_chain(*, chat_model: Any, system_prompt: str, user_prompt: str) -> FakeChain:
+    def fake_build_chain(
+        *,
+        chat_model: Any,
+        system_prompt: str,
+        user_prompt: str,
+        use_native_structured_output: bool,
+    ) -> FakeChain:
         # These assertions prove that the orchestration layer fed real prompt
         # content into the chain builder before any "model call" happened.
         assert chat_model == "fake-chat-model"
         assert "careful recruitment data-extraction assistant" in system_prompt
         assert "Roger Campbell" in user_prompt
+        assert use_native_structured_output is True
         return FakeChain()
 
     # Replace the real chain builder with a fake success path so this test can
@@ -608,6 +632,20 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
     ]
     assert result["structured_extraction"]["certifications"] == [
         "AWS Certified Cloud Practitioner"
+    ]
+    assert result["structured_extraction"]["projects"] == [
+        {
+            "name": "Market surveillance ML workflow",
+            "employer": "Pirum",
+            "role": "Senior Data Scientist",
+            "start_date": "2023",
+            "end_date": None,
+            "is_current": True,
+            "summary": "Built an applied machine learning workflow for trading operations.",
+            "outcomes": ["Improved operational decision support."],
+            "tools_and_platforms": ["Python", "SQL"],
+            "domains": ["Trading", "Machine Learning"],
+        }
     ]
 
 
@@ -700,6 +738,94 @@ def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_mod
     ]
 
 
+def test_extract_structured_candidate_profile_from_resume_bundle_retries_openrouter_with_json_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the extraction orchestrator retries with the JSON-text fallback
+    path when the OpenRouter/native-structured-output route rejects
+    `json_schema`.
+
+    Notes
+    -----
+    - This is the key compatibility test for cheaper OpenRouter-style models.
+    - The first chain simulates a provider route that fails specifically
+      because native `json_schema` output is unsupported.
+    - The second chain simulates a plain chat response containing JSON text,
+      which the service should parse and validate locally.
+    """
+
+    bundle = _build_fake_resume_text_bundle()
+    model_profile = ModelProfile(
+        provider=ModelProvider.OPENROUTER,
+        model_name="nvidia/nemotron-3-nano-30b-a3b:nitro",
+        purpose=ModelPurpose.EXTRACTION,
+        temperature=0.0,
+        max_output_tokens=1600,
+    )
+    build_modes: list[bool] = []
+
+    class FakeNativeFailingChain:
+        def invoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+            raise RuntimeError(
+                "json_schema response format is not supported for model"
+            )
+
+    class FakeJsonFallbackChain:
+        def invoke(self, payload: dict[str, Any]) -> Any:
+            class FakeMessage:
+                content = json.dumps(
+                    {
+                        "current_employer": "Pirum",
+                        "current_title": "Senior Data Scientist",
+                        "professional_summary": "Structured fallback path succeeded.",
+                        "location": "London",
+                        "emails": ["the_rfc@hotmail.co.uk"],
+                        "phones": ["07934 890 708"],
+                        "skills": ["Machine Learning"],
+                        "tools_and_platforms": ["Python"],
+                        "certifications": [],
+                        "linkedin_url": None,
+                        "portfolio_references": [],
+                        "education": [],
+                        "employment_history": [],
+                        "projects": [],
+                        "evidence_notes": ["Fallback JSON was parsed successfully."],
+                        "ambiguity_notes": [],
+                    }
+                )
+
+            return FakeMessage()
+
+    def fake_build_chain(
+        *,
+        chat_model: Any,
+        system_prompt: str,
+        user_prompt: str,
+        use_native_structured_output: bool,
+    ) -> Any:
+        build_modes.append(use_native_structured_output)
+        if use_native_structured_output:
+            return FakeNativeFailingChain()
+        return FakeJsonFallbackChain()
+
+    monkeypatch.setattr(
+        resume_extraction,
+        "_build_langchain_resume_extraction_chain",
+        fake_build_chain,
+    )
+
+    result = extract_structured_candidate_profile_from_resume_bundle(
+        resume_text_bundle=bundle,
+        chat_model="fake-chat-model",
+        model_profile=model_profile,
+    )
+
+    assert build_modes == [True, False]
+    assert result["structured_extraction"]["current_employer"] == "Pirum"
+    assert result["structured_extraction"]["tools_and_platforms"] == ["Python"]
+
+
 def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_output_schema_is_invalid(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -750,6 +876,7 @@ def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_out
                 "portfolio_references": [],
                 "education": [],
                 "employment_history": [],
+                "projects": [],
                 "evidence_notes": [],
                 "ambiguity_notes": [],
             }
@@ -787,6 +914,25 @@ def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_out
     # Pydantic may vary some error formatting across versions. The important
     # thing is that validation errors were captured and surfaced.
     assert error.details[2]["validation_errors"]
+
+
+def test_parse_json_object_from_model_text_accepts_fenced_json() -> None:
+    """
+    Verify that the JSON-text fallback parser accepts simple fenced JSON.
+
+    Notes
+    -----
+    - Some models still wrap valid JSON in markdown fences even after being
+      told not to.
+    - The fallback parser should tolerate that narrow formatting error rather
+      than failing unnecessarily.
+    """
+
+    parsed = resume_extraction._parse_json_object_from_model_text(
+        '```json\n{"current_title": "Senior Data Scientist"}\n```'
+    )
+
+    assert parsed == {"current_title": "Senior Data Scientist"}
 
 
 def test_extract_jobadder_candidate_resume_profile_fetches_upstream_bundle_and_delegates(
@@ -970,6 +1116,20 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
                 "summary": "Built applied machine learning systems.",
             }
         ],
+        "projects": [
+            {
+                "name": "Market surveillance ML workflow",
+                "employer": "Pirum",
+                "role": "Senior Data Scientist",
+                "start_date": "2023",
+                "end_date": None,
+                "is_current": True,
+                "summary": "Built an applied machine learning workflow for trading operations.",
+                "outcomes": ["Improved operational decision support."],
+                "tools_and_platforms": ["Python", "SQL"],
+                "domains": ["Trading", "Machine Learning"],
+            }
+        ],
         "evidence_notes": ["Resume headline supports current title."],
         "ambiguity_notes": [],
     }
@@ -985,6 +1145,7 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
     assert result.current_title == "Senior Data Scientist"
     assert result.education[0].institution == "University of Warwick"
     assert result.employment_history[0].employer == "Pirum"
+    assert result.projects[0].name == "Market surveillance ML workflow"
     assert result.skills == ["Python", "Machine Learning"]
     assert result.tools_and_platforms == ["LangChain", "Azure ML"]
     assert result.certifications == ["AWS Certified Cloud Practitioner"]

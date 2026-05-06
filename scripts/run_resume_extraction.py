@@ -90,6 +90,14 @@ Run with an explicit model override:
         --model-name gpt-5.4-mini ^
         --max-output-tokens 1600
 
+Run against OpenRouter with a Nemotron-style extraction model:
+
+    uv run python scripts/run_resume_extraction.py ^
+        --jobadder-account 2236 ^
+        --candidate-id 16496678 ^
+        --provider openrouter ^
+        --model-name nvidia/nemotron-3-nano-30b-a3b:nitro
+
 Print the full result to stdout as JSON, including prompt material:
 
     uv run python scripts/run_resume_extraction.py ^
@@ -144,6 +152,15 @@ from backend.services.resume_extraction import (
     extract_jobadder_candidate_resume_profile,
 )
 from backend.settings import get_settings
+
+
+DEFAULT_OPENROUTER_RESUME_EXTRACTION_MODEL_NAME = (
+    "nvidia/nemotron-3-nano-30b-a3b:nitro"
+)
+SUPPORTED_EXTRACTION_PROVIDERS = (
+    ModelProvider.OPENAI,
+    ModelProvider.OPENROUTER,
+)
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -204,6 +221,16 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="JobAdder candidate identifier to extract from.",
     )
 
+    parser.add_argument(
+        "--provider",
+        choices=[provider.value for provider in SUPPORTED_EXTRACTION_PROVIDERS],
+        default=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.provider.value,
+        help=(
+            "Model provider to use for extraction. Defaults to the current "
+            "module extraction-provider baseline."
+        ),
+    )
+
     # Keep model controls overridable from the CLI because real extraction work
     # often needs quick empirical comparison:
     # - stronger vs cheaper model
@@ -213,10 +240,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
     # This avoids hard-coding every experiment back into the service module.
     parser.add_argument(
         "--model-name",
-        default=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name,
+        default=None,
         help=(
-            "Model name to use for extraction. Defaults to the module's "
-            "configured extraction model."
+            "Model name to use for extraction. If omitted, the script chooses "
+            "a provider-specific default."
         ),
     )
     parser.add_argument(
@@ -290,6 +317,7 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
     -------
     If the caller runs:
 
+        --provider openai
         --model-name gpt-5.4-mini
         --temperature 0.0
         --max-output-tokens 1600
@@ -310,16 +338,58 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
     - turn them into the same typed profile the backend already understands
     """
 
+    provider = ModelProvider(args.provider)
+    model_name = _resolve_default_model_name(provider, args.model_name)
+
     return ModelProfile(
-        provider=ModelProvider.OPENAI,
-        model_name=args.model_name,
+        provider=provider,
+        model_name=model_name,
         purpose=ModelPurpose.EXTRACTION,
         temperature=args.temperature,
         max_output_tokens=args.max_output_tokens,
     )
 
 
-def validate_live_run_preconditions() -> None:
+def _resolve_default_model_name(
+    provider: ModelProvider,
+    explicit_model_name: str | None,
+) -> str:
+    """
+    Resolve the model name for one CLI run.
+
+    Parameters
+    ----------
+    provider : ModelProvider
+        Provider selected for this script run.
+
+    explicit_model_name : str | None
+        Optional explicit model name supplied by the caller.
+
+    Returns
+    -------
+    str
+        Model name to place on the runtime profile.
+
+    Notes
+    -----
+    - An explicit caller-provided model name always wins.
+    - Otherwise the script chooses one stable provider-specific default so
+      model-comparison runs remain convenient from the CLI.
+    """
+
+    if explicit_model_name is not None and explicit_model_name.strip() != "":
+        return explicit_model_name
+
+    if provider == ModelProvider.OPENAI:
+        return DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name
+
+    if provider == ModelProvider.OPENROUTER:
+        return DEFAULT_OPENROUTER_RESUME_EXTRACTION_MODEL_NAME
+
+    return DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name
+
+
+def validate_live_run_preconditions(*, provider: ModelProvider) -> None:
     """
     Validate the minimum local configuration needed for a live extraction run.
 
@@ -335,12 +405,12 @@ def validate_live_run_preconditions() -> None:
     begins.
 
     At the moment that means:
-    - an OpenAI API key available through settings
+    - the selected provider has a usable API key available through settings
     - the minimum JobAdder OAuth application settings needed by the wider
       integration layer
 
     This helper does not:
-    - verify the OpenAI key is valid
+    - verify the provider key is valid
     - verify the JobAdder token store contains a usable connection
     - test network connectivity
 
@@ -349,9 +419,9 @@ def validate_live_run_preconditions() -> None:
 
     Example
     -------
-    If `.env.local` has no `OPENAI_API_KEY`, this helper raises early with a
-    clear message rather than letting the provider constructor fail later with a
-    less contextual stack trace.
+    If `.env.local` has no provider key for the chosen provider, this helper
+    raises early with a clear message rather than letting the provider
+    constructor fail later with a less contextual stack trace.
 
     In plain language:
 
@@ -362,12 +432,21 @@ def validate_live_run_preconditions() -> None:
     settings = get_settings()
 
     # The provider layer can fall back to settings now, so this script should
-    # check the settings-backed path up front and fail with a message that is
-    # specific to this workflow.
-    if settings.openai_api_key.strip() == "":
+    # check the provider-specific settings path up front and fail with a
+    # message that is specific to this workflow.
+    if provider == ModelProvider.OPENAI and settings.openai_api_key.strip() == "":
         raise RuntimeError(
             "OPENAI_API_KEY is not configured. Set it in `.env.local` or the "
             "shell environment before running a live extraction."
+        )
+
+    if (
+        provider == ModelProvider.OPENROUTER
+        and settings.openrouter_api_key.strip() == ""
+    ):
+        raise RuntimeError(
+            "OPENROUTER_API_KEY is not configured. Set it in `.env.local` or "
+            "the shell environment before running a live extraction."
         )
 
     # The JobAdder integration needs the OAuth app settings to exist locally.
@@ -442,6 +521,7 @@ def build_console_summary(result: dict[str, Any]) -> str:
     ambiguity_notes = structured.get("ambiguity_notes", [])
     employment_history = structured.get("employment_history", [])
     education = structured.get("education", [])
+    projects = structured.get("projects", [])
 
     lines = [
         "Live resume extraction completed.",
@@ -451,6 +531,7 @@ def build_console_summary(result: dict[str, Any]) -> str:
         f"JobAdder account: {result.get('jobadder_account')}",
         f"Candidate: {candidate_context.get('first_name')} {candidate_context.get('last_name')}",
         f"Resume file: {latest_resume.get('file_name')}",
+        f"Provider: {result.get('model_profile', {}).get('provider')}",
         f"Model: {result.get('model_profile', {}).get('model_name')}",
         "",
         f"Current title: {structured.get('current_title')}",
@@ -462,6 +543,7 @@ def build_console_summary(result: dict[str, Any]) -> str:
         f"Tools/platforms: {', '.join(tools_and_platforms) if tools_and_platforms else '(none)'}",
         f"Certifications: {', '.join(certifications) if certifications else '(none)'}",
         f"Employment entries: {len(employment_history)}",
+        f"Projects: {len(projects)}",
         f"Education entries: {len(education)}",
         f"Evidence notes: {len(evidence_notes)}",
         f"Ambiguity notes: {len(ambiguity_notes)}",
@@ -669,9 +751,8 @@ def run_live_resume_extraction(args: argparse.Namespace) -> dict[str, Any]:
     - send one real candidate through the full extraction flow
     """
 
-    validate_live_run_preconditions()
-
     model_profile = build_runtime_model_profile(args)
+    validate_live_run_preconditions(provider=model_profile.provider)
 
     # Build the real provider-backed model through the shared provider factory.
     # This matters because the project now has a deliberate architecture:

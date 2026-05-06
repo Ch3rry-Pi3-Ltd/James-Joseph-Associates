@@ -298,6 +298,94 @@ class EducationHistoryItem(BaseModel):
     completion_date: str | None = Field(default=None)
 
 
+class ProjectExperienceItem(BaseModel):
+    """
+    One extracted project or major initiative entry.
+
+    Attributes
+    ----------
+    name : str | None
+        Project name or short identifying label when clearly supported.
+
+    employer : str | None
+        Employer or organisation context for the project.
+
+    role : str | None
+        Candidate role relevant to the project.
+
+    start_date : str | None
+        Human-readable project start date when visible.
+
+    end_date : str | None
+        Human-readable project end date when visible.
+
+    is_current : bool | None
+        Whether the project appears to be ongoing/current.
+
+    summary : str | None
+        Short factual project summary.
+
+    outcomes : list[str]
+        Concrete outcomes, deliverables, or business impacts supported by the
+        source material.
+
+    tools_and_platforms : list[str]
+        Concrete tools, frameworks, cloud platforms, or products used in the
+        project when clearly supported.
+
+        Prefer project-specific evidence first. If the project bullet itself
+        does not name the tooling, a tool/platform may still be included when
+        the surrounding role-local source text strongly and factually ties that
+        tooling to the same project context.
+
+    domains : list[str]
+        Business, technical, or problem domains associated with the project.
+
+    Notes
+    -----
+    - This schema is intentionally lightweight.
+    - The goal is to preserve project-level experience that is often lost when
+      everything is compressed into one employment-summary paragraph.
+    - Project names should remain conservative. If the source describes the
+      work clearly but does not give the project a proper name, a short factual
+      label is acceptable.
+
+    Example
+    -------
+    A structured project entry might look like:
+
+        ProjectExperienceItem(
+            name="Production optimisation ML initiatives",
+            employer="BP (via Grayce & Harvey Nash)",
+            role="Senior Data Scientist (Contractor)",
+            start_date="2022",
+            end_date="2025",
+            is_current=False,
+            summary="Built and productionised machine learning workflows for production optimisation.",
+            outcomes=["Delivered multi-million-dollar efficiency gains."],
+            tools_and_platforms=["Azure Databricks", "Palantir Foundry", "Jenkins"],
+            domains=["Energy", "Production optimisation", "Forecasting"],
+        )
+
+    In plain language:
+
+    - one meaningful project or initiative
+    - tied back to an employer and role
+    - with outcomes and tooling preserved separately
+    """
+
+    name: str | None = Field(default=None)
+    employer: str | None = Field(default=None)
+    role: str | None = Field(default=None)
+    start_date: str | None = Field(default=None)
+    end_date: str | None = Field(default=None)
+    is_current: bool | None = Field(default=None)
+    summary: str | None = Field(default=None)
+    outcomes: list[str] = Field(default_factory=list)
+    tools_and_platforms: list[str] = Field(default_factory=list)
+    domains: list[str] = Field(default_factory=list)
+
+
 class ResumeStructuredExtraction(BaseModel):
     """
     Structured extraction output expected from the LLM.
@@ -344,6 +432,9 @@ class ResumeStructuredExtraction(BaseModel):
     employment_history : list[EmploymentHistoryItem]
         Extracted employment history.
 
+    projects : list[ProjectExperienceItem]
+        Extracted project or major-initiative experience across employers.
+
     evidence_notes : list[str]
         Brief factual notes about source evidence that supports the extraction.
 
@@ -374,6 +465,7 @@ class ResumeStructuredExtraction(BaseModel):
             portfolio_references=["MLOps & LLMOps", "Data Engineering"],
             education=[],
             employment_history=[],
+            projects=[],
             evidence_notes=[
                 "Resume headline identifies the candidate as a Senior Data Scientist.",
                 "Contact block contains one email address and one mobile number.",
@@ -403,6 +495,7 @@ class ResumeStructuredExtraction(BaseModel):
     portfolio_references: list[str] = Field(default_factory=list)
     education: list[EducationHistoryItem] = Field(default_factory=list)
     employment_history: list[EmploymentHistoryItem] = Field(default_factory=list)
+    projects: list[ProjectExperienceItem] = Field(default_factory=list)
     evidence_notes: list[str] = Field(default_factory=list)
     ambiguity_notes: list[str] = Field(default_factory=list)
 
@@ -729,6 +822,7 @@ def extract_structured_candidate_profile_from_resume_bundle(
         chat_model=chat_model,
         system_prompt=prompt_bundle["system_prompt"],
         user_prompt=prompt_bundle["user_prompt"],
+        use_native_structured_output=True,
     )
 
     # LangChain becomes useful here because it can hold together:
@@ -749,38 +843,55 @@ def extract_structured_candidate_profile_from_resume_bundle(
     try:
         raw_result = extraction_chain.invoke({})
     except Exception as exc:
-        raise ResumeExtractionError(
-            "The resume extraction model call failed.",
-            stage="llm_invoke",
-            details=[
-                {"source_system": extraction_input["source_system"]},
-                {"source_candidate_id": extraction_input["source_candidate_id"]},
-                {"provider": model_profile.provider},
-                {"model_name": model_profile.model_name},
-            ],
-        ) from exc
+        if _should_retry_with_json_fallback(exc, model_profile):
+            fallback_chain = _build_langchain_resume_extraction_chain(
+                chat_model=chat_model,
+                system_prompt=prompt_bundle["system_prompt"],
+                user_prompt=prompt_bundle["user_prompt"],
+                use_native_structured_output=False,
+            )
 
-    # Some structured-output paths may already hand back an instantiated
-    # `ResumeStructuredExtraction`.
-    #
-    # Others may hand back a plain dictionary-like object. Supporting both
-    # keeps this orchestration layer robust to small library-level behaviour
-    # differences without loosening the final schema contract.
-    if isinstance(raw_result, ResumeStructuredExtraction):
-        structured_extraction = raw_result
-    else:
-        try:
-            structured_extraction = ResumeStructuredExtraction.model_validate(raw_result)
-        except ValidationError as exc:
+            try:
+                raw_result = fallback_chain.invoke({})
+            except Exception as fallback_exc:
+                raise ResumeExtractionError(
+                    "The resume extraction model call failed.",
+                    stage="llm_invoke",
+                    details=[
+                        {"source_system": extraction_input["source_system"]},
+                        {"source_candidate_id": extraction_input["source_candidate_id"]},
+                        {"provider": model_profile.provider},
+                        {"model_name": model_profile.model_name},
+                        {"fallback_mode": "json_text"},
+                    ],
+                ) from fallback_exc
+        else:
             raise ResumeExtractionError(
-                "The resume extraction model output did not match the expected schema.",
-                stage="llm_output_validation",
+                "The resume extraction model call failed.",
+                stage="llm_invoke",
                 details=[
                     {"source_system": extraction_input["source_system"]},
                     {"source_candidate_id": extraction_input["source_candidate_id"]},
-                    {"validation_errors": exc.errors()},
+                    {"provider": model_profile.provider},
+                    {"model_name": model_profile.model_name},
                 ],
             ) from exc
+
+    try:
+        structured_extraction = _coerce_model_result_to_resume_structured_extraction(
+            raw_result
+        )
+    except (ValidationError, ValueError, json.JSONDecodeError) as exc:
+        raise ResumeExtractionError(
+            "The resume extraction model output did not match the expected schema.",
+            stage="llm_output_validation",
+            details=[
+                {"source_system": extraction_input["source_system"]},
+                {"source_candidate_id": extraction_input["source_candidate_id"]},
+                {"validation_errors": getattr(exc, "errors", lambda: [])()},
+                {"raw_error": str(exc)},
+            ],
+        ) from exc
 
     return {
         "source_system": extraction_input["source_system"],
@@ -1040,10 +1151,16 @@ Rules:
 8. `linkedin_url` should only be populated when the actual URL text is visible in the source. If the resume says "click here" without the URL, leave it null.
 9. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
 10. Employment history should be ordered from most recent to oldest when possible.
-11. Education should include only entries reasonably supported by the source.
-12. Evidence notes should explain what source material supports the extraction.
-13. Ambiguity notes should explain uncertainty, contradictions, or missing context.
-14. Return data that matches the requested schema exactly.
+11. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
+12. Project entries should preserve employer context, role context, outcomes, and tools where the source supports them.
+13. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
+14. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
+15. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
+16. Do not invent branded project names. If the source does not provide a proper name, use a short factual label.
+17. Education should include only entries reasonably supported by the source.
+18. Evidence notes should explain what source material supports the extraction.
+19. Ambiguity notes should explain uncertainty, contradictions, or missing context.
+20. Return data that matches the requested schema exactly.
 """.strip()
 
     # The user prompt is intentionally structured instead of conversational.
@@ -1087,6 +1204,7 @@ def _build_langchain_resume_extraction_chain(
     chat_model: Any,
     system_prompt: str,
     user_prompt: str,
+    use_native_structured_output: bool = True,
 ) -> Any:
     """
     Build the LangChain extraction chain.
@@ -1101,6 +1219,11 @@ def _build_langchain_resume_extraction_chain(
 
     user_prompt : str
         User prompt text.
+
+    use_native_structured_output : bool
+        Whether to use the provider-native structured-output wrapper or the
+        compatibility fallback that asks for JSON text and validates it
+        locally afterwards.
 
     Returns
     -------
@@ -1128,6 +1251,11 @@ def _build_langchain_resume_extraction_chain(
         ChatPromptTemplate.from_messages([...])
         chat_model.with_structured_output(ResumeStructuredExtraction)
 
+    When native structured output is unavailable for a provider/model route,
+    the fallback path instead behaves like:
+
+        prompt with JSON-only instructions -> plain model -> JSON text
+
     In plain language:
 
     - format the messages
@@ -1153,20 +1281,134 @@ def _build_langchain_resume_extraction_chain(
         ]
     )
 
-    # This is the key LangChain feature we actually care about here:
-    # provider-backed structured output.
-    #
-    # We are not using LangChain just for the sake of it. We are using the
-    # smallest part that materially improves the extraction boundary:
-    # - schema-aware model invocation
-    # - cleaner prompt + model composition
-    #
-    # The important design point is that the rest of this service does not need
-    # to know the provider-specific mechanics of how structured output is
-    # requested. It only needs a runnable chain that honors the schema.
-    structured_model = chat_model.with_structured_output(ResumeStructuredExtraction)
+    if use_native_structured_output:
+        # This is the key LangChain feature we actually care about here:
+        # provider-backed structured output.
+        #
+        # We are not using LangChain just for the sake of it. We are using the
+        # smallest part that materially improves the extraction boundary:
+        # - schema-aware model invocation
+        # - cleaner prompt + model composition
+        #
+        # The important design point is that the rest of this service does not
+        # need to know the provider-specific mechanics of how structured output
+        # is requested. It only needs a runnable chain that honors the schema.
+        structured_model = chat_model.with_structured_output(
+            ResumeStructuredExtraction
+        )
+        return prompt | structured_model
 
-    return prompt | structured_model
+    # Some provider/model routes can answer normal chat prompts but do not
+    # support provider-native `json_schema` response formatting.
+    #
+    # In that case we fall back to the oldest reliable contract:
+    # - ask the model to return one JSON object only
+    # - parse that JSON locally
+    # - validate it against the same Pydantic schema ourselves
+    #
+    # This is a compatibility path, not the preferred path. It exists so we
+    # can evaluate cheaper models fairly rather than writing them off solely
+    # because they lack the native schema feature.
+    fallback_prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(
+                content=(
+                    f"{system_prompt}\n\n"
+                    "Fallback formatting instructions:\n"
+                    "Return one JSON object only.\n"
+                    "Do not include markdown fences.\n"
+                    "Do not include commentary before or after the JSON.\n"
+                    "The JSON must match this schema exactly:\n"
+                    f"{json.dumps(ResumeStructuredExtraction.model_json_schema(), indent=2, ensure_ascii=False)}"
+                )
+            ),
+            HumanMessage(content=user_prompt),
+        ]
+    )
+
+    return fallback_prompt | chat_model
+
+
+def _should_retry_with_json_fallback(exc: Exception, model_profile: ModelProfile) -> bool:
+    """
+    Return whether a failed extraction call should retry via JSON-text fallback.
+
+    Notes
+    -----
+    - This fallback is currently aimed at provider/model routes that can
+      handle normal chat completions but cannot honor provider-native
+      `json_schema` structured output.
+    - The logic is intentionally narrow so ordinary provider failures do not
+      silently trigger a second call.
+    """
+
+    if model_profile.provider != ModelProvider.OPENROUTER:
+        return False
+
+    error_text = str(exc).lower()
+
+    return (
+        "json_schema response format is not supported" in error_text
+        or "response format is not supported" in error_text
+    )
+
+
+def _coerce_model_result_to_resume_structured_extraction(raw_result: Any) -> ResumeStructuredExtraction:
+    """
+    Convert a raw model result into `ResumeStructuredExtraction`.
+
+    Notes
+    -----
+    - Native structured-output paths may return:
+        - an instantiated `ResumeStructuredExtraction`
+        - a dictionary-like object
+    - JSON-text fallback paths may return:
+        - an AI message with `.content`
+        - a raw JSON string
+    """
+
+    if isinstance(raw_result, ResumeStructuredExtraction):
+        return raw_result
+
+    if isinstance(raw_result, str):
+        return ResumeStructuredExtraction.model_validate(
+            _parse_json_object_from_model_text(raw_result)
+        )
+
+    content = getattr(raw_result, "content", None)
+    if isinstance(content, str):
+        return ResumeStructuredExtraction.model_validate(
+            _parse_json_object_from_model_text(content)
+        )
+
+    return ResumeStructuredExtraction.model_validate(raw_result)
+
+
+def _parse_json_object_from_model_text(raw_text: str) -> dict[str, Any]:
+    """
+    Parse one JSON object from model text content.
+
+    Notes
+    -----
+    - Fallback JSON-mode models sometimes return fenced JSON despite explicit
+      instructions not to.
+    - This helper strips a simple code-fence wrapper first, then parses the
+      result as JSON.
+    """
+
+    stripped_text = raw_text.strip()
+
+    if stripped_text.startswith("```"):
+        stripped_text = stripped_text.removeprefix("```json").removeprefix("```")
+        if stripped_text.endswith("```"):
+            stripped_text = stripped_text[:-3]
+        stripped_text = stripped_text.strip()
+
+    parsed_json = json.loads(stripped_text)
+    if not isinstance(parsed_json, dict):
+        raise ValueError("The model did not return a top-level JSON object.")
+
+    return parsed_json
 
 
 def _build_candidate_context_snapshot(candidate: dict[str, Any]) -> dict[str, Any]:

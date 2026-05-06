@@ -79,7 +79,7 @@
   "structured_extraction": {
     "current_employer": "Ch3rry Pi3 Ltd",
     "current_title": "Co-Founder & AI/ML Consultant",
-    "professional_summary": "Senior Data Scientist and AI/ML consultant with experience delivering end-to-end machine learning, LLM, MLOps, and analytics solutions across energy, medical, and technology contexts, with hands-on experience in Palantir Foundry, Azure, AWS, and production data/AI systems.",
+    "professional_summary": "Senior Data Scientist and AI/ML consultant with experience delivering end-to-end machine learning, LLM, MLOps, and advanced analytics solutions across energy, medical, and technology contexts.",
     "location": null,
     "emails": [
       "the_rfc@hotmail.co.uk",
@@ -90,17 +90,15 @@
     ],
     "skills": [
       "Machine Learning",
-      "LLMs",
       "MLOps",
       "LLMOps",
-      "Data Science",
       "Advanced Analytics",
-      "Econometrics",
-      "Statistical Inference",
       "Time Series Analysis",
       "Forecasting",
       "Predictive Modelling",
       "NLP",
+      "Econometrics",
+      "Statistical Inference",
       "Data Engineering"
     ],
     "tools_and_platforms": [
@@ -156,7 +154,7 @@
         "institution": "University of St Andrews",
         "qualification": "MSc",
         "subject": "Data Science",
-        "completion_date": "Present"
+        "completion_date": null
       },
       {
         "institution": "Open University",
@@ -184,7 +182,7 @@
         "start_date": "August 2025",
         "end_date": "Present",
         "is_current": true,
-        "summary": "Provides AI/ML consultancy and technical mentorship, specialising in scalable ML and LLM solutions; current work includes educational and clinical AI product development."
+        "summary": "Provides AI/ML consultancy and technical mentorship, building scalable ML and LLM solutions for clients and internal products."
       },
       {
         "employer": "BP (via Grayce & Harvey Nash)",
@@ -192,7 +190,7 @@
         "start_date": "June 2022",
         "end_date": "April 2025",
         "is_current": false,
-        "summary": "Led data science work in production optimisation, building end-to-end ML solutions, automating data pipelines, productionising models, and communicating results through dashboards and decision support outputs."
+        "summary": "Led data science work in production optimisation, building end-to-end ML solutions, data pipelines, forecasting models, and production ML deployments."
       },
       {
         "employer": "Jobs22",
@@ -208,13 +206,13 @@
         "name": "Leet-Cheat",
         "employer": "Ch3rry Pi3 Ltd",
         "role": "Co-Founder & AI/ML Consultant",
-        "start_date": null,
-        "end_date": null,
+        "start_date": "August 2025",
+        "end_date": "Present",
         "is_current": true,
-        "summary": "Developing an educational web platform covering coding and system design patterns alongside practical instruction in modern machine learning and AI frameworks, with emphasis on moving from local experimentation to scalable cloud architectures.",
+        "summary": "Educational web platform focused on coding and system design patterns used in LeetCode-style interviews, alongside practical instruction in machine learning and AI frameworks.",
         "outcomes": [
-          "Built as an educational platform for LeetCode-style interview preparation and modern ML/AI instruction.",
-          "Includes full-stack development, content and curriculum design, technical research, and architectural planning."
+          "Developing a platform that teaches transition from local experimental projects to scalable cloud-based architectures.",
+          "Covers full-stack development, content and curriculum design, technical research, and architectural planning."
         ],
         "tools_and_platforms": [],
         "domains": [
@@ -228,13 +226,13 @@
         "name": "GP AI Assistant",
         "employer": "Ch3rry Pi3 Ltd",
         "role": "Co-Founder & AI/ML Consultant",
-        "start_date": null,
-        "end_date": null,
+        "start_date": "August 2025",
+        "end_date": "Present",
         "is_current": true,
-        "summary": "Building an AI-driven clinical decision-support assistant to help GPs optimise diagnostic and referral pathways based on patient symptoms.",
+        "summary": "AI-driven clinical decision-support system intended to help General Practitioners optimise diagnostic and referral pathways based on patient symptoms.",
         "outcomes": [
-          "End-to-end responsibility for system design, data modelling, AI logic development, and web-based assistant implementation.",
-          "Developed in collaboration with current and retired ENT consultant surgeons for clinical validity and workflow alignment."
+          "Responsible for end-to-end system design, data modelling, AI logic development, and implementation of a web-based assistant.",
+          "Developed in collaboration with current and retired ENT consultant surgeons to support clinical validity and workflow alignment."
         ],
         "tools_and_platforms": [],
         "domains": [
@@ -251,12 +249,12 @@
         "start_date": "June 2022",
         "end_date": "April 2025",
         "is_current": false,
-        "summary": "Led machine learning delivery within a production optimisation team, building end-to-end ML solutions on large-scale production data and supporting operational and strategic decision-making.",
+        "summary": "Led data science delivery within a production optimisation team, building end-to-end machine learning solutions on large-scale production data.",
         "outcomes": [
           "Delivered multi-million-dollar efficiency gains.",
-          "Automated data pipelines and significantly reduced manual intervention.",
+          "Automated data pipelines and reduced manual intervention.",
           "Led ML delivery across six major initiatives.",
-          "Produced decision-ready outputs through dashboards and forecasting models."
+          "Produced decision-ready outputs that informed operational and strategic decision-making."
         ],
         "tools_and_platforms": [
           "Azure Data Factory",
@@ -278,23 +276,25 @@
       }
     ],
     "evidence_notes": [
-      "JobAdder metadata provides personal email the_rfc@hotmail.co.uk and mobile 07934 890 708.",
-      "Resume contact block includes personal email, company email roger@ch3rry-pi3.com, and mobile number.",
-      "Resume headline states he is a Senior Data Scientist with 4 years’ experience delivering end-to-end machine learning, LLM, and advanced analytics solutions.",
-      "Resume explicitly states current role as 'Co-Founder & AI/ML Consultant | Ch3rry Pi3 Ltd | AUGUST 2025 – PRESENT'.",
-      "Resume describes BP role from June 2022 to April 2025 as Senior Data Scientist (Contractor) via Grayce & Harvey Nash, including Azure, Databricks, Palantir Foundry, Azure ML, Jenkins, Python, TensorFlow, and Power BI.",
-      "Resume portfolio section names MLOps & LLMOps, Microsoft Azure, and Data Engineering as portfolio categories.",
-      "Resume certifications section explicitly lists AWS Certified Cloud Practitioner, Azure fundamentals certifications, Cloud Essentials+, AgilePM Foundation, and IBM certificates.",
-      "Candidate notes mention he 'did the entire data setup including teraform deploment, system building, production and data ops etc and the data science side too at BP' and that ML engineer work is of interest."
+      "Candidate metadata and resume both contain the personal email the_rfc@hotmail.co.uk and mobile number 07934 890 708.",
+      "Resume headline states Senior Data Scientist with 4 years’ experience delivering end-to-end machine learning, LLM, and advanced analytics solutions.",
+      "Resume explicitly states current role as Co-Founder & AI/ML Consultant at Ch3rry Pi3 Ltd from August 2025 to Present.",
+      "Resume explicitly names two current Ch3rry Pi3 projects: Leet-Cheat and GP AI Assistant.",
+      "Resume explicitly describes BP contract role from June 2022 to April 2025, including Azure Data Factory, Azure Databricks, Palantir Foundry, Azure ML, Jenkins, Python, TensorFlow, and Power BI.",
+      "Candidate notes state he did the entire data setup including Terraform deployment, system building, production, data ops, and data science at BP.",
+      "Resume education section lists four degree programs, including an in-progress MSc Data Science at University of St Andrews.",
+      "Resume certifications section explicitly lists AWS Certified Cloud Practitioner, Azure fundamentals certifications, CompTIA Cloud Essentials+, AgilePM Foundation, and IBM certificates.",
+      "Resume portfolio section names MLOps & LLMOps, Microsoft Azure, and Data Engineering as portfolio categories, but does not expose the actual URLs."
     ],
     "ambiguity_notes": [
-      "Location is not explicitly stated in candidate metadata or resume header; education and work entries mention multiple places and hybrid/remote arrangements, so location is left null.",
-      "LinkedIn URL is not visible in the resume text; it only says 'LinkedIn: click here', so linkedin_url is null.",
-      "Company website and company LinkedIn are referenced only as 'click here' without visible URLs.",
-      "MSc Data Science at University of St Andrews is marked 'Present'; no completion date is available yet.",
-      "Jobs22 employment entry has no supporting responsibility details beyond title and dates.",
-      "Some certifications listed under 2022–2023 may be certificates/course completions rather than strictly professional certifications, but they are included because they are explicitly listed in the certifications section.",
-      "The resume summary says 4 years’ experience, while the employment timeline may suggest broader prior academic or related experience; no adjustment was inferred beyond the stated summary."
+      "Location is not explicitly stated as a current candidate location; education entries include locations, but no current residence/location was provided.",
+      "LinkedIn URL is not visible in the source text; the resume only says 'LinkedIn: click here', so linkedin_url is null.",
+      "Company website and company LinkedIn are referenced as 'click here' without visible URLs, so no URLs were extracted.",
+      "The professional title 'Senior Data Scientist' appears in the profile summary, but the most recent formal role title is Co-Founder & AI/ML Consultant at Ch3rry Pi3 Ltd.",
+      "Jobs22 role has no supporting detail beyond employer, title, and dates.",
+      "Some tools listed in the global skills section may not have been used in every role or project; project-level tools were only included where directly supported by nearby role content.",
+      "The MSc Data Science at University of St Andrews is marked as present/current, so no completion date was extracted.",
+      "The note about possible Pirum work refers to prospective opportunities rather than confirmed employment, so Pirum was not added to employment history."
     ]
   }
 }

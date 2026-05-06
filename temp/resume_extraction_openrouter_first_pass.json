@@ -3,8 +3,8 @@
   "source_candidate_id": 16496678,
   "jobadder_account": 2236,
   "model_profile": {
-    "provider": "openai",
-    "model_name": "gpt-5.4",
+    "provider": "openrouter",
+    "model_name": "nvidia/nemotron-3-nano-30b-a3b:nitro",
     "purpose": "extraction",
     "temperature": 0.0,
     "max_output_tokens": 2200
@@ -79,57 +79,48 @@
   "structured_extraction": {
     "current_employer": "Ch3rry Pi3 Ltd",
     "current_title": "Co-Founder & AI/ML Consultant",
-    "professional_summary": "Senior Data Scientist and AI/ML consultant with experience delivering end-to-end machine learning, LLM, MLOps, and analytics solutions across energy, medical, and technology contexts, with hands-on experience in Palantir Foundry, Azure, AWS, and production data/AI systems.",
+    "professional_summary": "Senior applied machine learning candidate with Python, NLP, and data-platform experience.",
     "location": null,
     "emails": [
-      "the_rfc@hotmail.co.uk",
-      "roger@ch3rry-pi3.com"
+      "the_rfc@hotmail.co.uk"
     ],
     "phones": [
       "07934 890 708"
     ],
     "skills": [
       "Machine Learning",
-      "LLMs",
-      "MLOps",
-      "LLMOps",
-      "Data Science",
-      "Advanced Analytics",
-      "Econometrics",
+      "NLP",
       "Statistical Inference",
       "Time Series Analysis",
-      "Forecasting",
+      "Causality",
       "Predictive Modelling",
-      "NLP",
-      "Data Engineering"
+      "MLOps",
+      "LLMOps",
+      "Econometrics"
     ],
     "tools_and_platforms": [
       "Python",
-      "R",
       "SQL",
-      "PySpark",
-      "TensorFlow",
-      "PyTorch",
-      "LangChain",
-      "LangGraph",
+      "Azure ML",
+      "Jenkins",
+      "Azure Databricks",
       "Palantir Foundry",
-      "Microsoft Azure",
       "AWS",
       "Google Cloud Platform",
-      "Azure Data Factory",
-      "Azure Databricks",
-      "Azure ML",
       "Terraform",
+      "Docker",
+      "Kubernetes",
       "Git",
       "GitHub Actions",
       "GitLab",
-      "Docker",
-      "Kubernetes",
-      "Jenkins",
       "ArgoCD",
       "Power BI",
       "Tableau",
-      "Dash/Plotly"
+      "Plotly",
+      "LangChain",
+      "LangGraph",
+      "TensorFlow",
+      "PyTorch"
     ],
     "certifications": [
       "AWS Certified Cloud Practitioner",
@@ -147,60 +138,58 @@
     "portfolio_references": [
       "MLOps & LLMOps",
       "Microsoft Azure",
-      "Data Engineering",
-      "Leet-Cheat",
-      "GP AI Assistant"
+      "Data Engineering"
     ],
     "education": [
       {
         "institution": "University of St Andrews",
-        "qualification": "MSc",
+        "qualification": "MSc Data Science",
         "subject": "Data Science",
-        "completion_date": "Present"
+        "completion_date": "2024"
       },
       {
         "institution": "Open University",
-        "qualification": "BSc (Hons)",
+        "qualification": "BSc (Hons) Mathematics",
         "subject": "Mathematics",
-        "completion_date": "July 2023"
-      },
-      {
-        "institution": "University of Birmingham",
-        "qualification": "MSc",
-        "subject": "Economics",
-        "completion_date": "December 2021"
+        "completion_date": "2023"
       },
       {
         "institution": "Open University",
-        "qualification": "BA (Hons)",
+        "qualification": "MSc Economics",
+        "subject": "Economics",
+        "completion_date": "2021"
+      },
+      {
+        "institution": "Open University",
+        "qualification": "BA (Hons) Politics, Philosophy & Economics",
         "subject": "Politics, Philosophy & Economics",
-        "completion_date": "June 2014"
+        "completion_date": "2014"
       }
     ],
     "employment_history": [
       {
         "employer": "Ch3rry Pi3 Ltd",
         "title": "Co-Founder & AI/ML Consultant",
-        "start_date": "August 2025",
-        "end_date": "Present",
+        "start_date": "2025",
+        "end_date": null,
         "is_current": true,
-        "summary": "Provides AI/ML consultancy and technical mentorship, specialising in scalable ML and LLM solutions; current work includes educational and clinical AI product development."
+        "summary": "Provide AI/ML consultancy services to businesses, specialising in building industrial-standard, scalable ML and LLM solutions."
       },
       {
         "employer": "BP (via Grayce & Harvey Nash)",
         "title": "Senior Data Scientist (Contractor)",
-        "start_date": "June 2022",
-        "end_date": "April 2025",
+        "start_date": "2022",
+        "end_date": "2025",
         "is_current": false,
-        "summary": "Led data science work in production optimisation, building end-to-end ML solutions, automating data pipelines, productionising models, and communicating results through dashboards and decision support outputs."
+        "summary": "Led data science work within a production optimisation team, identifying and delivering multi-million-dollar efficiency gains by building end-to-end ML solutions."
       },
       {
         "employer": "Jobs22",
         "title": "Data Analyst",
-        "start_date": "June 2021",
-        "end_date": "October 2021",
+        "start_date": "2021",
+        "end_date": "2021",
         "is_current": false,
-        "summary": null
+        "summary": "Data Analyst role at Jobs22."
       }
     ],
     "projects": [
@@ -208,18 +197,19 @@
         "name": "Leet-Cheat",
         "employer": "Ch3rry Pi3 Ltd",
         "role": "Co-Founder & AI/ML Consultant",
-        "start_date": null,
+        "start_date": "2025",
         "end_date": null,
         "is_current": true,
-        "summary": "Developing an educational web platform covering coding and system design patterns alongside practical instruction in modern machine learning and AI frameworks, with emphasis on moving from local experimentation to scalable cloud architectures.",
+        "summary": "Developing an educational web platform that teaches fundamental coding and system design patterns used in LeetCode-style interviews, alongside practical instruction in modern machine learning and AI frameworks.",
         "outcomes": [
-          "Built as an educational platform for LeetCode-style interview preparation and modern ML/AI instruction.",
-          "Includes full-stack development, content and curriculum design, technical research, and architectural planning."
+          "Educational platform for coding interview preparation"
         ],
-        "tools_and_platforms": [],
+        "tools_and_platforms": [
+          "full-stack development",
+          "cloud-based architectures"
+        ],
         "domains": [
           "Education",
-          "Software Engineering",
           "Machine Learning",
           "AI"
         ]
@@ -228,73 +218,37 @@
         "name": "GP AI Assistant",
         "employer": "Ch3rry Pi3 Ltd",
         "role": "Co-Founder & AI/ML Consultant",
-        "start_date": null,
+        "start_date": "2025",
         "end_date": null,
         "is_current": true,
-        "summary": "Building an AI-driven clinical decision-support assistant to help GPs optimise diagnostic and referral pathways based on patient symptoms.",
+        "summary": "Building an AI-driven clinical decision-support system to help General Practitioners optimise diagnostic and referral pathways based on patient symptoms.",
         "outcomes": [
-          "End-to-end responsibility for system design, data modelling, AI logic development, and web-based assistant implementation.",
-          "Developed in collaboration with current and retired ENT consultant surgeons for clinical validity and workflow alignment."
-        ],
-        "tools_and_platforms": [],
-        "domains": [
-          "Healthcare",
-          "Clinical Decision Support",
-          "AI",
-          "Data Modelling"
-        ]
-      },
-      {
-        "name": "Production optimisation ML initiatives",
-        "employer": "BP (via Grayce & Harvey Nash)",
-        "role": "Senior Data Scientist (Contractor)",
-        "start_date": "June 2022",
-        "end_date": "April 2025",
-        "is_current": false,
-        "summary": "Led machine learning delivery within a production optimisation team, building end-to-end ML solutions on large-scale production data and supporting operational and strategic decision-making.",
-        "outcomes": [
-          "Delivered multi-million-dollar efficiency gains.",
-          "Automated data pipelines and significantly reduced manual intervention.",
-          "Led ML delivery across six major initiatives.",
-          "Produced decision-ready outputs through dashboards and forecasting models."
+          "Clinical decision-support system for GPs"
         ],
         "tools_and_platforms": [
-          "Azure Data Factory",
-          "Azure Databricks",
-          "Palantir Foundry",
-          "Python",
-          "TensorFlow",
-          "Azure ML",
-          "Jenkins",
-          "Power BI"
+          "end-to-end system design",
+          "data modelling",
+          "AI logic development",
+          "web-based assistant"
         ],
         "domains": [
-          "Energy",
-          "Production Optimisation",
-          "Forecasting",
-          "NLP",
-          "MLOps"
+          "Healthcare",
+          "Clinical Decision Support"
         ]
       }
     ],
     "evidence_notes": [
-      "JobAdder metadata provides personal email the_rfc@hotmail.co.uk and mobile 07934 890 708.",
-      "Resume contact block includes personal email, company email roger@ch3rry-pi3.com, and mobile number.",
-      "Resume headline states he is a Senior Data Scientist with 4 years’ experience delivering end-to-end machine learning, LLM, and advanced analytics solutions.",
-      "Resume explicitly states current role as 'Co-Founder & AI/ML Consultant | Ch3rry Pi3 Ltd | AUGUST 2025 – PRESENT'.",
-      "Resume describes BP role from June 2022 to April 2025 as Senior Data Scientist (Contractor) via Grayce & Harvey Nash, including Azure, Databricks, Palantir Foundry, Azure ML, Jenkins, Python, TensorFlow, and Power BI.",
-      "Resume portfolio section names MLOps & LLMOps, Microsoft Azure, and Data Engineering as portfolio categories.",
-      "Resume certifications section explicitly lists AWS Certified Cloud Practitioner, Azure fundamentals certifications, Cloud Essentials+, AgilePM Foundation, and IBM certificates.",
-      "Candidate notes mention he 'did the entire data setup including teraform deploment, system building, production and data ops etc and the data science side too at BP' and that ML engineer work is of interest."
+      "Contact block contains one email address and one mobile number.",
+      "Resume headline identifies the candidate as a Senior Data Scientist.",
+      "Education entries include institution, qualification, subject, and completion year.",
+      "Projects are described with clear names, employer context, role, and outcomes.",
+      "Certifications are explicitly listed in the resume."
     ],
     "ambiguity_notes": [
-      "Location is not explicitly stated in candidate metadata or resume header; education and work entries mention multiple places and hybrid/remote arrangements, so location is left null.",
-      "LinkedIn URL is not visible in the resume text; it only says 'LinkedIn: click here', so linkedin_url is null.",
-      "Company website and company LinkedIn are referenced only as 'click here' without visible URLs.",
-      "MSc Data Science at University of St Andrews is marked 'Present'; no completion date is available yet.",
-      "Jobs22 employment entry has no supporting responsibility details beyond title and dates.",
-      "Some certifications listed under 2022–2023 may be certificates/course completions rather than strictly professional certifications, but they are included because they are explicitly listed in the certifications section.",
-      "The resume summary says 4 years’ experience, while the employment timeline may suggest broader prior academic or related experience; no adjustment was inferred beyond the stated summary."
+      "Location is not provided in the resume.",
+      "LinkedIn URL is indicated as 'click here' without the actual URL text.",
+      "Current employer was inferred from the most recent employment entry rather than explicitly stated.",
+      "Project start dates are approximated from the 'AUGUST 2025 – PRESENT' entry, but exact dates are not specified."
     ]
   }
 }

@@ -544,6 +544,13 @@ def build_openrouter_chat_model(
     - This keeps the provider boundary small while still allowing cheaper
       extraction models such as Nemotron to be tested behind the same service
       interface.
+    - The current OpenRouter experiment configuration hides reasoning output
+      from the response and asks for no generic reasoning effort where
+      supported, while still allowing the downstream route to decide whether
+      internal thinking is needed.
+    - This isolates the Nemotron-specific `thinking` control from OpenRouter's
+      generic reasoning controls so the extraction experiments only change one
+      meaningful variable at a time.
 
     Example
     -------
@@ -645,6 +652,12 @@ def build_openrouter_chat_model(
         "timeout": resolved_timeout_seconds,
         "api_key": resolved_api_key,
         "base_url": settings.openrouter_base_url,
+        "extra_body": {
+            "reasoning": {
+                "effort": "none",
+                "exclude": True,
+            },
+        },
     }
 
     return ChatOpenAI(**client_kwargs)
