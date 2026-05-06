@@ -287,6 +287,39 @@ def test_clean_common_text_normalises_newlines_trims_lines_and_removes_known_gar
     assert cleaned_text == "Hello\n\nWorld"
 
 
+def test_clean_common_text_repairs_common_live_mojibake_sequences() -> None:
+    """
+    Verify that the common cleaner repairs the recurring mojibake patterns we
+    have now seen in live resume and note payloads.
+
+    Notes
+    -----
+    - This is a real quality issue, not a cosmetic test.
+    - The extraction input has shown corruption such as:
+      - `4 yearsâ€™ experience`
+      - `2022 â€“ 2023`
+      - `Â£450`
+      - `94.3% Â· 2024`
+    - Those patterns should be normalised before prompting the model.
+    """
+
+    raw_text = (
+        "4 yearsâ€™ experience\r\n"
+        "2022 â€“ 2023\r\n"
+        "was on Â£450 per day\r\n"
+        "Current average: 94.3% Â· 2024 Deanâ€™s List"
+    )
+
+    cleaned_text = text_cleaning._clean_common_text(raw_text)
+
+    assert cleaned_text == (
+        "4 years’ experience\n"
+        "2022 – 2023\n"
+        "was on £450 per day\n"
+        "Current average: 94.3% · 2024 Dean’s List"
+    )
+
+
 def test_repair_common_pdf_heading_spacing_does_not_flatten_normal_content() -> None:
     """
     Verify that the heading-repair helper does not aggressively rewrite normal

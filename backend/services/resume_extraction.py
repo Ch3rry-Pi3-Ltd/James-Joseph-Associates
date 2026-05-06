@@ -581,6 +581,48 @@ class ResumeExtractionError(RuntimeError):
         return self.message
 
 
+_SKILL_SOFT_EXCLUSIONS = {
+    "leadership",
+    "communication",
+    "mentorship",
+    "cross-functional collaboration",
+    "cross functional collaboration",
+}
+
+_SKILL_TECHNOLOGY_REHOMES = {
+    "python",
+    "r",
+    "sql",
+    "pyspark",
+    "git",
+    "github actions",
+    "gitlab",
+    "docker",
+    "kubernetes",
+    "jenkins",
+    "argocd",
+    "power bi",
+    "tableau",
+    "dash/plotly",
+    "dash",
+    "plotly",
+    "langchain",
+    "langgraph",
+    "tensorflow",
+    "pytorch",
+    "azure ml",
+    "azure data factory",
+    "azure databricks",
+    "microsoft azure",
+    "amazon aws",
+    "aws",
+    "google cloud platform",
+    "palantir foundry",
+    "databricks",
+    "terraform",
+}
+
+
 def build_default_openai_resume_extraction_chat_model(
     *,
     model_name: str = DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name,
@@ -893,6 +935,10 @@ def extract_structured_candidate_profile_from_resume_bundle(
             ],
         ) from exc
 
+    structured_extraction = _normalise_resume_structured_extraction(
+        structured_extraction
+    )
+
     return {
         "source_system": extraction_input["source_system"],
         "source_candidate_id": extraction_input["source_candidate_id"],
@@ -1145,22 +1191,45 @@ Rules:
 2. Prefer factual extraction over guesswork.
 3. Use null when a field is genuinely unclear.
 4. Do not invent employers, titles, dates, qualifications, or contact details.
-5. `skills` should contain concise, high-signal core skills or domains only. Keep it deduplicated and reasonably bounded.
-6. `tools_and_platforms` should contain concrete tools, frameworks, cloud platforms, and products. Keep it deduplicated and reasonably bounded.
-7. `certifications` should include clearly supported certifications when present in the source.
-8. `linkedin_url` should only be populated when the actual URL text is visible in the source. If the resume says "click here" without the URL, leave it null.
-9. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
-10. Employment history should be ordered from most recent to oldest when possible.
-11. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
-12. Project entries should preserve employer context, role context, outcomes, and tools where the source supports them.
-13. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
-14. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
-15. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
-16. Do not invent branded project names. If the source does not provide a proper name, use a short factual label.
-17. Education should include only entries reasonably supported by the source.
-18. Evidence notes should explain what source material supports the extraction.
-19. Ambiguity notes should explain uncertainty, contradictions, or missing context.
-20. Return data that matches the requested schema exactly.
+5. Source priority matters. Use the resume and structured candidate metadata as the primary source for employment, project, education, certification, skill, and tooling extraction.
+6. Treat recruiter/candidate notes as secondary context. Notes may confirm contact details, availability, compensation expectations, process status, or other relationship context, but they should not override clearer resume evidence.
+7. Do not add a skill, tool, platform, employer, project, or certification solely because it appears in recruiter notes about a possible future project, a recruiter discussion, a tool comparison, or a general conversation topic.
+8. Only include tools, platforms, and products when they are clearly presented as part of the candidate's own experience or current work. If a note says the candidate discussed or considered a technology, that alone is not enough.
+9. `skills` should contain concise, high-signal core skills or domains only. Keep `skills` deduplicated and reasonably bounded.
+10. `tools_and_platforms` should contain concrete tools, frameworks, cloud platforms, products, and programming technologies that are actually evidenced as part of the candidate's own work. Keep it deduplicated and reasonably bounded.
+11. `certifications` should include clearly supported certifications when present in the source.
+12. `linkedin_url` should only be populated when the actual URL text is visible in the source. If the resume says "click here" without the URL, leave it null.
+13. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
+14. Employment history should be ordered from most recent to oldest when possible.
+15. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
+16. Project entries should preserve employer context, role context, outcomes, and tools where the source supports them.
+17. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
+18. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
+19. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
+20. Do not invent branded project names. If the source does not provide a proper name, use a short factual label.
+21. Education should include only entries reasonably supported by the source.
+22. If a note-only item does not meet the evidence threshold for inclusion, exclude it from the final structured fields.
+23. `certifications` must be a list of plain strings only, not objects or nested records.
+24. `ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects.
+25. Evidence notes should cite whether support came from resume text, candidate metadata, or notes. If notes are used, explain exactly what they supported.
+26. Ambiguity notes should explain uncertainty, contradictions, or missing context, especially when notes mention tools or projects that are not clearly part of the candidate's own proven experience.
+27. Return data that matches the requested schema exactly.
+
+Worked example for source priority and field boundaries:
+
+Resume snippet:
+- "Skills: Machine Learning, Statistical Inference, Forecasting"
+- "Tools: Python, Azure ML, Databricks"
+- "Role: Built forecasting models in Python and deployed them with Azure ML"
+
+Recruiter note snippet:
+- "Client is considering Make.com and Supabase for a future workflow project."
+
+Correct output shape:
+- `skills`: ["Machine Learning", "Statistical Inference", "Forecasting"]
+- `tools_and_platforms`: ["Python", "Azure ML", "Databricks"]
+- Do not include `Make.com` or `Supabase` in `skills` or `tools_and_platforms`
+- If needed, mention those note-only future-project technologies only in `ambiguity_notes`
 """.strip()
 
     # The user prompt is intentionally structured instead of conversational.
@@ -1175,6 +1244,13 @@ Rules:
     # packet than a chat message.
     user_prompt = f"""
 Extract a structured candidate-enrichment object from the following material.
+
+Important source-handling reminder:
+- Resume text and structured candidate metadata are the primary evidence for skills, tools, employment, projects, education, and certifications.
+- Candidate notes are secondary context. Use them carefully for relationship/process context, and only use them for experience fields when they clearly describe the candidate's own proven work.
+- Do not treat recruiter brainstorms, future-project discussions, or tool comparisons in notes as confirmed candidate experience.
+- If a note-only technology or project idea is not clearly proven as part of the candidate's own work, leave it out of the final structured fields entirely.
+- Keep schema shape simple: certifications are plain strings, and ambiguity notes are short strings.
 
 Candidate context
 -----------------
@@ -1384,6 +1460,64 @@ def _coerce_model_result_to_resume_structured_extraction(raw_result: Any) -> Res
     return ResumeStructuredExtraction.model_validate(raw_result)
 
 
+def _normalise_resume_structured_extraction(
+    extraction: ResumeStructuredExtraction,
+) -> ResumeStructuredExtraction:
+    """
+    Apply small deterministic cleanup rules to the validated extraction.
+
+    Notes
+    -----
+    - This helper is intentionally narrow.
+    - It does not try to "fix" the model broadly.
+    - It only enforces a stable local boundary where experience-domain
+      `skills` should not keep obvious technologies or generic soft skills
+      when those belong elsewhere.
+
+    In plain language:
+
+    - remove generic soft skills from `skills`
+    - move obvious technologies from `skills` into `tools_and_platforms`
+    - keep ordering stable and avoid duplicates
+    """
+
+    normalised_tools = _deduplicate_preserving_order(extraction.tools_and_platforms)
+    normalised_tool_keys = {tool.casefold() for tool in normalised_tools}
+
+    normalised_skills: list[str] = []
+
+    for skill in extraction.skills:
+        if not isinstance(skill, str):
+            continue
+
+        stripped_skill = skill.strip()
+        if stripped_skill == "":
+            continue
+
+        skill_key = stripped_skill.casefold()
+
+        if skill_key in _SKILL_SOFT_EXCLUSIONS:
+            continue
+
+        if (
+            skill_key in _SKILL_TECHNOLOGY_REHOMES
+            or skill_key in normalised_tool_keys
+        ):
+            if skill_key not in normalised_tool_keys:
+                normalised_tools.append(stripped_skill)
+                normalised_tool_keys.add(skill_key)
+            continue
+
+        normalised_skills.append(stripped_skill)
+
+    return extraction.model_copy(
+        update={
+            "skills": _deduplicate_preserving_order(normalised_skills),
+            "tools_and_platforms": normalised_tools,
+        }
+    )
+
+
 def _parse_json_object_from_model_text(raw_text: str) -> dict[str, Any]:
     """
     Parse one JSON object from model text content.
@@ -1409,6 +1543,38 @@ def _parse_json_object_from_model_text(raw_text: str) -> dict[str, Any]:
         raise ValueError("The model did not return a top-level JSON object.")
 
     return parsed_json
+
+
+def _deduplicate_preserving_order(values: list[str]) -> list[str]:
+    """
+    Return one list with duplicate strings removed while preserving order.
+
+    Notes
+    -----
+    - This helper keeps the first occurrence of each non-empty string.
+    - Matching is case-insensitive for deduplication, but the original first
+      kept spelling is preserved in the returned list.
+    """
+
+    seen: set[str] = set()
+    deduplicated: list[str] = []
+
+    for value in values:
+        if not isinstance(value, str):
+            continue
+
+        stripped_value = value.strip()
+        if stripped_value == "":
+            continue
+
+        key = stripped_value.casefold()
+        if key in seen:
+            continue
+
+        seen.add(key)
+        deduplicated.append(stripped_value)
+
+    return deduplicated
 
 
 def _build_candidate_context_snapshot(candidate: dict[str, Any]) -> dict[str, Any]:

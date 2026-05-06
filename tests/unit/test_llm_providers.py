@@ -526,6 +526,9 @@ def test_build_openrouter_chat_model_uses_settings_fallbacks_when_arguments_are_
                 "effort": "none",
                 "exclude": True,
             },
+            "chat_template_kwargs": {
+                "thinking": False,
+            },
         },
     }
 
@@ -571,6 +574,9 @@ def test_build_openrouter_chat_model_prefers_explicit_arguments_over_settings(
             "reasoning": {
                 "effort": "none",
                 "exclude": True,
+            },
+            "chat_template_kwargs": {
+                "thinking": False,
             },
         },
     }

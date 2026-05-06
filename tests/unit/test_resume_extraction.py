@@ -77,6 +77,7 @@ from backend.llm.models import ModelProfile, ModelProvider, ModelPurpose
 from backend.services.resume_extraction import (
     ResumeExtractionError,
     ResumeStructuredExtraction,
+    _normalise_resume_structured_extraction,
     build_resume_extraction_input_from_jobadder_bundle,
     build_resume_extraction_prompt,
     extract_jobadder_candidate_resume_profile,
@@ -452,9 +453,18 @@ def test_build_resume_extraction_prompt_returns_system_and_user_prompt() -> None
 
     assert "careful recruitment data-extraction assistant" in prompt_bundle["system_prompt"]
     assert "Do not invent employers, titles, dates, qualifications, or contact details." in prompt_bundle["system_prompt"]
+    assert "Source priority matters." in prompt_bundle["system_prompt"]
+    assert "Do not add a skill, tool, platform, employer, project, or certification solely because it appears in recruiter notes" in prompt_bundle["system_prompt"]
+    assert "`certifications` must be a list of plain strings only, not objects or nested records." in prompt_bundle["system_prompt"]
+    assert "`ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects." in prompt_bundle["system_prompt"]
+    assert "Worked example for source priority and field boundaries:" in prompt_bundle["system_prompt"]
+    assert 'Do not include `Make.com` or `Supabase` in `skills` or `tools_and_platforms`' in prompt_bundle["system_prompt"]
     assert "`projects` should contain only clearly supported major projects or initiatives." in prompt_bundle["system_prompt"]
     assert "Do not copy broad resume-wide skill lists into every project." in prompt_bundle["system_prompt"]
 
+    assert "Important source-handling reminder" in prompt_bundle["user_prompt"]
+    assert "leave it out of the final structured fields entirely" in prompt_bundle["user_prompt"]
+    assert "Keep schema shape simple: certifications are plain strings, and ambiguity notes are short strings." in prompt_bundle["user_prompt"]
     assert "Candidate context" in prompt_bundle["user_prompt"]
     assert "Cleaned candidate notes" in prompt_bundle["user_prompt"]
     assert "Cleaned resume text" in prompt_bundle["user_prompt"]
@@ -1149,3 +1159,59 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
     assert result.skills == ["Python", "Machine Learning"]
     assert result.tools_and_platforms == ["LangChain", "Azure ML"]
     assert result.certifications == ["AWS Certified Cloud Practitioner"]
+
+
+def test_normalise_resume_structured_extraction_rehomes_tools_and_drops_soft_skills() -> None:
+    """
+    Verify that the post-validation cleanup keeps `skills` focused on core
+    domains while moving obvious technologies into `tools_and_platforms`.
+
+    Notes
+    -----
+    - This is intentionally a narrow deterministic cleanup test.
+    - It does not try to "fix" the model broadly.
+    - It only proves the local rule we want:
+        - generic soft skills should not stay in `skills`
+        - obvious technologies should live in `tools_and_platforms`
+    """
+
+    extraction = ResumeStructuredExtraction.model_validate(
+        {
+            "current_employer": "Pirum",
+            "current_title": "Senior Data Scientist",
+            "professional_summary": "Senior applied machine learning candidate.",
+            "location": "London",
+            "emails": ["the_rfc@hotmail.co.uk"],
+            "phones": ["07934 890 708"],
+            "skills": [
+                "Machine Learning",
+                "Python",
+                "Leadership",
+                "SQL",
+                "Statistical Inference",
+                "GitHub Actions",
+            ],
+            "tools_and_platforms": ["LangChain"],
+            "certifications": [],
+            "linkedin_url": None,
+            "portfolio_references": [],
+            "education": [],
+            "employment_history": [],
+            "projects": [],
+            "evidence_notes": [],
+            "ambiguity_notes": [],
+        }
+    )
+
+    result = _normalise_resume_structured_extraction(extraction)
+
+    assert result.skills == [
+        "Machine Learning",
+        "Statistical Inference",
+    ]
+    assert result.tools_and_platforms == [
+        "LangChain",
+        "Python",
+        "SQL",
+        "GitHub Actions",
+    ]

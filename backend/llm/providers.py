@@ -544,13 +544,13 @@ def build_openrouter_chat_model(
     - This keeps the provider boundary small while still allowing cheaper
       extraction models such as Nemotron to be tested behind the same service
       interface.
-    - The current OpenRouter experiment configuration hides reasoning output
-      from the response and asks for no generic reasoning effort where
-      supported, while still allowing the downstream route to decide whether
-      internal thinking is needed.
-    - This isolates the Nemotron-specific `thinking` control from OpenRouter's
-      generic reasoning controls so the extraction experiments only change one
-      meaningful variable at a time.
+    - The current OpenRouter experiment configuration hides reasoning output,
+      asks for no generic reasoning effort where supported, and explicitly
+      disables Nemotron thinking where that downstream route honors the
+      request.
+    - This remains the strongest extraction baseline found so far for
+      Nemotron Super in this repository, even though it still needs prompt
+      refinement for provenance and precision.
 
     Example
     -------
@@ -656,6 +656,9 @@ def build_openrouter_chat_model(
             "reasoning": {
                 "effort": "none",
                 "exclude": True,
+            },
+            "chat_template_kwargs": {
+                "thinking": False,
             },
         },
     }

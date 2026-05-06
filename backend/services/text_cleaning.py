@@ -280,17 +280,16 @@ def _clean_common_text(raw_text: Any) -> str:
     # reason about.
     cleaned_text = raw_text.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Remove the most common mojibake-style garbage we have already seen in
-    # real source payloads.
+    # Repair the small set of mojibake patterns we have now seen repeatedly in
+    # live resume and note payloads.
     #
-    # These replacements are intentionally narrow. The aim is to remove
-    # obvious, repeated junk without introducing aggressive rewriting.
+    # Keep this deterministic and narrow:
+    # - fix known garbage/re-encoding artifacts
+    # - do not attempt broad charset guessing
     #
-    # Examples we have already seen:
-    # - `Ã‚`
-    # - replacement characters such as `ï¿½`
-    cleaned_text = cleaned_text.replace("Ã‚", "")
-    cleaned_text = cleaned_text.replace("ï¿½", "")
+    # That gives us a genuine quality improvement without risking semantic
+    # rewrites of otherwise valid text.
+    cleaned_text = _repair_common_mojibake(cleaned_text)
 
     # Strip leading and trailing whitespace from each line rather than only
     # trimming the whole string once.
@@ -390,6 +389,51 @@ def _collapse_repeated_blank_lines(raw_text: str) -> str:
     # Reassemble the cleaned lines into one string and trim any accidental
     # whitespace around the edges of the final result.
     return "\n".join(cleaned_lines).strip()
+
+
+def _repair_common_mojibake(raw_text: str) -> str:
+    """
+    Repair a narrow set of recurring mojibake sequences seen in live payloads.
+
+    Notes
+    -----
+    - This helper is intentionally table-driven rather than heuristic.
+    - The goal is to fix repeated UTF-8/Windows-1252 style corruption such as:
+      - `â€™` -> right apostrophe
+      - `â€“` -> en dash
+      - `Â£` -> pound sign
+      - `Â·` -> middle dot
+    - It also strips a few known garbage tokens that do not carry meaning.
+    """
+
+    if raw_text == "":
+        return ""
+
+    replacements = {
+        "Ã‚": "",
+        "ï¿½": "",
+        "Â\xa0": " ",
+        "Â ": " ",
+        "Â£": "\u00a3",
+        "Â·": "\u00b7",
+        "â€™": "\u2019",
+        "â€˜": "\u2018",
+        "â€œ": "\u201c",
+        "â€\x9d": "\u201d",
+        "â€“": "\u2013",
+        "â€”": "\u2014",
+        "â€¢": "\u2022",
+        "â€¦": "\u2026",
+        "â€\x8b": "",
+        "â€\x8c": "",
+        "â€\x8d": "",
+    }
+
+    repaired_text = raw_text
+    for broken_value, repaired_value in replacements.items():
+        repaired_text = repaired_text.replace(broken_value, repaired_value)
+
+    return repaired_text
 
 
 def _repair_common_pdf_heading_spacing(raw_text: str) -> str:
