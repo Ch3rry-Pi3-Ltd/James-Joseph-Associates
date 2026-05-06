@@ -60,7 +60,7 @@ This should happen before backend implementation so Python, LangChain v1, LangGr
 - [x] Add Supabase migration structure under `supabase/`.
 - [x] Add test structure under `tests/`.
 - [ ] Add safe sample data and evaluation fixtures under `fixtures/`.
-- [ ] Add local operational scripts under `scripts/`.
+- [x] Add local operational scripts under `scripts/`.
 - [x] Add GitHub Actions workflow structure under `.github/workflows/`.
 - [x] Verify the structure locally with:
   - [x] Python health endpoint test.
@@ -229,9 +229,14 @@ Current status:
 - [x] LangGraph foundation is documented in `docs/langgraph_foundation.md`.
 - [x] LLM model profile foundation is implemented in `backend/llm/models.py`.
 - [x] LLM model profile tests are implemented in `tests/unit/test_llm_models.py`.
+- [x] LLM provider factory is implemented in `backend/llm/providers.py`.
+- [x] LLM provider tests are implemented in `tests/unit/test_llm_providers.py`.
 - [x] LLM model foundation is documented in `docs/llm_foundation.md`.
-- [ ] Real LangChain provider clients are implemented.
-- [ ] Real LLM calls are implemented.
+- [x] Resume extraction service is implemented in `backend/services/resume_extraction.py`.
+- [x] Resume extraction tests are implemented in `tests/unit/test_resume_extraction.py`.
+- [x] Live resume extraction runner is implemented in `scripts/run_resume_extraction.py`.
+- [x] Real LangChain provider clients are implemented.
+- [x] Real LLM calls are implemented.
 - [ ] Real GraphRAG workflow states are defined.
 - [ ] Real candidate/job matching graph is implemented.
 
@@ -396,6 +401,12 @@ LLM evaluation should be designed before model outputs become business-critical.
 - [ ] Define minimum acceptable output format.
 - [ ] Define CI pass/fail thresholds for initial evaluations.
 - [ ] Define how recruiter feedback becomes evaluation data later.
+
+Current note:
+
+- Live resume extraction is working against real candidate data.
+- The immediate remaining gap is evaluation, not provider plumbing.
+- The next evaluation layer should score extraction quality, cost, latency, and model/provider tradeoffs in a repeatable way.
 
 </details>
 

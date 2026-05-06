@@ -81,6 +81,7 @@ from backend.llm.providers import (
     LLMProviderConfigurationError,
     build_langchain_chat_model,
     build_openai_chat_model,
+    build_openrouter_chat_model,
 )
 
 
@@ -134,6 +135,54 @@ def _build_openai_test_profile(
 
     return ModelProfile(
         provider=ModelProvider.OPENAI,
+        model_name=model_name,
+        purpose=ModelPurpose.UTILITY,
+        temperature=temperature,
+        max_output_tokens=max_output_tokens,
+    )
+
+
+def _build_openrouter_test_profile(
+    *,
+    model_name: str = "nvidia/nemotron-3-nano-30b-a3b:nitro",
+    temperature: float = 0.0,
+    max_output_tokens: int = 500,
+) -> ModelProfile:
+    """
+    Return a realistic OpenRouter-backed `ModelProfile` for provider tests.
+
+    Parameters
+    ----------
+    model_name : str
+        Model name to place on the profile.
+
+    temperature : float
+        Temperature value to place on the profile.
+
+    max_output_tokens : int
+        Output-token limit to place on the profile.
+
+    Returns
+    -------
+    ModelProfile
+        OpenRouter-backed profile for provider tests.
+
+    Example
+    -------
+    A test can start from:
+
+        profile = _build_openrouter_test_profile()
+
+    and then override only the one field relevant to that test.
+
+    In plain language:
+
+    - make one good default OpenRouter profile
+    - let each test tweak only the field it cares about
+    """
+
+    return ModelProfile(
+        provider=ModelProvider.OPENROUTER,
         model_name=model_name,
         purpose=ModelPurpose.UTILITY,
         temperature=temperature,
@@ -418,6 +467,103 @@ def test_build_openai_chat_model_prefers_explicit_arguments_over_settings(
     }
 
 
+def test_build_openrouter_chat_model_uses_settings_fallbacks_when_arguments_are_omitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the OpenRouter-specific builder falls back to backend settings
+    when the caller omits both `api_key` and `timeout_seconds`.
+
+    Notes
+    -----
+    - OpenRouter uses an OpenAI-compatible endpoint in this backend.
+    - This test therefore focuses on one question:
+        - did the provider helper resolve the right key, timeout, and base URL
+          before constructing the client?
+
+    Example
+    -------
+    We fake backend settings like:
+
+        openrouter_api_key = "sk-or-test"
+        openrouter_base_url = "https://openrouter.ai/api/v1"
+        llm_timeout_seconds = 22.0
+
+    then call:
+
+        build_openrouter_chat_model(profile=profile)
+
+    and confirm those values are passed into the client constructor.
+    """
+
+    profile = _build_openrouter_test_profile()
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeSettings:
+        openrouter_api_key = "sk-or-test"
+        openrouter_base_url = "https://openrouter.ai/api/v1"
+        llm_timeout_seconds = 22.0
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "ChatOpenAI", FakeChatOpenAI)
+
+    result = build_openrouter_chat_model(profile=profile)
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs == {
+        "model": "nvidia/nemotron-3-nano-30b-a3b:nitro",
+        "temperature": 0.0,
+        "max_tokens": 500,
+        "timeout": 22.0,
+        "api_key": "sk-or-test",
+        "base_url": "https://openrouter.ai/api/v1",
+    }
+
+
+def test_build_openrouter_chat_model_prefers_explicit_arguments_over_settings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that explicit runtime arguments override backend settings for the
+    OpenRouter-specific builder.
+    """
+
+    profile = _build_openrouter_test_profile()
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeSettings:
+        openrouter_api_key = "sk-or-from-settings"
+        openrouter_base_url = "https://openrouter.ai/api/v1"
+        llm_timeout_seconds = 99.0
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "ChatOpenAI", FakeChatOpenAI)
+
+    result = build_openrouter_chat_model(
+        profile=profile,
+        api_key="sk-or-explicit",
+        timeout_seconds=12.5,
+    )
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs == {
+        "model": "nvidia/nemotron-3-nano-30b-a3b:nitro",
+        "temperature": 0.0,
+        "max_tokens": 500,
+        "timeout": 12.5,
+        "api_key": "sk-or-explicit",
+        "base_url": "https://openrouter.ai/api/v1",
+    }
+
+
 def test_build_langchain_chat_model_dispatches_openai_profile_to_openai_builder(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -484,6 +630,48 @@ def test_build_langchain_chat_model_dispatches_openai_profile_to_openai_builder(
     }
 
 
+def test_build_langchain_chat_model_dispatches_openrouter_profile_to_openrouter_builder(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the generic provider-dispatch entrypoint routes an
+    OpenRouter-backed profile into the OpenRouter-specific builder.
+    """
+
+    profile = _build_openrouter_test_profile()
+    captured_call: dict[str, Any] = {}
+
+    def fake_build_openrouter_chat_model(
+        *,
+        profile: ModelProfile,
+        api_key: str | None,
+        timeout_seconds: float,
+    ) -> str:
+        captured_call["profile"] = profile
+        captured_call["api_key"] = api_key
+        captured_call["timeout_seconds"] = timeout_seconds
+        return "fake-openrouter-client"
+
+    monkeypatch.setattr(
+        providers,
+        "build_openrouter_chat_model",
+        fake_build_openrouter_chat_model,
+    )
+
+    result = build_langchain_chat_model(
+        profile=profile,
+        api_key="sk-or-test-value",
+        timeout_seconds=18.0,
+    )
+
+    assert result == "fake-openrouter-client"
+    assert captured_call == {
+        "profile": profile,
+        "api_key": "sk-or-test-value",
+        "timeout_seconds": 18.0,
+    }
+
+
 def test_build_langchain_chat_model_raises_for_unsupported_provider() -> None:
     """
     Verify that the generic provider-dispatch entrypoint fails clearly when the
@@ -502,8 +690,8 @@ def test_build_langchain_chat_model_raises_for_unsupported_provider() -> None:
     A profile such as:
 
         ModelProfile(
-            provider=ModelProvider.OPENROUTER,
-            model_name="openrouter/some-model",
+            provider=ModelProvider.NEMOTRON,
+            model_name="nemotron/some-model",
             purpose=ModelPurpose.UTILITY,
             temperature=0.0,
             max_output_tokens=500,
@@ -520,8 +708,8 @@ def test_build_langchain_chat_model_raises_for_unsupported_provider() -> None:
     """
 
     profile = ModelProfile(
-        provider=ModelProvider.OPENROUTER,
-        model_name="openrouter/some-model",
+        provider=ModelProvider.NEMOTRON,
+        model_name="nemotron/some-model",
         purpose=ModelPurpose.UTILITY,
         temperature=0.0,
         max_output_tokens=500,
@@ -535,8 +723,8 @@ def test_build_langchain_chat_model_raises_for_unsupported_provider() -> None:
     assert str(error) == "The requested LLM provider is not implemented yet."
     assert error.stage == "provider_dispatch"
     assert error.details == [
-        {"provider": ModelProvider.OPENROUTER},
-        {"model_name": "openrouter/some-model"},
+        {"provider": ModelProvider.NEMOTRON},
+        {"model_name": "nemotron/some-model"},
     ]
 
 
@@ -813,6 +1001,38 @@ def test_build_openai_chat_model_raises_when_profile_provider_is_not_openai() ->
     assert error.details == [
         {"provider": ModelProvider.NEMOTRON},
         {"model_name": "nemotron-something"},
+    ]
+
+
+def test_build_openrouter_chat_model_raises_when_settings_key_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the OpenRouter-specific builder fails clearly when neither an
+    explicit key nor a settings-backed key is available.
+    """
+
+    profile = _build_openrouter_test_profile()
+
+    class FakeSettings:
+        openrouter_api_key = ""
+        openrouter_base_url = "https://openrouter.ai/api/v1"
+        llm_timeout_seconds = 30.0
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+
+    with pytest.raises(LLMProviderConfigurationError) as exc_info:
+        build_openrouter_chat_model(profile=profile)
+
+    error = exc_info.value
+
+    assert str(error) == (
+        "The OpenRouter API key must be configured either explicitly or in settings."
+    )
+    assert error.stage == "provider_configuration"
+    assert error.details == [
+        {"provider": ModelProvider.OPENROUTER},
+        {"model_name": "nvidia/nemotron-3-nano-30b-a3b:nitro"},
     ]
 
 

@@ -64,6 +64,7 @@ It does:
 - validate local `ModelProfile` values before client creation
 - dispatch by provider
 - build a `ChatOpenAI` client for OpenAI-backed profiles
+- build a `ChatOpenAI` client against OpenRouter's OpenAI-compatible endpoint
 - fail clearly for providers that are described locally but not implemented yet
 
 It does not:
@@ -72,7 +73,6 @@ It does not:
 - implement retries
 - implement rate-limit handling
 - implement cost tracking
-- implement OpenRouter transport yet
 - implement Nemotron transport yet
 - implement Perplexity transport yet
 
@@ -232,7 +232,7 @@ def build_langchain_chat_model(
         LangChain-compatible chat model.
 
         In the current implementation this will be a `ChatOpenAI` instance for
-        OpenAI-backed profiles.
+        both OpenAI-backed and OpenRouter-backed profiles.
 
     Raises
     ------
@@ -246,7 +246,9 @@ def build_langchain_chat_model(
     - The function validates the profile first, then routes to a
       provider-specific builder.
     - Even though the repo knows about several providers in `ModelProvider`,
-      this module only implements the OpenAI transport at the moment.
+      this module currently implements only:
+        - OpenAI
+        - OpenRouter via an OpenAI-compatible endpoint
     - Explicit runtime arguments still win. Settings are only used as fallback
       defaults when those arguments are omitted.
 
@@ -295,6 +297,13 @@ def build_langchain_chat_model(
     # A single dispatch function makes that behaviour consistent.
     if profile.provider == ModelProvider.OPENAI:
         return build_openai_chat_model(
+            profile=profile,
+            api_key=api_key,
+            timeout_seconds=timeout_seconds,
+        )
+
+    if profile.provider == ModelProvider.OPENROUTER:
+        return build_openrouter_chat_model(
             profile=profile,
             api_key=api_key,
             timeout_seconds=timeout_seconds,
@@ -487,6 +496,160 @@ def build_openai_chat_model(
     return ChatOpenAI(**client_kwargs)
 
 
+def build_openrouter_chat_model(
+    *,
+    profile: ModelProfile,
+    api_key: str | None = None,
+    timeout_seconds: float | None = None,
+) -> ChatOpenAI:
+    """
+    Build a `ChatOpenAI` client for one OpenRouter-backed `ModelProfile`.
+
+    Parameters
+    ----------
+    profile : ModelProfile
+        Local model description.
+
+        The profile must use:
+
+        - `provider = ModelProvider.OPENROUTER`
+
+    api_key : str | None
+        Optional explicit OpenRouter API key.
+
+        If omitted, the provider helper falls back to shared backend settings.
+
+    timeout_seconds : float | None
+        Optional explicit request timeout to apply to the client.
+
+        If omitted, the shared backend settings value is used.
+
+    Returns
+    -------
+    ChatOpenAI
+        Configured OpenAI-compatible LangChain chat model pointed at
+        OpenRouter.
+
+    Raises
+    ------
+    LLMProviderConfigurationError
+        If the profile does not describe an OpenRouter model or if local
+        settings are invalid.
+
+    Notes
+    -----
+    - OpenRouter exposes an OpenAI-compatible API, so the provider layer can
+      reuse `ChatOpenAI` rather than introducing a second LangChain client
+      abstraction immediately.
+    - This keeps the provider boundary small while still allowing cheaper
+      extraction models such as Nemotron to be tested behind the same service
+      interface.
+
+    Example
+    -------
+    Build an OpenRouter-backed chat model:
+
+        profile = ModelProfile(
+            provider=ModelProvider.OPENROUTER,
+            model_name="nvidia/nemotron-3-nano-30b-a3b:nitro",
+            purpose=ModelPurpose.EXTRACTION,
+            temperature=0.0,
+            max_output_tokens=1600,
+        )
+
+        chat_model = build_openrouter_chat_model(profile=profile)
+
+    In plain language:
+
+    - make sure the profile really is for OpenRouter
+    - resolve API key / timeout / base URL from explicit arguments or settings
+    - point `ChatOpenAI` at OpenRouter's compatible endpoint
+    - return the configured client
+    """
+
+    _validate_model_profile_for_provider_client(profile)
+
+    if profile.provider != ModelProvider.OPENROUTER:
+        raise LLMProviderConfigurationError(
+            "OpenRouter chat-model creation requires an OpenRouter-backed model profile.",
+            stage="provider_configuration",
+            details=[
+                {"provider": profile.provider},
+                {"model_name": profile.model_name},
+            ],
+        )
+
+    settings = get_settings()
+
+    resolved_timeout_seconds = (
+        timeout_seconds
+        if timeout_seconds is not None
+        else settings.llm_timeout_seconds
+    )
+
+    if api_key is not None:
+        resolved_api_key = api_key
+    else:
+        resolved_api_key = settings.openrouter_api_key
+        if (
+            isinstance(resolved_api_key, str)
+            and resolved_api_key.strip() == ""
+        ):
+            resolved_api_key = None
+
+    if resolved_timeout_seconds <= 0:
+        raise LLMProviderConfigurationError(
+            "The provider timeout must be greater than zero seconds.",
+            stage="provider_configuration",
+            details=[
+                {"provider": profile.provider},
+                {"model_name": profile.model_name},
+                {"timeout_seconds": resolved_timeout_seconds},
+            ],
+        )
+
+    if resolved_api_key is None:
+        raise LLMProviderConfigurationError(
+            "The OpenRouter API key must be configured either explicitly or in settings.",
+            stage="provider_configuration",
+            details=[
+                {"provider": profile.provider},
+                {"model_name": profile.model_name},
+            ],
+        )
+
+    if not _is_non_empty_string(resolved_api_key):
+        raise LLMProviderConfigurationError(
+            "The supplied OpenRouter API key must be a non-empty string.",
+            stage="provider_configuration",
+            details=[
+                {"provider": profile.provider},
+                {"model_name": profile.model_name},
+            ],
+        )
+
+    if not _is_non_empty_string(settings.openrouter_base_url):
+        raise LLMProviderConfigurationError(
+            "The OpenRouter base URL must be a non-empty string.",
+            stage="provider_configuration",
+            details=[
+                {"provider": profile.provider},
+                {"model_name": profile.model_name},
+            ],
+        )
+
+    client_kwargs: dict[str, Any] = {
+        "model": profile.model_name,
+        "temperature": profile.temperature,
+        "max_tokens": profile.max_output_tokens,
+        "timeout": resolved_timeout_seconds,
+        "api_key": resolved_api_key,
+        "base_url": settings.openrouter_base_url,
+    }
+
+    return ChatOpenAI(**client_kwargs)
+
+
 def _validate_model_profile_for_provider_client(profile: ModelProfile) -> None:
     """
     Validate that one local `ModelProfile` is usable for provider-client
@@ -637,4 +800,5 @@ __all__ = [
     "LLMProviderConfigurationError",
     "build_langchain_chat_model",
     "build_openai_chat_model",
+    "build_openrouter_chat_model",
 ]

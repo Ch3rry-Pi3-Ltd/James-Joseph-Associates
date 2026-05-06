@@ -13,6 +13,8 @@ It gives the rest of the repository a stable way to talk about:
 - the Postgres connection string used for Supabase-backed database reads and writes
 - the Make.com API token used by protected Make.com endpoints
 - the OpenAI API key used by the shared LLM provider layer
+- the OpenRouter API key used by the shared LLM provider layer
+- the OpenRouter base URL used for OpenAI-compatible routing
 - the default timeout used for backend LLM provider calls
 
 Keeping settings in one place makes the project easier to understand because:
@@ -135,6 +137,19 @@ class Settings(BaseSettings):
         committed. An empty default keeps local settings loadable before the
         model provider is intentionally configured.
 
+    openrouter_api_key : str
+        OpenRouter API key used by the backend LLM provider layer.
+
+        This should come from environment configuration and must never be
+        committed. An empty default keeps local settings loadable before the
+        OpenRouter path is intentionally configured.
+
+    openrouter_base_url : str
+        OpenRouter base URL for OpenAI-compatible chat-model calls.
+
+        This is configuration rather than provider logic because deployments
+        may later choose to override the default endpoint explicitly.
+
     llm_timeout_seconds : float
         Shared timeout to use for backend LLM provider calls.
 
@@ -165,6 +180,8 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_SECRET
         JOBADDER_REDIRECT_URI
         OPENAI_API_KEY
+        OPENROUTER_API_KEY
+        OPENROUTER_BASE_URL
         LLM_TIMEOUT_SECONDS
 
     Example
@@ -183,6 +200,8 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_SECRET=""
         JOBADDER_REDIRECT_URI=""
         OPENAI_API_KEY=""
+        OPENROUTER_API_KEY=""
+        OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
         LLM_TIMEOUT_SECONDS="60"
     """
 
@@ -301,6 +320,25 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(
         default="",
         validation_alias="OPENAI_API_KEY",
+    )
+
+    # Shared OpenRouter API key for the backend LLM provider layer.
+    #   - This mirrors the OpenAI settings path so the provider factory can
+    #     stay consistent across providers.
+    #   - An empty default keeps local development safe until the provider is
+    #     intentionally configured.
+    openrouter_api_key: str = Field(
+        default="",
+        validation_alias="OPENROUTER_API_KEY",
+    )
+
+    # Shared OpenRouter base URL for OpenAI-compatible provider routing.
+    #   - Keeping this in settings makes it easy to:
+    #       - use the normal OpenRouter endpoint by default
+    #       - override it later in special environments if needed
+    openrouter_base_url: str = Field(
+        default="https://openrouter.ai/api/v1",
+        validation_alias="OPENROUTER_BASE_URL",
     )
 
     # Shared timeout for backend LLM provider calls.

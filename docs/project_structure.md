@@ -209,6 +209,7 @@ james-joseph-associates/
 |   |-- llm/
 |   |   |-- __init__.py
 |   |   |-- models.py
+|   |   |-- providers.py
 |   |   |-- prompts.py
 |   |   |-- structured_output.py
 |   |   |-- safety.py
@@ -308,6 +309,7 @@ james-joseph-associates/
 |
 |-- scripts/
 |   |-- README.md
+|   |-- run_resume_extraction.py
 |   |-- check_env.py
 |   |-- run_evals.py
 |   |-- import_source_records.py
@@ -481,6 +483,7 @@ Fixtures should be safe to commit and must not contain client-sensitive data.
 
 Local operational scripts:
 
+- Live integration runners.
 - Environment checks.
 - Import helpers.
 - Embedding backfills.
