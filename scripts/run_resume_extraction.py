@@ -118,6 +118,7 @@ In plain language:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
@@ -146,6 +147,10 @@ from backend.llm.providers import (
     LLMProviderConfigurationError,
     build_langchain_chat_model,
 )
+from backend.services.extraction_quality import (
+    ExtractionQualityAssessment,
+    score_resume_extraction,
+)
 from backend.services.resume_extraction import (
     DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
     ResumeExtractionError,
@@ -157,6 +162,9 @@ from backend.settings import get_settings
 DEFAULT_OPENROUTER_RESUME_EXTRACTION_MODEL_NAME = (
     "nvidia/nemotron-3-nano-30b-a3b:nitro"
 )
+DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME = "gpt-4.1-mini"
+DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-5.4-mini"
+DEFAULT_QUALITY_LOG_JSONL_PATH = Path("temp/resume_extraction_quality_log.jsonl")
 SUPPORTED_EXTRACTION_PROVIDERS = (
     ModelProvider.OPENAI,
     ModelProvider.OPENROUTER,
@@ -287,6 +295,43 @@ def build_argument_parser() -> argparse.ArgumentParser:
             "material."
         ),
     )
+    parser.add_argument(
+        "--enable-quality-gate",
+        action="store_true",
+        help=(
+            "Run a deterministic quality assessment after extraction and "
+            "rerun weak first-pass outputs through a stronger fallback model."
+        ),
+    )
+    parser.add_argument(
+        "--quality-pass-threshold",
+        type=int,
+        default=80,
+        help="Score at or above this threshold is considered a pass.",
+    )
+    parser.add_argument(
+        "--quality-rerun-threshold",
+        type=int,
+        default=65,
+        help="Score below this threshold triggers the fallback model.",
+    )
+    parser.add_argument(
+        "--fallback-model-name",
+        default=DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME,
+        help=(
+            "Fallback OpenAI model name to use when the deterministic quality "
+            "score requests a rerun."
+        ),
+    )
+    parser.add_argument(
+        "--quality-log-jsonl",
+        type=Path,
+        default=DEFAULT_QUALITY_LOG_JSONL_PATH,
+        help=(
+            "Path to append quality-gate review/rerun records as JSONL when "
+            "quality gating is enabled."
+        ),
+    )
 
     return parser
 
@@ -339,7 +384,11 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
     """
 
     provider = ModelProvider(args.provider)
-    model_name = _resolve_default_model_name(provider, args.model_name)
+    model_name = _resolve_default_model_name(
+        provider,
+        args.model_name,
+        quality_gate_enabled=args.enable_quality_gate,
+    )
 
     return ModelProfile(
         provider=provider,
@@ -353,6 +402,8 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
 def _resolve_default_model_name(
     provider: ModelProvider,
     explicit_model_name: str | None,
+    *,
+    quality_gate_enabled: bool,
 ) -> str:
     """
     Resolve the model name for one CLI run.
@@ -381,6 +432,8 @@ def _resolve_default_model_name(
         return explicit_model_name
 
     if provider == ModelProvider.OPENAI:
+        if quality_gate_enabled:
+            return DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME
         return DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.model_name
 
     if provider == ModelProvider.OPENROUTER:
@@ -522,6 +575,8 @@ def build_console_summary(result: dict[str, Any]) -> str:
     employment_history = structured.get("employment_history", [])
     education = structured.get("education", [])
     projects = structured.get("projects", [])
+    quality_assessment = result.get("quality_assessment", {})
+    quality_gate = result.get("quality_gate", {})
 
     lines = [
         "Live resume extraction completed.",
@@ -548,6 +603,26 @@ def build_console_summary(result: dict[str, Any]) -> str:
         f"Evidence notes: {len(evidence_notes)}",
         f"Ambiguity notes: {len(ambiguity_notes)}",
     ]
+
+    if quality_assessment:
+        lines.extend(
+            [
+                "",
+                f"Quality score: {quality_assessment.get('quality_score')}",
+                f"Quality status: {quality_assessment.get('status')}",
+            ]
+        )
+        reasons = quality_assessment.get("reasons", [])
+        if reasons:
+            lines.append(f"Quality reasons: {', '.join(reasons)}")
+
+    if quality_gate:
+        lines.append(
+            f"Fallback invoked: {'yes' if quality_gate.get('fallback_invoked') else 'no'}"
+        )
+        final_model_name = quality_gate.get("final_model_name")
+        if final_model_name:
+            lines.append(f"Final model: {final_model_name}")
 
     # Include the first ambiguity/evidence note because those are often the
     # fastest signal of whether the model actually reasoned about uncertainty
@@ -665,6 +740,186 @@ def write_json_output(*, payload: dict[str, Any], output_path: Path) -> None:
     )
 
 
+def append_jsonl_log(*, payload: dict[str, Any], output_path: Path) -> None:
+    """
+    Append one JSON payload to a JSONL log file.
+
+    Parameters
+    ----------
+    payload : dict[str, Any]
+        One log record to append.
+
+    output_path : Path
+        Destination JSONL file.
+
+    Notes
+    -----
+    This helper is used by the quality-gate flow so weak first-pass and
+    fallback decisions can be inspected later without needing a database table
+    first.
+
+    Example
+    -------
+    A caller may append:
+
+        append_jsonl_log(
+            payload={"candidate_id": 16496678, "quality_score": 61},
+            output_path=Path("temp/resume_extraction_quality_log.jsonl"),
+        )
+    """
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def build_quality_assessment(
+    *,
+    result: dict[str, Any],
+    pass_threshold: int,
+    rerun_threshold: int,
+) -> ExtractionQualityAssessment:
+    """
+    Score one extraction result using the deterministic quality gate.
+
+    Parameters
+    ----------
+    result : dict[str, Any]
+        Full extraction result payload returned by the live extraction flow.
+
+    pass_threshold : int
+        Score at or above this threshold is a pass.
+
+    rerun_threshold : int
+        Score below this threshold triggers a rerun recommendation.
+
+    Returns
+    -------
+    ExtractionQualityAssessment
+        Deterministic quality assessment for the extraction result.
+
+    Example
+    -------
+    A caller can take the result from the live extraction runner and score it:
+
+        assessment = build_quality_assessment(
+            result=result,
+            pass_threshold=80,
+            rerun_threshold=65,
+        )
+    """
+
+    extraction_input = result.get("extraction_input", {})
+    structured_extraction = result.get("structured_extraction", {})
+
+    return score_resume_extraction(
+        extraction=structured_extraction,
+        cleaned_resume_text=extraction_input.get("cleaned_resume_text", ""),
+        pass_threshold=pass_threshold,
+        rerun_threshold=rerun_threshold,
+    )
+
+
+def build_quality_log_record(
+    *,
+    result: dict[str, Any],
+    assessment: ExtractionQualityAssessment,
+    stage: str,
+    fallback_invoked: bool,
+    final_status: str | None = None,
+) -> dict[str, Any]:
+    """
+    Build one structured quality-log record.
+
+    Parameters
+    ----------
+    result : dict[str, Any]
+        Extraction result being logged.
+
+    assessment : ExtractionQualityAssessment
+        Deterministic quality assessment for that result.
+
+    stage : str
+        Pipeline stage label, such as `first_pass` or `fallback`.
+
+    fallback_invoked : bool
+        Whether the quality gate triggered the fallback path for this
+        candidate.
+
+    final_status : str | None
+        Final routing status after any fallback decision is made.
+
+    Returns
+    -------
+    dict[str, Any]
+        JSON-serialisable log record.
+
+    Example
+    -------
+    A record may look like:
+
+        {
+            "candidate_id": 16496678,
+            "model_name": "gpt-4.1-mini",
+            "quality_score": 61,
+            "quality_status": "rerun",
+            "stage": "first_pass",
+        }
+    """
+
+    extraction_input = result.get("extraction_input", {})
+    latest_resume = extraction_input.get("latest_resume", {})
+    model_profile = result.get("model_profile", {})
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "stage": stage,
+        "source_system": result.get("source_system"),
+        "candidate_id": result.get("source_candidate_id"),
+        "jobadder_account": result.get("jobadder_account"),
+        "resume_file_name": latest_resume.get("file_name"),
+        "provider": model_profile.get("provider"),
+        "model_name": model_profile.get("model_name"),
+        "quality_score": assessment.quality_score,
+        "quality_status": assessment.status,
+        "reasons": assessment.reasons,
+        "fallback_invoked": fallback_invoked,
+        "final_status": final_status,
+    }
+
+
+def enrich_result_with_quality_metadata(
+    *,
+    result: dict[str, Any],
+    assessment: ExtractionQualityAssessment,
+    quality_gate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Attach quality-gate metadata to one extraction result payload.
+
+    Notes
+    -----
+    This keeps the final JSON output self-contained. A saved extraction file
+    can then explain both:
+
+    - what the extraction output was
+    - how the quality gate judged it
+
+    Example
+    -------
+    After enrichment, the payload contains fields such as:
+
+        result["quality_assessment"]
+        result["quality_gate"]
+    """
+
+    enriched_result = dict(result)
+    enriched_result["quality_assessment"] = assessment.model_dump()
+    if quality_gate is not None:
+        enriched_result["quality_gate"] = quality_gate
+    return enriched_result
+
+
 def _print_json_safely(payload: dict[str, Any]) -> None:
     """
     Print JSON to stdout while tolerating narrow Windows console encodings.
@@ -752,6 +1007,53 @@ def run_live_resume_extraction(args: argparse.Namespace) -> dict[str, Any]:
     """
 
     model_profile = build_runtime_model_profile(args)
+    return run_live_resume_extraction_with_model_profile(
+        args=args,
+        model_profile=model_profile,
+    )
+
+
+def run_live_resume_extraction_with_model_profile(
+    *,
+    args: argparse.Namespace,
+    model_profile: ModelProfile,
+) -> dict[str, Any]:
+    """
+    Run one live extraction using an already-resolved model profile.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments for the current invocation.
+
+    model_profile : ModelProfile
+        Explicit model profile to use for this extraction run.
+
+    Returns
+    -------
+    dict[str, Any]
+        Full extraction result returned by the backend extraction layer.
+
+    Notes
+    -----
+    This helper exists so the quality-gate flow can:
+
+    - run a first-pass model
+    - then rerun the same candidate with a stronger fallback model
+
+    without re-implementing the lower-level orchestration.
+
+    Example
+    -------
+    The quality gate can call this once with:
+
+        model_profile=ModelProfile(model_name="gpt-4.1-mini", ...)
+
+    and again with:
+
+        model_profile=ModelProfile(model_name="gpt-5.4-mini", ...)
+    """
+
     validate_live_run_preconditions(provider=model_profile.provider)
 
     # Build the real provider-backed model through the shared provider factory.
@@ -820,7 +1122,110 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.enable_quality_gate and args.provider != ModelProvider.OPENAI.value:
+            raise RuntimeError(
+                "The quality-gate fallback flow currently supports only the "
+                "OpenAI provider."
+            )
+
+        if args.quality_rerun_threshold > args.quality_pass_threshold:
+            raise RuntimeError(
+                "QUALITY_RERUN_THRESHOLD cannot be greater than "
+                "QUALITY_PASS_THRESHOLD."
+            )
+
         result = run_live_resume_extraction(args)
+        quality_gate_metadata: dict[str, Any] | None = None
+
+        if args.enable_quality_gate:
+            first_pass_assessment = build_quality_assessment(
+                result=result,
+                pass_threshold=args.quality_pass_threshold,
+                rerun_threshold=args.quality_rerun_threshold,
+            )
+            first_pass_model_name = result.get("model_profile", {}).get("model_name")
+            fallback_invoked = False
+            final_assessment = first_pass_assessment
+            final_result = result
+
+            if first_pass_assessment.status == "rerun":
+                fallback_invoked = True
+                fallback_profile = ModelProfile(
+                    provider=ModelProvider.OPENAI,
+                    model_name=args.fallback_model_name,
+                    purpose=ModelPurpose.EXTRACTION,
+                    temperature=args.temperature,
+                    max_output_tokens=args.max_output_tokens,
+                )
+                fallback_result = run_live_resume_extraction_with_model_profile(
+                    args=args,
+                    model_profile=fallback_profile,
+                )
+                fallback_assessment = build_quality_assessment(
+                    result=fallback_result,
+                    pass_threshold=args.quality_pass_threshold,
+                    rerun_threshold=args.quality_rerun_threshold,
+                )
+
+                if fallback_assessment.quality_score >= first_pass_assessment.quality_score:
+                    final_result = fallback_result
+                    final_assessment = fallback_assessment
+
+                append_jsonl_log(
+                    payload=build_quality_log_record(
+                        result=result,
+                        assessment=first_pass_assessment,
+                        stage="first_pass",
+                        fallback_invoked=True,
+                        final_status=final_assessment.status,
+                    ),
+                    output_path=args.quality_log_jsonl,
+                )
+                append_jsonl_log(
+                    payload=build_quality_log_record(
+                        result=fallback_result,
+                        assessment=fallback_assessment,
+                        stage="fallback",
+                        fallback_invoked=True,
+                        final_status=final_assessment.status,
+                    ),
+                    output_path=args.quality_log_jsonl,
+                )
+            elif first_pass_assessment.status == "review":
+                append_jsonl_log(
+                    payload=build_quality_log_record(
+                        result=result,
+                        assessment=first_pass_assessment,
+                        stage="first_pass",
+                        fallback_invoked=False,
+                        final_status=first_pass_assessment.status,
+                    ),
+                    output_path=args.quality_log_jsonl,
+                )
+
+            quality_gate_metadata = {
+                "enabled": True,
+                "first_pass_model_name": first_pass_model_name,
+                "fallback_model_name": args.fallback_model_name,
+                "fallback_invoked": fallback_invoked,
+                "final_model_name": final_result.get("model_profile", {}).get("model_name"),
+                "first_pass_quality_assessment": first_pass_assessment.model_dump(),
+                "final_quality_assessment": final_assessment.model_dump(),
+            }
+            result = enrich_result_with_quality_metadata(
+                result=final_result,
+                assessment=final_assessment,
+                quality_gate=quality_gate_metadata,
+            )
+        else:
+            result = enrich_result_with_quality_metadata(
+                result=result,
+                assessment=build_quality_assessment(
+                    result=result,
+                    pass_threshold=args.quality_pass_threshold,
+                    rerun_threshold=args.quality_rerun_threshold,
+                ),
+            )
 
         # Default to a concise summary because the full payload can be large and
         # includes prompt/input material. The operator usually wants the "did it

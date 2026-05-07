@@ -325,9 +325,16 @@ class ProjectExperienceItem(BaseModel):
     summary : str | None
         Short factual project summary.
 
-    outcomes : list[str]
-        Concrete outcomes, deliverables, or business impacts supported by the
+    responsibilities : list[str]
+        Concrete responsibilities or ownership statements supported by the
         source material.
+
+    deliverables : list[str]
+        Concrete systems, products, workflows, or outputs being built or
+        produced by the project when supported by the source material.
+
+    business_outcomes : list[str]
+        Concrete business outcomes or impacts supported by the source material.
 
     tools_and_platforms : list[str]
         Concrete tools, frameworks, cloud platforms, or products used in the
@@ -362,7 +369,9 @@ class ProjectExperienceItem(BaseModel):
             end_date="2025",
             is_current=False,
             summary="Built and productionised machine learning workflows for production optimisation.",
-            outcomes=["Delivered multi-million-dollar efficiency gains."],
+            responsibilities=["Led ML delivery across six major initiatives."],
+            deliverables=["Regression and time-series forecasting models."],
+            business_outcomes=["Delivered multi-million-dollar efficiency gains."],
             tools_and_platforms=["Azure Databricks", "Palantir Foundry", "Jenkins"],
             domains=["Energy", "Production optimisation", "Forecasting"],
         )
@@ -371,7 +380,8 @@ class ProjectExperienceItem(BaseModel):
 
     - one meaningful project or initiative
     - tied back to an employer and role
-    - with outcomes and tooling preserved separately
+    - with responsibilities, deliverables, business outcomes, and tooling
+      preserved separately
     """
 
     name: str | None = Field(default=None)
@@ -381,7 +391,9 @@ class ProjectExperienceItem(BaseModel):
     end_date: str | None = Field(default=None)
     is_current: bool | None = Field(default=None)
     summary: str | None = Field(default=None)
-    outcomes: list[str] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
+    deliverables: list[str] = Field(default_factory=list)
+    business_outcomes: list[str] = Field(default_factory=list)
     tools_and_platforms: list[str] = Field(default_factory=list)
     domains: list[str] = Field(default_factory=list)
 
@@ -1202,18 +1214,20 @@ Rules:
 13. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
 14. Employment history should be ordered from most recent to oldest when possible.
 15. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
-16. Project entries should preserve employer context, role context, outcomes, and tools where the source supports them.
+16. Project entries should preserve employer context, role context, responsibilities, deliverables, business outcomes, and tools where the source supports them.
 17. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
 18. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
 19. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
-20. Do not invent branded project names. If the source does not provide a proper name, use a short factual label.
+20. If the source provides a clear project name, use that exact project name in `projects[].name`. Put descriptive wording in `summary`, not in `name`. Only use a short factual label when the source does not provide a clear project name.
 21. Education should include only entries reasonably supported by the source.
 22. If a note-only item does not meet the evidence threshold for inclusion, exclude it from the final structured fields.
-23. `certifications` must be a list of plain strings only, not objects or nested records.
+23. `certifications` must be a list of plain strings only, not objects or nested records. Remove display separators like `|` when they are just joining an issuer and certification fragment rather than forming the visible certification title itself.
 24. `ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects.
 25. Evidence notes should cite whether support came from resume text, candidate metadata, or notes. If notes are used, explain exactly what they supported.
 26. Ambiguity notes should explain uncertainty, contradictions, or missing context, especially when notes mention tools or projects that are not clearly part of the candidate's own proven experience.
-27. Return data that matches the requested schema exactly.
+27. Only populate `location` when the source clearly states the candidate's current location. Do not use university locations, old job locations, or remote/hybrid labels as a proxy for current location.
+28. For education entries, keep `qualification` and `subject` separate. Example: `MSc Data Science` should become `qualification = "MSc"` and `subject = "Data Science"`.
+29. Return data that matches the requested schema exactly.
 
 Worked example for source priority and field boundaries:
 
@@ -1230,6 +1244,48 @@ Correct output shape:
 - `tools_and_platforms`: ["Python", "Azure ML", "Databricks"]
 - Do not include `Make.com` or `Supabase` in `skills` or `tools_and_platforms`
 - If needed, mention those note-only future-project technologies only in `ambiguity_notes`
+
+Worked example for location and education field shape:
+
+Resume snippet:
+- "MSc Data Science | University of St Andrews | St Andrews, Scotland"
+- "Hybrid"
+
+Correct output shape:
+- `education`: [{"institution": "University of St Andrews", "qualification": "MSc", "subject": "Data Science"}]
+- `location`: null
+- Do not use study locations or remote/hybrid labels as the candidate's current location unless the source states that explicitly.
+
+Worked example for preserving major projects under a role:
+
+Resume snippet:
+- "Senior Data Scientist | BP"
+- "Led production optimisation ML work across six major initiatives."
+- "Used Azure Data Factory, Azure Databricks, Palantir Foundry, Python, TensorFlow, Azure ML, Jenkins, and Power BI."
+
+Correct output shape:
+- Keep the BP role in `employment_history`
+- Also create one `projects[]` entry for the major initiative group, for example:
+  - `name`: "Production optimisation ML initiatives"
+  - `employer`: "BP"
+  - `role`: "Senior Data Scientist"
+  - `responsibilities`: ["Led ML delivery across six major initiatives"]
+  - `deliverables`: ["Regression and time-series forecasting models", "Productionised ML deployment workflows"]
+  - `business_outcomes`: ["Delivered multi-million-dollar efficiency gains"]
+  - `tools_and_platforms`: ["Azure Data Factory", "Azure Databricks", "Palantir Foundry", "Python", "TensorFlow", "Azure ML", "Jenkins", "Power BI"]
+- Include 1-3 concrete items in `responsibilities`, `deliverables`, or `business_outcomes` when the resume supports them.
+- Do not collapse all major project evidence only into the employment summary when the role clearly describes distinct project-level work.
+
+Worked example for exact project naming:
+
+Resume snippet:
+- "Current projects include: Leet-Cheat"
+- "Current projects include: GP AI Assistant"
+
+Correct output shape:
+- Use `name = "Leet-Cheat"` rather than `Leet-Cheat educational platform`
+- Use `name = "GP AI Assistant"` rather than `GP AI Assistant clinical decision-support system`
+- Put the descriptive details in `summary`
 """.strip()
 
     # The user prompt is intentionally structured instead of conversational.
@@ -1251,6 +1307,9 @@ Important source-handling reminder:
 - Do not treat recruiter brainstorms, future-project discussions, or tool comparisons in notes as confirmed candidate experience.
 - If a note-only technology or project idea is not clearly proven as part of the candidate's own work, leave it out of the final structured fields entirely.
 - Keep schema shape simple: certifications are plain strings, and ambiguity notes are short strings.
+- Only populate `location` when the source clearly states the candidate's current location. Study locations, historic role locations, and remote/hybrid labels are not enough by themselves.
+- Keep `education[].qualification` and `education[].subject` separate when the source combines them, for example `MSc Data Science` -> `qualification = "MSc"`, `subject = "Data Science"`.
+- Make `evidence_notes` concrete and source-specific where possible, for example `resume contact block`, `resume certifications section`, or `resume BP role bullets`, rather than generic statements.
 
 Candidate context
 -----------------

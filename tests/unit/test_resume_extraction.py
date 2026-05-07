@@ -456,8 +456,21 @@ def test_build_resume_extraction_prompt_returns_system_and_user_prompt() -> None
     assert "Source priority matters." in prompt_bundle["system_prompt"]
     assert "Do not add a skill, tool, platform, employer, project, or certification solely because it appears in recruiter notes" in prompt_bundle["system_prompt"]
     assert "`certifications` must be a list of plain strings only, not objects or nested records." in prompt_bundle["system_prompt"]
+    assert "Remove display separators like `|`" in prompt_bundle["system_prompt"]
     assert "`ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects." in prompt_bundle["system_prompt"]
+    assert "Do not use university locations, old job locations, or remote/hybrid labels as a proxy for current location." in prompt_bundle["system_prompt"]
+    assert 'Example: `MSc Data Science` should become `qualification = "MSc"` and `subject = "Data Science"`.' in prompt_bundle["system_prompt"]
     assert "Worked example for source priority and field boundaries:" in prompt_bundle["system_prompt"]
+    assert "Worked example for location and education field shape:" in prompt_bundle["system_prompt"]
+    assert "Worked example for preserving major projects under a role:" in prompt_bundle["system_prompt"]
+    assert '"Production optimisation ML initiatives"' in prompt_bundle["system_prompt"]
+    assert "If the source provides a clear project name, use that exact project name" in prompt_bundle["system_prompt"]
+    assert '`responsibilities`: ["Led ML delivery across six major initiatives"]' in prompt_bundle["system_prompt"]
+    assert '`deliverables`: ["Regression and time-series forecasting models", "Productionised ML deployment workflows"]' in prompt_bundle["system_prompt"]
+    assert '`business_outcomes`: ["Delivered multi-million-dollar efficiency gains"]' in prompt_bundle["system_prompt"]
+    assert "Include 1-3 concrete items in `responsibilities`, `deliverables`, or `business_outcomes`" in prompt_bundle["system_prompt"]
+    assert "Worked example for exact project naming:" in prompt_bundle["system_prompt"]
+    assert 'Use `name = "Leet-Cheat"` rather than `Leet-Cheat educational platform`' in prompt_bundle["system_prompt"]
     assert 'Do not include `Make.com` or `Supabase` in `skills` or `tools_and_platforms`' in prompt_bundle["system_prompt"]
     assert "`projects` should contain only clearly supported major projects or initiatives." in prompt_bundle["system_prompt"]
     assert "Do not copy broad resume-wide skill lists into every project." in prompt_bundle["system_prompt"]
@@ -465,6 +478,9 @@ def test_build_resume_extraction_prompt_returns_system_and_user_prompt() -> None
     assert "Important source-handling reminder" in prompt_bundle["user_prompt"]
     assert "leave it out of the final structured fields entirely" in prompt_bundle["user_prompt"]
     assert "Keep schema shape simple: certifications are plain strings, and ambiguity notes are short strings." in prompt_bundle["user_prompt"]
+    assert "Study locations, historic role locations, and remote/hybrid labels are not enough by themselves." in prompt_bundle["user_prompt"]
+    assert '`qualification = "MSc"`, `subject = "Data Science"`.' in prompt_bundle["user_prompt"]
+    assert "Make `evidence_notes` concrete and source-specific where possible" in prompt_bundle["user_prompt"]
     assert "Candidate context" in prompt_bundle["user_prompt"]
     assert "Cleaned candidate notes" in prompt_bundle["user_prompt"]
     assert "Cleaned resume text" in prompt_bundle["user_prompt"]
@@ -555,7 +571,9 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
                         "end_date": None,
                         "is_current": True,
                         "summary": "Built an applied machine learning workflow for trading operations.",
-                        "outcomes": ["Improved operational decision support."],
+                        "responsibilities": ["Led delivery of the workflow."],
+                        "deliverables": ["Market surveillance ML workflow."],
+                        "business_outcomes": ["Improved operational decision support."],
                         "tools_and_platforms": ["Python", "SQL"],
                         "domains": ["Trading", "Machine Learning"],
                     }
@@ -652,7 +670,9 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
             "end_date": None,
             "is_current": True,
             "summary": "Built an applied machine learning workflow for trading operations.",
-            "outcomes": ["Improved operational decision support."],
+            "responsibilities": ["Led delivery of the workflow."],
+            "deliverables": ["Market surveillance ML workflow."],
+            "business_outcomes": ["Improved operational decision support."],
             "tools_and_platforms": ["Python", "SQL"],
             "domains": ["Trading", "Machine Learning"],
         }
@@ -1135,7 +1155,9 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
                 "end_date": None,
                 "is_current": True,
                 "summary": "Built an applied machine learning workflow for trading operations.",
-                "outcomes": ["Improved operational decision support."],
+                "responsibilities": ["Led delivery of the workflow."],
+                "deliverables": ["Market surveillance ML workflow."],
+                "business_outcomes": ["Improved operational decision support."],
                 "tools_and_platforms": ["Python", "SQL"],
                 "domains": ["Trading", "Machine Learning"],
             }

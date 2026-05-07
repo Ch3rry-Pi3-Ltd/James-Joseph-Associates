@@ -1,0 +1,319 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 16496678,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-5.4-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 16496678,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 16496678,
+      "first_name": "Roger",
+      "last_name": "Campbell",
+      "email": "the_rfc@hotmail.co.uk",
+      "mobile": "07934 890 708",
+      "location": null,
+      "status": "Active",
+      "skill_tags": [
+        "applied econometrics",
+        "machine learning"
+      ],
+      "created_at": "2026-03-14T09:08:50Z",
+      "updated_at": "2026-04-28T19:37:12Z"
+    },
+    "latest_resume": {
+      "attachment_id": 21091489,
+      "file_name": "Roger Campbell - CV 2025.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2026-03-30T16:43:17Z",
+      "page_count": 2,
+      "character_count": 4975,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "Roger J. Campbell\nPersonal email: the_rfc@hotmail.co.uk\nMobile: 07934 890 708\nLinkedIn: click here\nCompany email: roger@ch3rry-pi3.com\nCompany Website: click here\nCompany LinkedIn: click here\nSenior Data Scientist with 4 years’ experience delivering end-to-end machine learning, LLM, and\nadvanced analytics solutions across energy, medical, and technology sectors. Strong expertise in MLOps\nand LLMOps, with hands-on experience building production-grade data and AI systems using Palantir\nFoundry, Microsoft Azure, and AWS.\nCo-Founder of Ch3rry Pi3 Ltd, providing AI/ML consultancy and technical mentorship. Currently\ncompleting an MSc in Data Science (average 94.3%), with a proven record of translating complex data\nproblems into measurable business impact.\nExperience\nAUGUST 2025 – PRESENT\nCo-Founder & AI/ML Consultant | Ch3rry Pi3 Ltd | Hybrid\n• Provide AI/ML consultancy services to businesses, specialising in building industrial-standard,\nscalable ML and LLM solutions.\n• Current projects include:\n\no Leet-Cheat: Developing an educational web platform that teaches fundamental coding\nand system design patterns used in LeetCode-style interviews, alongside practical\ninstruction in modern machine learning and AI frameworks.\n\nThe platform emphasises transitioning from local, experimental projects to scalable,\ncloud-based architectures using simple, intuitive explanations. Work includes full-stack\ndevelopment, content and curriculum design, technical research, and architectural planning.\n\no GP AI Assistant: Building an AI-driven clinical decision-support system to help General\nPractitioners optimise diagnostic and referral pathways based on patient symptoms. I am\nresponsible for end-to-end system design, data modelling, AI logic development, and\nimplementation of the web-based assistant.\n\nThis project is being developed in collaboration with current and retired ENT consultant\nsurgeons to ensure clinical validity and realistic workflow alignment.\n\nJUNE 2022 – APRIL 2025\nSenior Data Scientist (Contractor) | BP (via Grayce & Harvey Nash) | Hybrid\n• Led data science work within a production optimisation team, identifying and delivering multi-\nmillion-dollar efficiency gains by building end-to-end ML solutions.\n• Ingested and processed large-scale production data using Azure Data Factory, Azure Databricks,\nand Palantir Foundry, automating data pipelines and significantly reducing manual intervention.\n• Responsible for the design, training, and deployment of regression and time-series forecasting\nmodels in Python (including TensorFlow where appropriate) to quantify and forecast the impact of\nworkflow and operational changes.\n• My role also entailed the productionisation of ML models using CI/CD pipelines built with Azure\nML, Jenkins, enabling reproducible, version-controlled deployment of NLP event-classification\nmodels.\n• Communicated results through Power BI dashboards and decision-ready outputs, leading ML\ndelivery across six major initiatives and directly informing operational and strategic decision -making.\n\nJUNE 2021 – OCTOBER 2021\nData Analyst | Jobs22 | Remote\n\nSkills\nData Science & AI\nMachine Learning (ML) · MLOps · LLMOps · Econometrics · Statistical Inference · Time Series Analysis\n· Causality · Forecasting · Predictive Modelling · LangChain · LangGraph · Tensorflow · PyTorch\n\nCloud Platforms\nPalantir Foundry · Microsoft Azure · Amazon AWS · Google Cloud Platform · DataBricks · Terraform\n\nProgramming & Tools\nPython · R · SQL · PySpark · Git · GitHub Actions · GitLab · Docker · Kubernetes · Jenkins · ArgoCD\n\nData Visualisation\nPower BI · Tableau · Dash/Plotly\n\nProfessional\nLeadership · Communication · Mentorship · Cross-functional Collaboration\nEducation\nJANUARY 2024 – PRESENT\nMSc Data Science | University of St Andrews | St Andrews, Scotland\nCurrent average: 94.3% · 2024 Dean’s List for Academic Excellence\n\nOCTOBER 2015 – JULY 2023\nBSc (Hons) Mathematics | Open University | Remote, UK\nFirst Class Honours\n\nSEPTEMBER 2019 – DECEMBER 2021\nMSc Economics | University of Birmingham | Birmingham, UK\nDistinction · Elected Postgraduate Representative, Birmingham Business School\n\nSEPTEMBER 2010 – JUNE 2014\nBA (Hons) Politics, Philosophy & Economics| Open University | Remote, UK\nFirst Class Honours\n\nPortfolio\nTo view my latest portfolio, click the links below. Each GitHub organization showcases production-grade,\nend-to-end projects and focused implementations, built using industry best practices with an emphasis on\nreproducibility, scalability, and deployment readiness.\nMLOps & LLMOps: Click here.\nMicrosoft Azure: Click here.\nData Engineering: Click here.\nCertifications\n2025: AWS Certified Cloud Practitioner.\n2024: AZ-900: Microsoft Azure Fundamentals · AI-900: Microsoft Azure AI Fundamentals · DP-900:\nMicrosoft Azure Data Fundamentals.\n2022 – 2023: Cloud Essentials+ | CompTIA · AgilePM Foundation · IBM Data Science · IBM Machine\nLearning · IBM Applied AI · IBM AI Engineering.",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "99f52170-b815-4179-b729-afd528a47d8d",
+        "type": "Email Reply",
+        "created_at": "2026-04-17T12:01:11Z",
+        "updated_at": "2026-04-17T12:01:11Z",
+        "cleaned_text": "Hi Roger,\n\nI'm just checking if this email is coming through for you?\n\nI still can't find the invoice so if you can re-send I can get it paid for you this afternoon :)"
+      },
+      {
+        "note_id": "79d7b82f-3d11-4e2a-86bd-d68efdc09e0a",
+        "type": "Email Reply",
+        "created_at": "2026-04-06T08:51:06Z",
+        "updated_at": "2026-04-06T08:51:06Z",
+        "cleaned_text": "Hi Roger,\n\nGreat to hear from you! My apologies for then delayed reply (I'm taking a rare opportunity to have a mini \"Email detox\" over Easter!lol)\n\nAre you free for a quick phone chat/meetup at some point tomorrow by any chance?\n\nPriority 1 is I'll be chasing Pirum once they've spoken to their investors on the 15th but I was hoping you might be interested in helping me with a RAG Graph/API Orchestrated/MCP Server feeding into a LLM reasoning model solution I can't seem to find time to get started on 🙄 🤦‍♂️\n\nNaturally we need to work out a day rate you will be happy with (And that's assuming the project is interesting enough for you 😇)\n\nI alluded to this previously but iv currently got multiple disparate data sources that I want to model in a suitable GraphRag (Supabase with vectors looks acceptable to me but I'll follow your lead when picking the tech stack)\n\nOnce my data is mapped, migrated & suitably modelled I want to 2-way API sync it to the rest of my tech stack via an orchestration platform (I currently like Make.com) This would hand the basic basic/discrete workflow automation between the different apps on my tech stack (\"if this input occurrs then update this field on this app accordingly\" etc)\n\nI can give you the full list but I've got web crawlers, CRM/ATS, Office 365, accounting systems, task and project management systems, marketing systems etc. etc.\n\nThe good news is they all have ready made no code API connectivity via make.com so I'm hoping that part won't be too tricky.\n\nThe key feature is that I want to 2-way-sync\nMy master GraphRAG DB to my tech stack to automate workflows & to keep my data refreshed and as up to date as possible via an MCP Server solution.\n\nI'm also hoping to have some form of ML/Training layer in there that can query my data & identify useful trends/patterns/correlations .\n\nI'm currently leaning towards Nemotron/OpenRouter vs my current GPT Business subscription / GPT API. That way the API calls are far cheaper (& faster I believe)\n\nThat can handle the heavy work and then my understanding is I can still use GPT o1 where advanced reasoning is required and keep the API costs down.\n\nThe final feature/benefit of the product is that I will be able to query the data via a LLM chat interface (Or even give it permission to go \"hunting\" for me as an automated agentic agent and generate ready-made sales leads for me to follow up.\n\nI may be wrong, but I expect my data model will be reasonably simple. The key\n\n[TRUNCATED FOR PROMPT]"
+      },
+      {
+        "note_id": "60a061a6-6a43-4397-afe3-2a8eb9ccae84",
+        "type": "Email Received",
+        "created_at": "2026-04-02T17:52:41Z",
+        "updated_at": "2026-04-02T17:52:41Z",
+        "cleaned_text": "Hi Tom,\n\nThanks for getting back to me. That sounds good, I'd be happy to have a chat with them\n\nKeep me posted,\n\nR"
+      },
+      {
+        "note_id": "ae2fdf35-c45f-44b4-bcb6-3bc910eb2e1f",
+        "type": "Email Sent",
+        "created_at": "2026-04-02T15:01:15Z",
+        "updated_at": "2026-04-02T15:01:15Z",
+        "cleaned_text": "Hi Roger,\n\nI need to be on another call at 4pm but I tried calling a second ago as I promised I'd update you any movement Re: Pirum\n\nIf you are still looking for something there is some positive news there. Firstly, the manager apologised for the delay (Usual problem he's snowed under with manual work and managing a team etc.)\n\nThat said they really like your profile and the ideas you suggested for solving their problems. He is on holiday next week but they have a meeting with the PE investors w/c the who have been pressuring them to come up with ways to utilise AI (It will increase the value of the firm for the next funding round) and they are meeting them on the 15th and are going to discuss your experience with a view to getting approval to kickoff some greenfield AI based projects.\n\nI am scheduled to speak with him again on the 17th.\n\nWhat are your thoughts Roger, would you still be open to speaking to them? :)"
+      },
+      {
+        "note_id": "2034ccc1-1832-4270-863c-d35a2dcf6bec",
+        "type": "Phone call",
+        "created_at": "2026-03-23T17:36:42Z",
+        "updated_at": "2026-03-23T17:36:42Z",
+        "cleaned_text": "was on £450 per day but would take £375 per day or mid £60's base salary\n\nimmediate\n\nhe did the entire data setup including teraform deploment, system building, production and data ops etc and the data science side too at BP.\n\nHe get AI and can do that too\n\nML engineer is interestign to him"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "Ch3rry Pi3 Ltd",
+    "current_title": "Co-Founder & AI/ML Consultant",
+    "professional_summary": "Senior Data Scientist and AI/ML consultant with 4 years' experience delivering end-to-end machine learning, LLM, and advanced analytics solutions across energy, medical, and technology sectors. Strong background in MLOps/LLMOps, production data systems, and cloud-based ML delivery using Python, Azure, AWS, and Palantir Foundry.",
+    "location": null,
+    "emails": [
+      "the_rfc@hotmail.co.uk",
+      "roger@ch3rry-pi3.com"
+    ],
+    "phones": [
+      "07934 890 708"
+    ],
+    "skills": [
+      "Machine Learning",
+      "MLOps",
+      "LLMOps",
+      "Econometrics",
+      "Statistical Inference",
+      "Time Series Analysis",
+      "Causality",
+      "Forecasting",
+      "Predictive Modelling"
+    ],
+    "tools_and_platforms": [
+      "LangChain",
+      "LangGraph",
+      "TensorFlow",
+      "PyTorch",
+      "Palantir Foundry",
+      "Microsoft Azure",
+      "Amazon AWS",
+      "Google Cloud Platform",
+      "Databricks",
+      "Terraform",
+      "Python",
+      "R",
+      "SQL",
+      "PySpark",
+      "Git",
+      "GitHub Actions",
+      "GitLab",
+      "Docker",
+      "Kubernetes",
+      "Jenkins",
+      "ArgoCD",
+      "Power BI",
+      "Tableau",
+      "Dash",
+      "Plotly",
+      "Azure Data Factory",
+      "Azure ML"
+    ],
+    "certifications": [
+      "AWS Certified Cloud Practitioner",
+      "AZ-900: Microsoft Azure Fundamentals",
+      "AI-900: Microsoft Azure AI Fundamentals",
+      "DP-900: Microsoft Azure Data Fundamentals",
+      "Cloud Essentials+",
+      "AgilePM Foundation",
+      "IBM Data Science",
+      "IBM Machine Learning",
+      "IBM Applied AI",
+      "IBM AI Engineering"
+    ],
+    "linkedin_url": null,
+    "portfolio_references": [
+      "MLOps & LLMOps",
+      "Microsoft Azure",
+      "Data Engineering"
+    ],
+    "education": [
+      {
+        "institution": "University of St Andrews",
+        "qualification": "MSc",
+        "subject": "Data Science",
+        "completion_date": null
+      },
+      {
+        "institution": "Open University",
+        "qualification": "BSc (Hons)",
+        "subject": "Mathematics",
+        "completion_date": null
+      },
+      {
+        "institution": "University of Birmingham",
+        "qualification": "MSc",
+        "subject": "Economics",
+        "completion_date": null
+      },
+      {
+        "institution": "Open University",
+        "qualification": "BA (Hons)",
+        "subject": "Politics, Philosophy & Economics",
+        "completion_date": null
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "Ch3rry Pi3 Ltd",
+        "title": "Co-Founder & AI/ML Consultant",
+        "start_date": "August 2025",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Provides AI/ML consultancy services, specialising in building industrial-standard, scalable ML and LLM solutions."
+      },
+      {
+        "employer": "BP (via Grayce & Harvey Nash)",
+        "title": "Senior Data Scientist (Contractor)",
+        "start_date": "June 2022",
+        "end_date": "April 2025",
+        "is_current": false,
+        "summary": "Led data science work within a production optimisation team, building end-to-end ML solutions and productionising models across multiple initiatives."
+      },
+      {
+        "employer": "Jobs22",
+        "title": "Data Analyst",
+        "start_date": "June 2021",
+        "end_date": "October 2021",
+        "is_current": false,
+        "summary": null
+      }
+    ],
+    "projects": [
+      {
+        "name": "Leet-Cheat",
+        "employer": "Ch3rry Pi3 Ltd",
+        "role": "Co-Founder & AI/ML Consultant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": true,
+        "summary": "Educational web platform teaching coding and system design patterns used in LeetCode-style interviews, plus practical machine learning and AI frameworks.",
+        "responsibilities": [
+          "Full-stack development",
+          "Content and curriculum design",
+          "Technical research",
+          "Architectural planning"
+        ],
+        "deliverables": [
+          "Educational web platform"
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [],
+        "domains": [
+          "Education",
+          "Web platform",
+          "Machine learning",
+          "AI"
+        ]
+      },
+      {
+        "name": "GP AI Assistant",
+        "employer": "Ch3rry Pi3 Ltd",
+        "role": "Co-Founder & AI/ML Consultant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": true,
+        "summary": "AI-driven clinical decision-support system for General Practitioners to optimise diagnostic and referral pathways based on patient symptoms.",
+        "responsibilities": [
+          "End-to-end system design",
+          "Data modelling",
+          "AI logic development",
+          "Implementation of the web-based assistant"
+        ],
+        "deliverables": [
+          "Clinical decision-support system",
+          "Web-based assistant"
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [],
+        "domains": [
+          "Healthcare",
+          "Clinical decision support",
+          "AI"
+        ]
+      },
+      {
+        "name": "Production optimisation ML initiatives",
+        "employer": "BP (via Grayce & Harvey Nash)",
+        "role": "Senior Data Scientist (Contractor)",
+        "start_date": "June 2022",
+        "end_date": "April 2025",
+        "is_current": false,
+        "summary": "Delivered production optimisation machine learning work across six major initiatives, using data pipelines, forecasting models, and productionised deployment workflows.",
+        "responsibilities": [
+          "Led data science work within a production optimisation team",
+          "Automated data pipelines and reduced manual intervention",
+          "Designed, trained, and deployed regression and time-series forecasting models",
+          "Productionised ML models with CI/CD pipelines",
+          "Communicated results through dashboards and decision-ready outputs"
+        ],
+        "deliverables": [
+          "End-to-end ML solutions",
+          "Regression and time-series forecasting models",
+          "NLP event-classification models",
+          "CI/CD deployment workflows",
+          "Power BI dashboards"
+        ],
+        "business_outcomes": [
+          "Identified and delivered multi-million-dollar efficiency gains",
+          "Supported operational and strategic decision-making"
+        ],
+        "tools_and_platforms": [
+          "Azure Data Factory",
+          "Azure Databricks",
+          "Palantir Foundry",
+          "Python",
+          "TensorFlow",
+          "Azure ML",
+          "Jenkins",
+          "Power BI"
+        ],
+        "domains": [
+          "Production optimisation",
+          "Forecasting",
+          "NLP",
+          "Energy"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides personal email and mobile number.",
+      "Resume headline and summary describe the candidate as a Senior Data Scientist with 4 years' experience in ML, LLM, advanced analytics, MLOps, and LLMOps.",
+      "Resume experience section confirms current role at Ch3rry Pi3 Ltd and prior BP contractor role.",
+      "Resume BP role bullets support Azure Data Factory, Azure Databricks, Palantir Foundry, Python, TensorFlow, Azure ML, Jenkins, and Power BI usage.",
+      "Resume BP role bullets support production optimisation, forecasting, NLP event classification, and multi-million-dollar efficiency gains.",
+      "Resume projects under Ch3rry Pi3 Ltd support the named projects Leet-Cheat and GP AI Assistant.",
+      "Resume education section supports MSc Data Science, BSc (Hons) Mathematics, MSc Economics, and BA (Hons) Politics, Philosophy & Economics.",
+      "Resume certifications section supports the listed AWS, Microsoft, CompTIA, AgilePM, and IBM certifications.",
+      "Candidate metadata skill tags support applied econometrics and machine learning.",
+      "Notes on 2026-03-23 mention BP work included end-to-end data setup, terraform deployment, system building, production/data ops, and data science, but resume text was used as the primary evidence.",
+      "Notes on 2026-04-06 and 2026-04-17 concern process/contact context only and were not used for experience extraction."
+    ],
+    "ambiguity_notes": [
+      "Resume shows LinkedIn and website references as 'click here' without visible URLs, so linkedin_url is null and portfolio references are name-only.",
+      "Current location is not stated in the source material.",
+      "The Jobs22 role has no supporting summary details in the extracted resume text beyond the title and dates.",
+      "The candidate notes mention future/project ideas and tools like Supabase and Make.com, but these were not treated as confirmed experience.",
+      "The phone note mentions BP-related Terraform/deployment work; this aligns with the resume but was not used to add unsupported separate employment details."
+    ]
+  }
+}
