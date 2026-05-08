@@ -776,6 +776,138 @@ def fetch_jobadder_candidates_preview(
     }
 
 
+def fetch_jobadder_candidates_page(
+    *,
+    api_url: str,
+    access_token: str,
+    page: int = 1,
+    page_size: int = 100,
+    page_url: str | None = None,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch one page of candidates from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+        Example shapes:
+
+            https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    page : int
+        1-based page number for the first request when `page_url` is not
+        supplied.
+
+    page_size : int
+        Requested provider page size for the first request when `page_url` is
+        not supplied.
+
+    page_url : str | None
+        Optional fully-qualified next-page URL returned by JobAdder.
+
+        When supplied, this URL takes precedence over `api_url`, `page`, and
+        `page_size`.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `items`
+        - `item_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+        - `page`
+        - `page_size`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, page, or page size is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This helper is the paginated companion to
+      `fetch_jobadder_candidates_preview(...)`.
+    - The first page can be requested by number and size.
+    - Subsequent pages should usually follow the provider-supplied
+      `links["next"]` URL rather than reconstructing page URLs manually.
+
+    Example
+    -------
+    A caller can request the first page explicitly:
+
+        fetch_jobadder_candidates_page(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            page=1,
+            page_size=100,
+        )
+
+    Or it can follow the provider's next link directly:
+
+        fetch_jobadder_candidates_page(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            page_url="https://eu2api.jobadder.com/v2/candidates?page=2",
+        )
+
+    In plain language:
+
+    - request one concrete page of candidates
+    - trust JobAdder's `next` link when continuing pagination
+    - return one stable list-page wrapper
+    """
+    if page < 1:
+        raise ValueError("JobAdder candidate page must be at least 1.")
+
+    if page_size < 1:
+        raise ValueError("JobAdder candidate page_size must be at least 1.")
+
+    endpoint_url, params = _build_jobadder_candidate_page_request(
+        api_url=api_url,
+        page=page,
+        page_size=page_size,
+        page_url=page_url,
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Keep the list-page helper aligned with the rest of the module:
+    # - one shared transport helper
+    # - one local shape validator
+    # - one predictable return wrapper
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder candidate read failed.",
+        params=params,
+    )
+
+    return _normalise_jobadder_candidates_list_response(
+        response_payload=response_payload,
+        endpoint_url=endpoint_url,
+        page=page,
+        page_size=page_size,
+    )
+
+
 def fetch_jobadder_candidate_skills(
     *,
     api_url: str,
@@ -1131,6 +1263,168 @@ def _build_jobadder_api_endpoint(*, api_url: str, resource_path: str) -> str:
         return f"{cleaned_api_base}/{cleaned_path}"
 
     return f"{cleaned_api_base}/v2/{cleaned_path}"
+
+
+def _build_jobadder_candidate_page_request(
+    *,
+    api_url: str,
+    page: int,
+    page_size: int,
+    page_url: str | None,
+) -> tuple[str, dict[str, Any] | None]:
+    """
+    Build the endpoint URL and params for one candidate-page request.
+
+    Parameters
+    ----------
+    api_url : str
+        Stored JobAdder API base URL.
+
+    page : int
+        1-based page number for a fresh first-page request.
+
+    page_size : int
+        Requested provider page size for a fresh first-page request.
+
+    page_url : str | None
+        Optional provider-supplied next-page URL.
+
+    Returns
+    -------
+    tuple[str, dict[str, Any] | None]
+        Tuple containing:
+
+        - the endpoint URL to call
+        - optional query params for the request
+
+    Notes
+    -----
+    - When a provider-supplied `next` URL exists, we trust it and send no
+      extra params.
+    - Otherwise we construct the first-page candidate endpoint and pass page
+      parameters explicitly.
+
+    Example
+    -------
+    The first-page request becomes:
+
+        (
+            "https://eu2api.jobadder.com/v2/candidates",
+            {"page": 1, "pagesize": 100},
+        )
+
+    while a `next` link becomes:
+
+        (
+            "https://eu2api.jobadder.com/v2/candidates?page=2",
+            None,
+        )
+    """
+
+    if isinstance(page_url, str) and page_url.strip() != "":
+        return page_url.strip(), None
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path="/candidates",
+    )
+    params = {
+        "page": page,
+        "pagesize": page_size,
+    }
+
+    return endpoint_url, params
+
+
+def _normalise_jobadder_candidates_list_response(
+    *,
+    response_payload: dict[str, Any],
+    endpoint_url: str,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    """
+    Normalise one JobAdder candidates-list response into a predictable wrapper.
+
+    Parameters
+    ----------
+    response_payload : dict[str, Any]
+        Decoded provider payload returned by JobAdder.
+
+    endpoint_url : str
+        Concrete URL used for this read.
+
+    page : int
+        Requested page number for the current read.
+
+    page_size : int
+        Requested page size for the current read.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised candidates-list page wrapper.
+
+    Notes
+    -----
+    This helper keeps the list-shape validation logic in one place so both:
+
+    - preview reads
+    - paginated page reads
+
+    can rely on the same structural assumptions.
+
+    Example
+    -------
+    A successful result looks like:
+
+        {
+            "items": [...],
+            "item_count": 100,
+            "total_count": 3210,
+            "links": {"next": "..."},
+            "endpoint_url": "...",
+            "page": 1,
+            "page_size": 100,
+            "raw_payload": {...},
+        }
+    """
+
+    raw_items = response_payload.get("items")
+
+    # The items list is the only truly mandatory part of this response shape.
+    # If it is missing or malformed, later pagination logic cannot safely
+    # continue.
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder candidate read response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
+    return {
+        "items": raw_items,
+        "item_count": len(raw_items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "page": page,
+        "page_size": page_size,
+        "raw_payload": response_payload,
+    }
 
 
 def _request_jobadder_json(
@@ -1548,6 +1842,7 @@ __all__ = [
     "build_jobadder_api_headers",
     "download_jobadder_candidate_attachment",
     "fetch_jobadder_candidate_attachments",
+    "fetch_jobadder_candidates_page",
     "fetch_jobadder_candidate_detail",
     "fetch_jobadder_candidate_notes",
     "fetch_jobadder_candidate_skills",

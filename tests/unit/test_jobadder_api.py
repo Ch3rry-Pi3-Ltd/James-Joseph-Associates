@@ -47,6 +47,7 @@ from backend.services.jobadder_api import (
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidates_page,
     fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
@@ -208,6 +209,151 @@ def test_fetch_jobadder_candidates_preview_does_not_duplicate_v2_segment(
     assert preview["endpoint_url"] == "https://eu2api.jobadder.com/v2/candidates"
     assert preview["item_count"] == 0
     assert captured_request["url"] == "https://eu2api.jobadder.com/v2/candidates"
+
+
+def test_fetch_jobadder_candidates_page_requests_first_page_with_explicit_params(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the paginated candidate helper requests the first page using
+    explicit page and page-size parameters.
+
+    In plain language:
+
+    - ask for page 1 with a concrete page size
+    - confirm the helper keeps the base endpoint clean
+    - confirm the pagination params are sent separately
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout, params=None):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+        captured_request["params"] = params
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"candidateId": 1, "firstName": "Alice"},
+                    {"candidateId": 2, "firstName": "Ben"},
+                ],
+                "totalCount": 2,
+                "links": {
+                    "next": "https://api.jobadder.com/v2/candidates?page=2",
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    page_result = fetch_jobadder_candidates_page(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        page=1,
+        page_size=100,
+    )
+
+    assert page_result["item_count"] == 2
+    assert page_result["page"] == 1
+    assert page_result["page_size"] == 100
+    assert page_result["links"] == {
+        "next": "https://api.jobadder.com/v2/candidates?page=2",
+    }
+
+    assert captured_request["url"] == "https://api.jobadder.com/v2/candidates"
+    assert captured_request["params"] == {
+        "page": 1,
+        "pagesize": 100,
+    }
+
+
+def test_fetch_jobadder_candidates_page_uses_provider_next_link_directly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the paginated candidate helper trusts a provider-supplied next
+    link rather than reconstructing it.
+
+    In plain language:
+
+    - pretend JobAdder already gave us the next-page URL
+    - confirm the helper calls that URL directly
+    - confirm it does not send duplicate pagination params
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout, params=None):
+        captured_request["url"] = url
+        captured_request["params"] = params
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"candidateId": 3, "firstName": "Cara"},
+                ],
+                "totalCount": 3,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    page_result = fetch_jobadder_candidates_page(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        page=2,
+        page_size=100,
+        page_url="https://api.jobadder.com/v2/candidates?page=2",
+    )
+
+    assert page_result["item_count"] == 1
+    assert page_result["page"] == 2
+    assert captured_request["url"] == "https://api.jobadder.com/v2/candidates?page=2"
+    assert captured_request["params"] is None
+
+
+def test_fetch_jobadder_candidates_page_raises_when_items_list_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the paginated candidate helper rejects a malformed success
+    payload without an `items` list.
+
+    In plain language:
+
+    - pretend JobAdder returned a 200 response
+    - omit the `items` list
+    - confirm the helper fails clearly
+    """
+
+    def fake_get(url, headers, timeout, params=None):
+        return httpx.Response(
+            200,
+            json={
+                "totalCount": 3,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(JobAdderApiError) as exc_info:
+        fetch_jobadder_candidates_page(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            page=1,
+            page_size=100,
+        )
+
+    error = exc_info.value
+    assert str(error) == (
+        "JobAdder candidate read response did not include an items list."
+    )
 
 
 def test_fetch_jobadder_candidates_preview_raises_for_provider_error(

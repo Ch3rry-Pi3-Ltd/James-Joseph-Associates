@@ -91,6 +91,16 @@ def build_argument_parser() -> argparse.ArgumentParser:
     """
     Build the CLI argument parser for the batch extraction script.
 
+    Returns
+    -------
+    argparse.ArgumentParser
+        Configured parser for batch extraction runs.
+
+    Notes
+    -----
+    This parser deliberately mirrors the single-run script where possible so
+    operators do not have to learn two unrelated command surfaces.
+
     Example
     -------
     A caller can provide candidate IDs directly:
@@ -208,6 +218,33 @@ def load_candidate_ids(
     """
     Load and deduplicate candidate IDs from CLI flags and an optional file.
 
+    Parameters
+    ----------
+    explicit_candidate_ids : list[int]
+        Candidate IDs supplied directly through repeated `--candidate-id`
+        flags.
+
+    candidate_ids_file : Path | None
+        Optional file containing candidate IDs separated by whitespace and/or
+        commas.
+
+    Returns
+    -------
+    list[int]
+        Deduplicated candidate IDs preserving first-seen order.
+
+    Notes
+    -----
+    The batch runner needs one simple, forgiving way to accept candidate lists
+    from:
+
+    - quick CLI experiments
+    - copied spreadsheet exports
+    - temporary text files
+
+    So this helper accepts a deliberately loose delimiter rule rather than
+    enforcing one strict file format.
+
     Example
     -------
     A file containing:
@@ -245,6 +282,32 @@ def load_candidate_ids(
 def build_candidate_output_path(*, output_dir: Path, candidate_id: int) -> Path:
     """
     Return the per-candidate output JSON path for the batch.
+
+    Parameters
+    ----------
+    output_dir : Path
+        Timestamped batch output directory.
+
+    candidate_id : int
+        Candidate identifier for the current batch item.
+
+    Returns
+    -------
+    Path
+        Per-candidate JSON result path.
+
+    Example
+    -------
+    A call such as:
+
+        build_candidate_output_path(
+            output_dir=Path("temp/resume_extraction_batch/20260509T120000Z"),
+            candidate_id=16496678,
+        )
+
+    returns:
+
+        temp/resume_extraction_batch/20260509T120000Z/candidate_16496678.json
     """
 
     return output_dir / f"candidate_{candidate_id}.json"
@@ -257,6 +320,34 @@ def build_failure_record(
 ) -> dict[str, Any]:
     """
     Build one structured failure record for the batch summary.
+
+    Parameters
+    ----------
+    candidate_id : int
+        Candidate ID for the failed batch item.
+
+    exc : Exception
+        Captured exception raised during that candidate's extraction run.
+
+    Returns
+    -------
+    dict[str, Any]
+        JSON-serialisable failure record suitable for:
+
+        - the batch summary
+        - a JSONL failure log
+        - later debugging/replay work
+
+    Example
+    -------
+    A typical result contains:
+
+        {
+            "candidate_id": 16496678,
+            "error_type": "ResumeExtractionError",
+            "stage": "llm_invoke",
+            "message": "The resume extraction model call failed.",
+        }
     """
 
     return {
@@ -279,6 +370,28 @@ def build_batch_summary(
 ) -> dict[str, Any]:
     """
     Build one structured batch summary payload.
+
+    Parameters
+    ----------
+    candidate_ids : list[int]
+        Full requested candidate-ID list for this batch.
+
+    successes : list[dict[str, Any]]
+        Per-candidate success records built during the batch loop.
+
+    failures : list[dict[str, Any]]
+        Per-candidate failure records built during the batch loop.
+
+    output_dir : Path
+        Timestamped output directory for this batch run.
+
+    quality_log_jsonl : Path | None
+        Path to the quality-gate JSONL log when quality gating is enabled.
+
+    Returns
+    -------
+    dict[str, Any]
+        Summary payload describing what the batch attempted and how it ended.
 
     Example
     -------
@@ -320,6 +433,20 @@ def build_batch_summary(
 def print_batch_summary(summary: dict[str, Any]) -> None:
     """
     Print a concise human-readable batch summary.
+
+    Parameters
+    ----------
+    summary : dict[str, Any]
+        Structured batch summary payload returned by `build_batch_summary(...)`.
+
+    Notes
+    -----
+    The batch runner writes detailed JSON artifacts to disk. This helper is
+    intentionally smaller: it answers the operator's first question quickly:
+
+    - how many succeeded?
+    - how many failed?
+    - did the quality gate trigger fallback reruns?
     """
 
     lines = [
@@ -360,6 +487,37 @@ def print_batch_summary(summary: dict[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     """
     Run the batch extraction CLI entrypoint.
+
+    Parameters
+    ----------
+    argv : list[str] | None
+        Optional argument list. When omitted, `argparse` reads from
+        `sys.argv`.
+
+    Returns
+    -------
+    int
+        Process exit code.
+
+        - `0` when every requested candidate completed successfully
+        - `1` when one or more candidates failed
+        - `2` for unexpected top-level failures
+
+    Notes
+    -----
+    The batch runner is intentionally tolerant by default:
+
+    - one failed candidate does not abort the whole run
+    - failures are captured into the batch summary
+    - `--stop-on-error` exists for stricter debugging sessions
+
+    Example
+    -------
+    Running the module directly executes:
+
+        raise SystemExit(main())
+
+    which gives the script a normal process exit code for shell use.
     """
 
     parser = build_argument_parser()
@@ -390,6 +548,17 @@ def main(argv: list[str] | None = None) -> int:
         for index, candidate_id in enumerate(candidate_ids, start=1):
             print(f"[{index}/{len(candidate_ids)}] Candidate {candidate_id}")
 
+            # Clone the parsed batch arguments into one candidate-scoped
+            # namespace rather than mutating the shared object in place.
+            #
+            # That makes the control flow easier to reason about because each
+            # candidate run receives:
+            # - the same batch-wide settings
+            # - exactly one different candidate ID
+            #
+            # It also avoids subtle bugs where later logging or error handling
+            # accidentally sees the "wrong current candidate" because one
+            # mutable namespace object was reused across the whole loop.
             candidate_args = argparse.Namespace(**deepcopy(vars(args)))
             candidate_args.candidate_id = candidate_id
 
@@ -405,6 +574,15 @@ def main(argv: list[str] | None = None) -> int:
                     output_dir=batch_output_dir,
                     candidate_id=candidate_id,
                 )
+
+                # Keep one JSON result per candidate rather than one giant
+                # monolithic batch file.
+                #
+                # That tradeoff is deliberate:
+                # - it keeps manual inspection simple
+                # - it makes partial reruns easier later
+                # - it avoids rewriting a huge batch artifact when only one
+                #   candidate needs to be revisited
                 write_json_output(payload=json_payload, output_path=output_path)
 
                 quality_assessment = result.get("quality_assessment", {})

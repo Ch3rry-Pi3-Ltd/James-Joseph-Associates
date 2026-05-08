@@ -418,6 +418,40 @@ def _extract_phone_hints(text: str) -> list[str]:
 
 
 def _section_present(lowered_text: str, patterns: tuple[str, ...]) -> bool:
+    """
+    Return whether any section-marker string appears in lowered resume text.
+
+    Parameters
+    ----------
+    lowered_text : str
+        Resume text already converted to lowercase.
+
+    patterns : tuple[str, ...]
+        Lowercase or case-insensitive-compatible section labels to search for.
+
+    Returns
+    -------
+    bool
+        `True` when any pattern is present, otherwise `False`.
+
+    Notes
+    -----
+    This helper intentionally uses simple substring checks rather than trying
+    to parse full document structure. At this stage the goal is just to derive
+    cheap routing hints such as:
+
+    - "does the CV appear to have an education section?"
+    - "does the CV appear to have projects or portfolio content?"
+
+    Example
+    -------
+    A call like:
+
+        _section_present("experience\\neducation\\nprojects", ("projects",))
+
+    returns `True`.
+    """
+
     return any(pattern.casefold() in lowered_text for pattern in patterns)
 
 
