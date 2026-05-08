@@ -1073,6 +1073,150 @@ def run_live_resume_extraction_with_model_profile(
     )
 
 
+def run_live_resume_extraction_with_optional_quality_gate(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """
+    Run one live extraction and optionally apply the deterministic quality gate.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments for the current invocation.
+
+    Returns
+    -------
+    dict[str, Any]
+        Final extraction result, enriched with quality metadata when
+        applicable.
+
+    Notes
+    -----
+    This helper centralizes the first-pass plus optional fallback flow so:
+
+    - the single-candidate CLI
+    - any batch runner
+    - future integration helpers
+
+    can all reuse the same routing logic.
+
+    Example
+    -------
+    A caller can run:
+
+        result = run_live_resume_extraction_with_optional_quality_gate(args)
+
+    and then inspect:
+
+        result["quality_assessment"]
+        result["quality_gate"]
+    """
+
+    if args.enable_quality_gate and args.provider != ModelProvider.OPENAI.value:
+        raise RuntimeError(
+            "The quality-gate fallback flow currently supports only the "
+            "OpenAI provider."
+        )
+
+    if args.quality_rerun_threshold > args.quality_pass_threshold:
+        raise RuntimeError(
+            "QUALITY_RERUN_THRESHOLD cannot be greater than "
+            "QUALITY_PASS_THRESHOLD."
+        )
+
+    result = run_live_resume_extraction(args)
+
+    if args.enable_quality_gate:
+        first_pass_assessment = build_quality_assessment(
+            result=result,
+            pass_threshold=args.quality_pass_threshold,
+            rerun_threshold=args.quality_rerun_threshold,
+        )
+        first_pass_model_name = result.get("model_profile", {}).get("model_name")
+        fallback_invoked = False
+        final_assessment = first_pass_assessment
+        final_result = result
+
+        if first_pass_assessment.status == "rerun":
+            fallback_invoked = True
+            fallback_profile = ModelProfile(
+                provider=ModelProvider.OPENAI,
+                model_name=args.fallback_model_name,
+                purpose=ModelPurpose.EXTRACTION,
+                temperature=args.temperature,
+                max_output_tokens=args.max_output_tokens,
+            )
+            fallback_result = run_live_resume_extraction_with_model_profile(
+                args=args,
+                model_profile=fallback_profile,
+            )
+            fallback_assessment = build_quality_assessment(
+                result=fallback_result,
+                pass_threshold=args.quality_pass_threshold,
+                rerun_threshold=args.quality_rerun_threshold,
+            )
+
+            if fallback_assessment.quality_score >= first_pass_assessment.quality_score:
+                final_result = fallback_result
+                final_assessment = fallback_assessment
+
+            append_jsonl_log(
+                payload=build_quality_log_record(
+                    result=result,
+                    assessment=first_pass_assessment,
+                    stage="first_pass",
+                    fallback_invoked=True,
+                    final_status=final_assessment.status,
+                ),
+                output_path=args.quality_log_jsonl,
+            )
+            append_jsonl_log(
+                payload=build_quality_log_record(
+                    result=fallback_result,
+                    assessment=fallback_assessment,
+                    stage="fallback",
+                    fallback_invoked=True,
+                    final_status=final_assessment.status,
+                ),
+                output_path=args.quality_log_jsonl,
+            )
+        elif first_pass_assessment.status == "review":
+            append_jsonl_log(
+                payload=build_quality_log_record(
+                    result=result,
+                    assessment=first_pass_assessment,
+                    stage="first_pass",
+                    fallback_invoked=False,
+                    final_status=first_pass_assessment.status,
+                ),
+                output_path=args.quality_log_jsonl,
+            )
+
+        quality_gate_metadata = {
+            "enabled": True,
+            "first_pass_model_name": first_pass_model_name,
+            "fallback_model_name": args.fallback_model_name,
+            "fallback_invoked": fallback_invoked,
+            "final_model_name": final_result.get("model_profile", {}).get("model_name"),
+            "first_pass_quality_assessment": first_pass_assessment.model_dump(),
+            "final_quality_assessment": final_assessment.model_dump(),
+        }
+        return enrich_result_with_quality_metadata(
+            result=final_result,
+            assessment=final_assessment,
+            quality_gate=quality_gate_metadata,
+        )
+
+    return enrich_result_with_quality_metadata(
+        result=result,
+        assessment=build_quality_assessment(
+            result=result,
+            pass_threshold=args.quality_pass_threshold,
+            rerun_threshold=args.quality_rerun_threshold,
+        ),
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """
     Run the CLI entrypoint.
@@ -1122,110 +1266,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        if args.enable_quality_gate and args.provider != ModelProvider.OPENAI.value:
-            raise RuntimeError(
-                "The quality-gate fallback flow currently supports only the "
-                "OpenAI provider."
-            )
-
-        if args.quality_rerun_threshold > args.quality_pass_threshold:
-            raise RuntimeError(
-                "QUALITY_RERUN_THRESHOLD cannot be greater than "
-                "QUALITY_PASS_THRESHOLD."
-            )
-
-        result = run_live_resume_extraction(args)
-        quality_gate_metadata: dict[str, Any] | None = None
-
-        if args.enable_quality_gate:
-            first_pass_assessment = build_quality_assessment(
-                result=result,
-                pass_threshold=args.quality_pass_threshold,
-                rerun_threshold=args.quality_rerun_threshold,
-            )
-            first_pass_model_name = result.get("model_profile", {}).get("model_name")
-            fallback_invoked = False
-            final_assessment = first_pass_assessment
-            final_result = result
-
-            if first_pass_assessment.status == "rerun":
-                fallback_invoked = True
-                fallback_profile = ModelProfile(
-                    provider=ModelProvider.OPENAI,
-                    model_name=args.fallback_model_name,
-                    purpose=ModelPurpose.EXTRACTION,
-                    temperature=args.temperature,
-                    max_output_tokens=args.max_output_tokens,
-                )
-                fallback_result = run_live_resume_extraction_with_model_profile(
-                    args=args,
-                    model_profile=fallback_profile,
-                )
-                fallback_assessment = build_quality_assessment(
-                    result=fallback_result,
-                    pass_threshold=args.quality_pass_threshold,
-                    rerun_threshold=args.quality_rerun_threshold,
-                )
-
-                if fallback_assessment.quality_score >= first_pass_assessment.quality_score:
-                    final_result = fallback_result
-                    final_assessment = fallback_assessment
-
-                append_jsonl_log(
-                    payload=build_quality_log_record(
-                        result=result,
-                        assessment=first_pass_assessment,
-                        stage="first_pass",
-                        fallback_invoked=True,
-                        final_status=final_assessment.status,
-                    ),
-                    output_path=args.quality_log_jsonl,
-                )
-                append_jsonl_log(
-                    payload=build_quality_log_record(
-                        result=fallback_result,
-                        assessment=fallback_assessment,
-                        stage="fallback",
-                        fallback_invoked=True,
-                        final_status=final_assessment.status,
-                    ),
-                    output_path=args.quality_log_jsonl,
-                )
-            elif first_pass_assessment.status == "review":
-                append_jsonl_log(
-                    payload=build_quality_log_record(
-                        result=result,
-                        assessment=first_pass_assessment,
-                        stage="first_pass",
-                        fallback_invoked=False,
-                        final_status=first_pass_assessment.status,
-                    ),
-                    output_path=args.quality_log_jsonl,
-                )
-
-            quality_gate_metadata = {
-                "enabled": True,
-                "first_pass_model_name": first_pass_model_name,
-                "fallback_model_name": args.fallback_model_name,
-                "fallback_invoked": fallback_invoked,
-                "final_model_name": final_result.get("model_profile", {}).get("model_name"),
-                "first_pass_quality_assessment": first_pass_assessment.model_dump(),
-                "final_quality_assessment": final_assessment.model_dump(),
-            }
-            result = enrich_result_with_quality_metadata(
-                result=final_result,
-                assessment=final_assessment,
-                quality_gate=quality_gate_metadata,
-            )
-        else:
-            result = enrich_result_with_quality_metadata(
-                result=result,
-                assessment=build_quality_assessment(
-                    result=result,
-                    pass_threshold=args.quality_pass_threshold,
-                    rerun_threshold=args.quality_rerun_threshold,
-                ),
-            )
+        result = run_live_resume_extraction_with_optional_quality_gate(args)
 
         # Default to a concise summary because the full payload can be large and
         # includes prompt/input material. The operator usually wants the "did it
