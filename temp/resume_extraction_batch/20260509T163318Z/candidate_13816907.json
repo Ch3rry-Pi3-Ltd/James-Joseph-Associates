@@ -1,0 +1,479 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13816907,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13816907,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13816907,
+      "first_name": "Pavel",
+      "last_name": "Voronkin",
+      "email": "promethean.vp@gmail.com",
+      "mobile": "+44 7503 619821",
+      "location": null,
+      "status": "Inactive",
+      "skill_tags": [],
+      "created_at": "2025-07-11T14:39:18Z",
+      "updated_at": "2025-09-05T07:36:44Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17866988,
+      "file_name": "f3ecc06b-6baa-4db0-a492-b06697e0abb0.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-11T14:39:18Z",
+      "page_count": 4,
+      "character_count": 4385,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "Pavel  Voronkin   London,  England,  United  Kingdom\npromethean.vp@gmail.com  +44  7503  619821\nlinkedin.com/in/pavel-voronkin-47202291\nExperience   Staff  Engineer   Binance   Oct  2022  -  Present  (2  years  4  months)   I  am  working  on  a  futures  exchange  team.  I  am  rebuilding  the  matching  engine  and  surrounding\nstack\n\nfrom\n\nscratch\n\nin\n\nrust.\n\nI’ve\n\nbuilt\n\nseveral\n\nRust\n\napplications\n\nincluding\n\nan\n\ninternal\n\nmessage\n\nbroker\n\nfor\n\nintegration\n\nbetween\n\nmatching\n\nengine\n\nand\n\nother\n\napps.\n\nSoftware  Engineer,  VP   JPMorgan  Chase  &  Co.   Sep  2021  -  Oct  2022  (1  year  2  months)   In  Chase  we  are  building  a  payments  platform  (FPS,  BACS,  internal  money  transfers)  for  Chase  UK\nconsumer\n\nbanking\n\nusing\n\nTemporal.\n\nMy\n\nresponsibilities\n\nwere\n\nto\n\ndevelop\n\nfeatures,\n\nproduction\n\nsupport\n\nand\n\nmaintenance\n\nof\n\nmonitoring\n\ntools,\n\ndebug\n\nperformance\n\nbottlenecks,\n\ndevelop\n\nand\n\nsupport\n\nautomated\n\nperformance\n\ntest\n\nsuites.\n\nI\n\nwas\n\na\n\nmember\n\nof\n\nthe\n\nperformance\n\nguild\n\nfrom\n\na\n\npayments\n\nteam.\n\nSenior  Java  Software  Engineer   Revolut   Oct  2019  -  Sep  2021  (2  years)   We  were  building  the  best  credit  products  worldwide.  Scalable  for  every  country.\nIn  revolut  we  were  able  to  deliver  a  fixed  term  credit  engine  from  scratch  in  less  than  a  year.\nFlexible\n\nenough\n\nto\n\nscale\n\nin\n\ndifferent\n\ncountries,\n\nunder\n\ndifferent\n\nregulations.\n\nSuccessful  launch  in  Lithuania,  Poland,  Ireland,  Romania  in  EU  regulated\nspace.\n\nSuccessful\n\nemployee\n\ntesting\n\nin\n\nUK,\n\nUS.\n\nI  am  responsible  for  automated  end-to-end  testing,  production  rollout  and  support.\nLead  Software  Development  Engineer   GridGain   Aug  2018  -  Oct  2019  (1  year  3  months)   In  GridGain  we  successfully  launched  a  distributed  partitioned  cache  across  160  nodes  on  GridGain\nin\n\nSberbank.\n\nMy  responsibilities  were  to  develop  release  and  development  standards  for  the  team  of  6  java  devs\nin\n\nMoscow.\n\nWe  were  able  to  deliver  stable  rapid  releases  for  the  key  massive  scale  Sberbank's  delivery.\nPavel  Voronkin  -  page  1\nAs  developer  my  focus  was  to  debug  and  fix  critical  deadlocks  and  starvation  issues  we  came  across  in  Sberbank  production  cluster.  Optimize  memory  consumption  and  memory  pressure  to  reduce  and  stabilize  PME(partition  map  exchange)  -  crucial  process  for  cluster  to  reach  consensus  and  serve  workload.\nAssociate  Software  Engineer   Deutsche  Bank   Aug  2015  -  Aug  2018  (3  years  1  month)   In  RiskEngine  (pure  core  java)  project  -  eod/intraday  risk  calculator  for  bonds  and  derivatives  running  24  instances  on  6k  servers  on-premise  infrastructure,  we  were  able  to  migrate  legacy  grid  solution  to  IBM  platform  symphony  solution  without  affecting  production  mission  critical  DB  risk  calculation.  My  responsibilities  was  to  refactor  legacy  code  and  develop  new  mode,  which  can  be  toggled  to  run  on  new  IaaS  infrastructure.\nAs  a  part  of  dbAces  team  I  was  working  on  development  of  algo  trading  application,  which  is  responsible  for  risk  hedging  on  bond  D2D  markets  and  bond  derivatives.   In  particular  we  successfully  developed  mass  quoting  solution  to  perform  market  making  obligations  on  popular  EU/US  D2D  bond  markets.\nSoftware  Engineer   BPC  Banking  Technologies   Jun  2013  -  Aug  2015  (2  years  3  months)   Processing  solution  delivery  in  Armenia,  Uzbekistan,  Jordan,  Iraq  for  central  banks  of  those  countries.\nDevelopment  of  SmartVista  UI(JSF,  jdbc),  payment  gateways(Spring,Apache  Camel)  based  on  ISO  8583.\nDistributed  team  in  Moscow  and  Jordan.\nSoftware  Development  Engineer   BPC  Banking  Technologies   Nov  2010  -  Jul  2013  (2  years  9  months)\nTechnician   NIITP  Jun  2009  -  Nov  2010  (1  year  6  months)\nEducation\n\nBauman  Moscow  State  Technical  University   Master  of  Engineering  -  MEng,  Engineering  Physics/Applied\nPhysics\n\n2007\n\n-\n\n2013\n\nSkills\nPavel  Voronkin  -  page  2  Domain-Driven  Design  (DDD)    •    Exchange  Connectivity    •    Multithreading    •    Rust    •    Java    •    Kotlin    •\n\niOS\n\ndevelopment\n\n•\n\nAndroid\n\nDevelopment\n\n•\n\nLinux\n\nSystem\n\nAdministration\n\n•\n\nBash\n\nPavel  Voronkin  -  page  3",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "3a3e7064-4adf-49f5-882f-a64db5ced31d",
+        "type": "Email Received",
+        "created_at": "2025-09-05T07:36:44Z",
+        "updated_at": "2025-09-05T07:36:44Z",
+        "cleaned_text": "Thanks, keep me posted.\n\nBest regards, Pavel.\nWhatsapp +44 7503 619821\nSkype promethean.vp@gmail.com\n\nOn Thu, 4 Sep 2025 at 13:13, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\nMany thanks Pavel,\n\nI will get your CV across to them now.... :)"
+      },
+      {
+        "note_id": "81519632-2c98-4383-b9d4-4cd8fe1c1144",
+        "type": "General",
+        "created_at": "2025-09-04T16:39:51Z",
+        "updated_at": "2025-09-04T16:39:51Z",
+        "cleaned_text": "Tw380 Greenhouse info\n\n3 months notice\n\n3 years rust\n\n175k base\n\nPavel have just under 3 years of experience coding in Rust for Binance and has previous TradFi Algo Trading and Risk experience from his time at Deutsche Bank. He recently joined Blockhain.com to enhance and build out a legacy trade execution platform that was built in Rust but he is open to exploring other opportunities as the role is not progressing as described during his interview process. Pavel does require sponsorship as he is on a skilled worker Visa until he gets Indefinite Leave to Remain in 2 years’ time, but javing spoken to him I can confirm he is a clear and articulate communicator and also has a friendly and affable demeanour."
+      },
+      {
+        "note_id": "f25dfa5d-1e6d-4ca3-8899-a99932be9c02",
+        "type": "Submitted Via Portal",
+        "created_at": "2025-09-04T16:39:29Z",
+        "updated_at": "2025-09-04T16:39:29Z",
+        "cleaned_text": "Status changed from Withdrew application to CV Sent Via Portal by Tom Owens at 5:39pm on September 4, 2025"
+      },
+      {
+        "note_id": "d515471c-69a0-40f6-81b3-46f25d49eaa1",
+        "type": "Phone call",
+        "created_at": "2025-09-04T13:47:20Z",
+        "updated_at": "2025-09-04T13:47:20Z",
+        "cleaned_text": "Pavel Voronkin tw380\n\n£ 175k - doesn't know on bonus maybe 100%\n£ 175k +\nN 3 months\nV skilled workers visa 2 years until ILR\nwfh: 2 days is ok - does 4 days a week at the moment\nwhy?\n\nswitched from binance > blockchain.com\n\nnot that happy at blockchain\n\napplied 1-1.5 years ago\n\n3 years of RUst\n\ncurrently working on blockhain.com execution platform using rust"
+      },
+      {
+        "note_id": "aab4b4b0-4bdd-4df8-8366-d5e730bbd06e",
+        "type": "Email Reply",
+        "created_at": "2025-09-04T12:13:09Z",
+        "updated_at": "2025-09-04T12:13:09Z",
+        "cleaned_text": "Many thanks Pavel,\n\nI will get your CV across to them now.... :)"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "Binance",
+    "current_title": "Staff Engineer",
+    "professional_summary": "Experienced software engineer with expertise in Rust, Java, and Kotlin, specializing in building scalable financial and trading systems including futures exchange matching engines and payments platforms.",
+    "location": "London, England, United Kingdom",
+    "emails": [
+      "promethean.vp@gmail.com"
+    ],
+    "phones": [
+      "+44 7503 619821"
+    ],
+    "skills": [
+      "Domain-Driven Design",
+      "Exchange Connectivity",
+      "Multithreading",
+      "iOS development",
+      "Android Development",
+      "Linux System Administration"
+    ],
+    "tools_and_platforms": [
+      "Rust",
+      "Java",
+      "Kotlin",
+      "Temporal",
+      "Spring",
+      "Apache Camel",
+      "JSF",
+      "JDBC",
+      "Linux",
+      "Bash"
+    ],
+    "certifications": [],
+    "linkedin_url": "https://linkedin.com/in/pavel-voronkin-47202291",
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "Bauman Moscow State Technical University",
+        "qualification": "MEng",
+        "subject": "Engineering Physics/Applied Physics",
+        "completion_date": "2013"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "Binance",
+        "title": "Staff Engineer",
+        "start_date": "Oct 2022",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Working on a futures exchange team rebuilding the matching engine and surrounding stack from scratch in Rust. Built several Rust applications including an internal message broker for integration between matching engine and other apps."
+      },
+      {
+        "employer": "JPMorgan Chase & Co.",
+        "title": "Software Engineer, VP",
+        "start_date": "Sep 2021",
+        "end_date": "Oct 2022",
+        "is_current": false,
+        "summary": "Developed features, production support, and maintenance of monitoring tools for a payments platform for Chase UK consumer banking using Temporal. Member of the performance guild."
+      },
+      {
+        "employer": "Revolut",
+        "title": "Senior Java Software Engineer",
+        "start_date": "Oct 2019",
+        "end_date": "Sep 2021",
+        "is_current": false,
+        "summary": "Built scalable credit products and a fixed term credit engine from scratch, supporting launches in multiple countries. Responsible for automated end-to-end testing, production rollout, and support."
+      },
+      {
+        "employer": "GridGain",
+        "title": "Lead Software Development Engineer",
+        "start_date": "Aug 2018",
+        "end_date": "Oct 2019",
+        "is_current": false,
+        "summary": "Developed release and development standards for a team of 6 Java developers. Delivered stable rapid releases for Sberbank's distributed partitioned cache across 160 nodes. Debugged and fixed critical deadlocks and starvation issues, optimized memory consumption and pressure."
+      },
+      {
+        "employer": "Deutsche Bank",
+        "title": "Associate Software Engineer",
+        "start_date": "Aug 2015",
+        "end_date": "Aug 2018",
+        "is_current": false,
+        "summary": "Worked on RiskEngine project migrating legacy grid solution to IBM platform symphony without affecting production. Developed algo trading application for risk hedging on bond D2D markets and derivatives, including mass quoting solution for market making obligations."
+      },
+      {
+        "employer": "BPC Banking Technologies",
+        "title": "Software Engineer",
+        "start_date": "Jun 2013",
+        "end_date": "Aug 2015",
+        "is_current": false,
+        "summary": "Delivered processing solutions for central banks in Armenia, Uzbekistan, Jordan, and Iraq. Developed SmartVista UI and payment gateways based on ISO 8583."
+      },
+      {
+        "employer": "BPC Banking Technologies",
+        "title": "Software Development Engineer",
+        "start_date": "Nov 2010",
+        "end_date": "Jul 2013",
+        "is_current": false,
+        "summary": null
+      },
+      {
+        "employer": "NIITP",
+        "title": "Technician",
+        "start_date": "Jun 2009",
+        "end_date": "Nov 2010",
+        "is_current": false,
+        "summary": null
+      }
+    ],
+    "projects": [
+      {
+        "name": "Futures Exchange Matching Engine Rebuild",
+        "employer": "Binance",
+        "role": "Staff Engineer",
+        "start_date": "Oct 2022",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Rebuilt the matching engine and surrounding stack from scratch in Rust for Binance futures exchange.",
+        "responsibilities": [
+          "Rebuilt matching engine and surrounding stack from scratch in Rust.",
+          "Built several Rust applications including an internal message broker for integration between matching engine and other apps."
+        ],
+        "deliverables": [
+          "Matching engine rebuilt in Rust.",
+          "Internal message broker application."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Rust"
+        ],
+        "domains": [
+          "Financial Trading",
+          "Futures Exchange"
+        ]
+      },
+      {
+        "name": "Payments Platform Development",
+        "employer": "JPMorgan Chase & Co.",
+        "role": "Software Engineer, VP",
+        "start_date": "Sep 2021",
+        "end_date": "Oct 2022",
+        "is_current": false,
+        "summary": "Developed and supported a payments platform for Chase UK consumer banking using Temporal.",
+        "responsibilities": [
+          "Developed features and production support for payments platform.",
+          "Maintained monitoring tools and debugged performance bottlenecks.",
+          "Supported automated performance test suites."
+        ],
+        "deliverables": [
+          "Payments platform features.",
+          "Monitoring tools.",
+          "Automated performance test suites."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Temporal"
+        ],
+        "domains": [
+          "Payments",
+          "Banking"
+        ]
+      },
+      {
+        "name": "Fixed Term Credit Engine",
+        "employer": "Revolut",
+        "role": "Senior Java Software Engineer",
+        "start_date": "Oct 2019",
+        "end_date": "Sep 2021",
+        "is_current": false,
+        "summary": "Built a scalable fixed term credit engine from scratch supporting multiple countries and regulations.",
+        "responsibilities": [
+          "Delivered fixed term credit engine from scratch.",
+          "Responsible for automated end-to-end testing, production rollout, and support."
+        ],
+        "deliverables": [
+          "Fixed term credit engine.",
+          "Automated end-to-end testing suites."
+        ],
+        "business_outcomes": [
+          "Successful launch in Lithuania, Poland, Ireland, Romania, UK, and US."
+        ],
+        "tools_and_platforms": [
+          "Java"
+        ],
+        "domains": [
+          "Credit Products",
+          "Financial Services"
+        ]
+      },
+      {
+        "name": "Distributed Partitioned Cache Launch",
+        "employer": "GridGain",
+        "role": "Lead Software Development Engineer",
+        "start_date": "Aug 2018",
+        "end_date": "Oct 2019",
+        "is_current": false,
+        "summary": "Launched distributed partitioned cache across 160 nodes for Sberbank and optimized cluster performance.",
+        "responsibilities": [
+          "Developed release and development standards for Java team.",
+          "Debugged and fixed critical deadlocks and starvation issues.",
+          "Optimized memory consumption and pressure to stabilize partition map exchange process."
+        ],
+        "deliverables": [
+          "Distributed partitioned cache system.",
+          "Stable rapid releases for Sberbank."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Java"
+        ],
+        "domains": [
+          "Distributed Systems",
+          "Caching"
+        ]
+      },
+      {
+        "name": "RiskEngine and Algo Trading Application",
+        "employer": "Deutsche Bank",
+        "role": "Associate Software Engineer",
+        "start_date": "Aug 2015",
+        "end_date": "Aug 2018",
+        "is_current": false,
+        "summary": "Migrated legacy risk calculation system and developed algo trading application for bond markets.",
+        "responsibilities": [
+          "Refactored legacy code and developed new mode for IaaS infrastructure.",
+          "Developed mass quoting solution for market making obligations on EU/US bond markets."
+        ],
+        "deliverables": [
+          "Migrated risk calculation system to IBM platform symphony.",
+          "Algo trading application for risk hedging."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Java"
+        ],
+        "domains": [
+          "Risk Management",
+          "Algorithmic Trading"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides email and phone number.",
+      "Resume header states location as London, England, United Kingdom.",
+      "LinkedIn URL found in resume header.",
+      "Employment history and project details extracted from resume experience section.",
+      "Skills and tools extracted from resume skills section and experience descriptions.",
+      "Candidate notes confirm 3 years Rust experience and current work on blockchain.com execution platform using Rust, supporting resume evidence."
+    ],
+    "ambiguity_notes": [
+      "Candidate notes mention work at blockchain.com but resume lists current employer as Binance; possible recent change or parallel roles not clarified.",
+      "No explicit certifications found in resume or notes.",
+      "Location inferred from resume header, not explicitly confirmed as current in notes."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 96,
+    "status": "pass",
+    "reasons": [
+      "malformed_linkedin_url"
+    ],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "promethean.vp@gmail.com"
+      ],
+      "resume_phones": [
+        "+44  7503  619821"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": false,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 8,
+      "projects_count": 5,
+      "education_count": 1,
+      "evidence_notes_count": 6,
+      "skills_count": 6,
+      "tools_and_platforms_count": 10,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 96,
+    "richness_band": "rich",
+    "reasons": [
+      "no_explicit_projects_section"
+    ],
+    "source_metrics": {
+      "character_count": 4385,
+      "word_count": 574,
+      "nonempty_line_count": 124,
+      "substantial_line_count": 18,
+      "bullet_like_line_count": 5,
+      "employment_signal_count": 9,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": false,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 96,
+      "status": "pass",
+      "reasons": [
+        "malformed_linkedin_url"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "promethean.vp@gmail.com"
+        ],
+        "resume_phones": [
+          "+44  7503  619821"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 8,
+        "projects_count": 5,
+        "education_count": 1,
+        "evidence_notes_count": 6,
+        "skills_count": 6,
+        "tools_and_platforms_count": 10,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 96,
+      "status": "pass",
+      "reasons": [
+        "malformed_linkedin_url"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "promethean.vp@gmail.com"
+        ],
+        "resume_phones": [
+          "+44  7503  619821"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 8,
+        "projects_count": 5,
+        "education_count": 1,
+        "evidence_notes_count": 6,
+        "skills_count": 6,
+        "tools_and_platforms_count": 10,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

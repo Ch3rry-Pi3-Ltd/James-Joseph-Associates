@@ -28,44 +28,47 @@ Later stages such as:
 - employment-history parsing
 - canonical profile enrichment
 
-all need text, not just raw PDF bytes.
+all need text, not just raw document bytes.
 
 So this module creates the boundary between:
 
 - binary document retrieval, and
 - downstream semantic understanding
 
-Scope of this first version
----------------------------
-This module intentionally starts narrow.
+Scope of the current version
+----------------------------
+This module intentionally stays focused on local document parsing.
 
 It does:
 
 - validate that resume bytes exist
 - parse PDF bytes with `pypdf`
-- extract page text
+- parse DOCX bytes with the standard-library ZIP/XML readers
+- extract document text
 - normalise that text into one combined string
 - return a small metadata wrapper
 
 It does not:
 
-- store the PDF
+- store the original file
 - OCR scanned/image-only PDFs
 - run an LLM
 - infer skills or employers
 - write to the database
-- handle Word documents yet
+- support legacy `.doc` Word binaries
 
-That narrow scope is deliberate. The first goal is simply to prove that the
-downloaded resume bytes can be turned into usable text reliably.
+That narrow scope is deliberate. The goal is simply to prove that the
+downloaded resume bytes can be turned into usable text reliably before the
+first structured extraction stage.
 
 Example
 -------
 A typical caller later in the pipeline might do:
 
-    extracted_resume = extract_text_from_pdf_bytes(
+    extracted_resume = extract_text_from_resume_bytes(
         content_bytes=downloaded_resume["content_bytes"],
         file_name=downloaded_resume.get("file_name"),
+        content_type=downloaded_resume.get("content_type"),
     )
 
 and receive a result shaped like:
@@ -78,15 +81,28 @@ and receive a result shaped like:
         "character_count": 8421,
     }
 
+or for DOCX:
+
+    {
+        "text": "...full extracted text...",
+        "page_count": None,
+        "extractor": "docx_xml",
+        "file_name": "Isaiah Perumalla.docx",
+        "character_count": 7031,
+    }
+
 In plain language:
 
-- give this module PDF bytes
+- give this module resume bytes
+- let it choose the right local parser
 - get back plain text plus a little extraction metadata
 - hand that text to later parsing or LLM stages
 """
 
 from io import BytesIO
 from typing import Any
+from xml.etree import ElementTree
+from zipfile import BadZipFile, ZipFile
 
 try:
     from pypdf import PdfReader
@@ -113,6 +129,7 @@ class ResumeTextExtractionError(RuntimeError):
 
         - `input_validation`
         - `pdf_parse`
+        - `docx_parse`
         - `text_extraction`
         - `text_normalisation`
 
@@ -175,6 +192,107 @@ class ResumeTextExtractionError(RuntimeError):
         """
 
         return self.message
+
+
+def extract_text_from_resume_bytes(
+    *,
+    content_bytes: bytes,
+    file_name: str | None = None,
+    content_type: str | None = None,
+) -> dict[str, Any]:
+    """
+    Extract plain text from one supported resume document.
+
+    Parameters
+    ----------
+    content_bytes : bytes
+        Raw document bytes returned from a transient attachment download.
+
+    file_name : str | None
+        Optional source file name used for parser selection and clearer error
+        reporting.
+
+    content_type : str | None
+        Optional MIME type returned by the upstream provider.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised text-extraction metadata produced by the selected parser.
+
+    Raises
+    ------
+    ResumeTextExtractionError
+        If the file format is unsupported or the selected parser cannot turn
+        the bytes into usable text.
+
+    Example
+    -------
+    A typical orchestration-layer call looks like:
+
+        extract_text_from_resume_bytes(
+            content_bytes=downloaded_resume["content_bytes"],
+            file_name=downloaded_resume.get("file_name"),
+            content_type=downloaded_resume.get("content_type"),
+        )
+
+    Notes
+    -----
+    - This helper is intentionally a small dispatcher, not a kitchen-sink
+      parser.
+    - It currently supports:
+        - PDF
+        - DOCX
+    - Unsupported file types fail explicitly so the ingest layer can decide
+      whether that is a terminal source-data problem or a feature gap.
+
+    In plain language:
+
+    - inspect the file metadata
+    - choose the right parser
+    - return one consistent text bundle
+    """
+
+    # Derive the file type from explicit MIME type first, then fall back to the
+    # file extension.
+    #
+    # That ordering is deliberate:
+    # - provider MIME types are usually the strongest signal when present
+    # - file names are still useful because some upstream systems omit or blur
+    #   content types
+    # - the dispatcher should stay deterministic rather than guessing from raw
+    #   magic bytes unless we explicitly decide to add that later
+    normalised_content_type = (
+        content_type.strip().lower() if isinstance(content_type, str) else ""
+    )
+    normalised_file_name = file_name.strip().lower() if isinstance(file_name, str) else ""
+
+    if normalised_content_type == "application/pdf" or normalised_file_name.endswith(
+        ".pdf"
+    ):
+        return extract_text_from_pdf_bytes(
+            content_bytes=content_bytes,
+            file_name=file_name,
+        )
+
+    if (
+        normalised_content_type
+        == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        or normalised_file_name.endswith(".docx")
+    ):
+        return extract_text_from_docx_bytes(
+            content_bytes=content_bytes,
+            file_name=file_name,
+        )
+
+    raise ResumeTextExtractionError(
+        "The resume file format is not supported for text extraction.",
+        stage="input_validation",
+        details=[
+            {"file_name": file_name},
+            {"content_type": content_type},
+        ],
+    )
 
 
 def extract_text_from_pdf_bytes(
@@ -393,6 +511,134 @@ def extract_text_from_pdf_bytes(
     }
 
 
+def extract_text_from_docx_bytes(
+    *,
+    content_bytes: bytes,
+    file_name: str | None = None,
+) -> dict[str, Any]:
+    """
+    Extract plain text from DOCX resume bytes.
+
+    Parameters
+    ----------
+    content_bytes : bytes
+        Raw DOCX bytes, typically returned from a transient attachment-download
+        step such as the JobAdder resume-download helper.
+
+    file_name : str | None
+        Optional source file name used only for metadata and clearer error
+        reporting.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `text`
+        - `page_count`
+        - `extractor`
+        - `file_name`
+        - `character_count`
+
+    Raises
+    ------
+    ResumeTextExtractionError
+        If the input bytes are empty, the DOCX container cannot be parsed, or
+        no usable text can be extracted.
+
+    Example
+    -------
+    A typical call looks like:
+
+        extract_text_from_docx_bytes(
+            content_bytes=downloaded_resume["content_bytes"],
+            file_name="Isaiah Perumalla.docx",
+        )
+
+    Notes
+    -----
+    - DOCX files are ZIP containers with XML parts.
+    - This helper intentionally uses the Python standard library rather than
+      bringing in a heavier Word-processing dependency just to extract text.
+    - It currently reads the main document body from `word/document.xml`.
+    - That is enough for the common resume case even though DOCX can contain
+      much richer structures.
+
+    In plain language:
+
+    - open the DOCX ZIP safely in memory
+    - read the main document XML
+    - extract paragraph text
+    - return one clean text bundle
+    """
+
+    if not isinstance(content_bytes, bytes):
+        raise ResumeTextExtractionError(
+            "Resume content must be provided as raw bytes.",
+            stage="input_validation",
+            details=[{"file_name": file_name}],
+        )
+
+    if len(content_bytes) == 0:
+        raise ResumeTextExtractionError(
+            "Resume content bytes are empty.",
+            stage="input_validation",
+            details=[{"file_name": file_name}],
+        )
+
+    try:
+        with ZipFile(BytesIO(content_bytes)) as archive:
+            try:
+                document_xml = archive.read("word/document.xml")
+            except KeyError as exc:
+                raise ResumeTextExtractionError(
+                    "The resume DOCX does not contain the main document body.",
+                    stage="docx_parse",
+                    details=[{"file_name": file_name}],
+                ) from exc
+    except BadZipFile as exc:
+        raise ResumeTextExtractionError(
+            "The resume DOCX could not be parsed.",
+            stage="docx_parse",
+            details=[{"file_name": file_name}],
+        ) from exc
+
+    try:
+        root = ElementTree.fromstring(document_xml)
+    except ElementTree.ParseError as exc:
+        raise ResumeTextExtractionError(
+            "The resume DOCX XML could not be parsed.",
+            stage="docx_parse",
+            details=[{"file_name": file_name}],
+        ) from exc
+
+    extracted_paragraph_texts = _extract_docx_paragraph_texts(root)
+
+    if len(extracted_paragraph_texts) == 0:
+        raise ResumeTextExtractionError(
+            "The resume DOCX did not yield any usable text.",
+            stage="text_extraction",
+            details=[{"file_name": file_name}],
+        )
+
+    combined_text = "\n\n".join(extracted_paragraph_texts).strip()
+
+    if combined_text == "":
+        raise ResumeTextExtractionError(
+            "The extracted resume text became empty after normalisation.",
+            stage="text_normalisation",
+            details=[{"file_name": file_name}],
+        )
+
+    return {
+        "text": combined_text,
+        "page_count": None,
+        "extractor": "docx_xml",
+        "file_name": file_name,
+        "character_count": len(combined_text),
+    }
+
+
 def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     """
     Normalise one extracted PDF page into cleaner plain text.
@@ -466,7 +712,69 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     return normalised_text
 
 
+def _extract_docx_paragraph_texts(root: ElementTree.Element) -> list[str]:
+    """
+    Extract normalised paragraph text from a parsed DOCX document tree.
+
+    Parameters
+    ----------
+    root : ElementTree.Element
+        Parsed `word/document.xml` root element.
+
+    Returns
+    -------
+    list[str]
+        Non-empty paragraph strings in document order.
+
+    Notes
+    -----
+    - DOCX text is stored in many `<w:t>` nodes nested inside runs.
+    - We rebuild paragraphs one paragraph at a time because that is a simple,
+      useful structure for resume text.
+    - This helper also treats explicit Word line-break tags as newlines inside
+      a paragraph.
+    """
+
+    namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    paragraph_texts: list[str] = []
+
+    # Walk paragraph-by-paragraph so we preserve the basic document rhythm a CV
+    # usually relies on:
+    # - heading
+    # - summary block
+    # - employment bullets
+    # - education entries
+    #
+    # That is a better fit for later extraction than flattening every text node
+    # into one long line immediately.
+    for paragraph in root.findall(".//w:body//w:p", namespace):
+        paragraph_fragments: list[str] = []
+
+        # Process the paragraph children in order so explicit line breaks inside
+        # one paragraph remain visible instead of being silently discarded.
+        for element in paragraph.iter():
+            local_name = element.tag.rsplit("}", 1)[-1]
+
+            if local_name == "t" and element.text:
+                paragraph_fragments.append(element.text)
+            elif local_name in {"br", "cr"}:
+                paragraph_fragments.append("\n")
+            elif local_name == "tab":
+                paragraph_fragments.append("\t")
+
+        normalised_paragraph_text = _normalise_extracted_page_text(
+            "".join(paragraph_fragments)
+        )
+
+        if normalised_paragraph_text != "":
+            paragraph_texts.append(normalised_paragraph_text)
+
+    return paragraph_texts
+
+
 __all__ = [
     "ResumeTextExtractionError",
+    "extract_text_from_docx_bytes",
     "extract_text_from_pdf_bytes",
+    "extract_text_from_resume_bytes",
 ]

@@ -26,7 +26,7 @@ This module intentionally does not do everything.
 It does not:
 
 - run an LLM
-- parse PDF text
+- parse resume text itself
 - write canonical candidate records
 - write document records
 - talk to Dropbox
@@ -46,7 +46,7 @@ Specifically, given a JobAdder account ID and a candidate ID, this module:
 7. identifies the latest likely-resume attachment
 8. returns one normalised internal dictionary
 9. can optionally download the selected resume bytes transiently
-10. can optionally extract plain text from the selected resume PDF bytes
+10. can optionally extract plain text from the selected resume document bytes
 
 Why start here
 --------------
@@ -138,7 +138,7 @@ from backend.services.jobadder_oauth import (
 )
 from backend.services.resume_text import (
     ResumeTextExtractionError,
-    extract_text_from_pdf_bytes,
+    extract_text_from_resume_bytes,
 )
 from backend.services.text_cleaning import (
     clean_jobadder_note_text,
@@ -481,7 +481,7 @@ def build_jobadder_candidate_ingest_shell(
             #
             # The intention is that later steps such as:
             # - CV download
-            # - PDF parsing
+    # - document parsing
             # - LLM extraction
             # - canonical upsert
             #
@@ -610,7 +610,7 @@ def download_latest_jobadder_resume_for_candidate(
     -----
     - This helper is intentionally still a transient retrieval step.
     - It does not store the CV anywhere.
-    - It does not parse the PDF.
+    - It does not parse the resume document.
     - It does not run an LLM.
     - It exists to bridge the current gap between:
         - "we can identify the right resume attachment"
@@ -780,8 +780,8 @@ def extract_latest_jobadder_resume_text_for_candidate(
 
     JobAdderIngestPreparationError
         If the stored JobAdder connection cannot be loaded, refreshed, or used
-        safely, if no likely resume attachment exists, or if the downloaded PDF
-        cannot be turned into usable plain text.
+        safely, if no likely resume attachment exists, or if the downloaded
+        resume document cannot be turned into usable plain text.
 
     Example
     -------
@@ -826,8 +826,8 @@ def extract_latest_jobadder_resume_text_for_candidate(
     In plain language:
 
     - build the existing resume-download bundle
-    - pull the downloaded PDF bytes out of that bundle
-    - extract plain text from the PDF
+    - pull the downloaded resume bytes out of that bundle
+    - extract plain text from the document
     - clean that extracted text for later reasoning
     - return both the file metadata and the text together
     """
@@ -853,7 +853,11 @@ def extract_latest_jobadder_resume_text_for_candidate(
     downloaded_resume = resume_bundle["downloaded_resume"]
     raw_content_bytes = downloaded_resume.get("content_bytes")
     raw_file_name = downloaded_resume.get("file_name")
+    raw_content_type = downloaded_resume.get("content_type")
     file_name = raw_file_name if isinstance(raw_file_name, str) else None
+    content_type = (
+        raw_content_type if isinstance(raw_content_type, str) else None
+    )
 
     # The text-extraction helper uses its own exception type because it sits at
     # a different abstraction level from provider reads.
@@ -862,9 +866,10 @@ def extract_latest_jobadder_resume_text_for_candidate(
     # the JobAdder ingest error type so callers only need one high-level error
     # family for the whole "candidate -> resume -> text" flow.
     try:
-        extracted_resume_text = extract_text_from_pdf_bytes(
+        extracted_resume_text = extract_text_from_resume_bytes(
             content_bytes=raw_content_bytes,
             file_name=file_name,
+            content_type=content_type,
         )
     except ResumeTextExtractionError as exc:
         details: list[dict[str, Any]] = [
@@ -885,7 +890,7 @@ def extract_latest_jobadder_resume_text_for_candidate(
     #
     # The cleaned text is the likely input for later LLM work, but keeping the
     # raw extraction output alongside it is still useful for:
-    # - debugging PDF parsing quality
+    # - debugging document parsing quality
     # - auditing what the parser produced before cleanup
     # - tuning the text-cleaning rules later
     extracted_resume_text["cleaned_text"] = clean_resume_text(

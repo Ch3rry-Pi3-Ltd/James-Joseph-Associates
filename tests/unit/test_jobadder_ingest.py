@@ -1285,7 +1285,7 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     - The helper should not reimplement download logic itself.
     - It should:
         - reuse the resume-download bundle
-        - pass the downloaded bytes to the PDF text helper
+        - pass the downloaded bytes and content type to the document-text helper
         - keep the overall return shape aligned with the earlier ingest helpers
 
     Example
@@ -1293,14 +1293,14 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     We simulate:
 
     - a successful resume-download bundle
-    - a successful PDF text extraction result
+    - a successful document text extraction result
 
     and confirm the helper returns both pieces in one combined structure.
 
     In plain language:
 
     - pretend the CV download already worked
-    - pretend the PDF text extraction worked
+    - pretend the document text extraction worked
     - confirm the helper returns one clean end-to-end text bundle
     """
 
@@ -1360,9 +1360,15 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
         assert candidate_id == 16496678
         return fake_resume_bundle
 
-    def fake_extract_text(*, content_bytes: bytes, file_name: str | None) -> dict[str, object]:
+    def fake_extract_text(
+        *,
+        content_bytes: bytes,
+        file_name: str | None,
+        content_type: str | None,
+    ) -> dict[str, object]:
         captured_extract_call["content_bytes"] = content_bytes
         captured_extract_call["file_name"] = file_name
+        captured_extract_call["content_type"] = content_type
         return fake_extracted_text
 
     monkeypatch.setattr(
@@ -1372,7 +1378,7 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     )
     monkeypatch.setattr(
         jobadder_ingest,
-        "extract_text_from_pdf_bytes",
+        "extract_text_from_resume_bytes",
         fake_extract_text,
     )
 
@@ -1404,6 +1410,107 @@ def test_extract_latest_jobadder_resume_text_for_candidate_returns_text_bundle(
     assert captured_extract_call == {
         "content_bytes": b"%PDF-1.7 fake pdf bytes",
         "file_name": "Roger Campbell - CV 2025.pdf",
+        "content_type": "application/pdf",
+    }
+
+
+def test_extract_latest_jobadder_resume_text_for_candidate_supports_docx_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the orchestration helper passes DOCX metadata through to the
+    generic resume-text dispatcher.
+
+    Notes
+    -----
+    - This test exists because the live batch failures showed `.docx` resumes
+      were previously being handed to the PDF parser.
+    - The ingest layer should not guess from ZIP-like bytes alone.
+    - It should pass the upstream content type and file name through so the
+      document module can make the format decision in one place.
+    """
+
+    fake_resume_bundle = {
+        "source_system": "jobadder",
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "source_candidate_id": 13816910,
+        "candidate": {"candidateId": 13816910},
+        "notes": {
+            "items": [],
+            "cleaned_items": [],
+            "note_count": 0,
+            "total_count": 0,
+            "links": {},
+        },
+        "latest_resume": {
+            "attachmentId": 21091490,
+            "fileName": "Isaiah Perumalla.docx",
+        },
+        "resume_source": {
+            "provider": "jobadder_attachment",
+            "external_id": 21091490,
+            "file_name": "Isaiah Perumalla.docx",
+            "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        },
+        "downloaded_resume": {
+            "content_bytes": b"PK\x03\x04 fake docx bytes",
+            "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "content_length": 20,
+            "file_name": "Isaiah Perumalla.docx",
+            "endpoint_url": "https://eu2api.jobadder.com/v2/candidates/13816910/attachments/21091490",
+        },
+        "ingest_shell": {
+            "source_system": "jobadder",
+            "source_candidate_id": 13816910,
+        },
+    }
+
+    captured_extract_call: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "download_latest_jobadder_resume_for_candidate",
+        lambda *, jobadder_account, candidate_id: fake_resume_bundle,
+    )
+
+    def fake_extract_text(
+        *,
+        content_bytes: bytes,
+        file_name: str | None,
+        content_type: str | None,
+    ) -> dict[str, object]:
+        captured_extract_call["content_bytes"] = content_bytes
+        captured_extract_call["file_name"] = file_name
+        captured_extract_call["content_type"] = content_type
+        return {
+            "text": "Isaiah Perumalla\n\nSenior Data Engineer",
+            "page_count": None,
+            "extractor": "docx_xml",
+            "file_name": "Isaiah Perumalla.docx",
+            "character_count": 38,
+        }
+
+    monkeypatch.setattr(
+        jobadder_ingest,
+        "extract_text_from_resume_bytes",
+        fake_extract_text,
+    )
+
+    result = extract_latest_jobadder_resume_text_for_candidate(
+        jobadder_account=2236,
+        candidate_id=13816910,
+    )
+
+    assert result["extracted_resume_text"]["extractor"] == "docx_xml"
+    assert result["extracted_resume_text"]["cleaned_text"] == (
+        "Isaiah Perumalla\n\nSenior Data Engineer"
+    )
+    assert captured_extract_call == {
+        "content_bytes": b"PK\x03\x04 fake docx bytes",
+        "file_name": "Isaiah Perumalla.docx",
+        "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     }
 
 
@@ -1411,12 +1518,12 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
-    Verify that PDF text-extraction failures are converted into the ingest
+    Verify that document text-extraction failures are converted into the ingest
     layer's orchestration error type with useful structured context.
 
     Notes
     -----
-    - The lower PDF helper uses `ResumeTextExtractionError`.
+    - The lower document helper uses `ResumeTextExtractionError`.
     - This higher JobAdder orchestration layer should translate that into
       `JobAdderIngestPreparationError` so callers only need one main error
       family for the whole candidate-resume-text flow.
@@ -1428,17 +1535,17 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
     We simulate:
 
     - a successful resume-download bundle
-    - a failing PDF text extraction step
+    - a failing document text extraction step
 
     and confirm the public helper raises a structured ingest-level error with:
 
     - `stage = "resume_text_extraction"`
-    - the original PDF-stage label preserved in details
+    - the original parser-stage label preserved in details
 
     In plain language:
 
     - pretend the CV download worked
-    - pretend the PDF parser failed later
+    - pretend the document parser failed later
     - confirm the helper surfaces that clearly at the ingest layer
     """
 
@@ -1478,7 +1585,12 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
         lambda *, jobadder_account, candidate_id: fake_resume_bundle,
     )
 
-    def fake_extract_text(*, content_bytes: bytes, file_name: str | None) -> dict[str, object]:
+    def fake_extract_text(
+        *,
+        content_bytes: bytes,
+        file_name: str | None,
+        content_type: str | None,
+    ) -> dict[str, object]:
         raise ResumeTextExtractionError(
             "The resume PDF could not be parsed.",
             stage="pdf_parse",
@@ -1487,7 +1599,7 @@ def test_extract_latest_jobadder_resume_text_for_candidate_raises_when_text_extr
 
     monkeypatch.setattr(
         jobadder_ingest,
-        "extract_text_from_pdf_bytes",
+        "extract_text_from_resume_bytes",
         fake_extract_text,
     )
 

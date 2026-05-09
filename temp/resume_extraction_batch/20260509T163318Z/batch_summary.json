@@ -1,0 +1,141 @@
+{
+  "timestamp": "2026-05-09T16:35:18.483589+00:00",
+  "requested_candidate_ids": [
+    13812978,
+    13816907,
+    13816908,
+    13816909,
+    13816910,
+    13816911,
+    13844865,
+    13902887
+  ],
+  "requested_count": 8,
+  "success_count": 5,
+  "failure_count": 3,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {
+    "pass": 5
+  },
+  "output_dir": "temp\\resume_extraction_batch\\20260509T163318Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260509T163318Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [
+    {
+      "candidate_id": 13816907,
+      "output_json": "temp\\resume_extraction_batch\\20260509T163318Z\\candidate_13816907.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 96,
+      "quality_status": "pass",
+      "cv_richness_score": 96,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13816908,
+      "output_json": "temp\\resume_extraction_batch\\20260509T163318Z\\candidate_13816908.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 96,
+      "quality_status": "pass",
+      "cv_richness_score": 10,
+      "cv_richness_band": "very_sparse",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13816909,
+      "output_json": "temp\\resume_extraction_batch\\20260509T163318Z\\candidate_13816909.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 100,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13816911,
+      "output_json": "temp\\resume_extraction_batch\\20260509T163318Z\\candidate_13816911.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 88,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13844865,
+      "output_json": "temp\\resume_extraction_batch\\20260509T163318Z\\candidate_13844865.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 84,
+      "quality_status": "pass",
+      "cv_richness_score": 35,
+      "cv_richness_band": "sparse",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    }
+  ],
+  "failures": [
+    {
+      "timestamp": "2026-05-09T16:33:27.333915+00:00",
+      "candidate_id": 13812978,
+      "error_type": "JobAdderIngestPreparationError",
+      "message": "No likely JobAdder resume attachment was found for this candidate.",
+      "stage": "resume_selection",
+      "details": [
+        {
+          "jobadder_account": 2236
+        },
+        {
+          "candidate_id": 13812978
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T16:34:38.976937+00:00",
+      "candidate_id": 13816910,
+      "error_type": "JobAdderIngestPreparationError",
+      "message": "JobAdder candidate resume text extraction failed.",
+      "stage": "resume_text_extraction",
+      "details": [
+        {
+          "jobadder_account": 2236
+        },
+        {
+          "candidate_id": 13816910
+        },
+        {
+          "resume_text_stage": "pdf_parse"
+        },
+        {
+          "file_name": "Isaiah Perumalla.docx"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-05-09T16:35:18.480074+00:00",
+      "candidate_id": 13902887,
+      "error_type": "JobAdderIngestPreparationError",
+      "message": "JobAdder candidate resume text extraction failed.",
+      "stage": "resume_text_extraction",
+      "details": [
+        {
+          "jobadder_account": 2236
+        },
+        {
+          "candidate_id": 13902887
+        },
+        {
+          "resume_text_stage": "pdf_parse"
+        },
+        {
+          "file_name": "Susmitha-Valluru_cv-library.docx"
+        }
+      ]
+    }
+  ],
+  "skipped": []
+}

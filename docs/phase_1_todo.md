@@ -405,6 +405,9 @@ LLM evaluation should be designed before model outputs become business-critical.
 Current note:
 
 - Live resume extraction is working against real candidate data.
+- Resume text extraction now supports both:
+  - PDF resumes
+  - DOCX resumes
 - A deterministic non-LLM extraction scorer now exists for:
   - schema and required-field checks
   - source-hint comparisons

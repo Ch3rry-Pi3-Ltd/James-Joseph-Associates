@@ -1,7 +1,7 @@
 """
 Unit tests for resume text-extraction helpers.
 
-This module tests the PDF-to-text boundary in
+This module tests the document-to-text boundary in
 `backend.services.resume_text`.
 
 Why these tests matter
@@ -13,7 +13,8 @@ By this point in the broader ingestion flow, the backend can already:
 
 The next question is different:
 
-    "Can the backend turn those raw PDF bytes into usable plain text?"
+    "Can the backend turn those raw resume-document bytes into usable plain
+    text?"
 
 That matters because every later enrichment step depends on text rather than
 binary file content.
@@ -21,6 +22,7 @@ binary file content.
 These tests therefore protect the first document-understanding boundary:
 
 - valid PDF bytes should extract into plain text
+- valid DOCX bytes should extract into plain text
 - bad input should fail clearly
 - parse failures should be distinguished from no-text failures
 - whitespace clean-up should stay predictable for later LLM input
@@ -36,6 +38,8 @@ These tests intentionally do not:
 
 Instead, they focus on the local behaviour of:
 
+- `extract_text_from_resume_bytes(...)`
+- `extract_text_from_docx_bytes(...)`
 - `extract_text_from_pdf_bytes(...)`
 - `_normalise_extracted_page_text(...)`
 
@@ -59,6 +63,7 @@ In plain language:
 """
 
 from io import BytesIO
+from zipfile import ZipFile
 
 import pytest
 from pypdf import PdfWriter
@@ -66,7 +71,9 @@ from pypdf import PdfWriter
 import backend.services.resume_text as resume_text
 from backend.services.resume_text import (
     ResumeTextExtractionError,
+    extract_text_from_docx_bytes,
     extract_text_from_pdf_bytes,
+    extract_text_from_resume_bytes,
 )
 
 
@@ -100,6 +107,46 @@ def _build_minimal_pdf_bytes(page_count: int = 1) -> bytes:
 
     stream = BytesIO()
     writer.write(stream)
+
+    return stream.getvalue()
+
+
+def _build_minimal_docx_bytes(*paragraphs: str) -> bytes:
+    """
+    Build a tiny in-memory DOCX-like ZIP payload for tests.
+
+    Parameters
+    ----------
+    *paragraphs : str
+        Paragraph strings to place inside `word/document.xml`.
+
+    Returns
+    -------
+    bytes
+        ZIP bytes containing the minimal XML our DOCX helper relies on.
+
+    Notes
+    -----
+    - The production parser intentionally reads only `word/document.xml`.
+    - The test helper mirrors that narrow contract instead of trying to build a
+      fully standards-complete Word file.
+    - That keeps the tests focused on our local extraction logic.
+    """
+
+    paragraph_xml = "".join(
+        f"<w:p><w:r><w:t>{paragraph}</w:t></w:r></w:p>" for paragraph in paragraphs
+    )
+    document_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        f"<w:body>{paragraph_xml}</w:body>"
+        "</w:document>"
+    )
+
+    stream = BytesIO()
+
+    with ZipFile(stream, "w") as archive:
+        archive.writestr("word/document.xml", document_xml)
 
     return stream.getvalue()
 
@@ -170,6 +217,69 @@ def test_extract_text_from_pdf_bytes_returns_text_metadata_for_valid_pdf(
         "file_name": "Roger Campbell - CV 2025.pdf",
         "character_count": len(expected_text),
     }
+
+
+def test_extract_text_from_docx_bytes_returns_text_metadata_for_valid_docx() -> None:
+    """
+    Verify that a valid DOCX payload produces clean extracted text and
+    metadata.
+
+    Notes
+    -----
+    - This test uses a tiny in-memory ZIP rather than a fixture file.
+    - That keeps the test fast and makes the expected XML structure explicit.
+    - The goal is to pin our own paragraph reconstruction and metadata shape,
+      not to exercise every possible Word-processing feature.
+    """
+
+    docx_bytes = _build_minimal_docx_bytes(
+        "Isaiah Perumalla",
+        "Senior Data Engineer",
+        "Python Azure Databricks",
+    )
+
+    expected_text = (
+        "Isaiah Perumalla\n\nSenior Data Engineer\n\nPython Azure Databricks"
+    )
+
+    result = extract_text_from_docx_bytes(
+        content_bytes=docx_bytes,
+        file_name="Isaiah Perumalla.docx",
+    )
+
+    assert result == {
+        "text": expected_text,
+        "page_count": None,
+        "extractor": "docx_xml",
+        "file_name": "Isaiah Perumalla.docx",
+        "character_count": len(expected_text),
+    }
+
+
+def test_extract_text_from_resume_bytes_dispatches_to_docx_parser() -> None:
+    """
+    Verify that the format-dispatch helper routes DOCX files to the DOCX
+    parser.
+
+    Notes
+    -----
+    - This protects the new orchestration boundary that the JobAdder ingest
+      helper now depends on.
+    - A DOCX attachment should not fall through to the PDF parser simply
+      because the bytes happen to be a ZIP container.
+    """
+
+    docx_bytes = _build_minimal_docx_bytes("Susmitha Valluru", "Data Engineer")
+
+    result = extract_text_from_resume_bytes(
+        content_bytes=docx_bytes,
+        file_name="Susmitha-Valluru_cv-library.docx",
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+
+    assert result["extractor"] == "docx_xml"
+    assert result["page_count"] is None
+    assert result["text"] == "Susmitha Valluru\n\nData Engineer"
 
 
 def test_extract_text_from_pdf_bytes_raises_when_input_is_not_bytes() -> None:
@@ -256,6 +366,31 @@ def test_extract_text_from_pdf_bytes_raises_when_pdf_cannot_be_parsed() -> None:
     assert str(error) == "The resume PDF could not be parsed."
     assert error.stage == "pdf_parse"
     assert error.details == [{"file_name": "corrupt.pdf"}]
+
+
+def test_extract_text_from_docx_bytes_raises_when_docx_cannot_be_parsed() -> None:
+    """
+    Verify that unreadable DOCX bytes become a DOCX-parse-stage error.
+
+    Notes
+    -----
+    - DOCX files are ZIP containers, so random bytes should fail before any XML
+      parsing or text extraction logic runs.
+    - Keeping this distinct from `text_extraction` matters because it tells the
+      ingest layer whether the file itself was structurally unreadable.
+    """
+
+    with pytest.raises(ResumeTextExtractionError) as exc_info:
+        extract_text_from_docx_bytes(
+            content_bytes=b"not really a docx file",
+            file_name="broken.docx",
+        )
+
+    error = exc_info.value
+
+    assert str(error) == "The resume DOCX could not be parsed."
+    assert error.stage == "docx_parse"
+    assert error.details == [{"file_name": "broken.docx"}]
 
 
 def test_extract_text_from_pdf_bytes_raises_when_pdf_yields_no_usable_text(
