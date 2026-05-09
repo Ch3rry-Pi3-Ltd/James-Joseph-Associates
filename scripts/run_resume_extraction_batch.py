@@ -15,6 +15,7 @@ already present in `scripts/run_resume_extraction.py`, while adding:
 - per-candidate JSON output
 - batch-level success/failure tracking
 - one summary file for later review
+- a manifest-based skip layer so unchanged candidates are not reprocessed
 
 What this script does
 ---------------------
@@ -25,6 +26,7 @@ It performs the following steps for each candidate:
 3. optionally rerun with the stronger fallback model
 4. write one JSON result file
 5. record batch success/failure metadata
+6. skip later identical reruns when the source fingerprint is unchanged
 
 What this script does not do
 ----------------------------
@@ -33,6 +35,7 @@ It does not:
 - write accepted structured data into the database
 - define the final evaluation threshold policy
 - replace later Supabase persistence or dashboards
+- guarantee zero source-system reads for skipped candidates
 
 This script is for batch calibration and inspection.
 
@@ -52,11 +55,20 @@ Run a batch from a file of candidate IDs:
         --jobadder-account 2236 ^
         --candidate-ids-file temp\\candidate_ids.txt
 
+Force a reprocess even if the manifest says the candidate has already been
+handled successfully with the same fingerprint:
+
+    uv run python scripts/run_resume_extraction_batch.py ^
+        --jobadder-account 2236 ^
+        --candidate-id 16496678 ^
+        --force-reprocess
+
 In plain language:
 
 - provide a batch of candidate IDs
 - reuse the same extraction path as the single-run script
 - keep the outputs separate for later scoring review
+- avoid paying for duplicate LLM runs when the candidate inputs did not change
 """
 # ruff: noqa: E402
 
@@ -65,6 +77,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import re
 import sys
@@ -74,16 +87,32 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from backend.core.idempotency import hash_payload
 from backend.llm.models import ModelProvider
 from backend.llm.providers import LLMProviderConfigurationError
+from backend.services.jobadder_ingest import (
+    JobAdderIngestPreparationError,
+    build_jobadder_candidate_ingest_shell,
+)
 from backend.services.resume_extraction import ResumeExtractionError
 from scripts.run_resume_extraction import (
     DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME,
     DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
     append_jsonl_log,
     build_json_ready_result,
+    build_runtime_model_profile,
     run_live_resume_extraction_with_optional_quality_gate,
     write_json_output,
+)
+
+DEFAULT_BATCH_MANIFEST_JSONL_PATH = Path("temp/resume_extraction_batch_manifest.jsonl")
+BATCH_MANIFEST_SCHEMA_VERSION = "resume_extraction_batch_manifest_v1"
+BATCH_FINGERPRINT_RELEVANT_FILES = (
+    Path("backend/services/resume_extraction.py"),
+    Path("backend/services/extraction_quality.py"),
+    Path("backend/services/text_cleaning.py"),
+    Path("backend/services/resume_text.py"),
+    Path("scripts/run_resume_extraction.py"),
 )
 
 
@@ -196,6 +225,23 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Optional JSONL path for quality-gate logs. Defaults inside the batch output directory.",
+    )
+    parser.add_argument(
+        "--manifest-jsonl",
+        type=Path,
+        default=DEFAULT_BATCH_MANIFEST_JSONL_PATH,
+        help=(
+            "JSONL manifest used to skip already-processed candidates when "
+            "their source fingerprint and extraction contract are unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--force-reprocess",
+        action="store_true",
+        help=(
+            "Bypass manifest-based skip checks and process the supplied "
+            "candidates even when an identical successful fingerprint already exists."
+        ),
     )
     parser.add_argument(
         "--include-prompts",
@@ -313,6 +359,385 @@ def build_candidate_output_path(*, output_dir: Path, candidate_id: int) -> Path:
     return output_dir / f"candidate_{candidate_id}.json"
 
 
+def build_extraction_contract_fingerprint(
+    *,
+    args: argparse.Namespace,
+) -> str:
+    """
+    Build one deterministic fingerprint for the current extraction contract.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed batch-runner arguments for the current invocation.
+
+    Returns
+    -------
+    str
+        Stable SHA-256 fingerprint representing:
+
+        - the selected first-pass model configuration
+        - quality-gate thresholds and fallback model settings
+        - the current source text of the extraction-critical local files
+
+    Notes
+    -----
+    The goal is not to create a perfect formal "prompt version" system yet.
+    The goal is to make reprocessing behaviour sane in practice.
+
+    A candidate should be reprocessed automatically when either:
+
+    - the upstream candidate materials changed
+    - the extraction contract changed enough that a rerun is justified
+
+    The second category is approximated here by hashing the local files that
+    currently define:
+
+    - resume extraction schema and prompt rules
+    - input text cleaning
+    - resume text extraction
+    - quality-gate scoring
+    - the single-run extraction orchestration
+
+    Example
+    -------
+    Two separate batch runs with the same:
+
+        - provider
+        - model
+        - thresholds
+        - fallback model
+        - local extraction files
+
+    produce the same contract fingerprint.
+    """
+
+    model_profile = build_runtime_model_profile(args)
+    relevant_file_hashes: dict[str, str] = {}
+
+    # Fingerprint file content rather than only using file paths or modified
+    # times.
+    #
+    # The reason is pragmatic: if the prompt contract changes in a meaningful
+    # way, we want the batch runner to stop pretending that an old successful
+    # extraction is still equivalent. Hashing the content gives us that without
+    # requiring a separate manual version-bump step for every prompt edit.
+    for relative_path in BATCH_FINGERPRINT_RELEVANT_FILES:
+        absolute_path = PROJECT_ROOT / relative_path
+        relevant_file_hashes[str(relative_path)] = hash_payload(
+            absolute_path.read_text(encoding="utf-8")
+        )
+
+    return hash_payload(
+        {
+            "schema_version": BATCH_MANIFEST_SCHEMA_VERSION,
+            "provider": model_profile.provider.value,
+            "model_name": model_profile.model_name,
+            "temperature": model_profile.temperature,
+            "max_output_tokens": model_profile.max_output_tokens,
+            "quality_gate_enabled": args.enable_quality_gate,
+            "quality_pass_threshold": args.quality_pass_threshold,
+            "quality_rerun_threshold": args.quality_rerun_threshold,
+            "fallback_model_name": (
+                args.fallback_model_name if args.enable_quality_gate else None
+            ),
+            "relevant_file_hashes": relevant_file_hashes,
+        }
+    )
+
+
+def _select_latest_note_timestamp(note_items: list[dict[str, Any]]) -> str | None:
+    """
+    Return the latest note timestamp from a list of raw JobAdder note items.
+
+    Parameters
+    ----------
+    note_items : list[dict[str, Any]]
+        Raw note items returned by the JobAdder ingest preparation layer.
+
+    Returns
+    -------
+    str | None
+        Latest available note timestamp as an ISO-like string, or `None` when
+        no usable note timestamps exist.
+
+    Notes
+    -----
+    The JobAdder notes payload can expose both `updatedAt` and `createdAt`.
+    We prefer `updatedAt` when present, but fall back to `createdAt` so older
+    notes still contribute to the upstream-change signal.
+    """
+
+    timestamps: list[str] = []
+
+    for note in note_items:
+        for key in ("updatedAt", "createdAt"):
+            raw_value = note.get(key)
+            if isinstance(raw_value, str) and raw_value.strip() != "":
+                timestamps.append(raw_value.strip())
+                break
+
+    if not timestamps:
+        return None
+
+    return max(timestamps)
+
+
+def build_candidate_processing_fingerprint(
+    *,
+    ingest_payload: dict[str, Any],
+    contract_fingerprint: str,
+) -> tuple[str, dict[str, Any]]:
+    """
+    Build one deterministic fingerprint for a candidate's current source state.
+
+    Parameters
+    ----------
+    ingest_payload : dict[str, Any]
+        Ingest-preparation payload returned by
+        `build_jobadder_candidate_ingest_shell(...)`.
+
+    contract_fingerprint : str
+        Batch-run contract fingerprint returned by
+        `build_extraction_contract_fingerprint(...)`.
+
+    Returns
+    -------
+    tuple[str, dict[str, Any]]
+        Tuple containing:
+
+        - the final candidate processing fingerprint
+        - the smaller source-marker payload used to build it
+
+    Notes
+    -----
+    We intentionally do not fingerprint the full raw provider payload here.
+    That would make the skip logic harder to explain and more fragile than it
+    needs to be.
+
+    Instead we fingerprint the smaller set of source markers that answer the
+    operational question:
+
+        "Would re-running this candidate now likely produce a materially
+        different extraction result?"
+
+    Example
+    -------
+    If a candidate receives:
+
+    - a newer CV attachment
+    - additional notes
+    - or an upstream candidate-profile update
+
+    then the returned fingerprint changes and the batch runner will no longer
+    skip that candidate automatically.
+    """
+
+    candidate_payload = ingest_payload.get("candidate", {})
+    latest_resume = ingest_payload.get("latest_resume")
+    notes_payload = ingest_payload.get("notes", {})
+    note_items = notes_payload.get("items", []) if isinstance(notes_payload, dict) else []
+
+    latest_resume_payload = latest_resume if isinstance(latest_resume, dict) else {}
+    source_markers = {
+        "contract_fingerprint": contract_fingerprint,
+        "source_system": ingest_payload.get("source_system"),
+        "jobadder_account": ingest_payload.get("jobadder_account"),
+        "candidate_id": ingest_payload.get("source_candidate_id"),
+        "candidate_updated_at": candidate_payload.get("updatedAt"),
+        "candidate_status": candidate_payload.get("status"),
+        "latest_resume_attachment_id": latest_resume_payload.get("attachmentId"),
+        "latest_resume_created_at": latest_resume_payload.get("createdAt"),
+        "latest_resume_file_name": latest_resume_payload.get("fileName"),
+        "resume_attachment_count": ingest_payload.get("attachments", {}).get(
+            "resume_attachment_count"
+        ),
+        "note_count": notes_payload.get("note_count") if isinstance(notes_payload, dict) else None,
+        "latest_note_timestamp": _select_latest_note_timestamp(note_items),
+    }
+
+    return hash_payload(source_markers), source_markers
+
+
+def load_batch_manifest_records(*, manifest_path: Path) -> list[dict[str, Any]]:
+    """
+    Load previously recorded batch-manifest rows from JSONL.
+
+    Parameters
+    ----------
+    manifest_path : Path
+        JSONL manifest path to read.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Manifest records in file order.
+
+    Notes
+    -----
+    - Missing manifest files are treated as "no prior batch history".
+    - Blank lines are ignored.
+    - Malformed JSON is treated as an operator-visible error rather than
+      silently skipped, because a corrupted manifest should not quietly change
+      reprocessing behaviour.
+
+    Example
+    -------
+    When the manifest file does not exist yet, this helper simply returns `[]`.
+    """
+
+    if not manifest_path.exists():
+        return []
+
+    records: list[dict[str, Any]] = []
+    with manifest_path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            stripped_line = line.strip()
+            if stripped_line == "":
+                continue
+
+            try:
+                decoded = json.loads(stripped_line)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(
+                    f"Batch manifest is malformed at line {line_number}: "
+                    f"{manifest_path}"
+                ) from exc
+
+            if not isinstance(decoded, dict):
+                raise RuntimeError(
+                    f"Batch manifest record at line {line_number} is not a JSON object: "
+                    f"{manifest_path}"
+                )
+
+            records.append(decoded)
+
+    return records
+
+
+def find_success_manifest_record(
+    *,
+    manifest_records: list[dict[str, Any]],
+    candidate_fingerprint: str,
+) -> dict[str, Any] | None:
+    """
+    Return the most recent successful manifest record for one fingerprint.
+
+    Parameters
+    ----------
+    manifest_records : list[dict[str, Any]]
+        Previously loaded manifest rows.
+
+    candidate_fingerprint : str
+        Candidate processing fingerprint built for the current run.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Matching successful manifest row, or `None` when the candidate should
+        be processed again.
+
+    Notes
+    -----
+    We only skip when a prior record was both:
+
+    - the exact same fingerprint
+    - a successful completed processing run
+
+    Failures do not count as skip candidates because the same candidate should
+    be allowed to run again later after the underlying issue is fixed.
+    """
+
+    for record in reversed(manifest_records):
+        if record.get("candidate_fingerprint") != candidate_fingerprint:
+            continue
+        if record.get("processing_outcome") != "success":
+            continue
+        return record
+
+    return None
+
+
+def build_batch_manifest_record(
+    *,
+    candidate_id: int,
+    candidate_fingerprint: str,
+    source_markers: dict[str, Any],
+    output_json: str | None,
+    processing_outcome: str,
+    result: dict[str, Any] | None = None,
+    failure_record: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Build one manifest row for a processed candidate.
+
+    Parameters
+    ----------
+    candidate_id : int
+        Candidate identifier for the processed batch item.
+
+    candidate_fingerprint : str
+        Exact processing fingerprint used for skip decisions.
+
+    source_markers : dict[str, Any]
+        Smaller source-marker payload used to build the fingerprint.
+
+    output_json : str | None
+        Per-candidate JSON output path when a successful extraction result was
+        written.
+
+    processing_outcome : str
+        Processing outcome label. V1 uses:
+
+        - `success`
+        - `failure`
+
+    result : dict[str, Any] | None
+        Successful extraction result when available.
+
+    failure_record : dict[str, Any] | None
+        Structured failure record when the candidate run failed.
+
+    Returns
+    -------
+    dict[str, Any]
+        JSON-serialisable manifest record.
+
+    Example
+    -------
+    A successful row captures:
+
+    - the fingerprint
+    - the source markers that produced it
+    - the final model name
+    - the final quality score
+    - the per-candidate JSON artifact path
+    """
+
+    quality_assessment = result.get("quality_assessment", {}) if result else {}
+    quality_gate = result.get("quality_gate", {}) if result else {}
+    model_profile = result.get("model_profile", {}) if result else {}
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "candidate_id": candidate_id,
+        "candidate_fingerprint": candidate_fingerprint,
+        "source_markers": source_markers,
+        "processing_outcome": processing_outcome,
+        "output_json": output_json,
+        "provider": model_profile.get("provider"),
+        "model_name": model_profile.get("model_name"),
+        "final_model_name": quality_gate.get("final_model_name")
+        if quality_gate
+        else model_profile.get("model_name"),
+        "quality_score": quality_assessment.get("quality_score"),
+        "quality_status": quality_assessment.get("status"),
+        "fallback_invoked": quality_gate.get("fallback_invoked", False),
+        "failure_stage": failure_record.get("stage") if failure_record else None,
+        "failure_message": failure_record.get("message") if failure_record else None,
+    }
+
+
 def build_failure_record(
     *,
     candidate_id: int,
@@ -365,8 +790,10 @@ def build_batch_summary(
     candidate_ids: list[int],
     successes: list[dict[str, Any]],
     failures: list[dict[str, Any]],
+    skipped: list[dict[str, Any]],
     output_dir: Path,
     quality_log_jsonl: Path | None,
+    manifest_jsonl: Path | None,
 ) -> dict[str, Any]:
     """
     Build one structured batch summary payload.
@@ -382,11 +809,18 @@ def build_batch_summary(
     failures : list[dict[str, Any]]
         Per-candidate failure records built during the batch loop.
 
+    skipped : list[dict[str, Any]]
+        Candidate records skipped because an identical successful fingerprint
+        already existed in the manifest.
+
     output_dir : Path
         Timestamped output directory for this batch run.
 
     quality_log_jsonl : Path | None
         Path to the quality-gate JSONL log when quality gating is enabled.
+
+    manifest_jsonl : Path | None
+        Batch manifest JSONL path used for skip/reprocess tracking.
 
     Returns
     -------
@@ -421,12 +855,15 @@ def build_batch_summary(
         "requested_count": len(candidate_ids),
         "success_count": len(successes),
         "failure_count": len(failures),
+        "skipped_count": len(skipped),
         "fallback_count": fallback_count,
         "quality_status_counts": quality_status_counts,
         "output_dir": str(output_dir),
         "quality_log_jsonl": str(quality_log_jsonl) if quality_log_jsonl is not None else None,
+        "manifest_jsonl": str(manifest_jsonl) if manifest_jsonl is not None else None,
         "successes": successes,
         "failures": failures,
+        "skipped": skipped,
     }
 
 
@@ -455,9 +892,12 @@ def print_batch_summary(summary: dict[str, Any]) -> None:
         f"Requested candidates: {summary['requested_count']}",
         f"Successful candidates: {summary['success_count']}",
         f"Failed candidates: {summary['failure_count']}",
+        f"Skipped candidates: {summary['skipped_count']}",
         f"Fallback reruns: {summary['fallback_count']}",
         f"Output directory: {summary['output_dir']}",
     ]
+    if summary.get("manifest_jsonl"):
+        lines.append(f"Manifest JSONL: {summary['manifest_jsonl']}")
 
     quality_status_counts = summary.get("quality_status_counts", {})
     if quality_status_counts:
@@ -542,8 +982,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.quality_log_jsonl is None:
             args.quality_log_jsonl = batch_output_dir / "quality_log.jsonl"
 
+        manifest_records = load_batch_manifest_records(
+            manifest_path=args.manifest_jsonl,
+        )
+        contract_fingerprint = build_extraction_contract_fingerprint(args=args)
+
         successes: list[dict[str, Any]] = []
         failures: list[dict[str, Any]] = []
+        skipped: list[dict[str, Any]] = []
 
         for index, candidate_id in enumerate(candidate_ids, start=1):
             print(f"[{index}/{len(candidate_ids)}] Candidate {candidate_id}")
@@ -561,8 +1007,50 @@ def main(argv: list[str] | None = None) -> int:
             # mutable namespace object was reused across the whole loop.
             candidate_args = argparse.Namespace(**deepcopy(vars(args)))
             candidate_args.candidate_id = candidate_id
+            candidate_fingerprint: str | None = None
+            source_markers: dict[str, Any] | None = None
 
             try:
+                # Preflight one source-side ingest shell before we spend any
+                # LLM tokens.
+                #
+                # This preflight has two jobs:
+                # - gather the source markers needed for the manifest fingerprint
+                # - fail early if the candidate cannot even be read cleanly from
+                #   JobAdder
+                #
+                # That means the skip layer avoids duplicate LLM work, even
+                # though it still performs the cheaper source-system reads
+                # required to determine whether anything has changed upstream.
+                ingest_payload = build_jobadder_candidate_ingest_shell(
+                    jobadder_account=args.jobadder_account,
+                    candidate_id=candidate_id,
+                )
+                candidate_fingerprint, source_markers = (
+                    build_candidate_processing_fingerprint(
+                        ingest_payload=ingest_payload,
+                        contract_fingerprint=contract_fingerprint,
+                    )
+                )
+
+                if not args.force_reprocess:
+                    existing_success = find_success_manifest_record(
+                        manifest_records=manifest_records,
+                        candidate_fingerprint=candidate_fingerprint,
+                    )
+                    if existing_success is not None:
+                        skipped_record = {
+                            "candidate_id": candidate_id,
+                            "candidate_fingerprint": candidate_fingerprint,
+                            "previous_output_json": existing_success.get("output_json"),
+                            "previous_timestamp": existing_success.get("timestamp"),
+                        }
+                        skipped.append(skipped_record)
+                        print(
+                            "  Skipped: identical successful fingerprint already exists."
+                        )
+                        continue
+
                 result = run_live_resume_extraction_with_optional_quality_gate(
                     candidate_args
                 )
@@ -601,8 +1089,22 @@ def main(argv: list[str] | None = None) -> int:
                         ),
                     }
                 )
+                manifest_record = build_batch_manifest_record(
+                    candidate_id=candidate_id,
+                    candidate_fingerprint=candidate_fingerprint,
+                    source_markers=source_markers,
+                    output_json=str(output_path),
+                    processing_outcome="success",
+                    result=result,
+                )
+                append_jsonl_log(
+                    payload=manifest_record,
+                    output_path=args.manifest_jsonl,
+                )
+                manifest_records.append(manifest_record)
 
             except (
+                JobAdderIngestPreparationError,
                 ResumeExtractionError,
                 LLMProviderConfigurationError,
                 RuntimeError,
@@ -616,6 +1118,18 @@ def main(argv: list[str] | None = None) -> int:
                     payload=failure_record,
                     output_path=batch_output_dir / "batch_failures.jsonl",
                 )
+                if candidate_fingerprint is not None and source_markers is not None:
+                    append_jsonl_log(
+                        payload=build_batch_manifest_record(
+                            candidate_id=candidate_id,
+                            candidate_fingerprint=candidate_fingerprint,
+                            source_markers=source_markers,
+                            output_json=None,
+                            processing_outcome="failure",
+                            failure_record=failure_record,
+                        ),
+                        output_path=args.manifest_jsonl,
+                    )
 
                 print(f"  Failed candidate {candidate_id}: {exc}")
                 if args.stop_on_error:
@@ -625,8 +1139,10 @@ def main(argv: list[str] | None = None) -> int:
             candidate_ids=candidate_ids,
             successes=successes,
             failures=failures,
+            skipped=skipped,
             output_dir=batch_output_dir,
             quality_log_jsonl=args.quality_log_jsonl,
+            manifest_jsonl=args.manifest_jsonl,
         )
         summary_path = batch_output_dir / "batch_summary.json"
         write_json_output(payload=summary, output_path=summary_path)

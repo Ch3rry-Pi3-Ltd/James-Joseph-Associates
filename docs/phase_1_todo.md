@@ -405,8 +405,19 @@ LLM evaluation should be designed before model outputs become business-critical.
 Current note:
 
 - Live resume extraction is working against real candidate data.
-- The immediate remaining gap is evaluation, not provider plumbing.
-- The next evaluation layer should score extraction quality, cost, latency, and model/provider tradeoffs in a repeatable way.
+- A deterministic non-LLM extraction scorer now exists for:
+  - schema and required-field checks
+  - source-hint comparisons
+  - pass / review / rerun routing
+- The live extraction runner now supports:
+  - first-pass extraction with `gpt-4.1-mini`
+  - fallback reruns with `gpt-5.4-mini`
+  - JSONL quality logging
+- A batch runner now exists for calibration across multiple JobAdder candidates.
+- The batch runner also keeps a local manifest fingerprint so unchanged successful
+  candidates can be skipped instead of paying for duplicate LLM runs.
+- The immediate remaining gap is score calibration across a real candidate sample,
+  not the basic extraction/fallback plumbing.
 
 </details>
 

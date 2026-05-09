@@ -310,6 +310,8 @@ james-joseph-associates/
 |-- scripts/
 |   |-- README.md
 |   |-- run_resume_extraction.py
+|   |-- run_resume_extraction_batch.py
+|   |-- list_jobadder_candidates.py
 |   |-- check_env.py
 |   |-- run_evals.py
 |   |-- import_source_records.py
@@ -484,6 +486,8 @@ Fixtures should be safe to commit and must not contain client-sensitive data.
 Local operational scripts:
 
 - Live integration runners.
+- Batch calibration runners.
+- Source-system listing and inspection helpers.
 - Environment checks.
 - Import helpers.
 - Embedding backfills.

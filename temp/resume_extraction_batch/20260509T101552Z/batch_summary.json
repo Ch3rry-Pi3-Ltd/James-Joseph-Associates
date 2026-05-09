@@ -1,0 +1,57 @@
+{
+  "timestamp": "2026-05-09T10:16:50.491347+00:00",
+  "requested_candidate_ids": [
+    13812978,
+    13816907,
+    13816908
+  ],
+  "requested_count": 3,
+  "success_count": 2,
+  "failure_count": 1,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {
+    "pass": 2
+  },
+  "output_dir": "temp\\resume_extraction_batch\\20260509T101552Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260509T101552Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [
+    {
+      "candidate_id": 13816907,
+      "output_json": "temp\\resume_extraction_batch\\20260509T101552Z\\candidate_13816907.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 96,
+      "quality_status": "pass",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13816908,
+      "output_json": "temp\\resume_extraction_batch\\20260509T101552Z\\candidate_13816908.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 96,
+      "quality_status": "pass",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    }
+  ],
+  "failures": [
+    {
+      "timestamp": "2026-05-09T10:15:58.910872+00:00",
+      "candidate_id": 13812978,
+      "error_type": "JobAdderIngestPreparationError",
+      "message": "No likely JobAdder resume attachment was found for this candidate.",
+      "stage": "resume_selection",
+      "details": [
+        {
+          "jobadder_account": 2236
+        },
+        {
+          "candidate_id": 13812978
+        }
+      ]
+    }
+  ],
+  "skipped": []
+}

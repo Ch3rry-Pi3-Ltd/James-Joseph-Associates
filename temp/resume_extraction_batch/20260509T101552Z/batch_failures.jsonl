@@ -1,0 +1,1 @@
+{"timestamp": "2026-05-09T10:15:58.910872+00:00", "candidate_id": 13812978, "error_type": "JobAdderIngestPreparationError", "message": "No likely JobAdder resume attachment was found for this candidate.", "stage": "resume_selection", "details": [{"jobadder_account": 2236}, {"candidate_id": 13812978}]}

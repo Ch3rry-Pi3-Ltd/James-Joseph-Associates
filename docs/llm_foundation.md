@@ -20,8 +20,10 @@ Current files:
 ```text
 backend/llm/models.py
 backend/llm/providers.py
+backend/services/extraction_quality.py
 tests/unit/test_llm_models.py
 tests/unit/test_llm_providers.py
+tests/unit/test_extraction_quality.py
 ```
 
 These files define and test:
@@ -29,6 +31,7 @@ These files define and test:
 - a local model-description layer
 - a provider factory layer
 - settings-backed provider configuration for real model calls
+- a deterministic non-LLM extraction quality scorer
 
 The current layer can describe:
 
@@ -198,12 +201,17 @@ The backend now has:
 - settings-backed OpenAI key and timeout configuration in `backend/settings.py`
 - live extraction orchestration in `backend/services/resume_extraction.py`
 - a local integration script in `scripts/run_resume_extraction.py`
+- a deterministic extraction quality gate in `backend/services/extraction_quality.py`
+- a batch calibration runner in `scripts/run_resume_extraction_batch.py`
+- a JobAdder candidate-listing helper script in `scripts/list_jobadder_candidates.py`
 
 In plain language:
 
 - profiles describe what model we want
 - providers build the real client
 - services use that client for structured extraction
+- the quality gate can route weak first-pass extractions to a stronger fallback
+- the batch runner can now skip unchanged successful candidates using a local manifest fingerprint
 
 ## Why Multi-Provider Routing Is Still Deferred
 
@@ -259,16 +267,13 @@ Done:
 
 Not done yet:
 
-- OpenRouter provider integration
-- Nemotron/OpenRouter extraction benchmarking
-- provider fallback
+- provider fallback beyond the current extraction quality-gate flow
 - extraction monitoring metrics
 - evaluation harness
-- systematic model-quality comparison
+- systematic batch-score calibration across a wider real candidate sample
 
 Recommended next project step:
 
-- keep the provider layer thin and explicit
-- add OpenRouter/Nemotron support behind the same provider interface
-- build the evaluation harness before changing the default extraction model
-- add extraction run monitoring before scaling volume
+- calibrate the deterministic quality gate on a real multi-candidate batch
+- tighten the rerun/review thresholds using real disagreement cases
+- then move from local JSON artifacts toward persistence and reporting
