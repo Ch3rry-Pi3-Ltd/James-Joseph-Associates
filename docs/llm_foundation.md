@@ -202,6 +202,7 @@ The backend now has:
 - live extraction orchestration in `backend/services/resume_extraction.py`
 - a local integration script in `scripts/run_resume_extraction.py`
 - a deterministic extraction quality gate in `backend/services/extraction_quality.py`
+- a separate deterministic CV source-richness assessment in `backend/services/extraction_quality.py`
 - a batch calibration runner in `scripts/run_resume_extraction_batch.py`
 - a JobAdder candidate-listing helper script in `scripts/list_jobadder_candidates.py`
 
@@ -211,6 +212,7 @@ In plain language:
 - providers build the real client
 - services use that client for structured extraction
 - the quality gate can route weak first-pass extractions to a stronger fallback
+- the source-richness score can describe whether a CV is rich, adequate, or sparse
 - the batch runner can now skip unchanged successful candidates using a local manifest fingerprint
 
 ## Why Multi-Provider Routing Is Still Deferred

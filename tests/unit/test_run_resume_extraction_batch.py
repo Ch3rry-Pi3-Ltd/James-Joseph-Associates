@@ -1,5 +1,30 @@
 """
 Unit tests for the batch resume-extraction runner helpers.
+
+Why this module exists
+----------------------
+The batch runner now does more than just loop over candidate IDs. It also:
+
+- builds batch summaries
+- records manifest rows
+- decides whether unchanged successful candidates should be skipped
+
+Those behaviours are cheap to test locally and should stay deterministic.
+
+What these tests cover
+----------------------
+This module focuses on the small pure helpers that are easiest to verify
+without touching:
+
+- JobAdder
+- the LLM provider layer
+- the filesystem-heavy live batch path
+
+In plain language:
+
+- prove the helper logic is stable
+- keep the batch runner's control flow explainable
+- catch regressions in manifest/summary behaviour early
 """
 
 from __future__ import annotations

@@ -1,8 +1,10 @@
 """
 Deterministic quality assessment for structured resume extraction.
 
-This module provides a non-LLM quality gate for structured extraction output.
-It is designed for routing and triage, not semantic truth adjudication.
+This module provides two deterministic, non-LLM assessment layers:
+
+- extraction quality scoring for routing and triage
+- source CV richness scoring for source-document quality and downstream review
 
 Why this module exists
 ----------------------
@@ -21,6 +23,8 @@ This module answers that with deterministic checks based on:
 - schema completeness
 - source-hint extraction from cleaned resume text
 - simple contradiction / thinness heuristics
+- source-document richness signals such as section presence, role density, and
+  amount of descriptive text
 
 What this module is for
 -----------------------
@@ -29,6 +33,7 @@ It is for:
 - deciding whether an extraction is probably good enough
 - deciding whether to rerun a candidate through a stronger model
 - producing explainable reasons for those decisions
+- surfacing when a CV is merely sparse rather than poorly extracted
 
 What this module is not for
 ---------------------------
@@ -57,6 +62,7 @@ In plain language:
 - inspect the output cheaply
 - compare it to obvious hints from the source text
 - decide whether to keep it, review it, or rerun it
+- separately describe whether the source CV itself is rich, adequate, or sparse
 """
 
 from __future__ import annotations
@@ -71,9 +77,23 @@ from backend.services.resume_extraction import ResumeStructuredExtraction
 
 _EMAIL_PATTERN = re.compile(r"\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _PHONE_CANDIDATE_PATTERN = re.compile(r"(?:\+?\d[\d\s().\-]{8,}\d)")
+_DATE_RANGE_PATTERN = re.compile(
+    r"\b(?:"
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{4}"
+    r"|"
+    r"\d{4}"
+    r")\s*[-–—]\s*(?:"
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{4}"
+    r"|"
+    r"\d{4}"
+    r"|Present"
+    r")\b",
+    re.IGNORECASE,
+)
 _SECTION_PATTERNS: dict[str, tuple[str, ...]] = {
     "experience": ("experience", "employment"),
     "education": ("education",),
+    "skills": ("skills", "technical skills", "core skills"),
     "certifications": ("certifications", "certification"),
     "projects": ("projects", "project experience", "major projects"),
     "portfolio": ("portfolio",),
@@ -129,6 +149,53 @@ class ExtractionQualityAssessment(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     source_hints: dict[str, Any] = Field(default_factory=dict)
     check_results: dict[str, Any] = Field(default_factory=dict)
+
+
+class CVSourceAssessment(BaseModel):
+    """
+    One deterministic assessment of the source CV's richness.
+
+    Attributes
+    ----------
+    richness_score : int
+        Final 0-100 richness score for the cleaned source CV text.
+
+    richness_band : Literal["rich", "adequate", "sparse", "very_sparse"]
+        Coarse source-quality band derived from the richness score.
+
+    reasons : list[str]
+        Short machine-readable reason labels explaining why the richness score
+        was reduced.
+
+    source_metrics : dict[str, Any]
+        Deterministic source-document metrics such as word count, section
+        presence, and role/date-range density.
+
+    Notes
+    -----
+    This score is intentionally advisory. It should help distinguish:
+
+    - a sparse but correctly extracted CV
+    - a richer CV where the extraction itself may have underperformed
+
+    It should not trigger fallback reruns on its own.
+
+    Example
+    -------
+    A sparse one-page CV may produce:
+
+        CVSourceAssessment(
+            richness_score=42,
+            richness_band="sparse",
+            reasons=["short_resume_text", "limited_employment_signals"],
+            source_metrics={"word_count": 78},
+        )
+    """
+
+    richness_score: int
+    richness_band: Literal["rich", "adequate", "sparse", "very_sparse"]
+    reasons: list[str] = Field(default_factory=list)
+    source_metrics: dict[str, Any] = Field(default_factory=dict)
 
 
 def score_resume_extraction(
@@ -351,6 +418,154 @@ def score_resume_extraction(
     )
 
 
+def assess_source_cv_richness(*, cleaned_resume_text: str) -> CVSourceAssessment:
+    """
+    Assess how rich or sparse the source CV text appears to be.
+
+    Parameters
+    ----------
+    cleaned_resume_text : str
+        Cleaned resume text used for extraction.
+
+    Returns
+    -------
+    CVSourceAssessment
+        Advisory source-document richness assessment.
+
+    Notes
+    -----
+    This helper answers a different question from `score_resume_extraction`.
+    It is not asking:
+
+        "Did the extractor behave well?"
+
+    It is asking:
+
+        "How much recruiter-useful signal did the source CV itself contain?"
+
+    That distinction matters because a sparse CV may still be extracted
+    correctly and should not automatically be treated as an extraction failure.
+
+    Example
+    -------
+    A one-page CV with:
+
+        - one email
+        - three role titles
+        - almost no descriptive prose
+
+    may still yield a `richness_band="sparse"` even if the extraction quality
+    score later comes back as `pass`.
+    """
+
+    source_hints = _build_source_hints(cleaned_resume_text)
+    score = 100
+    reasons: list[str] = []
+
+    character_count = len(cleaned_resume_text)
+    word_count = len(re.findall(r"\b\w+\b", cleaned_resume_text))
+    nonempty_lines = [
+        line.strip()
+        for line in cleaned_resume_text.splitlines()
+        if line.strip() != ""
+    ]
+    date_range_count = len(_DATE_RANGE_PATTERN.findall(cleaned_resume_text))
+    substantial_line_count = sum(
+        1 for line in nonempty_lines if len(re.findall(r"\b\w+\b", line)) >= 8
+    )
+    bullet_like_line_count = sum(
+        1
+        for line in nonempty_lines
+        if line.startswith(("-", "*", "•")) or "•" in line
+    )
+
+    if character_count < 500:
+        score -= 30
+        reasons.append("short_resume_text")
+    elif character_count < 1200:
+        score -= 15
+        reasons.append("limited_resume_text")
+
+    if word_count < 90:
+        score -= 25
+        reasons.append("low_word_count")
+    elif word_count < 220:
+        score -= 10
+        reasons.append("moderate_word_count")
+
+    if date_range_count == 0:
+        score -= 25
+        reasons.append("no_employment_signals")
+    elif date_range_count == 1:
+        score -= 12
+        reasons.append("limited_employment_signals")
+
+    if substantial_line_count < 4:
+        score -= 15
+        reasons.append("limited_descriptive_content")
+    elif substantial_line_count < 8:
+        score -= 8
+        reasons.append("moderate_descriptive_content")
+
+    if bullet_like_line_count == 0:
+        score -= 4
+        reasons.append("no_bullet_like_content")
+
+    if not source_hints["has_skills_section"]:
+        score -= 8
+        reasons.append("no_explicit_skills_section")
+
+    if not source_hints["has_projects_section"]:
+        score -= 4
+        reasons.append("no_explicit_projects_section")
+
+    if not source_hints["has_education_section"]:
+        score -= 6
+        reasons.append("no_explicit_education_section")
+
+    if source_hints["resume_email_count"] == 0:
+        score -= 12
+        reasons.append("missing_email_contact")
+
+    if source_hints["resume_phone_count"] == 0:
+        score -= 4
+        reasons.append("missing_phone_contact")
+
+    score = max(0, min(100, score))
+
+    if score >= 80:
+        richness_band: Literal["rich", "adequate", "sparse", "very_sparse"] = "rich"
+    elif score >= 55:
+        richness_band = "adequate"
+    elif score >= 30:
+        richness_band = "sparse"
+    else:
+        richness_band = "very_sparse"
+
+    source_metrics = {
+        "character_count": character_count,
+        "word_count": word_count,
+        "nonempty_line_count": len(nonempty_lines),
+        "substantial_line_count": substantial_line_count,
+        "bullet_like_line_count": bullet_like_line_count,
+        "employment_signal_count": date_range_count,
+        "resume_email_count": source_hints["resume_email_count"],
+        "resume_phone_count": source_hints["resume_phone_count"],
+        "has_experience_section": source_hints["has_experience_section"],
+        "has_education_section": source_hints["has_education_section"],
+        "has_skills_section": source_hints["has_skills_section"],
+        "has_projects_section": source_hints["has_projects_section"],
+        "has_certifications_section": source_hints["has_certifications_section"],
+    }
+
+    return CVSourceAssessment(
+        richness_score=score,
+        richness_band=richness_band,
+        reasons=_deduplicate_preserving_order(reasons),
+        source_metrics=source_metrics,
+    )
+
+
 def _build_source_hints(cleaned_resume_text: str) -> dict[str, Any]:
     """
     Build simple deterministic hints from cleaned resume text.
@@ -387,6 +602,7 @@ def _build_source_hints(cleaned_resume_text: str) -> dict[str, Any]:
         "resume_phones": phones,
         "has_experience_section": _section_present(lowered_text, _SECTION_PATTERNS["experience"]),
         "has_education_section": _section_present(lowered_text, _SECTION_PATTERNS["education"]),
+        "has_skills_section": _section_present(lowered_text, _SECTION_PATTERNS["skills"]),
         "has_certifications_section": _section_present(lowered_text, _SECTION_PATTERNS["certifications"]),
         "has_projects_section": _section_present(lowered_text, _SECTION_PATTERNS["projects"])
         or _section_present(lowered_text, _SECTION_PATTERNS["portfolio"]),
@@ -585,6 +801,8 @@ def _deduplicate_preserving_order(values: list[str]) -> list[str]:
 
 
 __all__ = [
+    "CVSourceAssessment",
     "ExtractionQualityAssessment",
+    "assess_source_cv_richness",
     "score_resume_extraction",
 ]

@@ -1,14 +1,60 @@
 """
-Unit tests for deterministic resume-extraction quality scoring.
+Unit tests for deterministic extraction-quality and source-CV assessments.
+
+Why this module exists
+----------------------
+The scorer layer now answers two separate questions:
+
+- did the extraction pipeline produce a structurally credible result?
+- how rich or sparse was the source CV itself?
+
+Those are easy to conflate in conversation, so the tests pin them separately.
+
+What these tests cover
+----------------------
+This module checks that the scorer behaves sensibly for a few deliberately
+chosen shapes:
+
+- strong extraction from a solid CV
+- collapsed extraction that should rerun
+- thin but not broken extraction that should review
+- rich source CV text
+- sparse source CV text
+
+In plain language:
+
+- prove the scorer can tell bad extraction from sparse source material
+- keep routing logic and advisory source scoring from drifting together
 """
 
 from __future__ import annotations
 
-from backend.services.extraction_quality import score_resume_extraction
+from backend.services.extraction_quality import (
+    assess_source_cv_richness,
+    score_resume_extraction,
+)
 from backend.services.resume_extraction import ResumeStructuredExtraction
 
 
 def _build_strong_extraction() -> ResumeStructuredExtraction:
+    """
+    Build one high-signal extraction fixture for scorer tests.
+
+    Notes
+    -----
+    This fixture is intentionally richer than the minimal schema. It includes:
+
+    - current role data
+    - multiple contact methods
+    - projects
+    - tools
+    - education
+    - evidence notes
+
+    so the tests can subtract one dimension at a time without rebuilding the
+    whole object inline each time.
+    """
+
     return ResumeStructuredExtraction.model_validate(
         {
             "current_employer": "Ch3rry Pi3 Ltd",
@@ -82,6 +128,16 @@ def _build_strong_extraction() -> ResumeStructuredExtraction:
 
 
 def test_score_resume_extraction_passes_strong_output() -> None:
+    """
+    Verify that a strong extraction with matching source hints passes cleanly.
+
+    In plain language:
+
+    - feed the scorer a good structured result
+    - give it source text that supports the core extracted fields
+    - confirm it does not invent problems
+    """
+
     extraction = _build_strong_extraction()
     cleaned_resume_text = """
 Roger Campbell
@@ -113,6 +169,16 @@ Cloud Essentials+
 
 
 def test_score_resume_extraction_requests_rerun_for_collapsed_output() -> None:
+    """
+    Verify that an obviously collapsed extraction is routed to rerun.
+
+    In plain language:
+
+    - strip out the core fields
+    - keep the source CV hints intact
+    - confirm the scorer treats this as a bad extraction, not a sparse CV
+    """
+
     extraction = ResumeStructuredExtraction.model_validate(
         {
             "current_employer": None,
@@ -167,6 +233,15 @@ Cloud Essentials+
 
 
 def test_score_resume_extraction_flags_suspicious_output_pollution() -> None:
+    """
+    Verify that known note-only contamination terms are penalised.
+
+    Notes
+    -----
+    This is a narrow regression test for the exact class of leakage we saw in
+    earlier Nemotron/OpenRouter experiments.
+    """
+
     extraction = _build_strong_extraction().model_copy(
         update={
             "tools_and_platforms": [
@@ -188,6 +263,16 @@ def test_score_resume_extraction_flags_suspicious_output_pollution() -> None:
 
 
 def test_score_resume_extraction_reviews_thin_but_not_broken_output() -> None:
+    """
+    Verify that a weakened but still coherent extraction lands in review.
+
+    In plain language:
+
+    - remove some contact fidelity and evidence depth
+    - keep the extraction otherwise usable
+    - confirm the scorer distinguishes "thin" from "collapsed"
+    """
+
     extraction = _build_strong_extraction().model_copy(
         update={
             "emails": ["the_rfc@hotmail.co.uk"],
@@ -215,3 +300,108 @@ Education
     assert "email_count_lower_than_resume_hint" in assessment.reasons
     assert "missing_phones_despite_resume_hint" in assessment.reasons
     assert "evidence_notes_thin" in assessment.reasons
+
+
+def test_assess_source_cv_richness_scores_richer_cv_as_adequate_or_better() -> None:
+    """
+    Verify that a richer multi-role CV text scores as adequate or better.
+
+    Notes
+    -----
+    This is not trying to prove the scorer can identify a perfect CV.
+    It is only pinning the more important boundary:
+
+    - this source is clearly richer than a one-page title-only CV
+    - it should not be labelled sparse
+    """
+
+    cleaned_resume_text = """
+Roger Campbell
+the_rfc@hotmail.co.uk
+roger@ch3rry-pi3.com
+07934 890 708
+
+Experience
+Ch3rry Pi3 Ltd
+2025 - Present
+Co-founded and built applied AI systems for recruitment and healthcare workflows.
+Led end-to-end solution design, delivery, and stakeholder communication across product and engineering workstreams.
+
+BP (via Grayce & Harvey Nash)
+2022 - 2025
+Delivered production optimisation initiatives and forecasting models with measurable business impact.
+Worked across forecasting, optimisation, and deployment workflows in close collaboration with operational stakeholders.
+
+Grayce
+2021 - 2022
+Delivered analytics and machine learning workstreams across client-facing projects with a focus on reproducibility and evidence quality.
+
+Jaguar Land Rover
+2018 - 2021
+Built data science and econometric analysis deliverables for commercial and operational decision-making use cases.
+
+Projects
+GP AI Assistant
+AI Recruitment Platform
+Machine Learning eBook
+
+Skills
+Machine Learning
+Applied Econometrics
+Python
+Azure ML
+Power BI
+
+Education
+BSc Economics
+MSc Data Science
+    """.strip()
+
+    assessment = assess_source_cv_richness(
+        cleaned_resume_text=cleaned_resume_text,
+    )
+
+    assert assessment.richness_score >= 55
+    assert assessment.richness_band in {"adequate", "rich"}
+    assert assessment.source_metrics["has_skills_section"] is True
+    assert assessment.source_metrics["has_projects_section"] is True
+
+
+def test_assess_source_cv_richness_flags_sparse_one_page_cv() -> None:
+    """
+    Verify that a short one-page CV is treated as sparse source material.
+
+    In plain language:
+
+    - the source is thin
+    - that should be reflected in the advisory source score
+    - but it should remain a separate concept from extraction failure
+    """
+
+    cleaned_resume_text = """
+Aric Kuter
+Software Engineer
+London area
+arickuter99@gmail.com
+
+Work History
+Software Engineer
+Blockchain.com
+Apr 2022 - Present
+
+Programmer: Test Automation
+Capitec Bank
+Jan 2020 - Apr 2022
+
+Education
+Udacity
+2019 - 2020
+""".strip()
+
+    assessment = assess_source_cv_richness(
+        cleaned_resume_text=cleaned_resume_text,
+    )
+
+    assert assessment.richness_band in {"sparse", "very_sparse"}
+    assert "short_resume_text" in assessment.reasons or "limited_resume_text" in assessment.reasons
+    assert assessment.source_metrics["has_projects_section"] is False

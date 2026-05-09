@@ -409,6 +409,8 @@ Current note:
   - schema and required-field checks
   - source-hint comparisons
   - pass / review / rerun routing
+- A separate deterministic source-CV richness assessment now exists so sparse
+  CVs can be distinguished from weak extraction runs.
 - The live extraction runner now supports:
   - first-pass extraction with `gpt-4.1-mini`
   - fallback reruns with `gpt-5.4-mini`

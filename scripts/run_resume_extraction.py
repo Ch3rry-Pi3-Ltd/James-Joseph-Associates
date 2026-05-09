@@ -148,7 +148,9 @@ from backend.llm.providers import (
     build_langchain_chat_model,
 )
 from backend.services.extraction_quality import (
+    CVSourceAssessment,
     ExtractionQualityAssessment,
+    assess_source_cv_richness,
     score_resume_extraction,
 )
 from backend.services.resume_extraction import (
@@ -616,6 +618,18 @@ def build_console_summary(result: dict[str, Any]) -> str:
         if reasons:
             lines.append(f"Quality reasons: {', '.join(reasons)}")
 
+    cv_source_assessment = result.get("cv_source_assessment", {})
+    if cv_source_assessment:
+        lines.extend(
+            [
+                f"CV richness score: {cv_source_assessment.get('richness_score')}",
+                f"CV richness band: {cv_source_assessment.get('richness_band')}",
+            ]
+        )
+        source_reasons = cv_source_assessment.get("reasons", [])
+        if source_reasons:
+            lines.append(f"CV richness reasons: {', '.join(source_reasons)}")
+
     if quality_gate:
         lines.append(
             f"Fallback invoked: {'yes' if quality_gate.get('fallback_invoked') else 'no'}"
@@ -820,6 +834,42 @@ def build_quality_assessment(
     )
 
 
+def build_cv_source_assessment(*, result: dict[str, Any]) -> CVSourceAssessment:
+    """
+    Assess the richness of the source CV text for one extraction result.
+
+    Parameters
+    ----------
+    result : dict[str, Any]
+        Full extraction result payload returned by the live extraction flow.
+
+    Returns
+    -------
+    CVSourceAssessment
+        Advisory assessment of how rich or sparse the source CV appears to be.
+
+    Notes
+    -----
+    This assessment is intentionally separate from the extraction quality
+    score. That separation lets downstream users distinguish between:
+
+    - a sparse CV that was extracted correctly
+    - a richer CV where the extraction may have underperformed
+
+    Example
+    -------
+    A caller can derive the source assessment alongside the extraction quality
+    assessment:
+
+        source_assessment = build_cv_source_assessment(result=result)
+    """
+
+    extraction_input = result.get("extraction_input", {})
+    return assess_source_cv_richness(
+        cleaned_resume_text=extraction_input.get("cleaned_resume_text", ""),
+    )
+
+
 def build_quality_log_record(
     *,
     result: dict[str, Any],
@@ -892,6 +942,7 @@ def enrich_result_with_quality_metadata(
     *,
     result: dict[str, Any],
     assessment: ExtractionQualityAssessment,
+    source_assessment: CVSourceAssessment,
     quality_gate: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
@@ -910,11 +961,13 @@ def enrich_result_with_quality_metadata(
     After enrichment, the payload contains fields such as:
 
         result["quality_assessment"]
+        result["cv_source_assessment"]
         result["quality_gate"]
     """
 
     enriched_result = dict(result)
     enriched_result["quality_assessment"] = assessment.model_dump()
+    enriched_result["cv_source_assessment"] = source_assessment.model_dump()
     if quality_gate is not None:
         enriched_result["quality_gate"] = quality_gate
     return enriched_result
@@ -1109,6 +1162,7 @@ def run_live_resume_extraction_with_optional_quality_gate(
     and then inspect:
 
         result["quality_assessment"]
+        result["cv_source_assessment"]
         result["quality_gate"]
     """
 
@@ -1204,6 +1258,7 @@ def run_live_resume_extraction_with_optional_quality_gate(
         return enrich_result_with_quality_metadata(
             result=final_result,
             assessment=final_assessment,
+            source_assessment=build_cv_source_assessment(result=final_result),
             quality_gate=quality_gate_metadata,
         )
 
@@ -1214,6 +1269,7 @@ def run_live_resume_extraction_with_optional_quality_gate(
             pass_threshold=args.quality_pass_threshold,
             rerun_threshold=args.quality_rerun_threshold,
         ),
+        source_assessment=build_cv_source_assessment(result=result),
     )
 
 

@@ -466,6 +466,17 @@ def _select_latest_note_timestamp(note_items: list[dict[str, Any]]) -> str | Non
     The JobAdder notes payload can expose both `updatedAt` and `createdAt`.
     We prefer `updatedAt` when present, but fall back to `createdAt` so older
     notes still contribute to the upstream-change signal.
+
+    Example
+    -------
+    If the note list contains:
+
+        - one note with `createdAt="2025-07-01T10:00:00Z"`
+        - one note with `updatedAt="2025-09-05T07:36:44Z"`
+
+    this helper returns:
+
+        "2025-09-05T07:36:44Z"
     """
 
     timestamps: list[str] = []
@@ -646,6 +657,25 @@ def find_success_manifest_record(
 
     Failures do not count as skip candidates because the same candidate should
     be allowed to run again later after the underlying issue is fixed.
+
+    That rule is intentionally conservative for V1:
+
+    - successful identical runs are safe to skip
+    - failed runs are still replayable
+
+    Later we may carve out a narrower class of stable source-side failures,
+    such as "no resume attached", that are safe to skip too when the upstream
+    fingerprint is unchanged.
+
+    Example
+    -------
+    If the manifest contains:
+
+        - a failure row for fingerprint `abc`
+        - a later success row for fingerprint `abc`
+
+    this helper returns the later success row, because that is the only prior
+    record that justifies skipping a fresh batch attempt.
     """
 
     for record in reversed(manifest_records):
@@ -715,9 +745,18 @@ def build_batch_manifest_record(
     """
 
     quality_assessment = result.get("quality_assessment", {}) if result else {}
+    cv_source_assessment = result.get("cv_source_assessment", {}) if result else {}
     quality_gate = result.get("quality_gate", {}) if result else {}
     model_profile = result.get("model_profile", {}) if result else {}
 
+    # Keep routing quality and source richness side by side in the manifest.
+    #
+    # That distinction matters later when reviewing a batch:
+    # - a candidate may have a good extraction but a sparse CV
+    # - a candidate may have a richer CV but a weak extraction
+    #
+    # Storing both values now makes later threshold tuning and recruiter-facing
+    # reporting much easier than trying to reconstruct them from only one score.
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "candidate_id": candidate_id,
@@ -732,6 +771,8 @@ def build_batch_manifest_record(
         else model_profile.get("model_name"),
         "quality_score": quality_assessment.get("quality_score"),
         "quality_status": quality_assessment.get("status"),
+        "cv_richness_score": cv_source_assessment.get("richness_score"),
+        "cv_richness_band": cv_source_assessment.get("richness_band"),
         "fallback_invoked": quality_gate.get("fallback_invoked", False),
         "failure_stage": failure_record.get("stage") if failure_record else None,
         "failure_message": failure_record.get("message") if failure_record else None,
@@ -1039,6 +1080,17 @@ def main(argv: list[str] | None = None) -> int:
                         candidate_fingerprint=candidate_fingerprint,
                     )
                     if existing_success is not None:
+                        # Skip only on an identical successful fingerprint.
+                        #
+                        # This is the safest first cut:
+                        # - same upstream state
+                        # - same extraction contract
+                        # - previously succeeded
+                        #
+                        # That means we avoid duplicate LLM cost without
+                        # guessing whether a previous failure deserves to be
+                        # treated as terminal. We can add narrower stable-
+                        # failure skips later once we have more live evidence.
                         skipped_record = {
                             "candidate_id": candidate_id,
                             "candidate_fingerprint": candidate_fingerprint,
@@ -1074,6 +1126,7 @@ def main(argv: list[str] | None = None) -> int:
                 write_json_output(payload=json_payload, output_path=output_path)
 
                 quality_assessment = result.get("quality_assessment", {})
+                cv_source_assessment = result.get("cv_source_assessment", {})
                 quality_gate = result.get("quality_gate", {})
                 successes.append(
                     {
@@ -1082,6 +1135,8 @@ def main(argv: list[str] | None = None) -> int:
                         "model_name": result.get("model_profile", {}).get("model_name"),
                         "quality_score": quality_assessment.get("quality_score"),
                         "quality_status": quality_assessment.get("status"),
+                        "cv_richness_score": cv_source_assessment.get("richness_score"),
+                        "cv_richness_band": cv_source_assessment.get("richness_band"),
                         "fallback_invoked": quality_gate.get("fallback_invoked", False),
                         "final_model_name": quality_gate.get(
                             "final_model_name",
@@ -1119,6 +1174,12 @@ def main(argv: list[str] | None = None) -> int:
                     output_path=batch_output_dir / "batch_failures.jsonl",
                 )
                 if candidate_fingerprint is not None and source_markers is not None:
+                    # Record fingerprinted failures too.
+                    #
+                    # Even though V1 does not skip failed fingerprints yet,
+                    # keeping them in the manifest now gives us the raw data we
+                    # need to introduce smarter "stable source failure" rules
+                    # later without redesigning the storage format first.
                     append_jsonl_log(
                         payload=build_batch_manifest_record(
                             candidate_id=candidate_id,
