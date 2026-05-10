@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-05-10T13:40:31.241564+00:00",
+  "requested_candidate_ids": [
+    13844880,
+    13903086
+  ],
+  "requested_count": 2,
+  "success_count": 0,
+  "failure_count": 2,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {},
+  "output_dir": "temp\\resume_extraction_batch\\20260510T133858Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260510T133858Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [],
+  "failures": [
+    {
+      "timestamp": "2026-05-10T13:39:39.598728+00:00",
+      "candidate_id": 13844880,
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed.",
+      "stage": "llm_invoke",
+      "details": [
+        {
+          "source_system": "jobadder"
+        },
+        {
+          "source_candidate_id": 13844880
+        },
+        {
+          "provider": "openai"
+        },
+        {
+          "model_name": "gpt-4.1-mini"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-05-10T13:40:31.236565+00:00",
+      "candidate_id": 13903086,
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed.",
+      "stage": "llm_invoke",
+      "details": [
+        {
+          "source_system": "jobadder"
+        },
+        {
+          "source_candidate_id": 13903086
+        },
+        {
+          "provider": "openai"
+        },
+        {
+          "model_name": "gpt-4.1-mini"
+        }
+      ]
+    }
+  ],
+  "skipped": []
+}

@@ -752,6 +752,64 @@ def test_perform_jobadder_read_with_refresh_retry_raises_for_non_401_provider_fa
     ]
 
 
+def test_perform_jobadder_read_with_refresh_retry_retries_once_for_transport_failure() -> None:
+    """
+    Verify that the shared read helper retries once when the provider helper
+    reports a transport-level connectivity failure.
+
+    Notes
+    -----
+    - This retry is intentionally different from the 401 refresh path.
+    - No token refresh should happen here.
+    - The helper should simply retry the same read once because no usable HTTP
+      response was received on the first attempt.
+
+    Example
+    -------
+    We simulate:
+
+    - the first read raising `JobAdderApiError("Could not reach the JobAdder API.")`
+    - the second read succeeding
+
+    In plain language:
+
+    - pretend the network blipped once
+    - confirm the helper retries once and then returns success
+    """
+
+    stored_connection = {
+        "access_token": "stored-access-token",
+        "refresh_token": "stored-refresh-token",
+        "api_url": "https://eu2api.jobadder.com/v2/",
+        "jobadder_instance": "eu2",
+    }
+    captured_attempts: list[tuple[str, str]] = []
+
+    def fake_read_callable(*, api_url: str, access_token: str) -> dict[str, object]:
+        captured_attempts.append((api_url, access_token))
+        if len(captured_attempts) == 1:
+            raise JobAdderApiError(
+                "Could not reach the JobAdder API.",
+                endpoint_url=f"{api_url.rstrip('/')}/candidates/16496678",
+            )
+        return {"candidate": {"candidateId": 16496678}}
+
+    result, winning_connection = jobadder_ingest._perform_jobadder_read_with_refresh_retry(
+        jobadder_account=2236,
+        stored_connection=stored_connection,
+        stage_name="candidate_read",
+        provider_failure_message="JobAdder candidate detail read failed.",
+        read_callable=fake_read_callable,
+    )
+
+    assert result == {"candidate": {"candidateId": 16496678}}
+    assert winning_connection == stored_connection
+    assert captured_attempts == [
+        ("https://eu2api.jobadder.com/v2/", "stored-access-token"),
+        ("https://eu2api.jobadder.com/v2/", "stored-access-token"),
+    ]
+
+
 def test_select_latest_resume_attachment_uses_created_at_then_attachment_id() -> None:
     """
     Verify that resume selection prefers the newest timestamp and uses

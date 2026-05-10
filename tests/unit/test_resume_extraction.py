@@ -355,6 +355,103 @@ def test_build_resume_extraction_input_from_jobadder_bundle_returns_bounded_prom
             "cleaned_text": "Hi Roger,\n\nThanks again for today.",
         }
     ]
+    assert result["prompt_input_metrics"] == {
+        "resume_file_name": "Roger Campbell - CV 2025.pdf",
+        "resume_original_characters": 47,
+        "resume_prompt_characters": 47,
+        "resume_was_truncated": False,
+        "available_note_count": 1,
+        "prompt_note_count": 1,
+        "available_note_characters": 34,
+        "prompt_note_characters": 34,
+        "notes_were_truncated": False,
+    }
+
+
+def test_build_resume_extraction_input_from_jobadder_bundle_applies_resume_and_note_budgets() -> None:
+    """
+    Verify that the prompt-input builder budgets both oversized resume text and
+    oversized note payloads.
+
+    Notes
+    -----
+    - The resume budget and the note budget solve different problems.
+    - Huge resume bodies can overwhelm the first-pass extraction prompt.
+    - Long note histories can add a lot of low-signal recruiter/process text.
+    - This test pins the deterministic budgeting boundary so later refactors do
+      not silently remove it.
+
+    Example
+    -------
+    We inflate the fake bundle with:
+
+    - one oversized resume body
+    - three cleaned notes that together exceed the total note budget
+
+    The helper should then:
+
+    - truncate the resume text
+    - cap the number of notes
+    - cap the total note characters
+    - report those changes in `prompt_input_metrics`
+
+    In plain language:
+
+    - make the inputs too large on purpose
+    - confirm the prompt builder keeps them bounded
+    """
+
+    bundle = _build_fake_resume_text_bundle()
+    bundle["extracted_resume_text"]["cleaned_text"] = "A" * 80
+    bundle["notes"]["cleaned_items"] = [
+        {
+            "note_id": "n-1",
+            "type": "Call",
+            "created_at": "2026-04-01T10:00:00Z",
+            "updated_at": "2026-04-01T10:00:00Z",
+            "cleaned_text": "B" * 50,
+        },
+        {
+            "note_id": "n-2",
+            "type": "Email",
+            "created_at": "2026-04-02T10:00:00Z",
+            "updated_at": "2026-04-02T10:00:00Z",
+            "cleaned_text": "C" * 50,
+        },
+        {
+            "note_id": "n-3",
+            "type": "Email",
+            "created_at": "2026-04-03T10:00:00Z",
+            "updated_at": "2026-04-03T10:00:00Z",
+            "cleaned_text": "D" * 50,
+        },
+    ]
+
+    result = build_resume_extraction_input_from_jobadder_bundle(
+        resume_text_bundle=bundle,
+        max_resume_characters=40,
+        max_note_count=3,
+        max_note_characters=40,
+        max_total_note_characters=60,
+    )
+
+    assert result["cleaned_resume_text"].endswith("[TRUNCATED FOR PROMPT]")
+    assert len(result["cleaned_resume_text"]) == 40
+    assert len(result["cleaned_candidate_notes"]) == 2
+    assert sum(
+        len(note["cleaned_text"]) for note in result["cleaned_candidate_notes"]
+    ) <= 60
+    assert result["prompt_input_metrics"] == {
+        "resume_file_name": "Roger Campbell - CV 2025.pdf",
+        "resume_original_characters": 80,
+        "resume_prompt_characters": 40,
+        "resume_was_truncated": True,
+        "available_note_count": 3,
+        "prompt_note_count": 2,
+        "available_note_characters": 150,
+        "prompt_note_characters": 60,
+        "notes_were_truncated": True,
+    }
 
 
 def test_build_resume_extraction_input_from_jobadder_bundle_raises_when_resume_text_is_missing() -> None:
@@ -644,6 +741,11 @@ def test_extract_structured_candidate_profile_from_resume_bundle_returns_validat
         "temperature": 0.0,
         "max_output_tokens": 1600,
     }
+    assert result["prompt_truncation"] == {
+        "any_truncation": False,
+        "resume_was_truncated": False,
+        "notes_were_truncated": False,
+    }
 
     assert result["extraction_input"]["candidate_context"]["first_name"] == "Roger"
     assert result["structured_extraction"]["current_employer"] == "Pirum"
@@ -760,12 +862,14 @@ def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_mod
 
     assert str(error) == "The resume extraction model call failed."
     assert error.stage == "llm_invoke"
-    assert error.details == [
-        {"source_system": "jobadder"},
-        {"source_candidate_id": 16496678},
-        {"provider": ModelProvider.OPENAI},
-        {"model_name": "gpt-5.4-mini"},
-    ]
+    assert error.details[0] == {"source_system": "jobadder"}
+    assert error.details[1] == {"source_candidate_id": 16496678}
+    assert error.details[2] == {"provider": ModelProvider.OPENAI}
+    assert error.details[3] == {"model_name": "gpt-5.4-mini"}
+    assert error.details[4] == {"exception_type": "RuntimeError"}
+    assert error.details[5] == {"exception_message": "Provider exploded"}
+    assert error.details[6]["prompt_input_metrics"]["resume_original_characters"] == 47
+    assert error.details[6]["prompt_input_metrics"]["prompt_note_count"] == 1
 
 
 def test_extract_structured_candidate_profile_from_resume_bundle_retries_openrouter_with_json_fallback(
@@ -854,6 +958,121 @@ def test_extract_structured_candidate_profile_from_resume_bundle_retries_openrou
     assert build_modes == [True, False]
     assert result["structured_extraction"]["current_employer"] == "Pirum"
     assert result["structured_extraction"]["tools_and_platforms"] == ["Python"]
+
+
+def test_extract_structured_candidate_profile_from_resume_bundle_retries_length_limited_call_with_larger_output_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the extraction orchestrator retries once with a larger output
+    budget when the model response is cut off by the completion limit.
+
+    Notes
+    -----
+    - This is a narrow retry rule, not a generic second-try policy.
+    - The point is to recover from a specific first-pass failure mode:
+        - the prompt is valid
+        - the model answers
+        - the answer is truncated before the structured object finishes
+    - When that happens, staying on the same model but allowing more output is
+      a sensible local retry.
+
+    Example
+    -------
+    We simulate:
+
+    - the first chain raising a length-style exception
+    - the provider factory building one larger-budget retry model
+    - the retry chain returning valid structured data
+
+    In plain language:
+
+    - pretend the first answer was cut off
+    - confirm the service retries with a bigger output budget
+    - confirm the final returned model metadata reflects that retry budget
+    """
+
+    bundle = _build_fake_resume_text_bundle()
+    model_profile = ModelProfile(
+        provider=ModelProvider.OPENAI,
+        model_name="gpt-4.1-mini",
+        purpose=ModelPurpose.EXTRACTION,
+        temperature=0.0,
+        max_output_tokens=1600,
+    )
+    built_retry_profiles: list[ModelProfile] = []
+
+    class FakeLengthLimitedChain:
+        def invoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+            raise RuntimeError(
+                "Could not parse response content as the length limit was reached"
+            )
+
+    class FakeSuccessfulRetryChain:
+        def invoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+            return {
+                "current_employer": "Pirum",
+                "current_title": "Senior Data Scientist",
+                "professional_summary": "Retry succeeded after a larger output budget.",
+                "location": "London",
+                "emails": ["the_rfc@hotmail.co.uk"],
+                "phones": ["07934 890 708"],
+                "skills": ["Machine Learning"],
+                "tools_and_platforms": ["Python"],
+                "certifications": [],
+                "linkedin_url": None,
+                "portfolio_references": [],
+                "education": [],
+                "employment_history": [],
+                "projects": [],
+                "evidence_notes": ["Retry path returned a complete object."],
+                "ambiguity_notes": [],
+            }
+
+    def fake_build_chain(
+        *,
+        chat_model: Any,
+        system_prompt: str,
+        user_prompt: str,
+        use_native_structured_output: bool,
+    ) -> Any:
+        assert use_native_structured_output is True
+        if chat_model == "initial-chat-model":
+            return FakeLengthLimitedChain()
+        assert chat_model == "retry-chat-model"
+        return FakeSuccessfulRetryChain()
+
+    def fake_build_langchain_chat_model(*, profile: ModelProfile) -> str:
+        built_retry_profiles.append(profile)
+        return "retry-chat-model"
+
+    monkeypatch.setattr(
+        resume_extraction,
+        "_build_langchain_resume_extraction_chain",
+        fake_build_chain,
+    )
+    monkeypatch.setattr(
+        resume_extraction,
+        "build_langchain_chat_model",
+        fake_build_langchain_chat_model,
+    )
+
+    result = extract_structured_candidate_profile_from_resume_bundle(
+        resume_text_bundle=bundle,
+        chat_model="initial-chat-model",
+        model_profile=model_profile,
+    )
+
+    assert len(built_retry_profiles) == 1
+    assert built_retry_profiles[0].max_output_tokens == 2800
+    assert result["model_profile"]["model_name"] == "gpt-4.1-mini"
+    assert result["model_profile"]["max_output_tokens"] == 2800
+    assert result["prompt_truncation"] == {
+        "any_truncation": False,
+        "resume_was_truncated": False,
+        "notes_were_truncated": False,
+    }
+    assert result["structured_extraction"]["current_title"] == "Senior Data Scientist"
 
 
 def test_extract_structured_candidate_profile_from_resume_bundle_raises_when_output_schema_is_invalid(

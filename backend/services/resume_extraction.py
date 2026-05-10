@@ -189,6 +189,21 @@ DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE = ModelProfile(
     max_output_tokens=2200,
 )
 
+# Prompt-input budgeting defaults for the first-pass extraction flow.
+#
+# Some live JobAdder candidates carry very large CV text bodies and long note
+# histories. If we let those payloads grow without bounds, the model call
+# becomes more expensive, slower, and harder to reason about when it fails.
+#
+# These defaults keep the prompt large enough to preserve meaningful CV signal
+# while still putting an explicit ceiling on first-pass input volume.
+DEFAULT_MAX_RESUME_PROMPT_CHARACTERS = 18000
+DEFAULT_MAX_NOTE_COUNT = 4
+DEFAULT_MAX_NOTE_CHARACTERS = 1200
+DEFAULT_MAX_TOTAL_NOTE_CHARACTERS = 3200
+DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_CAP = 4000
+DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_INCREMENT = 1200
+
 
 class EmploymentHistoryItem(BaseModel):
     """
@@ -872,6 +887,7 @@ def extract_structured_candidate_profile_from_resume_bundle(
         extraction_input=extraction_input,
     )
 
+    active_model_profile = model_profile
     extraction_chain = _build_langchain_resume_extraction_chain(
         chat_model=chat_model,
         system_prompt=prompt_bundle["system_prompt"],
@@ -911,24 +927,68 @@ def extract_structured_candidate_profile_from_resume_bundle(
                 raise ResumeExtractionError(
                     "The resume extraction model call failed.",
                     stage="llm_invoke",
-                    details=[
-                        {"source_system": extraction_input["source_system"]},
-                        {"source_candidate_id": extraction_input["source_candidate_id"]},
-                        {"provider": model_profile.provider},
-                        {"model_name": model_profile.model_name},
-                        {"fallback_mode": "json_text"},
-                    ],
+                    details=_build_model_invoke_error_details(
+                        extraction_input=extraction_input,
+                        model_profile=model_profile,
+                        exc=fallback_exc,
+                        fallback_mode="json_text",
+                    ),
                 ) from fallback_exc
+        elif _should_retry_with_larger_output_budget(exc, model_profile):
+            retry_model_profile = _build_retry_model_profile_for_length_failure(
+                model_profile=model_profile
+            )
+
+            if retry_model_profile is None:
+                raise ResumeExtractionError(
+                    "The resume extraction model call failed.",
+                    stage="llm_invoke",
+                    details=_build_model_invoke_error_details(
+                        extraction_input=extraction_input,
+                        model_profile=model_profile,
+                        exc=exc,
+                    ),
+                ) from exc
+
+            # Rebuild the provider client deliberately here rather than trying
+            # to mutate the existing chat-model instance in place.
+            #
+            # The shared provider factory already owns profile validation and
+            # client construction. Reusing it keeps this retry path aligned
+            # with the rest of the extraction flow and makes the new budget
+            # explicit in the returned model metadata.
+            retry_chat_model = build_langchain_chat_model(profile=retry_model_profile)
+            retry_chain = _build_langchain_resume_extraction_chain(
+                chat_model=retry_chat_model,
+                system_prompt=prompt_bundle["system_prompt"],
+                user_prompt=prompt_bundle["user_prompt"],
+                use_native_structured_output=True,
+            )
+
+            try:
+                raw_result = retry_chain.invoke({})
+            except Exception as retry_exc:
+                raise ResumeExtractionError(
+                    "The resume extraction model call failed.",
+                    stage="llm_invoke",
+                    details=_build_model_invoke_error_details(
+                        extraction_input=extraction_input,
+                        model_profile=retry_model_profile,
+                        exc=retry_exc,
+                        fallback_mode="larger_output_budget",
+                    ),
+                ) from retry_exc
+
+            active_model_profile = retry_model_profile
         else:
             raise ResumeExtractionError(
                 "The resume extraction model call failed.",
                 stage="llm_invoke",
-                details=[
-                    {"source_system": extraction_input["source_system"]},
-                    {"source_candidate_id": extraction_input["source_candidate_id"]},
-                    {"provider": model_profile.provider},
-                    {"model_name": model_profile.model_name},
-                ],
+                details=_build_model_invoke_error_details(
+                    extraction_input=extraction_input,
+                    model_profile=model_profile,
+                    exc=exc,
+                ),
             ) from exc
 
     try:
@@ -955,8 +1015,11 @@ def extract_structured_candidate_profile_from_resume_bundle(
         "source_system": extraction_input["source_system"],
         "source_candidate_id": extraction_input["source_candidate_id"],
         "jobadder_account": extraction_input.get("jobadder_account"),
-        "model_profile": _serialise_model_profile(model_profile),
+        "model_profile": _serialise_model_profile(active_model_profile),
         "extraction_input": extraction_input,
+        "prompt_truncation": _build_prompt_truncation_summary(
+            prompt_input_metrics=extraction_input.get("prompt_input_metrics", {})
+        ),
         "prompt_bundle": prompt_bundle,
         "structured_extraction": structured_extraction.model_dump(),
     }
@@ -965,9 +1028,10 @@ def extract_structured_candidate_profile_from_resume_bundle(
 def build_resume_extraction_input_from_jobadder_bundle(
     *,
     resume_text_bundle: dict[str, Any],
-    max_resume_characters: int = 22000,
-    max_note_count: int = 5,
-    max_note_characters: int = 2500,
+    max_resume_characters: int = DEFAULT_MAX_RESUME_PROMPT_CHARACTERS,
+    max_note_count: int = DEFAULT_MAX_NOTE_COUNT,
+    max_note_characters: int = DEFAULT_MAX_NOTE_CHARACTERS,
+    max_total_note_characters: int = DEFAULT_MAX_TOTAL_NOTE_CHARACTERS,
 ) -> dict[str, Any]:
     """
     Build one prompt-ready extraction input from a prepared JobAdder text bundle.
@@ -985,6 +1049,10 @@ def build_resume_extraction_input_from_jobadder_bundle(
 
     max_note_characters : int
         Maximum number of characters to keep from each note.
+
+    max_total_note_characters : int
+        Maximum number of note characters to keep across all prompt-ready
+        notes combined.
 
     Returns
     -------
@@ -1028,6 +1096,8 @@ def build_resume_extraction_input_from_jobadder_bundle(
     - prefer `extracted_resume_text["cleaned_text"]` over raw text
     - convert the larger candidate payload into a smaller candidate snapshot
     - convert the larger notes payload into smaller prompt-ready note items
+    - attach prompt-input metrics so later `llm_invoke` failures are easier to
+      diagnose without reopening the full source bundle
 
     In plain language:
 
@@ -1090,6 +1160,18 @@ def build_resume_extraction_input_from_jobadder_bundle(
         note_items=cleaned_note_items,
         max_note_count=max_note_count,
         max_note_characters=max_note_characters,
+        max_total_characters=max_total_note_characters,
+    )
+    truncated_resume_text = _truncate_text(
+        resume_text_for_prompt,
+        max_characters=max_resume_characters,
+    )
+    prompt_input_metrics = _build_prompt_input_metrics(
+        latest_resume=latest_resume,
+        resume_text_for_prompt=resume_text_for_prompt,
+        truncated_resume_text=truncated_resume_text,
+        cleaned_note_items=cleaned_note_items,
+        prompt_ready_notes=prompt_ready_notes,
     )
 
     return {
@@ -1102,11 +1184,9 @@ def build_resume_extraction_input_from_jobadder_bundle(
             downloaded_resume=downloaded_resume,
             extracted_resume_text=extracted_resume_text,
         ),
-        "cleaned_resume_text": _truncate_text(
-            resume_text_for_prompt,
-            max_characters=max_resume_characters,
-        ),
+        "cleaned_resume_text": truncated_resume_text,
         "cleaned_candidate_notes": prompt_ready_notes,
+        "prompt_input_metrics": prompt_input_metrics,
     }
 
 
@@ -1488,6 +1568,109 @@ def _should_retry_with_json_fallback(exc: Exception, model_profile: ModelProfile
     )
 
 
+def _should_retry_with_larger_output_budget(
+    exc: Exception,
+    model_profile: ModelProfile,
+) -> bool:
+    """
+    Return whether a failed extraction call should retry with a larger output budget.
+
+    Notes
+    -----
+    This retry is intentionally narrow. It exists for a specific first-pass
+    failure mode we saw live:
+
+    - the provider call succeeds
+    - the model reaches the configured completion limit
+    - structured parsing then fails because the answer was cut off mid-object
+
+    We do not want to treat arbitrary provider failures as "just try again
+    bigger", so the rule is limited to explicit length-style completion
+    failures on OpenAI extraction routes.
+
+    Example
+    -------
+    An upstream exception such as:
+
+        LengthFinishReasonError("Could not parse response content as the length limit was reached ...")
+
+    returns `True` here, while a generic transport/runtime failure returns
+    `False`.
+    """
+
+    if model_profile.provider != ModelProvider.OPENAI:
+        return False
+
+    error_text = str(exc).lower()
+    exception_type_name = exc.__class__.__name__.lower()
+
+    return (
+        "lengthfinishreasonerror" in exception_type_name
+        or "length limit was reached" in error_text
+        or "finish_reason" in error_text and "length" in error_text
+    )
+
+
+def _build_retry_model_profile_for_length_failure(
+    *,
+    model_profile: ModelProfile,
+) -> ModelProfile | None:
+    """
+    Build a larger-output-budget retry profile for length-limited failures.
+
+    Parameters
+    ----------
+    model_profile : ModelProfile
+        Original model profile used for the failed first attempt.
+
+    Returns
+    -------
+    ModelProfile | None
+        Retry profile with a larger `max_output_tokens`, or `None` when the
+        current profile is already at the configured retry cap.
+
+    Notes
+    -----
+    The retry stays on the same provider and model name. We only increase the
+    allowed completion budget. That keeps the retry semantics simple:
+
+    - same extraction prompt
+    - same model family
+    - larger allowance for the structured answer to finish
+
+    Example
+    -------
+    A profile with:
+
+        max_output_tokens=2200
+
+    becomes something like:
+
+        max_output_tokens=3400
+
+    on the retry path, subject to the configured cap.
+    """
+
+    retry_max_output_tokens = min(
+        max(
+            model_profile.max_output_tokens + DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_INCREMENT,
+            int(model_profile.max_output_tokens * 1.5),
+        ),
+        DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_CAP,
+    )
+
+    if retry_max_output_tokens <= model_profile.max_output_tokens:
+        return None
+
+    return ModelProfile(
+        provider=model_profile.provider,
+        model_name=model_profile.model_name,
+        purpose=model_profile.purpose,
+        temperature=model_profile.temperature,
+        max_output_tokens=retry_max_output_tokens,
+    )
+
+
 def _coerce_model_result_to_resume_structured_extraction(raw_result: Any) -> ResumeStructuredExtraction:
     """
     Convert a raw model result into `ResumeStructuredExtraction`.
@@ -1753,6 +1936,7 @@ def _build_prompt_ready_candidate_notes(
     note_items: list[dict[str, Any]],
     max_note_count: int,
     max_note_characters: int,
+    max_total_characters: int,
 ) -> list[dict[str, Any]]:
     """
     Build a bounded list of cleaned candidate notes for prompt use.
@@ -1772,6 +1956,7 @@ def _build_prompt_ready_candidate_notes(
     - keep a small number of notes
     - keep the most useful metadata
     - truncate oversized note bodies
+    - stop once the overall note budget has been spent
 
     Example
     -------
@@ -1794,15 +1979,25 @@ def _build_prompt_ready_candidate_notes(
     """
 
     prompt_ready_notes: list[dict[str, Any]] = []
+    total_characters_kept = 0
 
     # Limit first, then cleanly project each kept note into the smaller prompt
     # shape. That keeps the transformation easy to read and makes it obvious
     # where note-count control happens.
     for note in note_items[:max_note_count]:
+        if total_characters_kept >= max_total_characters:
+            break
+
         note_text = note.get("cleaned_text") or note.get("text") or ""
 
         if not isinstance(note_text, str) or note_text.strip() == "":
             continue
+
+        remaining_budget = max_total_characters - total_characters_kept
+        bounded_note_text = _truncate_text(
+            note_text,
+            max_characters=min(max_note_characters, remaining_budget),
+        )
 
         prompt_ready_notes.append(
             {
@@ -1810,14 +2005,237 @@ def _build_prompt_ready_candidate_notes(
                 "type": note.get("type"),
                 "created_at": note.get("created_at"),
                 "updated_at": note.get("updated_at"),
-                "cleaned_text": _truncate_text(
-                    note_text,
-                    max_characters=max_note_characters,
-                ),
+                "cleaned_text": bounded_note_text,
             }
         )
+        total_characters_kept += len(bounded_note_text)
 
     return prompt_ready_notes
+
+
+def _build_prompt_input_metrics(
+    *,
+    latest_resume: dict[str, Any] | None,
+    resume_text_for_prompt: str,
+    truncated_resume_text: str,
+    cleaned_note_items: list[dict[str, Any]],
+    prompt_ready_notes: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """
+    Build compact prompt-budget metrics for debugging and failure artefacts.
+
+    Parameters
+    ----------
+    latest_resume : dict[str, Any] | None
+        Resume metadata selected by the ingest layer.
+
+    resume_text_for_prompt : str
+        Original cleaned-or-raw resume text before prompt truncation.
+
+    truncated_resume_text : str
+        Resume text actually sent to the prompt after budgeting.
+
+    cleaned_note_items : list[dict[str, Any]]
+        Full cleaned note list available before prompt budgeting.
+
+    prompt_ready_notes : list[dict[str, Any]]
+        Note items actually sent to the prompt after budgeting.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small serialisable metrics describing the prompt input size.
+
+    Notes
+    -----
+    These metrics deliberately answer the debugging questions that matter most
+    during batch review:
+
+    - how large was the original CV?
+    - how much CV text actually reached the prompt?
+    - how many notes were available upstream?
+    - how many note characters were actually sent?
+
+    Example
+    -------
+    A metric payload might look like:
+
+        {
+            "resume_file_name": "Example CV.pdf",
+            "resume_original_characters": 51107,
+            "resume_prompt_characters": 18000,
+            "resume_was_truncated": True,
+            "available_note_count": 15,
+            "prompt_note_count": 4,
+            "available_note_characters": 5260,
+            "prompt_note_characters": 3184,
+            "notes_were_truncated": True,
+        }
+
+    In plain language:
+
+    - record the original size
+    - record the prompt size
+    - make it obvious when budgeting actually changed the payload
+    """
+
+    available_note_characters = sum(
+        len(note_text)
+        for note in cleaned_note_items
+        for note_text in [note.get("cleaned_text") or note.get("text") or ""]
+        if isinstance(note_text, str)
+    )
+    prompt_note_characters = sum(
+        len(note_text)
+        for note in prompt_ready_notes
+        for note_text in [note.get("cleaned_text") or ""]
+        if isinstance(note_text, str)
+    )
+
+    return {
+        "resume_file_name": (latest_resume or {}).get("fileName"),
+        "resume_original_characters": len(resume_text_for_prompt),
+        "resume_prompt_characters": len(truncated_resume_text),
+        "resume_was_truncated": len(truncated_resume_text) < len(resume_text_for_prompt),
+        "available_note_count": len(cleaned_note_items),
+        "prompt_note_count": len(prompt_ready_notes),
+        "available_note_characters": available_note_characters,
+        "prompt_note_characters": prompt_note_characters,
+        "notes_were_truncated": (
+            len(prompt_ready_notes) < len(cleaned_note_items)
+            or prompt_note_characters < available_note_characters
+        ),
+    }
+
+
+def _build_prompt_truncation_summary(
+    *,
+    prompt_input_metrics: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build a small top-level truncation summary for saved extraction results.
+
+    Parameters
+    ----------
+    prompt_input_metrics : dict[str, Any]
+        Prompt-budget metrics previously computed for the extraction input.
+
+    Returns
+    -------
+    dict[str, Any]
+        Compact summary highlighting whether resume or note prompt truncation
+        occurred.
+
+    Notes
+    -----
+    The full prompt-budget metrics remain useful, but they are easy to miss
+    when buried inside `extraction_input`. This helper surfaces the headline
+    flags at the top level so batch review can answer the immediate question:
+
+    - was any prompt truncation applied to this candidate?
+
+    Example
+    -------
+    A top-level summary might look like:
+
+        {
+            "any_truncation": True,
+            "resume_was_truncated": True,
+            "notes_were_truncated": False,
+        }
+
+    In plain language:
+
+    - keep one obvious yes/no summary
+    - preserve the separate CV and notes flags
+    """
+
+    resume_was_truncated = bool(prompt_input_metrics.get("resume_was_truncated"))
+    notes_were_truncated = bool(prompt_input_metrics.get("notes_were_truncated"))
+
+    return {
+        "any_truncation": resume_was_truncated or notes_were_truncated,
+        "resume_was_truncated": resume_was_truncated,
+        "notes_were_truncated": notes_were_truncated,
+    }
+
+
+def _build_model_invoke_error_details(
+    *,
+    extraction_input: dict[str, Any],
+    model_profile: ModelProfile,
+    exc: Exception,
+    fallback_mode: str | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Build structured `llm_invoke` failure details for logs and batch artefacts.
+
+    Parameters
+    ----------
+    extraction_input : dict[str, Any]
+        Prompt-ready extraction input for the failing candidate.
+
+    model_profile : ModelProfile
+        Model metadata used for the attempted call.
+
+    exc : Exception
+        Underlying provider/library exception.
+
+    fallback_mode : str | None
+        Optional label describing the compatibility path in use.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Small machine-readable diagnostic details.
+
+    Notes
+    -----
+    The extraction runner already records the local failure stage. This helper
+    adds the two extra pieces that make repeated failures diagnosable:
+
+    - the actual upstream exception class/message
+    - the prompt-budget metrics that show how large the input bundle was
+
+    Example
+    -------
+    A detail payload might include:
+
+        [
+            {"source_candidate_id": 16496678},
+            {"provider": "openai"},
+            {"model_name": "gpt-4.1-mini"},
+            {"exception_type": "RuntimeError"},
+            {"exception_message": "Provider exploded"},
+            {"prompt_input_metrics": {...}},
+        ]
+
+    In plain language:
+
+    - keep the root failure
+    - keep the input-size context
+    - make later batch review materially easier
+    """
+
+    details: list[dict[str, Any]] = [
+        {"source_system": extraction_input["source_system"]},
+        {"source_candidate_id": extraction_input["source_candidate_id"]},
+        {"provider": model_profile.provider},
+        {"model_name": model_profile.model_name},
+        {"exception_type": exc.__class__.__name__},
+        {
+            "exception_message": _truncate_text(
+                str(exc),
+                max_characters=500,
+            )
+        },
+        {"prompt_input_metrics": extraction_input.get("prompt_input_metrics", {})},
+    ]
+
+    if fallback_mode is not None:
+        details.append({"fallback_mode": fallback_mode})
+
+    return details
 
 
 def _normalise_candidate_status(status: Any) -> str | None:
@@ -1885,7 +2303,15 @@ def _truncate_text(text: str, *, max_characters: int) -> str:
     if len(text) <= max_characters:
         return text
 
-    return text[: max_characters - 21].rstrip() + "\n\n[TRUNCATED FOR PROMPT]"
+    truncation_marker = "\n\n[TRUNCATED FOR PROMPT]"
+
+    # Extremely small budgets can appear when a total-note budget is almost
+    # exhausted. In that case we still want a stable bounded string rather than
+    # relying on negative slicing offsets.
+    if max_characters <= len(truncation_marker):
+        return truncation_marker[:max_characters]
+
+    return text[: max_characters - len(truncation_marker)].rstrip() + truncation_marker
 
 
 def _serialise_model_profile(profile: ModelProfile) -> dict[str, Any]:

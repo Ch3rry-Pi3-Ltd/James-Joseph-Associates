@@ -1237,11 +1237,14 @@ def _perform_jobadder_read_with_refresh_retry(
 
     Notes
     -----
-    - Only 401 gets special handling here.
-    - That is intentional:
-        - 401 often means the access token expired between reads
-        - other statuses such as 404 or 429 are different classes of failure
-          and should not trigger a blind refresh-and-retry loop
+    - 401 gets special handling because a refresh can plausibly fix it.
+    - A narrow transport retry also exists for provider reads that failed
+      without any HTTP status code at all.
+    - That transport retry is intentionally small:
+        - one immediate retry
+        - same token
+        - same endpoint
+    - Other statuses such as 404 or 429 are still treated as final failures.
     """
     # Read the values we need out of the stored connection row once up front.
     #
@@ -1261,6 +1264,25 @@ def _perform_jobadder_read_with_refresh_retry(
             access_token=raw_access_token,
         )
     except JobAdderApiError as exc:
+        if _should_retry_jobadder_transport_read(exc):
+            # A missing status code usually means we never got a usable HTTP
+            # response back at all. That is a different class from a provider
+            # 4xx/5xx and is the only non-401 case worth retrying once here.
+            try:
+                read_result = read_callable(
+                    api_url=raw_api_url,
+                    access_token=raw_access_token,
+                )
+            except JobAdderApiError as retry_exc:
+                raise _build_jobadder_ingest_read_failure(
+                    provider_failure_message=provider_failure_message,
+                    stage_name=stage_name,
+                    jobadder_account=jobadder_account,
+                    exc=retry_exc,
+                ) from retry_exc
+
+            return read_result, stored_connection
+
         if exc.status_code == 401:
             # A 401 is the one provider error we treat as potentially
             # recoverable here.
@@ -1294,22 +1316,11 @@ def _perform_jobadder_read_with_refresh_retry(
                     access_token=refreshed_access_token,
                 )
             except JobAdderApiError as retry_exc:
-                details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
-
-                if retry_exc.status_code is not None:
-                    details.append({"provider_status_code": retry_exc.status_code})
-
-                if retry_exc.retry_after is not None:
-                    details.append({"retry_after_seconds": retry_exc.retry_after})
-
-                if retry_exc.endpoint_url is not None:
-                    details.append({"endpoint_url": retry_exc.endpoint_url})
-
-                raise JobAdderIngestPreparationError(
-                    provider_failure_message,
-                    stage=stage_name,
-                    status_code=retry_exc.status_code,
-                    details=details,
+                raise _build_jobadder_ingest_read_failure(
+                    provider_failure_message=provider_failure_message,
+                    stage_name=stage_name,
+                    jobadder_account=jobadder_account,
+                    exc=retry_exc,
                 ) from retry_exc
 
             # Return both:
@@ -1329,27 +1340,94 @@ def _perform_jobadder_read_with_refresh_retry(
         #
         # Refreshing the token does not meaningfully help those cases, so we
         # surface them with as much safe context as we can.
-        details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
-
-        if exc.status_code is not None:
-            details.append({"provider_status_code": exc.status_code})
-
-        if exc.retry_after is not None:
-            details.append({"retry_after_seconds": exc.retry_after})
-
-        if exc.endpoint_url is not None:
-            details.append({"endpoint_url": exc.endpoint_url})
-
-        raise JobAdderIngestPreparationError(
-            provider_failure_message,
-            stage=stage_name,
-            status_code=exc.status_code,
-            details=details,
+        raise _build_jobadder_ingest_read_failure(
+            provider_failure_message=provider_failure_message,
+            stage_name=stage_name,
+            jobadder_account=jobadder_account,
+            exc=exc,
         ) from exc
 
     # The first attempt succeeded, so the caller can keep using the same
     # connection row for subsequent reads in this orchestration run.
     return read_result, stored_connection
+
+
+def _should_retry_jobadder_transport_read(exc: JobAdderApiError) -> bool:
+    """
+    Return whether one JobAdder read failure looks like a transport-only failure.
+
+    Parameters
+    ----------
+    exc : JobAdderApiError
+        Provider-layer read error raised by `backend.services.jobadder_api`.
+
+    Returns
+    -------
+    bool
+        `True` when the error looks like a transport/connectivity issue that is
+        worth retrying once with the same token.
+
+    Notes
+    -----
+    We keep this rule narrow. The JobAdder API helper already normalises
+    network failures into:
+
+        JobAdderApiError("Could not reach the JobAdder API.", status_code=None)
+
+    That is the one non-401 case where an immediate retry is worth trying.
+    Real provider responses with explicit statuses stay final.
+
+    Example
+    -------
+    A `JobAdderApiError` with:
+
+        status_code=None
+        message="Could not reach the JobAdder API."
+
+    returns `True` here.
+    """
+
+    if exc.status_code is not None:
+        return False
+
+    return str(exc) == "Could not reach the JobAdder API."
+
+
+def _build_jobadder_ingest_read_failure(
+    *,
+    provider_failure_message: str,
+    stage_name: str,
+    jobadder_account: int,
+    exc: JobAdderApiError,
+) -> JobAdderIngestPreparationError:
+    """
+    Convert a provider-layer read error into one ingest-layer failure.
+
+    Notes
+    -----
+    The orchestration layer wants a smaller, uniform failure shape than the raw
+    provider helper. Centralising that translation here keeps the retry helper
+    readable and avoids duplicating the same detail-building logic in several
+    branches.
+    """
+
+    details: list[dict[str, Any]] = [{"jobadder_account": jobadder_account}]
+
+    if exc.status_code is not None:
+        details.append({"provider_status_code": exc.status_code})
+
+    if exc.retry_after is not None:
+        details.append({"retry_after_seconds": exc.retry_after})
+
+    if exc.endpoint_url is not None:
+        details.append({"endpoint_url": exc.endpoint_url})
+
+    return JobAdderIngestPreparationError(
+        provider_failure_message,
+        stage=stage_name,
+        status_code=exc.status_code,
+        details=details,
+    )
 
 
 def _looks_like_resume_attachment(attachment: dict[str, Any]) -> bool:

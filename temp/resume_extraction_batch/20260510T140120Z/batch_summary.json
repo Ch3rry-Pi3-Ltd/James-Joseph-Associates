@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-05-10T14:03:37.403873+00:00",
+  "requested_candidate_ids": [
+    13844880,
+    13903086
+  ],
+  "requested_count": 2,
+  "success_count": 2,
+  "failure_count": 0,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {
+    "pass": 2
+  },
+  "output_dir": "temp\\resume_extraction_batch\\20260510T140120Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260510T140120Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [
+    {
+      "candidate_id": 13844880,
+      "output_json": "temp\\resume_extraction_batch\\20260510T140120Z\\candidate_13844880.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 95,
+      "quality_status": "pass",
+      "cv_richness_score": 86,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13903086,
+      "output_json": "temp\\resume_extraction_batch\\20260510T140120Z\\candidate_13903086.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 92,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    }
+  ],
+  "failures": [],
+  "skipped": []
+}

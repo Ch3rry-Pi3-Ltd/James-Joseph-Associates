@@ -1,0 +1,299 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13902890,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13902890,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13902890,
+      "first_name": "Gurinder",
+      "last_name": "Bhangu",
+      "email": "gsbhangu@hotmail.co.uk",
+      "mobile": "+44 7436004284",
+      "location": null,
+      "status": "Inactive",
+      "skill_tags": [],
+      "created_at": "2025-07-23T19:00:30Z",
+      "updated_at": "2025-08-04T14:37:02Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17956491,
+      "file_name": "Gurinder-Singh-Bhangu_cv-library.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-23T19:00:30Z",
+      "page_count": 1,
+      "character_count": 2692,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "Gurinder Singh Bhangu Service Transforma/on Analyst  London, United Kingdom +44 7436004284 gsbhangu@hotmail.co.uk, hHps://www.linkedin.com/in/gurinder-singh-b-a55788124/ Analy&cal and detail-oriented professional with 3+ years of experience driving service transforma&on and process improvements across public and private sectors. Proven track record in delivering cost savings of up to £500K through data-driven decision-making. AREAS OF EXPERTISE                                                                                                                                     ____________\nPROFESSIONAL EXPERIENCE                                                                                                                  ____________ IRIS – London, UK Service Transforma&on Analyst | May 2022 – June 2025 • Consolidated data from mul&ple sources to create uniﬁed dashboards, improving cross-departmental repor&ng eﬃciency by 30%. • Analysed performance trends in PSA systems, driving ac&onable insights for opera&onal improvements. • Built and maintained repor&ng solu&ons in Power BI, resul&ng in enhanced visibility for senior stakeholders. • Produced detailed management informa&on and project sta&s&cs in Excel and PowerPoint, streamlining decision-making processes. IRIS – London, UK Technical Specialist | Aug 2021 – May 2022 • Resolved onboarding-related technical queries, reducing customer issue resolu&on &me by 40%. • Installed and conﬁgured client systems using SQL, increasing implementa&on eﬃciency and customer sa&sfac&on. • Developed and uploaded customer data, created user guides, and streamlined onboarding processes for new clients. • Supported the delivery of tailored onboarding solu&ons, improving adop&on rates across customer segments.  EDUCATION                                                                                                                                                            ____ Royal Holloway University                                                                                 Sept 2018 – Aug 2021 BSc Mathema&cs , grade 1st Henley Appren:ceship                                                                                       Nov 2023 – Sept 2025 Senior Leaderships Level 7 ADDITIONAL SKILLS                                                                                                                                        ____________  Excel, Power BI, Salesforce, Data & Repor&ng, Communica&on, Problem-Solving, Collabora&on\n• Service Transforma&on • Financial Modelling • Excel (Advanced) • Process Improvement • Business Partnering • Power BI • Data Analysis • Budge&ng & Forecas&ng • Stakeholder Engagement",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "e1857c98-6fd8-4bb1-8fb7-6594943684ee",
+        "type": "Status Change",
+        "created_at": "2025-08-04T14:37:02Z",
+        "updated_at": "2025-08-04T14:37:02Z",
+        "cleaned_text": "Candidate status changed automatically from Active - Interviewing to Inactive by Tom Owens when Job Application status was changed to Withdrew application, Job: tw381 - MI Systems Analyst,  at 3:37pm on August 4, 2025"
+      },
+      {
+        "note_id": "4fd6d1a3-b887-42d7-b868-fbb029104d7f",
+        "type": "Status change",
+        "created_at": "2025-08-04T14:37:02Z",
+        "updated_at": "2025-08-04T14:37:02Z",
+        "cleaned_text": "Status changed from Client interview 1 to Withdrew application by Tom Owens at 3:37pm on August 4, 2025"
+      },
+      {
+        "note_id": "645bd5d8-dead-4908-aa1d-1711c436706d",
+        "type": "Email Reply",
+        "created_at": "2025-08-04T14:32:59Z",
+        "updated_at": "2025-08-04T14:32:59Z",
+        "cleaned_text": "Hi Gurinder,\n\nMany thanks for letting me know and congratulations!"
+      },
+      {
+        "note_id": "c140f977-8708-45bf-ad71-0c63b624da51",
+        "type": "Email Sent",
+        "created_at": "2025-08-04T14:32:27Z",
+        "updated_at": "2025-08-04T14:32:27Z",
+        "cleaned_text": "Hi Gurinder,\n\nI've just tried calling, as I have good news!   The manager at ERS is impressed with your CV and is keen to speak with you.\n\nPlease provide your ideal day/time and as many other slots as possible for this week/next week so I can coordinate diaries?\n\nP.S. Once this is booked, I'll be able to talk you through what format/questions to expect too..."
+      },
+      {
+        "note_id": "040277f2-8d38-41b1-9213-d036e1ba9cc4",
+        "type": "Email Received",
+        "created_at": "2025-08-04T14:29:19Z",
+        "updated_at": "2025-08-04T14:29:19Z",
+        "cleaned_text": "Hi Tom,\n\nI have accepted a job offer.\n\nThanks,\nGurinder\n\nSent from my Galaxy\n\n-------- Original message --------"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "IRIS",
+    "current_title": "Service Transformation Analyst",
+    "professional_summary": "Analytical and detail-oriented professional with 3+ years of experience driving service transformation and process improvements across public and private sectors. Proven track record in delivering cost savings of up to £500K through data-driven decision-making.",
+    "location": "London, United Kingdom",
+    "emails": [
+      "gsbhangu@hotmail.co.uk"
+    ],
+    "phones": [
+      "+44 7436004284"
+    ],
+    "skills": [
+      "Service Transformation",
+      "Financial Modelling",
+      "Excel (Advanced)",
+      "Process Improvement",
+      "Business Partnering",
+      "Data Analysis",
+      "Budgeting & Forecasting",
+      "Stakeholder Engagement",
+      "Problem-Solving",
+      "Collaboration"
+    ],
+    "tools_and_platforms": [
+      "Excel",
+      "Power BI",
+      "Salesforce",
+      "SQL",
+      "PowerPoint"
+    ],
+    "certifications": [],
+    "linkedin_url": "https://www.linkedin.com/in/gurinder-singh-b-a55788124/",
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "Royal Holloway University",
+        "qualification": "BSc",
+        "subject": "Mathematics",
+        "completion_date": "Aug 2021"
+      },
+      {
+        "institution": "Henley Apprenticeship",
+        "qualification": "Senior Leadership Level 7",
+        "subject": null,
+        "completion_date": "Sept 2025"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "IRIS",
+        "title": "Service Transformation Analyst",
+        "start_date": "May 2022",
+        "end_date": "June 2025",
+        "is_current": true,
+        "summary": "Consolidated data from multiple sources to create unified dashboards, improving cross-departmental reporting efficiency by 30%. Analysed performance trends in PSA systems, driving actionable insights for operational improvements. Built and maintained reporting solutions in Power BI, enhancing visibility for senior stakeholders. Produced detailed management information and project statistics in Excel and PowerPoint, streamlining decision-making processes."
+      },
+      {
+        "employer": "IRIS",
+        "title": "Technical Specialist",
+        "start_date": "Aug 2021",
+        "end_date": "May 2022",
+        "is_current": false,
+        "summary": "Resolved onboarding-related technical queries, reducing customer issue resolution time by 40%. Installed and configured client systems using SQL, increasing implementation efficiency and customer satisfaction. Developed and uploaded customer data, created user guides, and streamlined onboarding processes for new clients. Supported delivery of tailored onboarding solutions, improving adoption rates across customer segments."
+      }
+    ],
+    "projects": [],
+    "evidence_notes": [
+      "Resume contact block provides email, phone, location, and LinkedIn URL.",
+      "Resume professional summary states 3+ years experience and cost savings achieved.",
+      "Resume IRIS Service Transformation Analyst role bullets detail dashboard creation, reporting, and data analysis using Power BI, Excel, and PowerPoint.",
+      "Resume IRIS Technical Specialist role bullets detail SQL use, onboarding process improvements, and customer data management.",
+      "Resume education section lists Royal Holloway University BSc Mathematics and Henley Apprenticeship Senior Leadership Level 7."
+    ],
+    "ambiguity_notes": [
+      "Current employer inferred as IRIS from most recent role ending June 2025, despite note indicating candidate accepted a job offer elsewhere.",
+      "No explicit current location stated; London location taken from resume header but not confirmed as current.",
+      "No certifications explicitly listed despite apprenticeship qualification."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "gsbhangu@hotmail.co.uk"
+      ],
+      "resume_phones": [
+        "+44 7436004284"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": false,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 2,
+      "projects_count": 0,
+      "education_count": 2,
+      "evidence_notes_count": 5,
+      "skills_count": 10,
+      "tools_and_platforms_count": 5,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 81,
+    "richness_band": "rich",
+    "reasons": [
+      "limited_descriptive_content",
+      "no_explicit_projects_section"
+    ],
+    "source_metrics": {
+      "character_count": 2692,
+      "word_count": 280,
+      "nonempty_line_count": 3,
+      "substantial_line_count": 3,
+      "bullet_like_line_count": 2,
+      "employment_signal_count": 4,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": false,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "gsbhangu@hotmail.co.uk"
+        ],
+        "resume_phones": [
+          "+44 7436004284"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 2,
+        "projects_count": 0,
+        "education_count": 2,
+        "evidence_notes_count": 5,
+        "skills_count": 10,
+        "tools_and_platforms_count": 5,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "gsbhangu@hotmail.co.uk"
+        ],
+        "resume_phones": [
+          "+44 7436004284"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 2,
+        "projects_count": 0,
+        "education_count": 2,
+        "evidence_notes_count": 5,
+        "skills_count": 10,
+        "tools_and_platforms_count": 5,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}
