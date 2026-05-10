@@ -1,0 +1,388 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13844877,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13844877,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13844877,
+      "first_name": "Taras",
+      "last_name": "Maliarchuk",
+      "email": "maliarchuk@gmail.com",
+      "mobile": "07493589091",
+      "location": null,
+      "status": "Active",
+      "skill_tags": [],
+      "created_at": "2025-07-16T16:50:11Z",
+      "updated_at": "2025-10-03T14:46:14Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17903355,
+      "file_name": "d23c57b6-341f-473f-9bec-871c841981b2.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-16T16:50:12Z",
+      "page_count": 2,
+      "character_count": 3704,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "MaliarchukTaras\nTel.: +4474-935-89091E-mail: maliarchuk@gmail.com\nI ama passionateanddrivenIT professionalwitha strongambitionforsuccess.I haveparticipatedin thedevelopmentof decentralized exchange(DEX)platformsformultipleblockchains.Myexpertiseliesinsystemprogramming,particularlyover10yearswithC++,andI havevaluableexperienceworkingoncryptocurrencyexchangecores.\nMyprimary focusis on workingwithsmart contractsandvarioustradingplatforms.Iprioritize security, reliability, andperformancein theseareas.I ameagerto contributemyexpertiseandmakeapositiveimpactinorganizationsthatvalueinnovationandexcellence.\nSoftwaredevelopment experience\nSenior SoftwareDevelopment EngineerTacansLabs06.2023- currentlyTechnologystack: Rust, Near, MultiverseXandConcordiumblockchains, Golang● ImplementingmultiversionedDEXsmart contract codefor utilizationacrossmultipleblockchains.● DevelopingagasmeasuringsystemwithaGolanginterfacefor thebackendteam.● Creatingandimplementingablockchainindexer tocalculatetheincentivizationprogram.\nSenior SoftwareDevelopment EngineerDigitex01.2021- 04.2022(thecompanywasclosed)Technologystack: C++17, Linux, PostgreSQL, RabbitMQ, PyTest● Reviewing exchange platform core, analyzing weak and unstable parts, creating plan forrefactoring.● Implementation256bit logicandfeesfor acryptoexchangecore.● Unit testingintegration, functional testingrefactoringwritteninpython.● Refactoringcmakecodestructure, adding3rdpartylibraries.\nSenior SoftwareDevelopment EngineerKohYoungTechnology(asoutstaff fromEleks)08.2019- 01.2021● Designing and implementing project components like memory pool, performance profiler,progressreporter, etc. for modular projects, optimizingresourceusage.● Implementation of redirection output mechanism from embedded python to c++ throughswig.● Creationof aninterfacelibraryfor Intel TBBfor easeof usebythegraphicsteam.● Adding3rdpartylibrariesintocmakeproject.\nSoftwareDevelopment EngineerApriorit04.2017- 07.2019\nPage1\n\n● Development hooking library and script binary (pseudo terminal) for AIX, Solaris, Suse,Ubuntu systems; implementing bash scripts for install/uninstall processes and for varioussystemmodifications.\nSoftwareDevelopment EngineerAzzorro.io07.2016- 03.2017 (theproject wasclosed)● Modification and customization of the Darknet and Tensorflow frameworks for solvingface-detection problems, creating bash and python scripts for solving various classificationandconverting.\nSoftwareDevelopment EngineerPapakayaLtd.04.2015-06.2016● Research, analysis and implementation of machine learning and signal processingalgorithms for a trading engine targeted on the forex market, refactored and maintained aPostgreSQLdatabasestructure.\nJunior SoftwareDevelopment EngineerSamsungR&DInstituteUkraine04.2012- 04.2015● Worked on implementation of AdaBoost algorithms for classification tasks in gesturedetection, maintaining build process, creation of semi-automated testing systemfor gesturedetectionengineswithPythonandBash.\nEducation\n2006–2012TarasShevchenkoNational Universityof KyivFacultyof Radiophysics, Department of Computer EngineeringMaster’sDegree\n2010–2012KyivNational Universityof TradeandEconomicsFacultyof FinanceandCreditsBachelor’sDegree\n09.2010–4.2011Regional cisconetworkacademyat TarasShevchenkoNational Universityof KyivFull courseof CCNAExploration\nLanguageSkillsNativeUkrainian, fluent russian, upper-IntermediateEnglish.\nPersonal SkillsandCompetencesTeam-Workskills; Excellent communicationskills; Creativity; Purposefulness; Stressstability;High-loadmultitasking; Desirefor learningandconstant development; Cross-culturalflexibility.\nPersonal Interests: cryptocurrencies, technologies, ITtrends, economy, swimming, tennis, traveling.\nPage2",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "a42549b8-dc8e-4b6a-8759-3f6127794b2f",
+        "type": "Email Reply",
+        "created_at": "2025-10-03T14:46:14Z",
+        "updated_at": "2025-10-03T14:46:14Z",
+        "cleaned_text": "Hi Taras,\n\nI just tired giving you a call on 07493589091 but couldn't get through...\n\nI'm keen to tell you more about the attached opportunity...\n\nWhen is a good time for you speak?"
+      },
+      {
+        "note_id": "aa141505-d781-45df-902a-7762de695340",
+        "type": "Status change",
+        "created_at": "2025-10-02T17:28:14Z",
+        "updated_at": "2025-10-02T17:28:14Z",
+        "cleaned_text": "Status changed from Applied to Emailed Job Spec by Tom Owens at 6:28pm on October 2, 2025"
+      },
+      {
+        "note_id": "2a174b63-9365-4e92-8df7-7e6025929245",
+        "type": "Email sent",
+        "created_at": "2025-10-02T17:28:14Z",
+        "updated_at": "2025-10-02T17:28:14Z",
+        "cleaned_text": "Hi Taras,\n\nI came across your CV and it looks like a great fit for the attached role (I have deliberately disclosed the name of the company, but your discretion is appreciated!)\n\nIs this of interest?\n\nI'm keen to tell you more about this and answer your questions (The job spec does not tell the full story)...\n\nWhat is a convenient time for you to speak for a few minutes Taras?"
+      },
+      {
+        "note_id": "2cfc17db-7869-4b75-a92f-305ce242452b",
+        "type": "General",
+        "created_at": "2025-10-02T12:50:00Z",
+        "updated_at": "2025-10-02T12:50:00Z",
+        "cleaned_text": "RFL Notes Export:\n\n16th Jan at 03:57 pm\n\ntw372 spec@ sent 160125@1517+++"
+      },
+      {
+        "note_id": "afcea7d3-f319-47e7-bb1e-5f2814183ab9",
+        "type": "General",
+        "created_at": "2025-10-02T12:49:18Z",
+        "updated_at": "2025-10-02T12:49:18Z",
+        "cleaned_text": "RFL NOTES:\n\nOn 17th Jul 2023 at 03:01 pm\n\n£\n£ over £100k base +\nn 1 month\nv british residence permit - right to work - expires in 2 years\nloc wimbledon\nwfh?\nwhy?\nReferences!\nLeads: current compnay\nLeads: other interviews\n\n---------------------------------\n\nis looking for an ew job in fintech and blockchain, working for chillchat who are outside of the UK, he wants to move o the united kingdom\n\nhe works for a ukrainian compmnay now\n\njhe works on a defi chain x2 blockchain , neo, multivers ex and concordium\n\nhe is using rust for 1 year, his smart contract in rust is about 1 year\n\nstrong background 10 years in C++"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "TacansLabs",
+    "current_title": "Senior Software Development Engineer",
+    "professional_summary": "Passionate and driven IT professional with over 10 years of experience in system programming, specializing in C++ and blockchain smart contracts. Experienced in developing decentralized exchange (DEX) platforms across multiple blockchains, prioritizing security, reliability, and performance.",
+    "location": null,
+    "emails": [
+      "maliarchuk@gmail.com"
+    ],
+    "phones": [
+      "07493589091"
+    ],
+    "skills": [
+      "System Programming",
+      "Smart Contracts",
+      "Blockchain Development",
+      "Software Development",
+      "Machine Learning",
+      "Signal Processing",
+      "Testing and Refactoring",
+      "Teamwork"
+    ],
+    "tools_and_platforms": [
+      "C++",
+      "Rust",
+      "Golang",
+      "Near Blockchain",
+      "MultiverseX Blockchain",
+      "Concordium Blockchain",
+      "PostgreSQL",
+      "RabbitMQ",
+      "PyTest",
+      "CMake",
+      "Intel TBB",
+      "Python",
+      "Bash",
+      "Darknet",
+      "TensorFlow",
+      "AdaBoost",
+      "CCNA"
+    ],
+    "certifications": [],
+    "linkedin_url": null,
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "Taras Shevchenko National University of Kyiv",
+        "qualification": "Master's Degree",
+        "subject": "Computer Engineering",
+        "completion_date": "2012"
+      },
+      {
+        "institution": "Kyiv National University of Trade and Economics",
+        "qualification": "Bachelor's Degree",
+        "subject": "Finance and Credits",
+        "completion_date": "2012"
+      },
+      {
+        "institution": "Regional Cisco Network Academy at Taras Shevchenko National University of Kyiv",
+        "qualification": "Full course",
+        "subject": "CCNA Exploration",
+        "completion_date": "2011"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "TacansLabs",
+        "title": "Senior Software Development Engineer",
+        "start_date": "06.2023",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Implementing multiversioned DEX smart contract code for multiple blockchains; developing a gas measuring system with Golang interface; creating a blockchain indexer for incentivization program."
+      },
+      {
+        "employer": "Digitex",
+        "title": "Senior Software Development Engineer",
+        "start_date": "01.2021",
+        "end_date": "04.2022",
+        "is_current": false,
+        "summary": "Reviewed and refactored exchange platform core; implemented 256-bit logic and fees for crypto exchange core; performed unit, integration, and functional testing; refactored CMake code structure."
+      },
+      {
+        "employer": "Koh Young Technology (as outstaff from Eleks)",
+        "title": "Senior Software Development Engineer",
+        "start_date": "08.2019",
+        "end_date": "01.2021",
+        "is_current": false,
+        "summary": "Designed and implemented project components for modular projects; implemented output redirection from embedded Python to C++ via SWIG; created interface library for Intel TBB; added third-party libraries to CMake project."
+      },
+      {
+        "employer": "Apriorit",
+        "title": "Software Development Engineer",
+        "start_date": "04.2017",
+        "end_date": "07.2019",
+        "is_current": false,
+        "summary": "Developed hooking library and script binary for AIX, Solaris, Suse, Ubuntu systems; implemented bash scripts for install/uninstall and system modifications."
+      },
+      {
+        "employer": "Azzorro.io",
+        "title": "Software Development Engineer",
+        "start_date": "07.2016",
+        "end_date": "03.2017",
+        "is_current": false,
+        "summary": "Modified and customized Darknet and TensorFlow frameworks for face-detection problems; created bash and python scripts for classification and conversion."
+      },
+      {
+        "employer": "Papakaya Ltd.",
+        "title": "Software Development Engineer",
+        "start_date": "04.2015",
+        "end_date": "06.2016",
+        "is_current": false,
+        "summary": "Researched, analyzed, and implemented machine learning and signal processing algorithms for forex trading engine; refactored and maintained PostgreSQL database structure."
+      },
+      {
+        "employer": "Samsung R&D Institute Ukraine",
+        "title": "Junior Software Development Engineer",
+        "start_date": "04.2012",
+        "end_date": "04.2015",
+        "is_current": false,
+        "summary": "Implemented AdaBoost algorithms for gesture detection classification tasks; maintained build process; created semi-automated testing system for gesture detection engines using Python and Bash."
+      }
+    ],
+    "projects": [
+      {
+        "name": "Multiversioned DEX Smart Contract Development",
+        "employer": "TacansLabs",
+        "role": "Senior Software Development Engineer",
+        "start_date": "06.2023",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Implemented multiversioned decentralized exchange smart contract code for utilization across multiple blockchains.",
+        "responsibilities": [
+          "Implemented multiversioned DEX smart contract code for multiple blockchains.",
+          "Developed a gas measuring system with Golang interface for backend team.",
+          "Created and implemented a blockchain indexer to calculate incentivization program."
+        ],
+        "deliverables": [
+          "Multiversioned DEX smart contract code.",
+          "Gas measuring system with Golang interface.",
+          "Blockchain indexer for incentivization program."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Rust",
+          "Near Blockchain",
+          "MultiverseX Blockchain",
+          "Concordium Blockchain",
+          "Golang"
+        ],
+        "domains": [
+          "Blockchain",
+          "Decentralized Finance",
+          "Smart Contracts"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Contact details extracted from resume contact block.",
+      "Employment history and project details extracted from resume work experience section.",
+      "Education details extracted from resume education section.",
+      "Skills and tools extracted from resume technology stack and role descriptions.",
+      "Candidate notes confirm use of Rust for smart contracts and 10+ years experience in C++."
+    ],
+    "ambiguity_notes": [
+      "Candidate location is not explicitly stated in any source.",
+      "Certifications are not explicitly listed in the resume or notes.",
+      "No LinkedIn URL visible in the source material.",
+      "Candidate notes mention interest in fintech and blockchain but do not add new skills or tools beyond resume evidence."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "maliarchuk@gmail.com"
+      ],
+      "resume_phones": [
+        "+4474-935-89091"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": true,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 7,
+      "projects_count": 1,
+      "education_count": 3,
+      "evidence_notes_count": 5,
+      "skills_count": 8,
+      "tools_and_platforms_count": 17,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 96,
+    "richness_band": "rich",
+    "reasons": [
+      "no_bullet_like_content"
+    ],
+    "source_metrics": {
+      "character_count": 3704,
+      "word_count": 309,
+      "nonempty_line_count": 22,
+      "substantial_line_count": 14,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 6,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": true,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "maliarchuk@gmail.com"
+        ],
+        "resume_phones": [
+          "+4474-935-89091"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 7,
+        "projects_count": 1,
+        "education_count": 3,
+        "evidence_notes_count": 5,
+        "skills_count": 8,
+        "tools_and_platforms_count": 17,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "maliarchuk@gmail.com"
+        ],
+        "resume_phones": [
+          "+4474-935-89091"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 7,
+        "projects_count": 1,
+        "education_count": 3,
+        "evidence_notes_count": 5,
+        "skills_count": 8,
+        "tools_and_platforms_count": 17,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

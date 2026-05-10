@@ -419,8 +419,10 @@ Current note:
   - fallback reruns with `gpt-5.4-mini`
   - JSONL quality logging
 - A batch runner now exists for calibration across multiple JobAdder candidates.
-- The batch runner also keeps a local manifest fingerprint so unchanged successful
-  candidates can be skipped instead of paying for duplicate LLM runs.
+- The batch runner also keeps a local manifest fingerprint so:
+  - unchanged successful candidates can be skipped instead of paying for duplicate LLM runs
+  - unchanged no-resume source failures can be skipped instead of repeating terminal source-side misses
+  - stable source failures are keyed from source-only state rather than prompt/scorer contract changes
 - The immediate remaining gap is score calibration across a real candidate sample,
   not the basic extraction/fallback plumbing.
 

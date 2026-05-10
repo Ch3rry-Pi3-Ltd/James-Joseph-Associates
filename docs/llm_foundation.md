@@ -213,7 +213,9 @@ In plain language:
 - services use that client for structured extraction
 - the quality gate can route weak first-pass extractions to a stronger fallback
 - the source-richness score can describe whether a CV is rich, adequate, or sparse
-- the batch runner can now skip unchanged successful candidates using a local manifest fingerprint
+- the batch runner now uses two skip identities:
+  - a full contract-aware fingerprint for unchanged successful candidates
+  - a source-only fingerprint for unchanged no-resume source failures
 
 ## Why Multi-Provider Routing Is Still Deferred
 

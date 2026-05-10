@@ -1,0 +1,268 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13816908,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13816908,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13816908,
+      "first_name": "Aric",
+      "last_name": "Kuter",
+      "email": "arickuter99@gmail.com",
+      "mobile": null,
+      "location": null,
+      "status": "Active",
+      "skill_tags": [],
+      "created_at": "2025-07-11T14:39:18Z",
+      "updated_at": "2025-07-11T14:49:48Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17866990,
+      "file_name": "7a843f48-b7f5-48cd-a5dd-ebc27a935f9d.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-11T14:39:18Z",
+      "page_count": 1,
+      "character_count": 407,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "Page 1\nAric Kuter\nSoftware Engineer\nLondon area\nContact\narickuter99@gmail.com\n(Personal)\nlinkedin.com/in/aric-kuter\n(Company)\nWork History\nSoftware Engineer\nBlockchain.com\nApr 2022 - Present (2 years 9 months)\nProgrammer: Test Automation\nCapitec Bank\nJan 2020 - Apr 2022 (2 years 3 months)\nGraduate Software Engineer\nPBT Group\nMar 2019 - Dec 2019 (9 months)\nEducation\nUdacity\n2019 - 2020\nUdacity\n2018 - 2019",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "ce369157-7654-4174-a8f7-2e6333aaf140",
+        "type": "Status change",
+        "created_at": "2025-07-11T14:49:48Z",
+        "updated_at": "2025-07-11T14:49:48Z",
+        "cleaned_text": "Status changed from Applied to Emailed Job Spec by Tom Owens at 3:49pm on July 11, 2025"
+      },
+      {
+        "note_id": "3f6d7cb9-155a-4285-9ac7-7789ef0acebc",
+        "type": "Email sent",
+        "created_at": "2025-07-11T14:49:47Z",
+        "updated_at": "2025-07-11T14:49:47Z",
+        "cleaned_text": "Hi Aric,\n\nI came across your CV and it looks like a great fit for the attached role (I have deliberately disclosed the name of the company, but your discretion is appreciated!)\n\nIs this of interest?\n\nI'm keen to tell you more about this and answer your questions (The job spec does not tell the full story)...\n\nWhat is a convenient time for you to speak for a few minutes Aric?"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "Blockchain.com",
+    "current_title": "Software Engineer",
+    "professional_summary": "Software Engineer with experience in test automation and software development across fintech and blockchain sectors.",
+    "location": "London area",
+    "emails": [
+      "arickuter99@gmail.com"
+    ],
+    "phones": [],
+    "skills": [
+      "Software Engineering",
+      "Test Automation"
+    ],
+    "tools_and_platforms": [],
+    "certifications": [],
+    "linkedin_url": "linkedin.com/in/aric-kuter",
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "Udacity",
+        "qualification": null,
+        "subject": null,
+        "completion_date": "2020"
+      },
+      {
+        "institution": "Udacity",
+        "qualification": null,
+        "subject": null,
+        "completion_date": "2019"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "Blockchain.com",
+        "title": "Software Engineer",
+        "start_date": "Apr 2022",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Software Engineer role since April 2022."
+      },
+      {
+        "employer": "Capitec Bank",
+        "title": "Programmer: Test Automation",
+        "start_date": "Jan 2020",
+        "end_date": "Apr 2022",
+        "is_current": false,
+        "summary": "Worked on test automation for over two years."
+      },
+      {
+        "employer": "PBT Group",
+        "title": "Graduate Software Engineer",
+        "start_date": "Mar 2019",
+        "end_date": "Dec 2019",
+        "is_current": false,
+        "summary": "Graduate Software Engineer for nine months."
+      }
+    ],
+    "projects": [],
+    "evidence_notes": [
+      "Resume contact block provides email and LinkedIn URL.",
+      "Resume headline and work history provide current title and employer.",
+      "Resume education section lists Udacity courses for 2018-2019 and 2019-2020.",
+      "Resume work history details roles at Blockchain.com, Capitec Bank, and PBT Group."
+    ],
+    "ambiguity_notes": [
+      "No specific skills or tools detailed beyond job titles and general roles.",
+      "Education entries from Udacity lack qualification and subject details.",
+      "Location is inferred from resume headline but not explicitly confirmed as current location."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 0,
+      "resume_emails": [
+        "arickuter99@gmail.com"
+      ],
+      "resume_phones": [],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": false,
+      "has_certifications_section": false,
+      "has_projects_section": false,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 0,
+      "employment_history_count": 3,
+      "projects_count": 0,
+      "education_count": 2,
+      "evidence_notes_count": 4,
+      "skills_count": 2,
+      "tools_and_platforms_count": 0,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 10,
+    "richness_band": "very_sparse",
+    "reasons": [
+      "short_resume_text",
+      "low_word_count",
+      "limited_descriptive_content",
+      "no_bullet_like_content",
+      "no_explicit_skills_section",
+      "no_explicit_projects_section",
+      "missing_phone_contact"
+    ],
+    "source_metrics": {
+      "character_count": 407,
+      "word_count": 63,
+      "nonempty_line_count": 24,
+      "substantial_line_count": 1,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 5,
+      "resume_email_count": 1,
+      "resume_phone_count": 0,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": false,
+      "has_projects_section": false,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 0,
+        "resume_emails": [
+          "arickuter99@gmail.com"
+        ],
+        "resume_phones": [],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": false,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 0,
+        "employment_history_count": 3,
+        "projects_count": 0,
+        "education_count": 2,
+        "evidence_notes_count": 4,
+        "skills_count": 2,
+        "tools_and_platforms_count": 0,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 0,
+        "resume_emails": [
+          "arickuter99@gmail.com"
+        ],
+        "resume_phones": [],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": false,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 0,
+        "employment_history_count": 3,
+        "projects_count": 0,
+        "education_count": 2,
+        "evidence_notes_count": 4,
+        "skills_count": 2,
+        "tools_and_platforms_count": 0,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

@@ -16,6 +16,7 @@ already present in `scripts/run_resume_extraction.py`, while adding:
 - batch-level success/failure tracking
 - one summary file for later review
 - a manifest-based skip layer so unchanged candidates are not reprocessed
+- a narrow stable-failure skip for unchanged no-resume cases
 
 What this script does
 ---------------------
@@ -27,6 +28,7 @@ It performs the following steps for each candidate:
 4. write one JSON result file
 5. record batch success/failure metadata
 6. skip later identical reruns when the source fingerprint is unchanged
+7. skip unchanged terminal no-resume failures without paying for another run
 
 What this script does not do
 ----------------------------
@@ -69,6 +71,7 @@ In plain language:
 - reuse the same extraction path as the single-run script
 - keep the outputs separate for later scoring review
 - avoid paying for duplicate LLM runs when the candidate inputs did not change
+- avoid repeating known no-resume failures when the upstream source state is unchanged
 """
 # ruff: noqa: E402
 
@@ -498,9 +501,9 @@ def build_candidate_processing_fingerprint(
     *,
     ingest_payload: dict[str, Any],
     contract_fingerprint: str,
-) -> tuple[str, dict[str, Any]]:
+) -> tuple[str, str, dict[str, Any]]:
     """
-    Build one deterministic fingerprint for a candidate's current source state.
+    Build deterministic source and processing fingerprints for one candidate.
 
     Parameters
     ----------
@@ -514,20 +517,27 @@ def build_candidate_processing_fingerprint(
 
     Returns
     -------
-    tuple[str, dict[str, Any]]
+    tuple[str, str, dict[str, Any]]
         Tuple containing:
 
-        - the final candidate processing fingerprint
+        - the source-only fingerprint
+        - the full candidate processing fingerprint
         - the smaller source-marker payload used to build it
 
     Notes
     -----
-    We intentionally do not fingerprint the full raw provider payload here.
-    That would make the skip logic harder to explain and more fragile than it
-    needs to be.
+    We intentionally distinguish between two related but different identities:
 
-    Instead we fingerprint the smaller set of source markers that answer the
-    operational question:
+    - the source-only fingerprint
+    - the full processing fingerprint
+
+    That distinction matters because the batch runner has two skip policies:
+
+    - successful re-runs should depend on both source state and extraction contract
+    - stable no-resume failures should depend only on source state
+
+    We still avoid fingerprinting the full raw provider payload. Instead we use
+    the smaller set of source markers that answer the operational question:
 
         "Would re-running this candidate now likely produce a materially
         different extraction result?"
@@ -540,7 +550,7 @@ def build_candidate_processing_fingerprint(
     - additional notes
     - or an upstream candidate-profile update
 
-    then the returned fingerprint changes and the batch runner will no longer
+    then both returned fingerprints change and the batch runner will no longer
     skip that candidate automatically.
     """
 
@@ -551,7 +561,6 @@ def build_candidate_processing_fingerprint(
 
     latest_resume_payload = latest_resume if isinstance(latest_resume, dict) else {}
     source_markers = {
-        "contract_fingerprint": contract_fingerprint,
         "source_system": ingest_payload.get("source_system"),
         "jobadder_account": ingest_payload.get("jobadder_account"),
         "candidate_id": ingest_payload.get("source_candidate_id"),
@@ -567,7 +576,15 @@ def build_candidate_processing_fingerprint(
         "latest_note_timestamp": _select_latest_note_timestamp(note_items),
     }
 
-    return hash_payload(source_markers), source_markers
+    source_fingerprint = hash_payload(_source_markers_without_contract(source_markers))
+    candidate_processing_fingerprint = hash_payload(
+        {
+            "contract_fingerprint": contract_fingerprint,
+            "source_fingerprint": source_fingerprint,
+        }
+    )
+
+    return source_fingerprint, candidate_processing_fingerprint, source_markers
 
 
 def load_batch_manifest_records(*, manifest_path: Path) -> list[dict[str, Any]]:
@@ -655,17 +672,12 @@ def find_success_manifest_record(
     - the exact same fingerprint
     - a successful completed processing run
 
-    Failures do not count as skip candidates because the same candidate should
-    be allowed to run again later after the underlying issue is fixed.
+    This helper intentionally answers only the narrower question:
 
-    That rule is intentionally conservative for V1:
+    - "Was there a prior identical success?"
 
-    - successful identical runs are safe to skip
-    - failed runs are still replayable
-
-    Later we may carve out a narrower class of stable source-side failures,
-    such as "no resume attached", that are safe to skip too when the upstream
-    fingerprint is unchanged.
+    The broader skip policy now lives in `find_skip_manifest_record(...)`,
+    which can also admit a very small class of stable source-side failures.
 
     Example
     -------
@@ -688,9 +700,222 @@ def find_success_manifest_record(
     return None
 
 
+def is_stable_source_failure_manifest_record(record: dict[str, Any]) -> bool:
+    """
+    Return whether one manifest failure row is safe to skip on an unchanged rerun.
+
+    Parameters
+    ----------
+    record : dict[str, Any]
+        One manifest row previously written by the batch runner.
+
+    Returns
+    -------
+    bool
+        `True` when the failure describes a stable upstream source-data absence
+        that is unlikely to change without an external update.
+
+    Notes
+    -----
+    This helper is intentionally narrow.
+
+    We currently treat only one failure pattern as skip-worthy:
+
+    - `stage == "resume_selection"`
+    - failure message indicates that no likely JobAdder resume attachment exists
+
+    That narrowness is deliberate:
+
+    - missing resume attachments are usually an upstream data problem
+    - rerunning the same unchanged candidate does not help
+    - other failures, such as parsing or model issues, may become fixable after
+      code changes and should remain replayable
+
+    Example
+    -------
+    A manifest row like:
+
+        {
+            "processing_outcome": "failure",
+            "failure_stage": "resume_selection",
+            "failure_message": "No likely JobAdder resume attachment was found for this candidate.",
+        }
+
+    returns `True`.
+    """
+
+    if record.get("processing_outcome") != "failure":
+        return False
+
+    failure_stage = record.get("failure_stage")
+    failure_message = record.get("failure_message")
+
+    if failure_stage != "resume_selection":
+        return False
+
+    if not isinstance(failure_message, str):
+        return False
+
+    return (
+        failure_message.strip()
+        == "No likely JobAdder resume attachment was found for this candidate."
+    )
+
+
+def _source_markers_without_contract(source_markers: dict[str, Any]) -> dict[str, Any]:
+    """
+    Return a copy of source markers with any contract-only keys removed.
+
+    Parameters
+    ----------
+    source_markers : dict[str, Any]
+        Source-marker payload stored in or derived for a manifest row.
+
+    Returns
+    -------
+    dict[str, Any]
+        Source-marker payload suitable for source-only fingerprinting.
+
+    Notes
+    -----
+    Older manifest rows were written before `source_fingerprint` existed and
+    stored only `source_markers`, which at that time still included
+    `contract_fingerprint`. This helper strips that contract-only key so old
+    rows can still participate in the newer source-only stable-failure skip
+    logic.
+    """
+
+    return {
+        key: value
+        for key, value in source_markers.items()
+        if key != "contract_fingerprint"
+    }
+
+
+def get_manifest_record_source_fingerprint(record: dict[str, Any]) -> str | None:
+    """
+    Return the source-only fingerprint for one manifest row when available.
+
+    Parameters
+    ----------
+    record : dict[str, Any]
+        One manifest row previously written by the batch runner.
+
+    Returns
+    -------
+    str | None
+        Source-only fingerprint for that row, or `None` when it cannot be
+        derived safely.
+
+    Notes
+    -----
+    This helper exists for manifest backward compatibility.
+
+    Newer rows store `source_fingerprint` explicitly. Older rows do not, so we
+    derive it from `source_markers` after stripping any contract-only keys.
+
+    Example
+    -------
+    A modern row may already contain:
+
+        {"source_fingerprint": "abc123", ...}
+
+    while an older row may only contain:
+
+        {"source_markers": {..., "contract_fingerprint": "old-contract"}, ...}
+
+    In the second case, this helper reconstructs the source-only fingerprint
+    from the remaining source-state markers.
+    """
+
+    stored_source_fingerprint = record.get("source_fingerprint")
+    if isinstance(stored_source_fingerprint, str) and stored_source_fingerprint.strip():
+        return stored_source_fingerprint
+
+    raw_source_markers = record.get("source_markers")
+    if not isinstance(raw_source_markers, dict):
+        return None
+
+    return hash_payload(_source_markers_without_contract(raw_source_markers))
+
+
+def find_skip_manifest_record(
+    *,
+    manifest_records: list[dict[str, Any]],
+    candidate_fingerprint: str,
+    source_fingerprint: str,
+) -> dict[str, Any] | None:
+    """
+    Return the most recent manifest row that justifies skipping one candidate.
+
+    Parameters
+    ----------
+    manifest_records : list[dict[str, Any]]
+        Previously loaded manifest rows.
+
+    candidate_fingerprint : str
+        Contract-aware candidate processing fingerprint built for the current
+        run.
+
+    source_fingerprint : str
+        Source-only fingerprint built for the current run.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Matching manifest row that is safe to skip, or `None` when the
+        candidate should be processed again.
+
+    Notes
+    -----
+    The skip policy now has two categories, each keyed differently:
+
+    - identical prior success, matched on the full processing fingerprint
+    - identical prior stable no-resume failure, matched on the source-only
+      fingerprint
+
+    It still does **not** skip:
+
+    - parse failures
+    - LLM/provider failures
+    - prompt/schema failures
+    - document-format failures
+
+    because those are all cases where a later code change may make rerunning
+    worthwhile.
+
+    Example
+    -------
+    If the manifest contains an unchanged failure row for:
+
+        - `stage == "resume_selection"`
+        - `message == "No likely JobAdder resume attachment was found for this candidate."`
+
+    this helper returns that row and the batch runner will skip the candidate.
+    """
+
+    for record in reversed(manifest_records):
+        record_outcome = record.get("processing_outcome")
+
+        if (
+            record_outcome == "success"
+            and record.get("candidate_fingerprint") == candidate_fingerprint
+        ):
+            return record
+
+        if (
+            is_stable_source_failure_manifest_record(record)
+            and get_manifest_record_source_fingerprint(record) == source_fingerprint
+        ):
+            return record
+
+    return None
+
+
 def build_batch_manifest_record(
     *,
     candidate_id: int,
+    source_fingerprint: str,
     candidate_fingerprint: str,
     source_markers: dict[str, Any],
     output_json: str | None,
@@ -705,6 +930,9 @@ def build_batch_manifest_record(
     ----------
     candidate_id : int
         Candidate identifier for the processed batch item.
+
+    source_fingerprint : str
+        Source-only fingerprint used for stable source-failure skip decisions.
 
     candidate_fingerprint : str
         Exact processing fingerprint used for skip decisions.
@@ -760,6 +988,7 @@ def build_batch_manifest_record(
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "candidate_id": candidate_id,
+        "source_fingerprint": source_fingerprint,
         "candidate_fingerprint": candidate_fingerprint,
         "source_markers": source_markers,
         "processing_outcome": processing_outcome,
@@ -851,7 +1080,7 @@ def build_batch_summary(
         Per-candidate failure records built during the batch loop.
 
     skipped : list[dict[str, Any]]
-        Candidate records skipped because an identical successful fingerprint
+        Candidate records skipped because an identical safe-to-skip fingerprint
         already existed in the manifest.
 
     output_dir : Path
@@ -1048,6 +1277,7 @@ def main(argv: list[str] | None = None) -> int:
             # mutable namespace object was reused across the whole loop.
             candidate_args = argparse.Namespace(**deepcopy(vars(args)))
             candidate_args.candidate_id = candidate_id
+            source_fingerprint: str | None = None
             candidate_fingerprint: str | None = None
             source_markers: dict[str, Any] | None = None
 
@@ -1067,7 +1297,7 @@ def main(argv: list[str] | None = None) -> int:
                     jobadder_account=args.jobadder_account,
                     candidate_id=candidate_id,
                 )
-                candidate_fingerprint, source_markers = (
+                source_fingerprint, candidate_fingerprint, source_markers = (
                     build_candidate_processing_fingerprint(
                         ingest_payload=ingest_payload,
                         contract_fingerprint=contract_fingerprint,
@@ -1075,32 +1305,55 @@ def main(argv: list[str] | None = None) -> int:
                 )
 
                 if not args.force_reprocess:
-                    existing_success = find_success_manifest_record(
+                    existing_skip_record = find_skip_manifest_record(
                         manifest_records=manifest_records,
                         candidate_fingerprint=candidate_fingerprint,
+                        source_fingerprint=source_fingerprint,
                     )
-                    if existing_success is not None:
-                        # Skip only on an identical successful fingerprint.
+                    if existing_skip_record is not None:
+                        # Skip on an identical manifest row only when the prior
+                        # outcome is known to be safe to replay as a skip.
                         #
-                        # This is the safest first cut:
-                        # - same upstream state
-                        # - same extraction contract
-                        # - previously succeeded
+                        # There are now two safe categories:
+                        # - a prior identical success
+                        # - a prior identical no-resume source failure
                         #
-                        # That means we avoid duplicate LLM cost without
-                        # guessing whether a previous failure deserves to be
-                        # treated as terminal. We can add narrower stable-
-                        # failure skips later once we have more live evidence.
+                        # The second category is intentionally narrow. A missing
+                        # resume attachment is an upstream source-data absence,
+                        # so repeating the same unchanged run does not buy us
+                        # anything. By contrast, parser/model failures stay
+                        # replayable because later code changes may fix them.
+                        previous_outcome = existing_skip_record.get(
+                            "processing_outcome"
+                        )
+                        skip_reason = (
+                            "unchanged_success"
+                            if previous_outcome == "success"
+                            else "unchanged_terminal_source_failure"
+                        )
                         skipped_record = {
                             "candidate_id": candidate_id,
+                            "source_fingerprint": source_fingerprint,
                             "candidate_fingerprint": candidate_fingerprint,
-                            "previous_output_json": existing_success.get("output_json"),
-                            "previous_timestamp": existing_success.get("timestamp"),
+                            "skip_reason": skip_reason,
+                            "previous_output_json": existing_skip_record.get("output_json"),
+                            "previous_timestamp": existing_skip_record.get("timestamp"),
+                            "previous_failure_stage": existing_skip_record.get(
+                                "failure_stage"
+                            ),
+                            "previous_failure_message": existing_skip_record.get(
+                                "failure_message"
+                            ),
                         }
                         skipped.append(skipped_record)
-                        print(
-                            "  Skipped: identical successful fingerprint already exists."
-                        )
+                        if previous_outcome == "success":
+                            print(
+                                "  Skipped: identical successful fingerprint already exists."
+                            )
+                        else:
+                            print(
+                                "  Skipped: identical no-resume source failure already exists."
+                            )
                         continue
 
                 result = run_live_resume_extraction_with_optional_quality_gate(
@@ -1146,6 +1399,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 manifest_record = build_batch_manifest_record(
                     candidate_id=candidate_id,
+                    source_fingerprint=source_fingerprint,
                     candidate_fingerprint=candidate_fingerprint,
                     source_markers=source_markers,
                     output_json=str(output_path),
@@ -1173,7 +1427,11 @@ def main(argv: list[str] | None = None) -> int:
                     payload=failure_record,
                     output_path=batch_output_dir / "batch_failures.jsonl",
                 )
-                if candidate_fingerprint is not None and source_markers is not None:
+                if (
+                    source_fingerprint is not None
+                    and candidate_fingerprint is not None
+                    and source_markers is not None
+                ):
                     # Record fingerprinted failures too.
                     #
                     # Even though V1 does not skip failed fingerprints yet,
@@ -1183,6 +1441,7 @@ def main(argv: list[str] | None = None) -> int:
                     append_jsonl_log(
                         payload=build_batch_manifest_record(
                             candidate_id=candidate_id,
+                            source_fingerprint=source_fingerprint,
                             candidate_fingerprint=candidate_fingerprint,
                             source_markers=source_markers,
                             output_json=None,

@@ -81,17 +81,33 @@ _DATE_RANGE_PATTERN = re.compile(
     r"\b(?:"
     r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{4}"
     r"|"
+    r"\d{1,2}[./-]\d{4}"
+    r"|"
     r"\d{4}"
     r")\s*[-–—]\s*(?:"
     r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{4}"
     r"|"
+    r"\d{1,2}[./-]\d{4}"
+    r"|"
     r"\d{4}"
     r"|Present"
+    r"|present"
+    r"|Current"
+    r"|current"
+    r"|Currently"
+    r"|currently"
     r")\b",
     re.IGNORECASE,
 )
 _SECTION_PATTERNS: dict[str, tuple[str, ...]] = {
-    "experience": ("experience", "employment"),
+    "experience": (
+        "experience",
+        "employment",
+        "work history",
+        "career history",
+        "professional experience",
+        "software development experience",
+    ),
     "education": ("education",),
     "skills": ("skills", "technical skills", "core skills"),
     "certifications": ("certifications", "certification"),
@@ -586,6 +602,7 @@ def _build_source_hints(cleaned_resume_text: str) -> dict[str, Any]:
         {
             "resume_email_count": 2,
             "resume_phone_count": 1,
+            "has_experience_section": True,
             "has_projects_section": True,
             "resume_contains_bp": True,
         }
@@ -619,6 +636,21 @@ def _extract_phone_hints(text: str) -> list[str]:
     - This helper is intentionally permissive about formatting.
     - It is only trying to derive a count/sanity hint, not canonicalize the
       final stored phone format.
+    - It explicitly rejects date-range lookalikes such as:
+        - `01.2021- 04.2022`
+        - `06.2023- currently`
+
+    Example
+    -------
+    A source line like:
+
+        `Tel.: +4474-935-89091`
+
+    should be counted as a phone hint, while a work-history line like:
+
+        `01.2021- 04.2022`
+
+    should not.
     """
 
     phone_candidates = _PHONE_CANDIDATE_PATTERN.findall(text)
@@ -627,6 +659,8 @@ def _extract_phone_hints(text: str) -> list[str]:
     for candidate in phone_candidates:
         digit_count = _digits_only_length(candidate)
         if digit_count < 10 or digit_count > 16:
+            continue
+        if _looks_like_date_rangeish_phone_false_positive(candidate):
             continue
         filtered.append(candidate.strip())
 
@@ -734,10 +768,39 @@ def _count_casefold_duplicates(values: list[str]) -> int:
 def _looks_like_linkedin_url(value: str) -> bool:
     """
     Return whether one value looks like a LinkedIn profile URL.
+
+    Notes
+    -----
+    Recruiter exports and compact CV headers often omit the URL scheme and use
+    forms such as:
+
+    - `linkedin.com/in/drougas`
+    - `www.linkedin.com/in/roger-campbell/`
+
+    Those are still valid enough for extraction quality purposes, so this
+    helper normalizes away an optional scheme and `www.` prefix before it
+    checks the core path shape.
+
+    Example
+    -------
+    All of the following should be accepted:
+
+        https://www.linkedin.com/in/roger-campbell/
+        http://www.linkedin.com/in/roger-campbell/
+        linkedin.com/in/roger-campbell/
     """
 
     lowered = value.strip().casefold()
-    return lowered.startswith("https://www.linkedin.com/") or lowered.startswith("http://www.linkedin.com/")
+
+    if lowered.startswith("https://"):
+        lowered = lowered[len("https://") :]
+    elif lowered.startswith("http://"):
+        lowered = lowered[len("http://") :]
+
+    if lowered.startswith("www."):
+        lowered = lowered[len("www.") :]
+
+    return lowered.startswith("linkedin.com/in/")
 
 
 def _looks_like_email(value: str) -> bool:
@@ -754,6 +817,58 @@ def _digits_only_length(value: str) -> int:
     """
 
     return len(re.sub(r"\D", "", value))
+
+
+def _looks_like_date_rangeish_phone_false_positive(value: str) -> bool:
+    """
+    Return whether a phone-like candidate is actually a work-history date range.
+
+    Parameters
+    ----------
+    value : str
+        Phone-like candidate string produced by the broad phone regex.
+
+    Returns
+    -------
+    bool
+        `True` when the candidate looks more like a date range than a phone
+        number.
+
+    Notes
+    -----
+    The phone-hint regex is intentionally broad because real CVs use many
+    phone-number formats. The tradeoff is that role date ranges can sometimes
+    look phone-like. This helper is the second-stage filter that removes
+    obvious false positives such as:
+
+    - `01.2021- 04.2022`
+    - `06.2023- currently`
+
+    Example
+    -------
+    A value like:
+
+        `+4474-935-89091`
+
+    returns `False`, while:
+
+        `01.2021- 04.2022`
+
+    returns `True`.
+    """
+
+    stripped = value.strip()
+
+    if _DATE_RANGE_PATTERN.search(stripped):
+        return True
+
+    return bool(
+        re.search(
+            r"\b\d{1,2}[./-]\d{4}\s*[-–—]\s*(?:\d{1,2}[./-]\d{4}|current(?:ly)?|present)\b",
+            stripped,
+            re.IGNORECASE,
+        )
+    )
 
 
 def _find_suspicious_terms_in_output(extraction: ResumeStructuredExtraction) -> list[str]:

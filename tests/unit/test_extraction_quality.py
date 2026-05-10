@@ -262,6 +262,31 @@ def test_score_resume_extraction_flags_suspicious_output_pollution() -> None:
     assert "nemotron" in assessment.check_results["suspicious_terms_present"]
 
 
+def test_score_resume_extraction_accepts_scheme_less_linkedin_profile_url() -> None:
+    """
+    Verify that a scheme-less LinkedIn profile URL is treated as acceptable.
+
+    Notes
+    -----
+    Real recruiter exports often present LinkedIn URLs in compact forms such
+    as `linkedin.com/in/...` without `https://`. That should not be penalised
+    as malformed when the profile path itself is clear.
+    """
+
+    extraction = _build_strong_extraction().model_copy(
+        update={
+            "linkedin_url": "linkedin.com/in/roger-campbell/",
+        }
+    )
+
+    assessment = score_resume_extraction(
+        extraction=extraction,
+        cleaned_resume_text="Roger Campbell\nlinkedin.com/in/roger-campbell/\nExperience",
+    )
+
+    assert "malformed_linkedin_url" not in assessment.reasons
+
+
 def test_score_resume_extraction_reviews_thin_but_not_broken_output() -> None:
     """
     Verify that a weakened but still coherent extraction lands in review.
@@ -300,6 +325,73 @@ Education
     assert "email_count_lower_than_resume_hint" in assessment.reasons
     assert "missing_phones_despite_resume_hint" in assessment.reasons
     assert "evidence_notes_thin" in assessment.reasons
+
+
+def test_assess_source_cv_richness_treats_work_history_as_experience_signal() -> None:
+    """
+    Verify that `Work History` is recognised as an experience-section variant.
+
+    Notes
+    -----
+    The live calibration batch included LinkedIn-style one-page CVs that used
+    `Work History` rather than `Experience`. This test protects that broader
+    section-heading coverage.
+    """
+
+    cleaned_resume_text = """
+Yannis Drougas
+Senior Software Engineer
+London area
+linkedin.com/in/drougas
+
+Work History
+Senior Software Engineer
+Crypto Trading Firm
+Jun 2023 - Present
+
+Education
+University of California, Riverside
+    """.strip()
+
+    assessment = assess_source_cv_richness(
+        cleaned_resume_text=cleaned_resume_text,
+    )
+
+    assert assessment.source_metrics["has_experience_section"] is True
+
+
+def test_assess_source_cv_richness_does_not_count_date_ranges_as_phone_hints() -> None:
+    """
+    Verify that month-year role ranges do not inflate phone-hint counts.
+
+    Notes
+    -----
+    This pins the specific regression we saw in the Taras CV, where strings
+    like `01.2021- 04.2022` were being mistaken for phone numbers by the
+    source-hint layer.
+    """
+
+    cleaned_resume_text = """
+Maliarchuk Taras
+Tel.: +4474-935-89091
+E-mail: maliarchuk@gmail.com
+
+Software development experience
+Senior Software Development Engineer
+Tacans Labs
+06.2023- currently
+
+Senior Software Development Engineer
+Digitex
+01.2021- 04.2022
+    """.strip()
+
+    assessment = assess_source_cv_richness(
+        cleaned_resume_text=cleaned_resume_text,
+    )
+
+    assert assessment.source_metrics["resume_phone_count"] == 1
+    assert assessment.source_metrics["employment_signal_count"] >= 2
 
 
 def test_assess_source_cv_richness_scores_richer_cv_as_adequate_or_better() -> None:

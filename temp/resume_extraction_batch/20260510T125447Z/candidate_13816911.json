@@ -1,0 +1,477 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13816911,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13816911,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13816911,
+      "first_name": "Edward",
+      "last_name": "Birdsall",
+      "email": "edward.birdsall@outlook.com",
+      "mobile": "+44 7460 778980",
+      "location": null,
+      "status": "Active - Interviewing",
+      "skill_tags": [],
+      "created_at": "2025-07-11T14:39:19Z",
+      "updated_at": "2025-10-02T17:28:14Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17903444,
+      "file_name": "edward-birdsall-quantitative-researcher.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-16T17:05:18Z",
+      "page_count": 2,
+      "character_count": 5864,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "Edward Birdsall\nLondon, United Kingdom\n/ne+44 7460 778980\nedward.birdsall@outlook.com\n/g♀bewww.python-limit-order-book.co.uk\nEmployment and Work Experience\nState Street FX Group / BestXSeptember 2024 – Current\nQuantitative Researcher Canary Wharf, London\nBestX is a startup acquired by State Street in 2018. BestX provide the industry standard for\npre-trade and post-trade TCA (Transaction Cost Analysis) for FX, Fixed Income and Equities.\n∠Low-latency performance optimization ofJulia(programming language) pre-trade TCA quant\nlibrary. Optimized algorithms, dynamic memory allocation and JIT compiler performance by\nleveraging typesystem. Improved performance of functions by 40,000%\n∠Timeseries analysisof FX volatility withARIMAmodels. Daily volatility prediction\n∠When I joined BestX, the existing TCA software could not be modified as it had become a fragile\nmonolith. I modularization the software, and added a unit testing framework. This enabled the\nteam to modify the software in a fluid manner, resulting in significant improvements to the team\nefficiency.\n∠Reasons for waning to leave: (1) Not able to focus onQuantitative Researchwhich is my main\narea of interest. (2) Environment not fast moving enough, too constrained/slow\nHartree Partners (Commodities Prop Trading)April 2024 – May 2024\nFront Office Fundamental Data Victoria, London\n∠Implemented high-performance, real-time data pipelines usingPython, AWS, S3 and Postgres\nGrantabridge Research (Proprietary Trading)Mar 2023 – Jan 2024\nQuantitative Developer Cambridge, UK\nI designed, implemented and deployed systematic trading system (Order Management\nSystem) for Grantabridge Research. My system enabled the first trades to be executed.\nLetter of recommendation from CEO available on request.\n∠Technologies used includeRust,Python, Java,Kafkaand Microsoft SQL\n∠Grantabridge Research are astartup Hedge Fundbased in Cambridge, UK. The firm operate as a\ntrading pod within Exodus Point, with $2bn AUM\n∠Asset classes include Commodities Futures and FX\n∠Statistical arbitragetrading strategies,intra-day time horizons, expected sharpe of 2-3.\n∠My system Manages Orders, Trade flow, Covariance Matrix Risk Calculation, Positions, PnL\n∠I helped Quants implement mid-frequency stat-arb alpha strategy, and buildreal-time tick data\ningestion system\nTorstone Technology Post-Trade SolutionsJan 2022 – Mar 2023\nC++ 20 Software Engineer, Accounting Team London, UK\nTorstone Technology is a software house specializing in high performance back-office\nsoftware for the financial services industry.\n∠Delivered products for clients, including Tower Research, Optiver, hedge funds, private banks\n∠I created ahigh performance transaction data export system using Apache Kafka\n∠I usedC++ 20 Template Metaprogrammingto optimize performance where possible\n∠Technologies includeC++ 20, C#,Oracle SQL database,Kafka,Docker, Jenkins, CICD\n∠Other notables: Mentored junior engineers, Software Security Training Course, responsible for\ncoordinating release process for Accounting Group Software\n\nBAE Systems Applied IntelligenceMay 2021 – Dec 2021\nSoftware Engineer Guildford, UK\n∠VHDL training course. Vivado and XilinxFPGAs\n∠Delivered prototype Raspberry-Pi sensor system with Python 3\n∠Reverse engineering of legacyC++project\n/beaerPersonal Projects and Software Examples\nResearch ProjectsJan – Mar, July – Aug 2024\nPython Quantitative Research London, UK\n∠Machine learning research (deep neural networks) usingpytorch,Kerasandtensorflow\n∠Learned low-level details of inner workings ofPython, including object memory model.\nAttempted to contribute to Python (cpython) project with fast C implementation ofallequal()\nfunction which would double performance under some conditions. My contribution did not\nreceive support to be included in a future release\n∠Researched machine learning tools such asPCA,factor analysis, andtimeseries cointegration\n∠WIP: building alow-latency vector/timeseries database with C++ 23\n∠Built a simulation Exchange Matching Engine, with web UI. (React, Material UI,Python, FastAPI)\nwww.python-limit-order-book.co.uk\n∠Technologies used:Python,Rust,Kafka,Docker, MinIO (AWS S3 compatible storage)\nResearch Experience & Education\nThe University of Manchester2016 – 2021\nPhD, Applied Statistics (Physics) Manchester, UK\nExperimental Particle Physics (Applied Statistics). I performed a multi-parameter,\nmulti-distribution statistical analysis of a rare nuclear decay.\n∠UsedMachine-Learningtools for analysis of large datasets from physics experiments. Performed\nstatistical measurementsof weak signals in noisy data using non-linear optimization algorithms\n∠Obtained world first measurement ofAxial-Vector Coupling Constantin addition to the best\nmeasurement of nuclear halflife for Neodymium isotope\n∠Final analysis could be imagined as a multi-dimensional linear regression in∼40 (constrained)\ndimensions\n∠Ran project to predict performance of future experiments usingMonte-Carlo (MC) simulation\n∠ContributedC++ 11shared library to model correlations inMonte-Carlo detector simulation\n∠Undergraduate Laboratory teacher. Taught students statistical data analysis with Matlab, Python\nThe University of Manchester2012 – 2016\nMaster of Theoretical Physics (MPHYS, Hons, 1st) Manchester, UK\n∠Specialized in Advanced Theoretical and Statistical Physics including Stochastic Calculus and\nBlack-Scholes Options Pricing, Monte Carlo Processes and Algorithms\n∠Masters projects in Statistical Physics and Experimental Particle Physics. Implemented a\nMarkov-Chainstatistical model of cancer cell evolution usingNvidia CUDA. Analyzed data from\nLHC experiment withC++\n∠C++ 14 Object Oriented Programmingcourse. Created a Data Analysis and Graph Plotting Library,\nsimilar to Python Pandas and Matplotlib. github: example output\n∠Non-Linear Physics summer internship.C++ 14analysis ofnoise in Chaotic Systems",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "b2574e85-1c3b-403f-8aec-fb885ff08e02",
+        "type": "Status change",
+        "created_at": "2025-10-02T17:28:14Z",
+        "updated_at": "2025-10-02T17:28:14Z",
+        "cleaned_text": "Status changed from Applied to Emailed Job Spec by Tom Owens at 6:28pm on October 2, 2025"
+      },
+      {
+        "note_id": "51aad4f7-b6c0-4d16-9e60-29f6f735978a",
+        "type": "Email sent",
+        "created_at": "2025-10-02T17:28:14Z",
+        "updated_at": "2025-10-02T17:28:14Z",
+        "cleaned_text": "Hi Edward,\n\nI came across your CV and it looks like a great fit for the attached role (I have deliberately disclosed the name of the company, but your discretion is appreciated!)\n\nIs this of interest?\n\nI'm keen to tell you more about this and answer your questions (The job spec does not tell the full story)...\n\nWhat is a convenient time for you to speak for a few minutes Edward?"
+      },
+      {
+        "note_id": "f52ccd84-2814-4ce2-a841-dfd87f30d1cb",
+        "type": "General",
+        "created_at": "2025-10-02T12:56:21Z",
+        "updated_at": "2025-10-02T12:56:21Z",
+        "cleaned_text": "RFL from 31/01/2025\n\nEd birdsall\n——————-\n£ numbers are important but environment blah blah… doesn’t know what bonus will be…suggested about £40k bonus per year…..base salary £150k ?! It’s comfortable\n£ he would be surprised if he got offered more\nN 3 months\nV\nLoc\nWFH\nWhy?\n————\nBuilt with Rust Kafka and Python\nDid it in record time with a small team and quickly emmeaiker had 20 ppl trying to do off or 2 years and they did it\nGrantabridge were weird hired a bunch of grads etc\nStruggled to find work after most hedge funds they wanted to know about strategies etc\nHe found some work started at a commodities firm heart tree partners**\nInterviewed with investment banks Citibank etc didn’t hear back. Then they came back and Citi offered him a job with loads more money\nHe resigned and then he got axed by Citibank and used the excuse that he doesn’t have the award for pHD so he was binned again. His dept. Hired 4 ppl in a month  so less than 2 months\nThen he went for a quant research role and more than citi\nHe is improving performance of Julia improved by factor of 100 and he he fixed a type system problem x450\nThey have platform does analysis for fx fixed income equity etc\nTransaction cost analysis, now they. Have a pre-trade product and client expects info immediately so he is working on that.\nIt all sounds very good but problems are political but his manager head of quant research doesn’t agree with CTO and they don’t like each other as quant team does their job better etc etc so they obstruct the work they are doing\nE.g. big report redos to cache data (which can stupid) uses string based keys to access data and format of keys is not documented but dev team hide\nHe is doing low latency for software engineering in a language not known for it (Julia) he says it should be rust or C++\nHe was hired for quant research and he can’t do any as Julia problems keep happening\nIt was sold as fix the data problem for 3 months then do quant research but now it is very complex\nStrictly speaking he can’t use Git in development server and has to copy and paste to a terminal based system…dev team can use git but not quant team…\nThey pay him reasonably but long term won’t be good for his career either\nArtificial constraints\nLooking at Woolwich for £475k\nJulia is academic code that’s faster with data than Python and has a garbage collector so it’s easy to get it wrong. Julia doesn’t has open source libraries and connectors like Python. You have to build it yourse\n\n[TRUNCATED FOR PROMPT]"
+      },
+      {
+        "note_id": "476c060d-4f44-498e-91ce-c421f6cc7f6d",
+        "type": "Client interview",
+        "created_at": "2025-07-23T15:35:31Z",
+        "updated_at": "2025-07-23T15:35:31Z",
+        "cleaned_text": "Status changed from Submitted to client to Client interview 1 by Tom Owens at 4:35pm on July 23, 2025"
+      },
+      {
+        "note_id": "f0800f12-edda-4357-bfbe-683bc4c8514f",
+        "type": "Status Change",
+        "created_at": "2025-07-23T15:35:26Z",
+        "updated_at": "2025-07-23T15:35:26Z",
+        "cleaned_text": "Candidate status changed automatically from Active to Active - Interviewing by Tom Owens when Job Application status was changed to Submitted to client, Job: tw380 - Quant Developer Rust,  at 4:35pm on July 23, 2025"
+      }
+    ]
+  },
+  "structured_extraction": {
+    "current_employer": "State Street FX Group / BestX",
+    "current_title": "Quantitative Researcher",
+    "professional_summary": "Quantitative Researcher with expertise in low-latency performance optimization, statistical analysis, and systematic trading system development. Experienced in Julia, Python, Rust, C++, and machine learning applied to financial markets and physics research.",
+    "location": "London, United Kingdom",
+    "emails": [
+      "edward.birdsall@outlook.com"
+    ],
+    "phones": [
+      "+44 7460 778980"
+    ],
+    "skills": [
+      "Quantitative Research",
+      "Low-latency Performance Optimization",
+      "Statistical Analysis",
+      "Time Series Analysis",
+      "Machine Learning",
+      "Systematic Trading Systems",
+      "Software Development",
+      "Data Pipeline Engineering"
+    ],
+    "tools_and_platforms": [
+      "Julia",
+      "Python",
+      "Rust",
+      "C++ 20",
+      "Java",
+      "Kafka",
+      "Microsoft SQL",
+      "AWS",
+      "S3",
+      "Postgres",
+      "Docker",
+      "MinIO",
+      "FastAPI",
+      "React",
+      "Material UI",
+      "PyTorch",
+      "Keras",
+      "TensorFlow",
+      "Oracle SQL",
+      "Jenkins",
+      "CICD",
+      "VHDL",
+      "Vivado",
+      "Xilinx FPGAs",
+      "Matlab",
+      "Nvidia CUDA"
+    ],
+    "certifications": [],
+    "linkedin_url": null,
+    "portfolio_references": [
+      "python-limit-order-book.co.uk"
+    ],
+    "education": [
+      {
+        "institution": "The University of Manchester",
+        "qualification": "PhD",
+        "subject": "Applied Statistics (Physics)",
+        "completion_date": "2021"
+      },
+      {
+        "institution": "The University of Manchester",
+        "qualification": "Master of Theoretical Physics (MPHYS, Hons, 1st)",
+        "subject": null,
+        "completion_date": "2016"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "State Street FX Group / BestX",
+        "title": "Quantitative Researcher",
+        "start_date": "September 2024",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Low-latency performance optimization of Julia pre-trade TCA quant library; modularized software and added unit testing framework; timeseries analysis of FX volatility with ARIMA models."
+      },
+      {
+        "employer": "Hartree Partners (Commodities Prop Trading)",
+        "title": "Front Office Fundamental Data",
+        "start_date": "April 2024",
+        "end_date": "May 2024",
+        "is_current": false,
+        "summary": "Implemented high-performance, real-time data pipelines using Python, AWS, S3 and Postgres."
+      },
+      {
+        "employer": "Grantabridge Research (Proprietary Trading)",
+        "title": "Quantitative Developer",
+        "start_date": "March 2023",
+        "end_date": "January 2024",
+        "is_current": false,
+        "summary": "Designed, implemented and deployed systematic trading system (Order Management System) enabling first trades; technologies used include Rust, Python, Java, Kafka and Microsoft SQL."
+      },
+      {
+        "employer": "Torstone Technology Post-Trade Solutions",
+        "title": "C++ 20 Software Engineer, Accounting Team",
+        "start_date": "January 2022",
+        "end_date": "March 2023",
+        "is_current": false,
+        "summary": "Delivered high performance transaction data export system using Apache Kafka; used C++ 20 Template Metaprogramming; mentored junior engineers; coordinated release process."
+      },
+      {
+        "employer": "BAE Systems Applied Intelligence",
+        "title": "Software Engineer",
+        "start_date": "May 2021",
+        "end_date": "December 2021",
+        "is_current": false,
+        "summary": "VHDL training; delivered prototype Raspberry-Pi sensor system with Python 3; reverse engineering of legacy C++ project."
+      }
+    ],
+    "projects": [
+      {
+        "name": "Low-latency performance optimization of Julia pre-trade TCA quant library",
+        "employer": "State Street FX Group / BestX",
+        "role": "Quantitative Researcher",
+        "start_date": "September 2024",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Optimized algorithms, dynamic memory allocation and JIT compiler performance leveraging Julia's type system; improved function performance by 40,000%. Modularized fragile monolithic software and added unit testing framework enabling fluid modifications and team efficiency improvements.",
+        "responsibilities": [
+          "Optimized Julia pre-trade TCA quant library for low-latency performance.",
+          "Modularized existing TCA software and implemented unit testing framework."
+        ],
+        "deliverables": [
+          "Improved performance of Julia functions by 40,000%.",
+          "Modularized and unit-tested TCA software enabling easier modifications."
+        ],
+        "business_outcomes": [
+          "Significant improvements to team efficiency and software maintainability."
+        ],
+        "tools_and_platforms": [
+          "Julia"
+        ],
+        "domains": [
+          "Financial Technology",
+          "Transaction Cost Analysis",
+          "Quantitative Research"
+        ]
+      },
+      {
+        "name": "Systematic Trading System (Order Management System)",
+        "employer": "Grantabridge Research (Proprietary Trading)",
+        "role": "Quantitative Developer",
+        "start_date": "March 2023",
+        "end_date": "January 2024",
+        "is_current": false,
+        "summary": "Designed, implemented and deployed a systematic trading system enabling first trades for the firm; managed orders, trade flow, risk calculations, positions, and PnL.",
+        "responsibilities": [
+          "Designed and implemented systematic trading system.",
+          "Managed orders, trade flow, covariance matrix risk calculation, positions, and PnL."
+        ],
+        "deliverables": [
+          "Order Management System enabling first trades execution."
+        ],
+        "business_outcomes": [
+          "Enabled first trades execution for Grantabridge Research."
+        ],
+        "tools_and_platforms": [
+          "Rust",
+          "Python",
+          "Java",
+          "Kafka",
+          "Microsoft SQL"
+        ],
+        "domains": [
+          "Proprietary Trading",
+          "Systematic Trading",
+          "Risk Management"
+        ]
+      },
+      {
+        "name": "High-performance transaction data export system",
+        "employer": "Torstone Technology Post-Trade Solutions",
+        "role": "C++ 20 Software Engineer, Accounting Team",
+        "start_date": "January 2022",
+        "end_date": "March 2023",
+        "is_current": false,
+        "summary": "Created a high-performance transaction data export system using Apache Kafka and optimized performance with C++ 20 Template Metaprogramming.",
+        "responsibilities": [
+          "Developed transaction data export system.",
+          "Optimized software performance using C++ 20 Template Metaprogramming.",
+          "Mentored junior engineers and coordinated release process."
+        ],
+        "deliverables": [
+          "High-performance transaction data export system."
+        ],
+        "business_outcomes": [
+          "Delivered products for clients including hedge funds and private banks."
+        ],
+        "tools_and_platforms": [
+          "C++ 20",
+          "Apache Kafka",
+          "Docker",
+          "Jenkins",
+          "CICD"
+        ],
+        "domains": [
+          "Financial Software",
+          "Post-Trade Solutions"
+        ]
+      },
+      {
+        "name": "Machine Learning Research Projects",
+        "employer": null,
+        "role": null,
+        "start_date": "January 2024",
+        "end_date": "August 2024",
+        "is_current": false,
+        "summary": "Conducted machine learning research using deep neural networks and tools such as PyTorch, Keras, and TensorFlow; researched PCA, factor analysis, and timeseries cointegration; built a low-latency vector/timeseries database with C++ 23; developed a simulation Exchange Matching Engine with web UI.",
+        "responsibilities": [
+          "Conducted machine learning research using deep neural networks.",
+          "Researched PCA, factor analysis, and timeseries cointegration.",
+          "Built low-latency vector/timeseries database with C++ 23.",
+          "Developed simulation Exchange Matching Engine with web UI."
+        ],
+        "deliverables": [
+          "Low-latency vector/timeseries database (WIP).",
+          "Simulation Exchange Matching Engine with React, Material UI, Python, FastAPI."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Python",
+          "PyTorch",
+          "Keras",
+          "TensorFlow",
+          "C++ 23",
+          "React",
+          "Material UI",
+          "FastAPI",
+          "Rust",
+          "Kafka",
+          "Docker",
+          "MinIO"
+        ],
+        "domains": [
+          "Machine Learning",
+          "Quantitative Research",
+          "Financial Technology"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides email and phone number.",
+      "Resume header states location as London, United Kingdom.",
+      "Resume employment section details roles at State Street FX Group / BestX, Hartree Partners, Grantabridge Research, Torstone Technology, and BAE Systems Applied Intelligence.",
+      "Resume project and personal projects sections describe machine learning research and software development projects.",
+      "Resume education section details PhD and Master degrees from The University of Manchester.",
+      "Candidate metadata confirms email and phone number.",
+      "Candidate notes provide context on current role environment and technologies used but do not add new skills or tools beyond resume.",
+      "Portfolio reference to python-limit-order-book.co.uk from resume header."
+    ],
+    "ambiguity_notes": [
+      "Location is inferred from resume header but not explicitly stated as current location in candidate metadata.",
+      "No certifications explicitly listed in resume or metadata.",
+      "Candidate notes mention tools and projects but do not confirm additional proven experience beyond resume."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "edward.birdsall@outlook.com"
+      ],
+      "resume_phones": [
+        "+44 7460 778980"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": false,
+      "has_certifications_section": false,
+      "has_projects_section": true,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 5,
+      "projects_count": 4,
+      "education_count": 2,
+      "evidence_notes_count": 8,
+      "skills_count": 8,
+      "tools_and_platforms_count": 26,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 88,
+    "richness_band": "rich",
+    "reasons": [
+      "no_bullet_like_content",
+      "no_explicit_skills_section"
+    ],
+    "source_metrics": {
+      "character_count": 5864,
+      "word_count": 794,
+      "nonempty_line_count": 88,
+      "substantial_line_count": 59,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 5,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": false,
+      "has_projects_section": true,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "edward.birdsall@outlook.com"
+        ],
+        "resume_phones": [
+          "+44 7460 778980"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": false,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 4,
+        "education_count": 2,
+        "evidence_notes_count": 8,
+        "skills_count": 8,
+        "tools_and_platforms_count": 26,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "edward.birdsall@outlook.com"
+        ],
+        "resume_phones": [
+          "+44 7460 778980"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": false,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 4,
+        "education_count": 2,
+        "evidence_notes_count": 8,
+        "skills_count": 8,
+        "tools_and_platforms_count": 26,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}
