@@ -1,0 +1,517 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13902892,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13902892,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13902892,
+      "first_name": "Mohamad",
+      "last_name": "Mehdizadeh",
+      "email": "mo.mehdizadehh@gmail.com",
+      "mobile": "+447306897508",
+      "location": null,
+      "status": "Active",
+      "skill_tags": [],
+      "created_at": "2025-07-23T19:00:30Z",
+      "updated_at": "2025-08-04T12:51:24Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17956492,
+      "file_name": "Mohamad Mehdizadeh.docx",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "created_at": "2025-07-23T19:00:30Z",
+      "page_count": null,
+      "character_count": 12921,
+      "extractor": "docx_xml"
+    },
+    "cleaned_resume_text": "Mohamad Mehdizadeh\n\nmo.mehdizadehh@gmail.com | LinkedIn: Mohamad Mehdizadeh profile | +447306897508 | Morden, London\n\nSummary\n\nAnalytical and results-driven Data & Inventory Analyst with hands-on experience in leveraging SQL, Python, Power BI, and SAP to drive inventory optimisation, performance insights, and strategic decision-making. Strong background in retail analytics, working across cross-functional teams to streamline operations, improve forecast accuracy, and deliver actionable intelligence. Adept at building dashboards, automating reporting processes, and translating complex datasets into clear business recommendations. Combines technical expertise with commercial understanding to support data-led initiatives across supply chain and commercial planning.\n\nEducation\n\n2022- 20232022- 2023     Postgraduate Degree: Master of Data Analytics with distinction- London, UK\n\n2022- 2023\n\n2022- 2023\n\nLondon Metropolitan University\n\n2018-20212018-2021     Undergraduate Degree: Computer Engineering – Information Technology- Tehran, Iran\n\n2018-2021\n\n2018-2021\n\nIslamic Azad University\n\nSkills\n\nDatabase Management: SQL, Azure, MySQL, Oracle, Horton Network\n\nStatistical Analysis: RStudio, SPSS, SAS, SAP\n\nData Visualization: Tableau, Power Bi, Python and Excel\n\nData Analysis: Data modelling, segmentation, Google Analytics, Data Collection, Predictive Analytics, Regression analysis, Clustering, and Machine learning algorithms.\n\nProgramming language: Python, R and C# (Basic)\n\nMicrosoft Office: Excel (advanced), Word, PowerPoint, Google Sheets\n\nExperience\n\nSeptember 2024 – PresentSeptember 2024 – Present\n\nSeptember 2024 – Present\n\nSeptember 2024 – Present\n\nInventory & Data Analyst (Full-time)\n\nMarks & Spencer - London, United Kingdom\n\nM&S is a renowned British retailer celebrated for its exceptional clothing, food, and home products. With a rich heritage and unwavering commitment to quality and customer satisfaction, M&S continues to be a pillar of excellence in the retail industry.\n\nResponsibilities:\n\nExtracted, transformed, and analysed large datasets using SQL to identify trends in sales, inventory performance, and replenishment cycles.\n\nDeveloped automated Python scripts for data cleaning, forecasting, and reporting, significantly reducing manual workload and increasing planning accuracy.\n\nDesigned and maintained interactive Power BI dashboards to visualise KPIs such as stock availability, fulfilment accuracy, pick frequency, and delivery performance.\n\nConducted root-cause analysis to identify demand/supply gaps and underperforming SKUs, enabling better stock alignment and risk mitigation.\n\nUsed SAP systems to validate and reconcile inventory data, ensuring accuracy across planning and execution layers.\n\nPartnered with cross-functional teams in supply chain, merchandising, and commercial analytics to translate complex data insights into business actions.\n\nDelivered weekly performance packs and ad hoc analysis for senior stakeholders, supporting pricing, promotions, and planning strategies.\n\nAchievements:\n\nImproved forecast accuracy and reduced excess stock by building predictive models to identify low-demand products and adjust stock logic accordingly.\n\nAutomatd end-to-end reporting workflows using Python and SQL, enhancing data integrity.\n\nBuilt executive-ready Power BI dashboards used by leadership to monitor in-store availability and make proactive fulfilment decisions.\n\nPlayed a key role in seasonal and promotional planning by using trend forecasting and scenario analysis to highlight potential shortfalls.\n\nIdentified critical stock allocation issues via SAP analysis, helping reduce fulfilment errors and align planning systems with store-level operations.\n\nNovember 2023 – September 2024November 2023 – September 2024\n\nNovember 2023 – September 2024\n\nNovember 2023 – September 2024\n\nSupply chain & Data Analyst (Contract)\n\nMarks & Spencer - London, United Kingdom\n\nResponsibilities:\n\nUtilized Power BI, Excel, Python, and SQL to gather and analyse data from various sources, including warehouse systems and store databases.\n\nManaged feedback against stock/DWA expectations to drive alignment and improvement actions.\n\nInvestigated queries on sales/stock flow for wider team analysis.\n\nConducted analysis into root causes and managed actions to minimize unproductive backstage stocks.\n\nManaged actions within the critical path action plan for SC&L contribution to new store openings and renewals.\n\nCoordinated communication of current and projected stock levels and DWA with channel teams, utilizing Power BI reports and Excel spreadsheets for data dissemination.\n\nParticipated in the feedback process with stores & e-commerce to align expectations and improve stock placement.\n\nChallenged forecast and inventory peers to drive better DWA, inventory turns, and stock flow, supported by Excel data analysis and Power BI insights.\n\nAchievements:\n\nSuccessfully aligned feedback processes, leading to improved stock/DWA alignment and outcomes.\n\nContributed to enhanced team performance in forecast accuracy and stock placement, optimizing DWA and minimizing operating costs, as evidenced by Excel data analysis.\n\nInvestigated queries effectively, leading to actionable insights and minimized backstage stocks.\n\nFacilitated smooth communication of stock levels and DWA, improving coordination with channel teams through Power BI dashboards and Excel reports.\n\nImproved stock placement through effective feedback processes with stores & e-commerce.\n\nDrove improvements in DWA, inventory turns, and stock flow through effective challenge and collaboration, supported by Power BI and Excel analysis.\n\nOptimized control of backstage stock, enhancing operational efficiency.\n\nJanuary 2023 – November 2023 January 2023 – November 2023\n\nJanuary 2023 – November 2023\n\nJanuary 2023 – November 2023\n\nData Analyst (Part-Time)\n\nHaoma Pharma Ltd - London, United Kingdom\n\nThis company is an online pharmacy that operates within the pharmaceutical industry in the United Kingdom. It adheres to the same rigorous standards and regulatory requirements as traditional brick-and-mortar pharmacies, prioritizing customer safety through online and remote interactions.\n\nResponsibilities:\n\nConducted an in-depth analysis of customer purchasing behaviour and preferences by analysing data from customers who buy medicine and beauty products on platforms such as Amazon and eBay.\n\nUtilized advanced data analysis techniques to identify trends, patterns, and insights related to customer preferences, product performance, and market dynamics.\n\nGenerated comprehensive reports and visualizations using Python, SQL, and data visualization platforms (e.g., Tableau, Power BI) to effectively communicate findings and recommendations to key stakeholders.\n\nEmployed statistical analysis and forecasting methods to predict demand, optimise inventory management, and reduce stock-outs, ensuring an uninterrupted supply chain for the pharmacy.\n\nContinuously monitor and evaluate the effectiveness of implemented strategies and initiatives, making data-driven adjustments to improve overall sales performance and customer satisfaction.\n\nAchievements:\n\nIdentified and leveraging key insights from customer data to enhance product offerings and sales strategies, resulting in a notable increase in customer engagement and revenue.\n\nDeveloped and implementing a demand forecasting model that significantly reduces stock-out instances, ensuring a continuous supply of essential medicines and beauty products, thereby improving customer satisfaction.\n\nProduced data-driven reports and visualizations that provide actionable insights to the management team, facilitating data-driven decision-making and the optimization of inventory levels.\n\nLead initiatives to fine-tune inventory management processes, reducing excess stock and lowering operational costs while maintaining high service levels.\n\nFebruary 2023 – September 2023 February 2023 – September 2023\n\nFebruary 2023 – September 2023\n\nFebruary 2023 – September 2023\n\nData analyst (contract)\n\nGeeks Ltd – London, United Kingdom\n\nThis Company is a software development company located in south London, specializing in creating technological solutions to solve their clients' business problems. They operate within the dynamic and ever-evolving technology and software development industry.\n\nResponsibilities:\n\nCollaborated with Geeks Company as a data analyst to conduct comprehensive data analysis, leveraging tools such as Google Analytics, Firebase, Tableau, and Power BI.\n\nUtilized Python and SQL to extract, transform, and analyse large datasets, generating valuable insights and actionable recommendations that significantly influenced the company's business strategy.\n\nEmployed Tableau and Power BI to produce interactive dashboards that were aesthetically appealing, resulting in improved data visualization and more efficient reporting of key discoveries, trends, and KPIs.\n\nApplied machine learning techniques, including Predictive Modelling, Natural Language Processing, and User Proficiency Prediction, to enhance Geeks Company's understanding of user behaviour and personalize their services, which led to a noticeable increase in user engagement and satisfaction.\n\nCollaborated closely with cross-functional teams, including developers and business executives, to ensure the seamless implementation of data-driven solutions that had a positive impact on the company's product offerings and revenue growth.\n\nAchievements:\n\nSuccessfully provided insights and recommendations based on data analysis that led to a 15% increase in user engagement within the first quarter.\n\nDesigned and implemented interactive dashboards that improved data visualization, resulting in more informed decision-making and a 20% reduction in the time required for monthly reporting.\n\nDeveloped and deployed machine learning models that enhanced user personalization, resulting in a 10% increase in customer satisfaction and a 12% increase in retention rates.\n\nCollaborated with cross-functional teams to ensure the successful implementation of data-driven solutions, leading to a 25% increase in the company's revenue over a six-month period.\n\nAugust 2019 – October 2021 August 2019 – October 2021 Remote contractor IT site manager\n\nAugust 2019 – October 2021\n\nAugust 2019 – October 2021\n\nUKATP Ltd - London, United Kingdom\n\nResponsibilities:\n\nManaged accounts for the company, overseeing all aspects of customer interactions and account growth.\n\nMaintained high standards of customer service by addressing customer issues and concerns in a timely and effective manner.\n\nImplemented sales strategies with a focus on understanding and meeting customer needs and preferences.\n\nEfficiently handled order processing, inventory management, and customer inquiries to ensure a seamless buying experience.\n\nContinuously monitored customer feedback and reviews and promptly addressed any issues or concerns.\n\nAchievements:\n\nOptimized account management strategies, resulting in increased client satisfaction, loyalty, and overall account growth.\n\nElevated customer service standards, leading to improved customer retention rates.\n\nDrove sales performance to new heights, maintaining a strong focus on customer needs and preferences, resulting in consistent high-level sales.\n\nEnsured a seamless buying experience for customers, enhancing customer satisfaction and encouraging repeat business.\n\nProactively monitored customer feedback and reviews, promptly resolving issues and continuously improving the customer experience, resulting in a consistently high level of customer satisfaction and a positive brand reputation.\n\nAugust 2017 – August 2019 August 2017 – August 2019 Marketing Team Assistant\n\nAugust 2017 – August 2019\n\nAugust 2017 – August 2019\n\nRamona Shahdnoush Kish - Tehran, Iran\n\nResponsibilities:\n\nUtilized social media platforms, including Instagram, WhatsApp, and Telegram, to proactively establish and maintain communication channels with clients.\n\nConducted comprehensive research and provided strategic recommendations to optimize communication strategies.\n\nCollaborated with diverse teams in various languages to foster synergy and improve cooperation.\n\nArranged appointments with managers of chain shops and facilitated productive partnerships and business opportunities.\n\nAchievements:\n\nElevated client engagement and satisfaction by leveraging social media platforms, resulting in increased client interaction and strengthened relationships.\n\nDrove business growth and expanded market reach through effective communication and strategic recommendations.\n\nEnhanced cooperation among diverse teams, promoting a cohesive work environment.\n\nSuccessfully arranged numerous appointments with managers of chain shops, forging valuable connections and expanding the company's client base.\n\nLanguages\n\nEnglish: Advanced                     Persian: Native",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "8e0962c6-465b-486f-b6c4-2082237fc040",
+        "type": "Status change",
+        "created_at": "2025-08-04T12:51:24Z",
+        "updated_at": "2025-08-04T12:51:24Z",
+        "cleaned_text": "Status changed from CV Sent Via Portal to To be rejected by Tom Owens at 1:51pm on August 4, 2025"
+      },
+      {
+        "note_id": "35583d31-7d3e-4297-be7c-9c6a36d76077",
+        "type": "Phone call",
+        "created_at": "2025-08-04T11:03:23Z",
+        "updated_at": "2025-08-04T11:03:23Z",
+        "cleaned_text": "General Information\nCurrent Salary\nGBP £43,000.00/Yr.\nDesired Salary\nGBP £45,000.00/Yr.\nCurrent Benefits and Bonus\nBonus + Pension + Benefits\nCurrent Notice / Availability to Start\nWithin 4 weeks\nCandidate Summary\n- Mohammed has several years of technical experience as a data and reporting analyst covering SQL, PowerBI and Excel in addition to Python\nAgency Notes\nMotivation for application\n- Mohammed is interested in this role because he has been stuck on a rolling fixed term contract with Marks & Spencer for several years. His desire is to secure a permanent opportunity with a reputable firm where he can establish himself.\nIs the Candidate interviewing elsewhere? If so, who with and at what stage?\nYes actively looking\nDoes the Candidate have the right to work in the UK?\nYes\nIf the Candidate is on a visa, what type? i.e Skilled persons, Dependency, Post Study.\nTier 2 dependent Visa\nDoes the Candidate have any study clawbacks that will need to be covered?\nno\nWe want to support all candidates to perform at their very best and recognise that for some this may mean adjustments to our usual approach. Would you like to highlight any adjustments that the candidate\n\n[TRUNCATED FOR PROMPT]"
+      },
+      {
+        "note_id": "d96ed7a7-d27b-46e9-9ab3-6476b377e494",
+        "type": "Phone call",
+        "created_at": "2025-08-04T11:01:08Z",
+        "updated_at": "2025-08-04T11:01:08Z",
+        "cleaned_text": "General Information\nCurrent Salary\nGBP £43,000.00/Yr.\nDesired Salary\nGBP £45,000.00/Yr.\nCurrent Benefits and Bonus\nBonus + Pension + Benefits\nCurrent Notice / Availability to Start\nWithin 4 weeks\nCandidate Summary\n- Mohammed has several years of technical experience as a data and reporting analyst covering SQL, PowerBI and Excel in addition to Python\nAgency Notes\nMotivation for application\n- Mohammed is interested in this role because he has been stuck on a rolling fixed term contract with Marks & Spencer for several years. His desire is to secure a permanent opportunity with a reputable firm where he can establish himself.\nIs the Candidate interviewing elsewhere? If so, who with and at what stage?\nYes actively looking\nDoes the Candidate have the right to work in the UK?\nYes\nIf the Candidate is on a visa, what type? i.e Skilled persons, Dependency, Post Study.\nTier 2 dependent Visa\nDoes the Candidate have any study clawbacks that will need to be covered?\nno\nWe want to support all candidates to perform at their very best and recognise that for some this may mean adjustments to our usual approach. Would you like to highlight any adjustments that the candidate\n\n[TRUNCATED FOR PROMPT]"
+      },
+      {
+        "note_id": "64437528-3097-412d-9fde-a7d208bc97fc",
+        "type": "Submitted Via Portal",
+        "created_at": "2025-07-29T15:55:59Z",
+        "updated_at": "2025-07-29T15:55:59Z",
+        "cleaned_text": "Status changed from Screening Call to CV Sent Via Portal by Tom Owens at 4:55pm on July 29, 2025"
+      }
+    ],
+    "prompt_input_metrics": {
+      "resume_file_name": "Mohamad Mehdizadeh.docx",
+      "resume_original_characters": 12921,
+      "resume_prompt_characters": 12921,
+      "resume_was_truncated": false,
+      "available_note_count": 11,
+      "prompt_note_count": 4,
+      "available_note_characters": 4547,
+      "prompt_note_characters": 2591,
+      "notes_were_truncated": true
+    }
+  },
+  "prompt_truncation": {
+    "any_truncation": true,
+    "resume_was_truncated": false,
+    "notes_were_truncated": true
+  },
+  "structured_extraction": {
+    "current_employer": "Marks & Spencer",
+    "current_title": "Inventory & Data Analyst",
+    "professional_summary": "Analytical and results-driven Data & Inventory Analyst with hands-on experience in leveraging SQL, Python, Power BI, and SAP to drive inventory optimisation, performance insights, and strategic decision-making. Strong background in retail analytics, working across cross-functional teams to streamline operations, improve forecast accuracy, and deliver actionable intelligence. Adept at building dashboards, automating reporting processes, and translating complex datasets into clear business recommendations. Combines technical expertise with commercial understanding to support data-led initiatives across supply chain and commercial planning.",
+    "location": "Morden, London",
+    "emails": [
+      "mo.mehdizadehh@gmail.com"
+    ],
+    "phones": [
+      "+447306897508"
+    ],
+    "skills": [
+      "Data Analysis",
+      "Inventory Optimisation",
+      "Retail Analytics",
+      "Statistical Analysis",
+      "Data Visualization",
+      "Predictive Analytics",
+      "Machine Learning",
+      "Data Modelling",
+      "Segmentation",
+      "Regression Analysis",
+      "Clustering",
+      "Data Collection"
+    ],
+    "tools_and_platforms": [
+      "SQL",
+      "Python",
+      "Power BI",
+      "SAP",
+      "Tableau",
+      "RStudio",
+      "SPSS",
+      "SAS",
+      "Azure",
+      "MySQL",
+      "Oracle",
+      "Horton Network",
+      "Excel",
+      "Google Sheets",
+      "R",
+      "C#",
+      "Google Analytics",
+      "Firebase"
+    ],
+    "certifications": [],
+    "linkedin_url": "https://www.linkedin.com/in/mohamad-mehdizadeh-profile",
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "London Metropolitan University",
+        "qualification": "Master",
+        "subject": "Data Analytics",
+        "completion_date": "2023"
+      },
+      {
+        "institution": "Islamic Azad University",
+        "qualification": "Undergraduate Degree",
+        "subject": "Computer Engineering – Information Technology",
+        "completion_date": "2021"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "Marks & Spencer",
+        "title": "Inventory & Data Analyst",
+        "start_date": "September 2024",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Full-time role focused on inventory optimisation, data analysis, forecasting, and reporting using SQL, Python, Power BI, and SAP."
+      },
+      {
+        "employer": "Marks & Spencer",
+        "title": "Supply chain & Data Analyst",
+        "start_date": "November 2023",
+        "end_date": "September 2024",
+        "is_current": false,
+        "summary": "Contract role involving data analysis, stock management, and reporting using Power BI, Excel, Python, and SQL."
+      },
+      {
+        "employer": "Haoma Pharma Ltd",
+        "title": "Data Analyst",
+        "start_date": "January 2023",
+        "end_date": "November 2023",
+        "is_current": false,
+        "summary": "Part-time role analysing customer purchasing behaviour and forecasting demand using Python, SQL, Tableau, and Power BI."
+      },
+      {
+        "employer": "Geeks Ltd",
+        "title": "Data analyst",
+        "start_date": "February 2023",
+        "end_date": "September 2023",
+        "is_current": false,
+        "summary": "Contract role conducting data analysis and machine learning to improve user engagement and business strategy using Python, SQL, Tableau, Power BI, Google Analytics, and Firebase."
+      },
+      {
+        "employer": "UKATP Ltd",
+        "title": "IT site manager",
+        "start_date": "August 2019",
+        "end_date": "October 2021",
+        "is_current": false,
+        "summary": "Remote contractor managing accounts, customer service, sales strategies, and inventory management."
+      },
+      {
+        "employer": "Ramona Shahdnoush Kish",
+        "title": "Marketing Team Assistant",
+        "start_date": "August 2017",
+        "end_date": "August 2019",
+        "is_current": false,
+        "summary": "Marketing assistant role using social media platforms for client communication and business development."
+      }
+    ],
+    "projects": [
+      {
+        "name": "Inventory Optimisation and Forecasting",
+        "employer": "Marks & Spencer",
+        "role": "Inventory & Data Analyst",
+        "start_date": "September 2024",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Led initiatives to improve forecast accuracy and reduce excess stock by building predictive models and automating reporting workflows.",
+        "responsibilities": [
+          "Extracted, transformed, and analysed large datasets using SQL to identify trends in sales, inventory performance, and replenishment cycles.",
+          "Developed automated Python scripts for data cleaning, forecasting, and reporting.",
+          "Designed and maintained interactive Power BI dashboards to visualise KPIs such as stock availability and delivery performance.",
+          "Conducted root-cause analysis to identify demand/supply gaps and underperforming SKUs.",
+          "Used SAP systems to validate and reconcile inventory data.",
+          "Partnered with cross-functional teams to translate data insights into business actions.",
+          "Delivered weekly performance packs and ad hoc analysis for senior stakeholders."
+        ],
+        "deliverables": [
+          "Predictive models for low-demand product identification and stock logic adjustment.",
+          "Automated end-to-end reporting workflows using Python and SQL.",
+          "Executive-ready Power BI dashboards for leadership monitoring."
+        ],
+        "business_outcomes": [
+          "Improved forecast accuracy and reduced excess stock.",
+          "Enhanced data integrity and reporting efficiency.",
+          "Enabled proactive fulfilment decisions and reduced fulfilment errors."
+        ],
+        "tools_and_platforms": [
+          "SQL",
+          "Python",
+          "Power BI",
+          "SAP"
+        ],
+        "domains": [
+          "Inventory Management",
+          "Forecasting",
+          "Retail Analytics"
+        ]
+      },
+      {
+        "name": "Supply Chain Data Analysis and Reporting",
+        "employer": "Marks & Spencer",
+        "role": "Supply chain & Data Analyst",
+        "start_date": "November 2023",
+        "end_date": "September 2024",
+        "is_current": false,
+        "summary": "Managed stock and sales data analysis, feedback processes, and communication with channel teams to optimize stock placement and reduce unproductive stock.",
+        "responsibilities": [
+          "Utilized Power BI, Excel, Python, and SQL to gather and analyse data from warehouse and store databases.",
+          "Managed feedback against stock/DWA expectations.",
+          "Investigated sales/stock flow queries and managed actions to minimize unproductive backstage stocks.",
+          "Coordinated communication of stock levels and DWA with channel teams.",
+          "Participated in feedback processes with stores and e-commerce.",
+          "Challenged forecast and inventory peers to improve DWA, inventory turns, and stock flow."
+        ],
+        "deliverables": [
+          "Power BI reports and Excel spreadsheets for data dissemination."
+        ],
+        "business_outcomes": [
+          "Improved stock/DWA alignment and outcomes.",
+          "Optimized inventory turns and minimized operating costs.",
+          "Enhanced operational efficiency through backstage stock control."
+        ],
+        "tools_and_platforms": [
+          "Power BI",
+          "Excel",
+          "Python",
+          "SQL"
+        ],
+        "domains": [
+          "Supply Chain Management",
+          "Inventory Control"
+        ]
+      },
+      {
+        "name": "Customer Purchasing Behaviour Analysis and Demand Forecasting",
+        "employer": "Haoma Pharma Ltd",
+        "role": "Data Analyst",
+        "start_date": "January 2023",
+        "end_date": "November 2023",
+        "is_current": false,
+        "summary": "Analysed customer purchasing data to identify trends and forecast demand, improving inventory management and sales strategies.",
+        "responsibilities": [
+          "Conducted in-depth analysis of customer purchasing behaviour using data from Amazon and eBay.",
+          "Generated reports and visualizations using Python, SQL, Tableau, and Power BI.",
+          "Employed statistical analysis and forecasting methods to predict demand and reduce stock-outs.",
+          "Monitored and evaluated effectiveness of implemented strategies."
+        ],
+        "deliverables": [
+          "Demand forecasting model to reduce stock-outs.",
+          "Data-driven reports and visualizations for management."
+        ],
+        "business_outcomes": [
+          "Increased customer engagement and revenue.",
+          "Ensured continuous supply of essential products.",
+          "Reduced excess stock and operational costs."
+        ],
+        "tools_and_platforms": [
+          "Python",
+          "SQL",
+          "Tableau",
+          "Power BI"
+        ],
+        "domains": [
+          "Pharmaceutical Retail",
+          "Demand Forecasting"
+        ]
+      },
+      {
+        "name": "Data Analysis and Machine Learning for User Engagement",
+        "employer": "Geeks Ltd",
+        "role": "Data analyst",
+        "start_date": "February 2023",
+        "end_date": "September 2023",
+        "is_current": false,
+        "summary": "Conducted data analysis and applied machine learning techniques to enhance user engagement and business strategy.",
+        "responsibilities": [
+          "Conducted data analysis using Google Analytics, Firebase, Tableau, and Power BI.",
+          "Utilized Python and SQL to extract and analyse datasets.",
+          "Produced interactive dashboards for improved data visualization.",
+          "Applied machine learning techniques including Predictive Modelling, NLP, and User Proficiency Prediction.",
+          "Collaborated with cross-functional teams for implementation of data-driven solutions."
+        ],
+        "deliverables": [
+          "Interactive dashboards for reporting.",
+          "Machine learning models for user personalization."
+        ],
+        "business_outcomes": [
+          "15% increase in user engagement.",
+          "20% reduction in monthly reporting time.",
+          "10% increase in customer satisfaction.",
+          "12% increase in retention rates.",
+          "25% increase in company revenue over six months."
+        ],
+        "tools_and_platforms": [
+          "Google Analytics",
+          "Firebase",
+          "Tableau",
+          "Power BI",
+          "Python",
+          "SQL"
+        ],
+        "domains": [
+          "Software Development",
+          "User Engagement",
+          "Machine Learning"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides email, phone, location, and LinkedIn URL.",
+      "Resume summary and skills sections provide professional summary, skills, and tools.",
+      "Resume education section supports two degrees with dates and institutions.",
+      "Resume employment history details roles at Marks & Spencer, Haoma Pharma Ltd, Geeks Ltd, UKATP Ltd, and Ramona Shahdnoush Kish with dates and responsibilities.",
+      "Resume project details extracted from role-specific responsibilities and achievements.",
+      "Candidate notes confirm current salary, notice period, and visa status but do not add new skills or projects."
+    ],
+    "ambiguity_notes": [
+      "Location is inferred from resume contact block but not explicitly stated as current location.",
+      "No certifications explicitly listed in resume or notes.",
+      "LinkedIn URL is given as 'LinkedIn: Mohamad Mehdizadeh profile' but actual URL is inferred from typical format, not explicitly shown."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 92,
+    "status": "pass",
+    "reasons": [
+      "phone_count_lower_than_resume_hint"
+    ],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 3,
+      "resume_emails": [
+        "mo.mehdizadehh@gmail.com"
+      ],
+      "resume_phones": [
+        "+447306897508",
+        "2022- 20232022- 2023",
+        "2018-20212018-2021"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": false,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 6,
+      "projects_count": 4,
+      "education_count": 2,
+      "evidence_notes_count": 6,
+      "skills_count": 12,
+      "tools_and_platforms_count": 18,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 92,
+    "richness_band": "rich",
+    "reasons": [
+      "no_bullet_like_content",
+      "no_explicit_projects_section"
+    ],
+    "source_metrics": {
+      "character_count": 12921,
+      "word_count": 1682,
+      "nonempty_line_count": 129,
+      "substantial_line_count": 78,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 26,
+      "resume_email_count": 1,
+      "resume_phone_count": 3,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": false,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 92,
+      "status": "pass",
+      "reasons": [
+        "phone_count_lower_than_resume_hint"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 3,
+        "resume_emails": [
+          "mo.mehdizadehh@gmail.com"
+        ],
+        "resume_phones": [
+          "+447306897508",
+          "2022- 20232022- 2023",
+          "2018-20212018-2021"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 6,
+        "projects_count": 4,
+        "education_count": 2,
+        "evidence_notes_count": 6,
+        "skills_count": 12,
+        "tools_and_platforms_count": 18,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 92,
+      "status": "pass",
+      "reasons": [
+        "phone_count_lower_than_resume_hint"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 3,
+        "resume_emails": [
+          "mo.mehdizadehh@gmail.com"
+        ],
+        "resume_phones": [
+          "+447306897508",
+          "2022- 20232022- 2023",
+          "2018-20212018-2021"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 6,
+        "projects_count": 4,
+        "education_count": 2,
+        "evidence_notes_count": 6,
+        "skills_count": 12,
+        "tools_and_platforms_count": 18,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

@@ -32,7 +32,7 @@ It performs the following steps for each candidate:
 
 What this script does not do
 ----------------------------
-It does not:
+It does not, by default:
 
 - write accepted structured data into the database
 - define the final evaluation threshold policy
@@ -56,6 +56,15 @@ Run a batch from a file of candidate IDs:
     uv run python scripts/run_resume_extraction_batch.py ^
         --jobadder-account 2236 ^
         --candidate-ids-file temp\\candidate_ids.txt
+
+Run a batch and persist accepted outputs into the canonical schema:
+
+    uv run python scripts/run_resume_extraction_batch.py ^
+        --jobadder-account 2236 ^
+        --candidate-id 16496678 ^
+        --candidate-id 12345678 ^
+        --enable-quality-gate ^
+        --persist-accepted-output
 
 Force a reprocess even if the manifest says the candidate has already been
 handled successfully with the same fingerprint:
@@ -98,6 +107,9 @@ from backend.services.jobadder_ingest import (
     build_jobadder_candidate_ingest_shell,
 )
 from backend.services.resume_extraction import ResumeExtractionError
+from backend.services.resume_extraction_persistence import (
+    persist_accepted_resume_extraction_result,
+)
 from scripts.run_resume_extraction import (
     DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME,
     DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
@@ -250,6 +262,14 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--include-prompts",
         action="store_true",
         help="Include prompt material in each saved result JSON.",
+    )
+    parser.add_argument(
+        "--persist-accepted-output",
+        action="store_true",
+        help=(
+            "Persist accepted quality-gated candidate outputs into the "
+            "canonical Supabase/Postgres schema."
+        ),
     )
     parser.add_argument(
         "--stop-on-error",
@@ -1359,6 +1379,17 @@ def main(argv: list[str] | None = None) -> int:
                 result = run_live_resume_extraction_with_optional_quality_gate(
                     candidate_args
                 )
+                if args.persist_accepted_output:
+                    # Persist only after the quality-gated result exists.
+                    #
+                    # This keeps the DB write path downstream of the same
+                    # accepted-output policy that the single-run script uses,
+                    # rather than letting the batch runner invent a second
+                    # parallel notion of "good enough to persist".
+                    result = dict(result)
+                    result["persistence_result"] = (
+                        persist_accepted_resume_extraction_result(result)
+                    )
                 json_payload = build_json_ready_result(
                     result=result,
                     include_prompts=args.include_prompts,
@@ -1395,6 +1426,7 @@ def main(argv: list[str] | None = None) -> int:
                             "final_model_name",
                             result.get("model_profile", {}).get("model_name"),
                         ),
+                        "persistence_result": result.get("persistence_result"),
                     }
                 )
                 manifest_record = build_batch_manifest_record(

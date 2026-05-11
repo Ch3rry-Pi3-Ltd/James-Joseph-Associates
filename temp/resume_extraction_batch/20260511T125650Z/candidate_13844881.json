@@ -1,0 +1,593 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13844881,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 3400
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13844881,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13844881,
+      "first_name": "Jason",
+      "last_name": "Tatton",
+      "email": "jason.tatton@googlemail.com",
+      "mobile": "(+44) 7872 366864",
+      "location": null,
+      "status": "Active",
+      "skill_tags": [],
+      "created_at": "2025-07-16T16:50:30Z",
+      "updated_at": "2025-07-16T16:53:18Z"
+    },
+    "latest_resume": {
+      "attachment_id": 20986889,
+      "file_name": "Jason+Tatton+-+CV.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2026-03-18T17:33:28Z",
+      "page_count": 2,
+      "character_count": 9134,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": "JASONTATTON\njason.tatton@googlemail.com (+44) 7872366864\nOverviewI'mahands-onfull-stackpolyglot softwareengineer specialisinginbuildingtradingsystemswithover 15yearsexperienceinC++, Java, Python, Assembly, C, Rust, Ocaml andother languages. I cansolveyour most challengingtechnical problemsandworkasamultiplier inorder toempower your teamtosuccessfullydeliver upontheir organisational goals. I canoperateasanindividual contributor andcanprovideengineeringleadership. Thisisbackedupbymydiversereal worldexperienceleadingprojectsacross:● Buildingtheclient facingFXOptionderivativetradingbusinessandsupportingtradingsystemsat JPMorganfrom0to$60mmannual revenue.● Quantitativeanalysisof principletradingstrategiesinSpot FXat JPMorganfor highfrequencypricingandriskmanagement (marktomarket, flowandorder bookanalysis).● Agency-stylealgorithmictradingalgorithmsandpost tradetransactioncost analysisof thosealgorithmsat JPMorgan.● Lowlevel backendcompiler engineeringontheJVM(at AmazonAWS), Cinder (Meta'shighperformancePythonruntime) andHipHopVirtual machine(Meta'sruntimefor Hack- animplementationof PHP).● Performanceengineeringtohelpteamsandcustomersget themost out of theJVMat AmazonAWS.● TypesystemsinPythonanddeveloper toolsfor over 20,000engineersat Meta.● Support of MachineLearningengineersinefficientlyrunningA/Bexperimentsandmakingstatisticallyvalidstatementswithout adverselyimpactingrevenueat Meta.● Languagedesignfocusingonconcurrency, JVMbytecodetransformationandfrontendcompiler engineeringatConcurnas.● GPUprogramminglanguagedesignandprogramtransformationat Concurnas.\nExperience\nMeta.StaffSoftwareEngineer.August 2021- Present. LondonProgrammingLanguagesandRuntimes- August 2022- PresentTech lead of 3 software engineers in the Pyre type checker team. Focusing on improving Pyre, typecoverageof Pythoncode,Python performance at Meta and the developer experience of using Python at Meta (including linters, developer tools, IDEintegration in VSCode etc). My experienceinbuildingaprogramminglanguageandengineeringtheJVMmeant that I hadalottooffer inthisarea.● Python developer tools. Introduction of error recovering parser for Python to consolidate Meta to one gold standard ofefficient and accurate parsing across all Python development tools. Achieved through the novel application of GLRparsing. Enabling syntactical and semantic analysis of partially complete Python code on an interactive basis andpowering developer tool functionality in internal Meta distributions of VSCode and Jupyter Notebooks. Unblocked over20,000 engineers enabling the upgrade of the firm to Python 3.10 and simplifying the upgrade path for next year'smigrationto3.12.● Compiler workonCinder - Meta’sperformanceorienteddistributionof Python:○ Reduced power utilisation of instagram.comweb server fleet by 3%through introduction of AOTcompilationof 10,000most frequentlyinvokedPythonfunctions.○ IntroducedtieredJITcompilationsimilar toJavaHotspot. Enablingcompanywideadoptionof Cinder.● Compiler work on hhvm/hack. Reduced power utilisation of hackfor thewholeof facebook.comwebserver fleet by0.3%throughapplicationof escapeanalysistoeliminateunnecessaryobject allocation.● Companywidesoftwareengineeringhiring(systemdesign) andmentorshipof junior engineers.AdsMachineLearning(ML) - August 2021- August 2022Tech lead of 5 software engineers. Focusing on experimental correctness of A/B testing infrastructure for new/modified MLmodels in the Ads organisation. Large scale distributed systems engineering impacting Meta’s core revenue. Main objectivesbeing to improve experimental outcomes (reduce false negatives and false positives), reduce latency of workflowand reduceresourcewaste. Mybackgroundinbuildingtradingsystemsandmodelssuitedmewell for thisposition:● Revamped experimental process to minimisethecomputational resourcesrequiredfor statisticallysignificant conclusionstobedrawn.● Introduceddynamicresourceallocationtoreducelatencywhereexcessresourcesareavailable.● Introducedautomatedexperimental best practicesmonitoringandenforcement.● Revampedmodel releasereviewprocessacrosssenior level MLresearchersinAdsorg.● Proof of concept for Ads in theMetaverse. NewbusinessopportunitypitchedtoVPof Metaverse. Feedbackwaspositiveon pitch, and the company will focus on more foundational matters concerning the Metaverse to empower features likethat proposeduntil at least 2025.Languagesused: C++, OCaml, Python, Hack, Javascript (React), Rust, SQL, x86/ARMassembly, Unity/C#.\n\nAmazonWebServices.PrincipalEngineer, Javacompilerengineering.July2020- August 2021. LondonRana3personteamworkingonoptimizationstotheJavaVirtualMachine(JVM)inordertoimproveperformance:● Implementationofpartialescapeanalysis, improvinginliningandexperimentingwithfasterregisterallocationtosupportareductioninmemoryusage(by10%),betterperformingcode(by15%)andfasterapplicationstartuptimes(by20%)intheC2servercomponentoftheJVM.Theseenhancementswillbemadepubliclyavailableforallsoftwarewrittenin JavaandJVMlanguages(Scala,Kotlin,Concurnasetc)tobenefitfrom.● OtherresponsibilitiesincludeinternalconsultingtohelpcustomersobtainbestperformancefromtheJVMviagarbagecollectiontuning.Implementationof compilerintrinsicsto improveperformanceof commonlyusedfunctions,backportsofnewfunctionalityaddedtoJavato earlierversionssuchasJava11. I haveOpenJDKAuthorstatus- I amabletoraisebugsregardingtheJVMplatformandsubmitpatchesindependentlywithoutrequiringOraclesponsorship.● I wasoriginallyhiredtobringConcurnastoAWShowever, thefirmdecidedtoreallocatetheagreedbudgettoacquiretheRustteamfromMozillainstead.Languagesused:Java,C,C++,x86assembly, ARMassembly.\nConcurnasLtd.Techlead/Founder.March2017- July2020. LondonConcurnasisanopensourceJVMprogramminglanguagedesignedforbuildingreliable,scalable,highperformanceconcurrent,distributedandparallelsystems:concurnas.com. Thoughnotcommerciallyviable,I learntalotabouthowtorunabusinessandbuildaproductfromstarttofinish.Itisnotcurrentlyinactivedevelopment.● LondonbasedselffundedstartupbuildingConcurnasfromscratchinjustunderthreeyears.UsingConcurnasenabledorganisationstakefulladvantageofmodernmulti-coreCPUandGPUhardwarebymakingconcurrentandparallelprogrammingeasier.● Concurnasis interoperablewithJava(andotherJVMlanguages)- organisationsareableto leverageexistingJavasoftwareinaconcurrentenvironment.Comparedto otherlanguages,withConcurnasdevelopersneedtowritefewerlinesofcode.Thatcodeissaferandeasiertotest,increasingqualityandboostingdeveloperproductivity.● Criticalreceptiononreddit: andreddit. Hackernews. InfoQ. OracleJavamagazine. Now, wheneverI changejobs,journaliststhinkitmakesforagoodstory…Conferences:JAXLondon2020: Joker2020\nJ.P. MorganFXautomatedtradingstrategist,FX&ratestrading.Sept 2009–March2017(7years). LondonFXoptionsmarket making● PitchedabusinessplantocreateanendtoendclientfacingFXoptionderivativestradingplatform.Built,fromthegroundup,ateamof16peopletodelivertheinitiative.● Inthreeyearswebuiltthebusinessupfrom$0to$60Mannualrecurringrevenue.● Handsonfullstackdeveloper/manager, globaloversightofclientfranchise;interactingwithpartnersinsales,technology, marketrisk,modelreview, legal,creditandcomplianceonadailybasis.● Wrotethemanualonandtrainedsalespeopleinhowtoselltheclientdealingplatform.● Pitchedtheplatformandgatheredfeedbackdirectlyfromclientsonvisitswithsalespeopleandatconferences.● SubjectmatterexpertinelectronictradingforSalesandTradinggraduatescheme.FXalgorithmictrading● Builtananalyticsplatformforposttradetransactioncostanalysis- showingperformanceagainstindustryrecognisedbenchmarks,providingtransparencyandrecommendationstoimprovefutureexecutionperformance.● Implementedanew‘percentageofvolume’ordertypewhichhelpsclientscontrolmarketimpact(cost)oftheirtrading.● Wrotethemanualonandtrainedsalespeopleinhowtosellthealgorithmicexecutionplatform.● Pitchedtheplatformandgatheredfeedbackdirectlyfromclientsonvisitswithsalespeople.● Mentoring;3formaland4informalappointmentsacrosssales&tradingandtechnologyatlevels:AnalysttoDirector.● Internandgraduateschemerecruitmentforsales.FXspot trading● Creatednovelstrategiesforclientfacingmarketmakingandimplementedmetricsfortrackingtheperformanceofthesestrategies.● Introduceda moreconsistentmethodofdetermininghowtochargeclientsaccordingtotheamountofriskassociatedwithwhattheywishedtotradewithus,allowingustogrowmarketsharewithoutintroducingrevenuevolatility.● Advisoronprojecttobuildahistoricalmarketdatadatabase.Languagesused:Java,Python(NumPy, Pandas),Scala,kdb+.Strategistsin JP Morganaremarketsprofessionalsresponsiblefor generatingtradingrevenuebyapplyingspecialisedskillsin trading,quantitativeanalysisandtechnology.\nDeutscheBankHighfrequencytrading developer, Technology.Sept 2007–Sept 2009(2years). London● Implementedhighfrequencyrevenuegeneratingtradingstrategiesinforeignexchange.Performanceorientedengineering.● Implementedlowlatencymarketconnectivity(tradingandmarketdata).● Managedateamof2directreportstobuildahistoricalmarketdatadatabase.Languagesused: Java, Matlab, kdb+\nEducationUniversityCollegeLondonMaster of Engineering(MEng), Computer Science, first classhonours. 2003–2007● NeoworksPrizeforBestperformingfourthyearstudent+Dean'sList",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "df775bde-beac-4c3e-9400-18800b2b7d39",
+        "type": "Status change",
+        "created_at": "2025-07-16T16:53:18Z",
+        "updated_at": "2025-07-16T16:53:18Z",
+        "cleaned_text": "Status changed from Applied to Emailed Job Spec by Tom Owens at 5:53pm on July 16, 2025"
+      },
+      {
+        "note_id": "e40df788-5b95-4c3b-b67b-ce9c5117d945",
+        "type": "Email sent",
+        "created_at": "2025-07-16T16:53:18Z",
+        "updated_at": "2025-07-16T16:53:18Z",
+        "cleaned_text": "Hi Jason,\n\nI came across your CV and it looks like a great fit for the attached role (I have deliberately disclosed the name of the company, but your discretion is appreciated!)\n\nIs this of interest?\n\nI'm keen to tell you more about this and answer your questions (The job spec does not tell the full story)...\n\nWhat is a convenient time for you to speak for a few minutes Jason?"
+      }
+    ],
+    "prompt_input_metrics": {
+      "resume_file_name": "Jason+Tatton+-+CV.pdf",
+      "resume_original_characters": 9134,
+      "resume_prompt_characters": 9134,
+      "resume_was_truncated": false,
+      "available_note_count": 2,
+      "prompt_note_count": 2,
+      "available_note_characters": 466,
+      "prompt_note_characters": 466,
+      "notes_were_truncated": false
+    }
+  },
+  "prompt_truncation": {
+    "any_truncation": false,
+    "resume_was_truncated": false,
+    "notes_were_truncated": false
+  },
+  "structured_extraction": {
+    "current_employer": "Meta",
+    "current_title": "Staff Software Engineer",
+    "professional_summary": "Hands-on full-stack polyglot software engineer specialising in building trading systems with over 15 years experience in C++, Java, Python, Assembly, C, Rust, Ocaml and other languages. Experienced in individual contribution and engineering leadership, with diverse real-world project leadership across trading systems, compiler engineering, and machine learning infrastructure.",
+    "location": null,
+    "emails": [
+      "jason.tatton@googlemail.com"
+    ],
+    "phones": [
+      "(+44) 7872 366864"
+    ],
+    "skills": [
+      "Full-stack software engineering",
+      "Trading systems",
+      "Quantitative analysis",
+      "Algorithmic trading",
+      "Compiler engineering",
+      "Performance engineering",
+      "Programming languages design",
+      "Machine learning infrastructure",
+      "Distributed systems",
+      "Concurrency",
+      "GPU programming"
+    ],
+    "tools_and_platforms": [
+      "C++",
+      "Java",
+      "Python",
+      "Assembly",
+      "Rust",
+      "Ocaml",
+      "C",
+      "Hack",
+      "JavaScript",
+      "React",
+      "SQL",
+      "x86 assembly",
+      "ARM assembly",
+      "Unity",
+      "Cinder",
+      "HHVM",
+      "Pyre",
+      "JVM",
+      "OpenJDK",
+      "Scala",
+      "Kotlin",
+      "Concurnas",
+      "kdb+"
+    ],
+    "certifications": [],
+    "linkedin_url": null,
+    "portfolio_references": [
+      "Concurnas"
+    ],
+    "education": [
+      {
+        "institution": "University College London",
+        "qualification": "MEng",
+        "subject": "Computer Science",
+        "completion_date": "2007"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "Meta",
+        "title": "Staff Software Engineer",
+        "start_date": "August 2021",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Tech lead of software engineering teams working on Python developer tools, compiler engineering for Cinder and HHVM, and A/B testing infrastructure for Ads ML. Led improvements in Python parsing, performance optimizations reducing power usage, and experimental correctness in large scale distributed systems."
+      },
+      {
+        "employer": "Amazon Web Services",
+        "title": "Principal Engineer, Java compiler engineering",
+        "start_date": "July 2020",
+        "end_date": "August 2021",
+        "is_current": false,
+        "summary": "Led a small team optimizing the Java Virtual Machine (JVM) for performance improvements including partial escape analysis, register allocation, and compiler intrinsics. Provided internal consulting on JVM performance and held OpenJDK Author status."
+      },
+      {
+        "employer": "Concurnas Ltd.",
+        "title": "Tech lead / Founder",
+        "start_date": "March 2017",
+        "end_date": "July 2020",
+        "is_current": false,
+        "summary": "Founded and led development of Concurnas, an open source JVM programming language designed for concurrent, distributed, and parallel systems. Managed product development and business operations for nearly three years."
+      },
+      {
+        "employer": "J.P. Morgan",
+        "title": "FX automated trading strategist, FX & rates trading",
+        "start_date": "September 2009",
+        "end_date": "March 2017",
+        "is_current": false,
+        "summary": "Built and led a team to develop a client-facing FX option derivatives trading platform growing to $60M annual revenue. Developed algorithmic trading analytics and post-trade transaction cost analysis platforms. Mentored junior staff and contributed to sales training and client engagement."
+      },
+      {
+        "employer": "Deutsche Bank",
+        "title": "High frequency trading developer, Technology",
+        "start_date": "September 2007",
+        "end_date": "September 2009",
+        "is_current": false,
+        "summary": "Developed high frequency trading strategies and low latency market connectivity for foreign exchange. Managed a small team building a historical market data database."
+      }
+    ],
+    "projects": [
+      {
+        "name": "Pyre type checker improvements",
+        "employer": "Meta",
+        "role": "Tech lead, Staff Software Engineer",
+        "start_date": "August 2022",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Led a team improving Python type coverage, performance, and developer experience at Meta through enhancements to the Pyre type checker and developer tools.",
+        "responsibilities": [
+          "Led a team of 3 engineers on Pyre type checker improvements.",
+          "Introduced error recovering parser for Python enabling efficient parsing of incomplete code.",
+          "Enabled syntactical and semantic analysis powering developer tools used by over 20,000 engineers."
+        ],
+        "deliverables": [
+          "Error recovering parser for Python.",
+          "Upgraded internal Meta Python tooling to support Python 3.10 and simplified migration to 3.12."
+        ],
+        "business_outcomes": [
+          "Unblocked over 20,000 engineers in Python development at Meta."
+        ],
+        "tools_and_platforms": [
+          "Python",
+          "Pyre",
+          "VSCode",
+          "Jupyter Notebooks"
+        ],
+        "domains": [
+          "Programming languages",
+          "Developer tools"
+        ]
+      },
+      {
+        "name": "Compiler work on Cinder and HHVM",
+        "employer": "Meta",
+        "role": "Staff Software Engineer",
+        "start_date": "August 2021",
+        "end_date": "August 2022",
+        "is_current": false,
+        "summary": "Improved performance and power efficiency of Meta's Python and Hack runtimes through compiler optimizations and JIT compilation.",
+        "responsibilities": [
+          "Reduced power utilization of Instagram web server fleet by 3% via AOT compilation of frequently invoked Python functions.",
+          "Introduced tiered JIT compilation similar to Java Hotspot for Cinder.",
+          "Applied escape analysis to reduce unnecessary object allocation in HHVM."
+        ],
+        "deliverables": [
+          "AOT compilation for Python functions in Cinder.",
+          "Tiered JIT compilation system.",
+          "Escape analysis optimizations in HHVM."
+        ],
+        "business_outcomes": [
+          "Reduced power consumption of Meta's web server fleets."
+        ],
+        "tools_and_platforms": [
+          "Cinder",
+          "HHVM",
+          "Python",
+          "Hack"
+        ],
+        "domains": [
+          "Compiler engineering",
+          "Performance optimization"
+        ]
+      },
+      {
+        "name": "Ads Machine Learning A/B testing infrastructure improvements",
+        "employer": "Meta",
+        "role": "Tech lead, Staff Software Engineer",
+        "start_date": "August 2021",
+        "end_date": "August 2022",
+        "is_current": false,
+        "summary": "Led a team improving experimental correctness, latency, and resource efficiency of A/B testing infrastructure for machine learning models in Meta Ads.",
+        "responsibilities": [
+          "Revamped experimental process to minimize computational resources for statistical significance.",
+          "Introduced dynamic resource allocation to reduce latency.",
+          "Implemented automated monitoring and enforcement of experimental best practices.",
+          "Revamped model release review process with senior ML researchers."
+        ],
+        "deliverables": [
+          "Improved A/B testing workflows and resource allocation systems."
+        ],
+        "business_outcomes": [
+          "Improved experimental outcomes reducing false negatives and positives.",
+          "Reduced latency and resource waste in ML model testing."
+        ],
+        "tools_and_platforms": [
+          "C++",
+          "OCaml",
+          "Python",
+          "Hack",
+          "JavaScript",
+          "React",
+          "Rust",
+          "SQL",
+          "x86 assembly",
+          "ARM assembly",
+          "Unity",
+          "C#"
+        ],
+        "domains": [
+          "Machine learning",
+          "Distributed systems",
+          "Experimental design"
+        ]
+      },
+      {
+        "name": "Java Virtual Machine optimizations",
+        "employer": "Amazon Web Services",
+        "role": "Principal Engineer",
+        "start_date": "July 2020",
+        "end_date": "August 2021",
+        "is_current": false,
+        "summary": "Led JVM performance optimizations including partial escape analysis, register allocation improvements, and compiler intrinsics to improve memory usage, code performance, and startup times.",
+        "responsibilities": [
+          "Implemented partial escape analysis and experimented with faster register allocation.",
+          "Provided internal consulting on JVM garbage collection tuning.",
+          "Implemented compiler intrinsics and backports for Java functionality."
+        ],
+        "deliverables": [
+          "Performance improvements in JVM C2 server component.",
+          "Backports of Java features to earlier versions."
+        ],
+        "business_outcomes": [
+          "Improved JVM memory usage by 10%, code performance by 15%, and startup times by 20%."
+        ],
+        "tools_and_platforms": [
+          "Java",
+          "C",
+          "C++",
+          "x86 assembly",
+          "ARM assembly",
+          "OpenJDK"
+        ],
+        "domains": [
+          "Compiler engineering",
+          "JVM optimization"
+        ]
+      },
+      {
+        "name": "Concurnas programming language development",
+        "employer": "Concurnas Ltd.",
+        "role": "Tech lead / Founder",
+        "start_date": "March 2017",
+        "end_date": "July 2020",
+        "is_current": false,
+        "summary": "Founded and led development of Concurnas, a JVM programming language designed for reliable, scalable, high-performance concurrent, distributed, and parallel systems.",
+        "responsibilities": [
+          "Built Concurnas from scratch over three years.",
+          "Managed product development and business operations.",
+          "Promoted interoperability with Java and other JVM languages."
+        ],
+        "deliverables": [
+          "Concurnas open source JVM programming language."
+        ],
+        "business_outcomes": [
+          "Enabled organizations to leverage modern multi-core CPU and GPU hardware with safer, easier concurrent programming."
+        ],
+        "tools_and_platforms": [
+          "Concurnas",
+          "Java",
+          "JVM"
+        ],
+        "domains": [
+          "Programming languages",
+          "Concurrent and parallel systems"
+        ]
+      },
+      {
+        "name": "FX option derivatives trading platform",
+        "employer": "J.P. Morgan",
+        "role": "FX automated trading strategist",
+        "start_date": "September 2009",
+        "end_date": "March 2017",
+        "is_current": false,
+        "summary": "Built and led a team to deliver a client-facing FX option derivatives trading platform growing to $60M annual recurring revenue.",
+        "responsibilities": [
+          "Pitched and led development of the trading platform with a team of 16.",
+          "Managed global client franchise and cross-functional stakeholder interactions.",
+          "Trained salespeople and gathered client feedback."
+        ],
+        "deliverables": [
+          "End-to-end FX option derivatives trading platform."
+        ],
+        "business_outcomes": [
+          "Grew business from $0 to $60M annual revenue in three years."
+        ],
+        "tools_and_platforms": [
+          "Java",
+          "Python",
+          "Scala",
+          "kdb+"
+        ],
+        "domains": [
+          "Financial trading",
+          "Derivatives",
+          "Client-facing platforms"
+        ]
+      },
+      {
+        "name": "Algorithmic trading analytics platform",
+        "employer": "J.P. Morgan",
+        "role": "FX automated trading strategist",
+        "start_date": "September 2009",
+        "end_date": "March 2017",
+        "is_current": false,
+        "summary": "Developed analytics platform for post-trade transaction cost analysis and implemented new order types to control market impact.",
+        "responsibilities": [
+          "Built analytics platform for post-trade transaction cost analysis.",
+          "Implemented 'percentage of volume' order type.",
+          "Trained salespeople and gathered client feedback."
+        ],
+        "deliverables": [
+          "Post-trade transaction cost analysis platform."
+        ],
+        "business_outcomes": [
+          "Improved transparency and execution performance for clients."
+        ],
+        "tools_and_platforms": [
+          "Java",
+          "Python",
+          "Scala",
+          "kdb+"
+        ],
+        "domains": [
+          "Algorithmic trading",
+          "Transaction cost analysis"
+        ]
+      },
+      {
+        "name": "High frequency trading strategies and market data database",
+        "employer": "Deutsche Bank",
+        "role": "High frequency trading developer",
+        "start_date": "September 2007",
+        "end_date": "September 2009",
+        "is_current": false,
+        "summary": "Developed high frequency trading strategies and low latency market connectivity for FX, and managed a team building a historical market data database.",
+        "responsibilities": [
+          "Implemented high frequency trading strategies in FX.",
+          "Developed low latency market connectivity.",
+          "Managed a team of 2 to build a historical market data database."
+        ],
+        "deliverables": [
+          "High frequency trading strategies.",
+          "Historical market data database."
+        ],
+        "business_outcomes": [
+          "Generated revenue through FX trading strategies."
+        ],
+        "tools_and_platforms": [
+          "Java",
+          "Matlab",
+          "kdb+"
+        ],
+        "domains": [
+          "High frequency trading",
+          "Market data management"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides email and phone number.",
+      "Resume overview and experience sections provide professional summary and skills.",
+      "Resume education section provides degree and institution.",
+      "Resume employment history details roles at Meta, AWS, Concurnas Ltd., J.P. Morgan, and Deutsche Bank with dates and summaries.",
+      "Resume project bullets support detailed project extractions including tooling and outcomes."
+    ],
+    "ambiguity_notes": [
+      "Candidate location is not stated in the resume or notes.",
+      "No certifications explicitly listed in the resume or notes.",
+      "LinkedIn URL not provided in the source.",
+      "Skills and tools are extracted conservatively from resume technical and project descriptions.",
+      "Notes do not add additional experience or tools beyond the resume."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "jason.tatton@googlemail.com"
+      ],
+      "resume_phones": [
+        "+44) 7872366864"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": true,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 5,
+      "projects_count": 8,
+      "education_count": 1,
+      "evidence_notes_count": 5,
+      "skills_count": 11,
+      "tools_and_platforms_count": 23,
+      "certifications_count": 0,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 88,
+    "richness_band": "rich",
+    "reasons": [
+      "moderate_descriptive_content",
+      "no_bullet_like_content"
+    ],
+    "source_metrics": {
+      "character_count": 9134,
+      "word_count": 583,
+      "nonempty_line_count": 10,
+      "substantial_line_count": 7,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 3,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": true,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "jason.tatton@googlemail.com"
+        ],
+        "resume_phones": [
+          "+44) 7872366864"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 8,
+        "education_count": 1,
+        "evidence_notes_count": 5,
+        "skills_count": 11,
+        "tools_and_platforms_count": 23,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "jason.tatton@googlemail.com"
+        ],
+        "resume_phones": [
+          "+44) 7872366864"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 8,
+        "education_count": 1,
+        "evidence_notes_count": 5,
+        "skills_count": 11,
+        "tools_and_platforms_count": 23,
+        "certifications_count": 0,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

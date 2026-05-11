@@ -1,0 +1,424 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13902889,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 2200
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13902889,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13902889,
+      "first_name": "Vincent",
+      "last_name": "Odiaka",
+      "email": "odiaka.vincent@yahoo.com",
+      "mobile": "07858893286",
+      "location": null,
+      "status": "Active",
+      "skill_tags": [],
+      "created_at": "2025-07-23T19:00:29Z",
+      "updated_at": "2025-08-05T12:43:19Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17956490,
+      "file_name": "Vincent-Odiaka_cv-library.pdf",
+      "mime_type": "application/pdf",
+      "created_at": "2025-07-23T19:00:29Z",
+      "page_count": 4,
+      "character_count": 10717,
+      "extractor": "pypdf"
+    },
+    "cleaned_resume_text": ".\n.\n\nVincent Odiaka  Member (IoA)\nData Analyst\nAddress: London England\nPhone: 07858893286\nWebsite: https://vincentodiaka.github.io/VincentOdiakaDataExpert/\nLinkedIn: https://www.linkedin.com/in/vincentodiaka\nE-mail: odiaka.vincent@yahoo.com\nGitHub: https://github.com/vincentodiaka\n\n.\n\nPersonal Statement\nI am an innovative Data Analyst with over 5 years of experience in analytics, specializing in agile methodologies and\nfast-paced environments. I am proficient in SQL, Excel, Power BI, DAX, Python and R, I deliver data-driven insights and\ntranslate complex data into actionable business strategies. My strong communication and collaborative skills ensure\neffective teamwork and stakeholder engagement. I have a proven track record in product development and process\noptimization, driving business growth while maintaining regulatory compliance. I hold a First Class Honours in\nMathematics and Economics, with Distinctions in Industrial Mathematics and Data Science.\nSkills Summary\n• Programming & Tools: Python, R, SQL, Azure Cognitive Services\n• Frameworks: Pandas, NumPy, Matplotlib, Scikit-Learn\n• Data Analytics: Descriptive and Inferential Statistics, A/B Testing, Regression\nAnalysis, Machine Learning, Data Validation, Data Classification\n• Statistical Methods: Hypothesis Testing, Regression Models, Predictive Analytics\n• Data Visualization: Microsoft Power BI, Microsoft Excel (Pivot Tables, DAX, VBA,\nPower Pivot), Google Looker Studio, Tableau, PowerPoint\n• Data Management: ETL, Data Collection, Cleaning, Modeling, Process Mining\n• Microsoft Office: Advanced proficiency in Word, Excel, PowerPoint\n• Customer Service: Stakeholder Collaboration, Data Solutions for Business Needs\n• Data-driven Solutions: Integrating Analytics with Business Strategy, Performance\nImprovement\n• Project Management: Leading Cross-functional Teams, Stakeholder Engagement,\nAgile Methodologies\n• Soft Skills: Excellent Communication, Analytical Thinking, Attention to Detail,\nProblem Solving, Collaboration, Time Management\nWork History\n2025-04 – Current Data Analyst\nNHS Practitioner Health, London\n• Utilized advanced Tableau tools and data analytics to provide actionable insights\nwithin NHS Practitioner Health, supporting the mental health and wellbeing of NHS\nhealthcare professionals.\n(a) Used data from EMIS and NHS App to enhance the accuracy and depth of\ninsights.\n(b) Incorporated feedback collected via Smart Survey to ensure comprehensive\ndata analysis.\n(c) Preprocessed quantitative data by removing duplicates, handling missing\nvalues, and normalizing data using Excel.\n\n.\n.\n(d) Coded and categorized qualitative data from surveys to identify themes and\npatterns using Excel.\n•  Developed interactive dashboards and visualizations using Tableau to improve\npatient pathways, enhance service outcomes, and streamline operational processes.\n(a) Integrated real-time data from EMIS and NHS App to create dynamic and up-\nto-date dashboards.\n(b) Applied survey results from Smart Survey to identify key areas for improvement\nin patient pathways.\n(c) Created dynamic charts, filters, and drill-downs with Tableau for comprehensive\ndata analysis.\n• Collaborated with clinical teams and administrators to monitor patient outcomes,\nidentify areas for improvement, and implement data-driven solutions to deliver\nquality care.\n(a) Worked closely with clinical teams to interpret data from EMIS and NHS App.\n(b) Used insights from Smart Survey to drive continuous improvement initiatives.\n(c) Prepared yearly reports to provide comprehensive overviews of service\nperformance and outcomes.\n• Generated monthly reports focusing on specific metrics such as patient\nengagement and service delivery times.\n• Compiled quarterly reports to update on key performance indicators (KPIs), service\nutilization, and patient outcomes.\n• Created patient feedback reports to analyze feedback from patients and identify\nareas for improvement.\n2024-07 – 2025-04 Data Analyst (Remote)\n10Alytics\n•  Applied SQL and Python to process and clean large-scale sales and product datasets,\nenabling accurate analysis that supported campaigns contributing to a 7% increase in\nrevenue.\n• Designed and maintained interactive dashboards in Power BI and Excel, improving\ndata accessibility and increasing dashboard adoption by 50% across business units.\n•  Automated and optimized the ETL pipeline, incorporating data validation steps that\nimproved data accuracy, enhancing operational efficiency.\n•  Led cross-functional projects in product development, sales, and marketing,\nsuccessfully delivering over 7 projects on time and within scope, while ensuring\nalignment with stakeholder goals.\n• Contributed to a 10-point increase in customer satisfaction scores (CSAT) and\nimproved product visibility, supporting a broader customer engagement strategy.\n2019-09 – 2022-09\n\nData Analyst\nElsoft Technologies Limited\n•  Led data transformation initiatives using SQL and Python, ensuring 99% data\nintegrity across client data warehouses. Projects included retail POS systems,\nfinancial ledgers, e-commerce transactions, and HRIS platforms.\n• Managed complex ETL pipelines for clients in retail, finance, logistics, and HR,\nintegrating data from CRM and inventory systems. This reduced data processing\ntime, enabled daily reporting, and improved data availability for real-time\ndashboards.\n• Automated monthly and ad hoc reporting using VBA in Excel, cutting manual\neffort by 25+ hours per month and reducing reporting errors.\n• Conducted detailed sales, financial, and workforce analytics using R and Excel,\nimproving forecast accuracy, identifying cost-saving opportunities, and\nuncovering attrition trends that led to a 15% reduction in turnover for HR clients.\n\n.\n.\n\n2016-12 – 2019-08\n•  Built and deployed 20+ interactive dashboards in Power BI and Excel, visualizing\nKPIs such as inventory turnover, revenue variance, conversion rates, on-time\ndelivery, and employee engagement scores. These dashboards were adopted by\n80% of client teams and became central to weekly and monthly business reviews.\n\nJunior Data Analyst\nElsoft Technologies Limited\n• Entered, cleaned, and validated data from multiple sources, maintaining 98%\naccuracy, which improved the reliability of business reports used in operational\nplanning.\n• Performed basic data analysis using Excel, uncovering early trends that helped\nteams make faster, more informed decisions during weekly reviews.\n• Assisted in generating KPI reports in Excel, improving reporting efficiency by 15%\n(via VBA), which enabled managers to track performance metrics more\nconsistently.\n• Supported the creation of data visualizations in Power BI and Excel, helping\nstakeholders quickly interpret key insights and take action on sales and\noperational data.\n• Wrote simple SQL queries to extract data for ad hoc analysis, reducing\ndependency on senior analysts and speeding up response time to business\nquestions.\n• Performed data cleaning using Excel functions and Python (Pandas), improving\ndata quality and reducing inconsistencies that previously led to reporting delays.\n• Collaborated with business teams to gather data requirements, ensuring that\ndata solutions were aligned with departmental goals and reporting needs.\n\n2011-12 - 2016-11 Graduate Assistant/Assistant Lecturer\n•  I taught undergraduate courses in Descriptive Statistics, Inferential Statistics,\nProbability Theory, Regression Analysis, Time Series Analysis, Experimental Design,\nand Multivariate Statistics. Delivered lectures, tutorials, and practical sessions,\nensuring students developed both theoretical understanding and applied analytical\nSkills\n• Supervised student research projects that applied statistical methods to real-world\nproblems. Notable projects included:\n(a) Road Safety Analytics: Guided students in using logistic regression and time series\nforecasting to analyze accident data.\n(b) Public Health Studies: Oversaw projects using hypothesis testing and ANOVA to\nevaluate the effectiveness of community health interventions.\n(c) Market Research: Led projects involving survey design, sampling techniques, and\nfactor analysis to assess consumer behaviour and product satisfaction. Integrated\nExcel, SPSS, and R into coursework and research supervision to enhance students’\ndata analysis capabilities.\n• Mentored over 200 students annually, using data tracking tools to monitor academic\nprogress and provide targeted support, resulting in improved student outcomes and\nengagement.\n• Collaborated with faculty on curriculum development, embedding real-world data\napplications into the statistics syllabus to better prepare students for industry and\nresearch roles.\n\n.\n.\nProfessional Membership\n• Member, Institute of Analytics (IoA)\nKey Projects\nIT Infrastructure for Educational Institutions\nTools Used: Python, SQL, Microsoft Power BI, Excel\n• Led the implementation of IT infrastructure solutions, enhancing digital capabilities.\n• Conducted needs assessments, analyzed usage data, and monitored system performance.\n• Results: Improved digital resource usage by 30% and increased user satisfaction by 25%\n\nHealthcare IT Solutions\nTools Used: Python, SQL, Data Security Tools\n• Developed and implemented Electronic Medical Records (EMR) systems and hospital management software.\n• Gathered and analyzed patient and operational data, ensuring data integrity and security.\n• Results: Reduced patient record access time by 40% and improved data accuracy by 35%.\nTraining and Certificates\n• Microsoft Certified: Azure AI Fundamentals, Microsoft\n• Microsoft Certified: Power Platform Fundamentals, Microsoft\n• Python Data Science with NumPy, Pandas and Matplotlib, (Distinction) StudyHub\n• Advanced Diploma in Microsoft Power BI, (Distinction) StudyHub\n• SQL for Data Analytics and Database Development, (Distinction) StudyHub\n• Advanced Excel Formulas and Functions, Coursera\n• Problem Solving and Critical Thinking Skills, Alison\n• Time Management Skills, Alison\n• Tableau for Data Scientists, LinkedIn\n• Data Analysis (TestDome) Achieved: March 6, 2025, Ranked in the top 25% of candidates\nAwards\nMSc Data Science Scholarship\nMSc Data Science Scholarship by the Office for National Statistics (ONS)\nUniversity Scholar Prize\nBest Graduating Student in Department of Mathematics and Economics in 2008/2009 Academic\nsession.\nUniversity Scholar Prize\nBest Student in Academic Performance in the Department of Mathematics in 200 level for the 2006/2007 Academic\nSession.\n\nEducation\nMaster of Science Data Science - Sep 2022 – Sep 2023\nGPA Distinction\n\nMaster of Science Industrial Mathematics - Sep 2012 – Jun 2014\nGPA Distinction\n\nBachelor of Science Mathematics and Economics - Dec 2005 – Jun 2010\nGPA First Class Honours",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "c1bf99ff-f094-49c3-8ffd-a4aaabb450ee",
+        "type": "Email Received",
+        "created_at": "2025-08-05T12:43:19Z",
+        "updated_at": "2025-08-05T12:43:19Z",
+        "cleaned_text": "Subject: Re: ERS Group Pricing Analyst\n\nHi Tom,\n\nThank you for sending over the job specification and briefing notes, and for the helpful conversation earlier.\n\nI've reviewed the details and would be pleased to move forward with an application. Please find my updated CV attached. I confirm that I'm happy for you to represent me for the ERS Group Pricing Analyst role.\n\nI'm genuinely intrigued by the scope of this role, particularly its emphasis on pricing strategy and data-driven decision-making. With a track record of translating complex analytics into actionable insights for diverse stakeholders, I'm confident I can bring both precision and impact to the team."
+      },
+      {
+        "note_id": "dd64dec5-3692-479d-8cfe-7ffd4cc5e05c",
+        "type": "Status change",
+        "created_at": "2025-08-04T13:20:57Z",
+        "updated_at": "2025-08-04T13:20:57Z",
+        "cleaned_text": "Status changed from Screening Call to To be rejected by Tom Owens at 2:20pm on August 4, 2025"
+      },
+      {
+        "note_id": "3c205d5e-d493-463c-9971-1da19b007137",
+        "type": "Email Sent",
+        "created_at": "2025-08-04T13:14:21Z",
+        "updated_at": "2025-08-04T13:14:21Z",
+        "cleaned_text": "Hi Vincent,\n\nMany thanks for your time on the phone a moment ago.   As discussed, I've attached the job spec and briefing notes.   If you would like to apply, please reply to this email, along with the latest copy of your CV, and confirm that you are happy for me to represent you for this role, and I will submit your application...."
+      },
+      {
+        "note_id": "05b53f25-9f7d-4671-ad08-174d18f3f99a",
+        "type": "Left Message",
+        "created_at": "2025-08-04T13:02:08Z",
+        "updated_at": "2025-08-04T13:02:08Z",
+        "cleaned_text": "Status changed from Applied to Screening Call by Tom Owens at 2:02pm on August 4, 2025"
+      }
+    ],
+    "prompt_input_metrics": {
+      "resume_file_name": "Vincent-Odiaka_cv-library.pdf",
+      "resume_original_characters": 10716,
+      "resume_prompt_characters": 10716,
+      "resume_was_truncated": false,
+      "available_note_count": 19,
+      "prompt_note_count": 4,
+      "available_note_characters": 5753,
+      "prompt_note_characters": 1182,
+      "notes_were_truncated": true
+    }
+  },
+  "prompt_truncation": {
+    "any_truncation": true,
+    "resume_was_truncated": false,
+    "notes_were_truncated": true
+  },
+  "structured_extraction": {
+    "current_employer": "NHS Practitioner Health",
+    "current_title": "Data Analyst",
+    "professional_summary": "Innovative Data Analyst with over 5 years of experience in analytics, specializing in agile methodologies and fast-paced environments. Proficient in SQL, Excel, Power BI, DAX, Python, and R, delivering data-driven insights and translating complex data into actionable business strategies. Strong communication and collaborative skills with a proven track record in product development and process optimization, driving business growth while maintaining regulatory compliance.",
+    "location": "London England",
+    "emails": [
+      "odiaka.vincent@yahoo.com"
+    ],
+    "phones": [
+      "07858893286"
+    ],
+    "skills": [
+      "Data Analysis",
+      "Data Visualization",
+      "ETL",
+      "Statistical Methods",
+      "Machine Learning",
+      "Project Management",
+      "Stakeholder Collaboration",
+      "Data-driven Solutions",
+      "Problem Solving"
+    ],
+    "tools_and_platforms": [
+      "Python",
+      "R",
+      "SQL",
+      "Azure Cognitive Services",
+      "Pandas",
+      "NumPy",
+      "Matplotlib",
+      "Scikit-Learn",
+      "Microsoft Power BI",
+      "Microsoft Excel",
+      "DAX",
+      "VBA",
+      "Power Pivot",
+      "Google Looker Studio",
+      "Tableau",
+      "PowerPoint",
+      "SPSS"
+    ],
+    "certifications": [
+      "Microsoft Certified: Azure AI Fundamentals",
+      "Microsoft Certified: Power Platform Fundamentals",
+      "Python Data Science with NumPy, Pandas and Matplotlib (Distinction)",
+      "Advanced Diploma in Microsoft Power BI (Distinction)",
+      "SQL for Data Analytics and Database Development (Distinction)",
+      "Advanced Excel Formulas and Functions",
+      "Problem Solving and Critical Thinking Skills",
+      "Time Management Skills",
+      "Tableau for Data Scientists",
+      "Data Analysis (TestDome)"
+    ],
+    "linkedin_url": "https://www.linkedin.com/in/vincentodiaka",
+    "portfolio_references": [
+      "IT Infrastructure for Educational Institutions",
+      "Healthcare IT Solutions"
+    ],
+    "education": [
+      {
+        "institution": null,
+        "qualification": "MSc",
+        "subject": "Data Science",
+        "completion_date": "Sep 2023"
+      },
+      {
+        "institution": null,
+        "qualification": "MSc",
+        "subject": "Industrial Mathematics",
+        "completion_date": "Jun 2014"
+      },
+      {
+        "institution": null,
+        "qualification": "BSc",
+        "subject": "Mathematics and Economics",
+        "completion_date": "Jun 2010"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "NHS Practitioner Health",
+        "title": "Data Analyst",
+        "start_date": "2025-04",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Utilizes advanced Tableau and data analytics to provide actionable insights supporting mental health and wellbeing of NHS healthcare professionals. Develops interactive dashboards, collaborates with clinical teams, and generates reports to improve patient pathways and service outcomes."
+      },
+      {
+        "employer": "10Alytics",
+        "title": "Data Analyst (Remote)",
+        "start_date": "2024-07",
+        "end_date": "2025-04",
+        "is_current": false,
+        "summary": "Applied SQL and Python to process and clean large-scale sales and product datasets, designed and maintained dashboards in Power BI and Excel, automated ETL pipelines, and led cross-functional projects improving revenue and customer satisfaction."
+      },
+      {
+        "employer": "Elsoft Technologies Limited",
+        "title": "Data Analyst",
+        "start_date": "2019-09",
+        "end_date": "2022-09",
+        "is_current": false,
+        "summary": "Led data transformation initiatives using SQL and Python, managed ETL pipelines, automated reporting with VBA, and conducted analytics using R and Excel to improve forecast accuracy and reduce turnover."
+      },
+      {
+        "employer": "Elsoft Technologies Limited",
+        "title": "Junior Data Analyst",
+        "start_date": "2016-12",
+        "end_date": "2019-08",
+        "is_current": false,
+        "summary": "Performed data entry, cleaning, validation, basic analysis, KPI reporting, and data visualization using Excel, Power BI, and SQL to support operational planning and decision-making."
+      },
+      {
+        "employer": null,
+        "title": "Graduate Assistant/Assistant Lecturer",
+        "start_date": "2011-12",
+        "end_date": "2016-11",
+        "is_current": false,
+        "summary": "Taught undergraduate courses in statistics and mathematics, supervised student research projects applying statistical methods, mentored students, and collaborated on curriculum development."
+      }
+    ],
+    "projects": [
+      {
+        "name": "IT Infrastructure for Educational Institutions",
+        "employer": null,
+        "role": null,
+        "start_date": null,
+        "end_date": null,
+        "is_current": null,
+        "summary": "Led implementation of IT infrastructure solutions enhancing digital capabilities, conducted needs assessments, analyzed usage data, and monitored system performance.",
+        "responsibilities": [
+          "Led implementation of IT infrastructure solutions",
+          "Conducted needs assessments and usage data analysis",
+          "Monitored system performance"
+        ],
+        "deliverables": [],
+        "business_outcomes": [
+          "Improved digital resource usage by 30%",
+          "Increased user satisfaction by 25%"
+        ],
+        "tools_and_platforms": [
+          "Python",
+          "SQL",
+          "Microsoft Power BI",
+          "Excel"
+        ],
+        "domains": []
+      },
+      {
+        "name": "Healthcare IT Solutions",
+        "employer": null,
+        "role": null,
+        "start_date": null,
+        "end_date": null,
+        "is_current": null,
+        "summary": "Developed and implemented Electronic Medical Records (EMR) systems and hospital management software, ensuring data integrity and security.",
+        "responsibilities": [
+          "Developed and implemented EMR systems and hospital management software",
+          "Gathered and analyzed patient and operational data",
+          "Ensured data integrity and security"
+        ],
+        "deliverables": [],
+        "business_outcomes": [
+          "Reduced patient record access time by 40%",
+          "Improved data accuracy by 35%"
+        ],
+        "tools_and_platforms": [
+          "Python",
+          "SQL",
+          "Data Security Tools"
+        ],
+        "domains": [
+          "Healthcare IT"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Resume contact block provides email, phone, LinkedIn, GitHub, and website URLs.",
+      "Professional summary and skills section detail core competencies and tools.",
+      "Employment history detailed with dates, roles, and responsibilities from resume work history section.",
+      "Certifications and training listed in resume certifications section.",
+      "Education details with qualifications and dates from resume education section.",
+      "Projects described under 'Key Projects' in resume with tools and outcomes."
+    ],
+    "ambiguity_notes": [
+      "Education institution names are not explicitly stated in the resume.",
+      "Project roles and exact dates are not specified for key projects.",
+      "Location is inferred from address line in resume but not explicitly confirmed as current location."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 92,
+    "status": "pass",
+    "reasons": [
+      "phone_count_lower_than_resume_hint"
+    ],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 2,
+      "resume_emails": [
+        "odiaka.vincent@yahoo.com"
+      ],
+      "resume_phones": [
+        "07858893286",
+        "2011-12 - 2016-11"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": true,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 5,
+      "projects_count": 2,
+      "education_count": 3,
+      "evidence_notes_count": 6,
+      "skills_count": 9,
+      "tools_and_platforms_count": 17,
+      "certifications_count": 10,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 100,
+    "richness_band": "rich",
+    "reasons": [],
+    "source_metrics": {
+      "character_count": 10716,
+      "word_count": 1431,
+      "nonempty_line_count": 192,
+      "substantial_line_count": 105,
+      "bullet_like_line_count": 55,
+      "employment_signal_count": 3,
+      "resume_email_count": 1,
+      "resume_phone_count": 2,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": true,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 92,
+      "status": "pass",
+      "reasons": [
+        "phone_count_lower_than_resume_hint"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 2,
+        "resume_emails": [
+          "odiaka.vincent@yahoo.com"
+        ],
+        "resume_phones": [
+          "07858893286",
+          "2011-12 - 2016-11"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 2,
+        "education_count": 3,
+        "evidence_notes_count": 6,
+        "skills_count": 9,
+        "tools_and_platforms_count": 17,
+        "certifications_count": 10,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 92,
+      "status": "pass",
+      "reasons": [
+        "phone_count_lower_than_resume_hint"
+      ],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 2,
+        "resume_emails": [
+          "odiaka.vincent@yahoo.com"
+        ],
+        "resume_phones": [
+          "07858893286",
+          "2011-12 - 2016-11"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": true,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 5,
+        "projects_count": 2,
+        "education_count": 3,
+        "evidence_notes_count": 6,
+        "skills_count": 9,
+        "tools_and_platforms_count": 17,
+        "certifications_count": 10,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  }
+}

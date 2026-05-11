@@ -49,11 +49,12 @@ It performs the following steps:
 4. construct the LangChain chat model through `backend.llm.providers`
 5. call `extract_jobadder_candidate_resume_profile(...)`
 6. print a concise human-readable summary
-7. optionally write the full result to disk as JSON
+7. optionally persist accepted output into Supabase/Postgres
+8. optionally write the full result to disk as JSON
 
 What this script does not do
 ----------------------------
-It does not:
+It does not, by default:
 
 - write the structured extraction into the database
 - update canonical candidate records
@@ -81,6 +82,14 @@ Run an extraction and save the full JSON payload to disk:
         --jobadder-account 2236 ^
         --candidate-id 16496678 ^
         --output-json temp\\resume_extraction_result.json
+
+Run an extraction, quality-gate it, and persist the accepted result:
+
+    uv run python scripts/run_resume_extraction.py ^
+        --jobadder-account 2236 ^
+        --candidate-id 16496678 ^
+        --enable-quality-gate ^
+        --persist-accepted-output
 
 Run with an explicit model override:
 
@@ -157,6 +166,9 @@ from backend.services.resume_extraction import (
     DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
     ResumeExtractionError,
     extract_jobadder_candidate_resume_profile,
+)
+from backend.services.resume_extraction_persistence import (
+    persist_accepted_resume_extraction_result,
 )
 from backend.settings import get_settings
 
@@ -332,6 +344,15 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help=(
             "Path to append quality-gate review/rerun records as JSONL when "
             "quality gating is enabled."
+        ),
+    )
+    parser.add_argument(
+        "--persist-accepted-output",
+        action="store_true",
+        help=(
+            "Persist accepted quality-gated output into the canonical "
+            "Supabase/Postgres schema. Only `pass` results are currently "
+            "eligible for persistence."
         ),
     )
 
@@ -579,6 +600,8 @@ def build_console_summary(result: dict[str, Any]) -> str:
     projects = structured.get("projects", [])
     quality_assessment = result.get("quality_assessment", {})
     quality_gate = result.get("quality_gate", {})
+    persistence_result = result.get("persistence_result")
+    persistence_requested = result.get("persistence_requested", False)
 
     lines = [
         "Live resume extraction completed.",
@@ -637,6 +660,13 @@ def build_console_summary(result: dict[str, Any]) -> str:
         final_model_name = quality_gate.get("final_model_name")
         if final_model_name:
             lines.append(f"Final model: {final_model_name}")
+
+    lines.append(
+        f"Persistence requested: {'yes' if persistence_requested else 'no'}"
+    )
+    lines.append(
+        f"Persistence completed: {'yes' if persistence_result is not None else 'no'}"
+    )
 
     # Include the first ambiguity/evidence note because those are often the
     # fastest signal of whether the model actually reasoned about uncertainty
@@ -973,6 +1003,57 @@ def enrich_result_with_quality_metadata(
     return enriched_result
 
 
+def persist_result_if_requested(
+    *,
+    args: argparse.Namespace,
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one accepted result when the caller enabled persistence.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments for the current run.
+
+    result : dict[str, Any]
+        Final extraction result, already enriched with quality metadata.
+
+    Returns
+    -------
+    dict[str, Any]
+        Result payload, optionally enriched with `persistence_result`.
+
+    Notes
+    -----
+    Persistence is intentionally opt-in because the extraction scripts still
+    serve two different operator workflows:
+
+    - calibration and debugging with local JSON artefacts only
+    - accepted-output ingestion into the canonical database
+
+    Example
+    -------
+    When the caller runs with:
+
+        --persist-accepted-output
+
+    the returned result contains:
+
+        result["persistence_result"]
+    """
+
+    enriched_result = dict(result)
+    enriched_result["persistence_requested"] = args.persist_accepted_output
+
+    if not args.persist_accepted_output:
+        return enriched_result
+
+    persisted_summary = persist_accepted_resume_extraction_result(result)
+    enriched_result["persistence_result"] = persisted_summary
+    return enriched_result
+
+
 def _print_json_safely(payload: dict[str, Any]) -> None:
     """
     Print JSON to stdout while tolerating narrow Windows console encodings.
@@ -1158,6 +1239,10 @@ def run_live_resume_extraction_with_optional_quality_gate(
     A caller can run:
 
         result = run_live_resume_extraction_with_optional_quality_gate(args)
+        result = persist_result_if_requested(
+            args=args,
+            result=result,
+        )
 
     and then inspect:
 
@@ -1323,6 +1408,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         result = run_live_resume_extraction_with_optional_quality_gate(args)
+        result = persist_result_if_requested(
+            args=args,
+            result=result,
+        )
 
         # Default to a concise summary because the full payload can be large and
         # includes prompt/input material. The operator usually wants the "did it
@@ -1341,6 +1430,15 @@ def main(argv: list[str] | None = None) -> int:
             )
             print("")
             print(f"Wrote full JSON result to: {args.output_json}")
+
+        persistence_result = result.get("persistence_result")
+        if persistence_result is not None:
+            print("")
+            print(
+                "Persisted accepted output to canonical schema "
+                f"(candidate_id={persistence_result.get('candidate_id')}, "
+                f"person_id={persistence_result.get('person_id')})."
+            )
 
         if args.print_full_json:
             print("")

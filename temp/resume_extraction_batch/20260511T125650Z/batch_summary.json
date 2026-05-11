@@ -1,0 +1,152 @@
+{
+  "timestamp": "2026-05-11T13:03:21.545616+00:00",
+  "requested_candidate_ids": [
+    13844870,
+    13844877,
+    13844880,
+    13844881,
+    13902889,
+    13902890,
+    13902892,
+    13902893,
+    13902894,
+    13902895,
+    13903086
+  ],
+  "requested_count": 11,
+  "success_count": 11,
+  "failure_count": 0,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {
+    "pass": 11
+  },
+  "output_dir": "temp\\resume_extraction_batch\\20260511T125650Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260511T125650Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [
+    {
+      "candidate_id": 13844870,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13844870.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 72,
+      "cv_richness_band": "adequate",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13844877,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13844877.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 96,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13844880,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13844880.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 95,
+      "quality_status": "pass",
+      "cv_richness_score": 86,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13844881,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13844881.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 88,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902889,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902889.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 92,
+      "quality_status": "pass",
+      "cv_richness_score": 100,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902890,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902890.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 81,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902892,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902892.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 92,
+      "quality_status": "pass",
+      "cv_richness_score": 92,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902893,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902893.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 96,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902894,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902894.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 96,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13902895,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13902895.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 100,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    },
+    {
+      "candidate_id": 13903086,
+      "output_json": "temp\\resume_extraction_batch\\20260511T125650Z\\candidate_13903086.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 92,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini"
+    }
+  ],
+  "failures": [],
+  "skipped": []
+}

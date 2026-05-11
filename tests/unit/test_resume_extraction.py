@@ -454,6 +454,62 @@ def test_build_resume_extraction_input_from_jobadder_bundle_applies_resume_and_n
     }
 
 
+def test_build_resume_extraction_input_from_jobadder_bundle_keeps_full_cleaned_notes_by_default() -> None:
+    """
+    Verify that cleaned candidate notes are preserved in full by default.
+
+    Notes
+    -----
+    The current extraction goal is to preserve recruiter and candidate comment
+    history unless a caller explicitly opts into note budgeting. This test pins
+    that default so future prompt-budget tuning does not silently start cutting
+    note text again.
+
+    Example
+    -------
+    We provide two longer cleaned notes and call the helper with its default
+    note-budget settings. The helper should:
+
+    - keep both notes
+    - keep their full cleaned text
+    - report that note truncation did not occur
+
+    In plain language:
+
+    - make the notes long enough that old defaults would have clipped them
+    - confirm the new defaults preserve them
+    """
+
+    bundle = _build_fake_resume_text_bundle()
+    bundle["notes"]["cleaned_items"] = [
+        {
+            "note_id": "n-1",
+            "type": "Email",
+            "created_at": "2026-04-01T10:00:00Z",
+            "updated_at": "2026-04-01T10:00:00Z",
+            "cleaned_text": "A" * 1600,
+        },
+        {
+            "note_id": "n-2",
+            "type": "Call",
+            "created_at": "2026-04-02T10:00:00Z",
+            "updated_at": "2026-04-02T10:00:00Z",
+            "cleaned_text": "B" * 1700,
+        },
+    ]
+
+    result = build_resume_extraction_input_from_jobadder_bundle(
+        resume_text_bundle=bundle,
+    )
+
+    assert len(result["cleaned_candidate_notes"]) == 2
+    assert result["cleaned_candidate_notes"][0]["cleaned_text"] == "A" * 1600
+    assert result["cleaned_candidate_notes"][1]["cleaned_text"] == "B" * 1700
+    assert result["prompt_input_metrics"]["available_note_characters"] == 3300
+    assert result["prompt_input_metrics"]["prompt_note_characters"] == 3300
+    assert result["prompt_input_metrics"]["notes_were_truncated"] is False
+
+
 def test_build_resume_extraction_input_from_jobadder_bundle_raises_when_resume_text_is_missing() -> None:
     """
     Verify that the input builder fails clearly when the prepared upstream bundle

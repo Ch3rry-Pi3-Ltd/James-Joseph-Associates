@@ -205,6 +205,7 @@ The backend now has:
 - a separate deterministic CV source-richness assessment in `backend/services/extraction_quality.py`
 - a batch calibration runner in `scripts/run_resume_extraction_batch.py`
 - a JobAdder candidate-listing helper script in `scripts/list_jobadder_candidates.py`
+- an accepted-output persistence path in `backend/services/resume_extraction_persistence.py`
 
 In plain language:
 
@@ -216,6 +217,14 @@ In plain language:
 - the batch runner now uses two skip identities:
   - a full contract-aware fingerprint for unchanged successful candidates
   - a source-only fingerprint for unchanged no-resume source failures
+- accepted `pass` results can now be persisted into the canonical schema on an opt-in basis
+  through the CLI runners, covering:
+  - source records
+  - person
+  - candidate
+  - current company
+  - resume document
+  - candidate skills
 
 ## Why Multi-Provider Routing Is Still Deferred
 
@@ -280,4 +289,5 @@ Recommended next project step:
 
 - calibrate the deterministic quality gate on a real multi-candidate batch
 - tighten the rerun/review thresholds using real disagreement cases
-- then move from local JSON artifacts toward persistence and reporting
+- widen the accepted-output persistence slice beyond the current narrow canonical write path
+- then move from local JSON artifacts toward richer persistence and reporting

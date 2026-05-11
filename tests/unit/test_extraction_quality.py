@@ -368,7 +368,9 @@ def test_assess_source_cv_richness_does_not_count_date_ranges_as_phone_hints() -
     -----
     This pins the specific regression we saw in the Taras CV, where strings
     like `01.2021- 04.2022` were being mistaken for phone numbers by the
-    source-hint layer.
+    source-hint layer. It also covers the LinkedIn/CV export style:
+
+    - `2011-12 - 2016-11`
     """
 
     cleaned_resume_text = """
@@ -384,6 +386,10 @@ Tacans Labs
 Senior Software Development Engineer
 Digitex
 01.2021- 04.2022
+
+Analyst
+Legacy Firm
+2011-12 - 2016-11
     """.strip()
 
     assessment = assess_source_cv_richness(

@@ -198,9 +198,15 @@ DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE = ModelProfile(
 # These defaults keep the prompt large enough to preserve meaningful CV signal
 # while still putting an explicit ceiling on first-pass input volume.
 DEFAULT_MAX_RESUME_PROMPT_CHARACTERS = 18000
-DEFAULT_MAX_NOTE_COUNT = 4
-DEFAULT_MAX_NOTE_CHARACTERS = 1200
-DEFAULT_MAX_TOTAL_NOTE_CHARACTERS = 3200
+# Keep recruiter/candidate notes unbounded by default.
+#
+# The extraction work now relies on notes for relationship/process context, and
+# the user has explicitly asked that we preserve them wherever feasible. We
+# therefore keep full cleaned notes by default and leave note budgeting as an
+# opt-in override for callers that want a tighter prompt budget.
+DEFAULT_MAX_NOTE_COUNT: int | None = None
+DEFAULT_MAX_NOTE_CHARACTERS: int | None = None
+DEFAULT_MAX_TOTAL_NOTE_CHARACTERS: int | None = None
 DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_CAP = 4000
 DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_INCREMENT = 1200
 
@@ -1029,9 +1035,9 @@ def build_resume_extraction_input_from_jobadder_bundle(
     *,
     resume_text_bundle: dict[str, Any],
     max_resume_characters: int = DEFAULT_MAX_RESUME_PROMPT_CHARACTERS,
-    max_note_count: int = DEFAULT_MAX_NOTE_COUNT,
-    max_note_characters: int = DEFAULT_MAX_NOTE_CHARACTERS,
-    max_total_note_characters: int = DEFAULT_MAX_TOTAL_NOTE_CHARACTERS,
+    max_note_count: int | None = DEFAULT_MAX_NOTE_COUNT,
+    max_note_characters: int | None = DEFAULT_MAX_NOTE_CHARACTERS,
+    max_total_note_characters: int | None = DEFAULT_MAX_TOTAL_NOTE_CHARACTERS,
 ) -> dict[str, Any]:
     """
     Build one prompt-ready extraction input from a prepared JobAdder text bundle.
@@ -1044,15 +1050,17 @@ def build_resume_extraction_input_from_jobadder_bundle(
     max_resume_characters : int
         Maximum number of resume characters to include.
 
-    max_note_count : int
-        Maximum number of cleaned candidate notes to include.
+    max_note_count : int | None
+        Maximum number of cleaned candidate notes to include. `None` keeps all
+        cleaned notes.
 
-    max_note_characters : int
-        Maximum number of characters to keep from each note.
+    max_note_characters : int | None
+        Maximum number of characters to keep from each note. `None` preserves
+        the full cleaned note text.
 
-    max_total_note_characters : int
+    max_total_note_characters : int | None
         Maximum number of note characters to keep across all prompt-ready
-        notes combined.
+        notes combined. `None` keeps the combined cleaned-note text unbounded.
 
     Returns
     -------
@@ -1076,7 +1084,18 @@ def build_resume_extraction_input_from_jobadder_bundle(
     - more prompt noise
     - more unstable extraction quality
 
-    So this helper makes the prompt input deliberate rather than accidental.
+    Resume text still keeps an explicit first-pass ceiling because giant CV
+    bodies are one of the strongest contributors to unstable provider calls.
+
+    Notes are handled differently now:
+
+    - full cleaned note text is preserved by default
+    - note budgeting is still available, but only when a caller opts in
+
+    That reflects the current extraction goal more accurately:
+
+    - CV text is the main payload volume risk
+    - notes often contain signal we do not want to silently throw away
 
     Example
     -------
@@ -1095,7 +1114,7 @@ def build_resume_extraction_input_from_jobadder_bundle(
 
     - prefer `extracted_resume_text["cleaned_text"]` over raw text
     - convert the larger candidate payload into a smaller candidate snapshot
-    - convert the larger notes payload into smaller prompt-ready note items
+    - convert the larger notes payload into prompt-ready note items
     - attach prompt-input metrics so later `llm_invoke` failures are easier to
       diagnose without reopening the full source bundle
 
@@ -1103,7 +1122,9 @@ def build_resume_extraction_input_from_jobadder_bundle(
 
     - take the big upstream bundle
     - keep the pieces the model actually needs
-    - keep them bounded so the prompt stays disciplined
+    - keep a strict budget on the CV body
+    - preserve cleaned notes in full unless the caller explicitly asks for
+      note budgeting
     """
 
     candidate = resume_text_bundle.get("candidate")
@@ -1934,9 +1955,9 @@ def _build_resume_context_snapshot(
 def _build_prompt_ready_candidate_notes(
     *,
     note_items: list[dict[str, Any]],
-    max_note_count: int,
-    max_note_characters: int,
-    max_total_characters: int,
+    max_note_count: int | None,
+    max_note_characters: int | None,
+    max_total_characters: int | None,
 ) -> list[dict[str, Any]]:
     """
     Build a bounded list of cleaned candidate notes for prompt use.
@@ -1952,11 +1973,16 @@ def _build_prompt_ready_candidate_notes(
     But they can also become prompt bloat very quickly, especially when they
     contain long email threads and disclaimers.
 
-    This helper therefore makes a controlled tradeoff:
-    - keep a small number of notes
-    - keep the most useful metadata
-    - truncate oversized note bodies
-    - stop once the overall note budget has been spent
+    This helper now defaults to preserving full cleaned notes because recruiter
+    and candidate comments can carry important context that should not be
+    dropped silently.
+
+    Budgeting is still supported, but only when the caller explicitly opts in.
+
+    That means the helper can do two different jobs cleanly:
+
+    - preserve all cleaned notes by default
+    - enforce a note budget when a caller is tuning for prompt size
 
     Example
     -------
@@ -1980,12 +2006,18 @@ def _build_prompt_ready_candidate_notes(
 
     prompt_ready_notes: list[dict[str, Any]] = []
     total_characters_kept = 0
+    bounded_note_items = (
+        note_items[:max_note_count] if max_note_count is not None else note_items
+    )
 
     # Limit first, then cleanly project each kept note into the smaller prompt
     # shape. That keeps the transformation easy to read and makes it obvious
     # where note-count control happens.
-    for note in note_items[:max_note_count]:
-        if total_characters_kept >= max_total_characters:
+    for note in bounded_note_items:
+        if (
+            max_total_characters is not None
+            and total_characters_kept >= max_total_characters
+        ):
             break
 
         note_text = note.get("cleaned_text") or note.get("text") or ""
@@ -1993,11 +2025,23 @@ def _build_prompt_ready_candidate_notes(
         if not isinstance(note_text, str) or note_text.strip() == "":
             continue
 
-        remaining_budget = max_total_characters - total_characters_kept
-        bounded_note_text = _truncate_text(
-            note_text,
-            max_characters=min(max_note_characters, remaining_budget),
-        )
+        if max_total_characters is None and max_note_characters is None:
+            bounded_note_text = note_text
+        else:
+            remaining_budget = (
+                max_total_characters - total_characters_kept
+                if max_total_characters is not None
+                else len(note_text)
+            )
+            per_note_budget = (
+                max_note_characters
+                if max_note_characters is not None
+                else len(note_text)
+            )
+            bounded_note_text = _truncate_text(
+                note_text,
+                max_characters=min(per_note_budget, remaining_budget),
+            )
 
         prompt_ready_notes.append(
             {

@@ -235,6 +235,7 @@ Current status:
 - [x] Resume extraction service is implemented in `backend/services/resume_extraction.py`.
 - [x] Resume extraction tests are implemented in `tests/unit/test_resume_extraction.py`.
 - [x] Live resume extraction runner is implemented in `scripts/run_resume_extraction.py`.
+- [x] Narrow accepted-output persistence service is implemented in `backend/services/resume_extraction_persistence.py`.
 - [x] Real LangChain provider clients are implemented.
 - [x] Real LLM calls are implemented.
 - [ ] Real GraphRAG workflow states are defined.
@@ -304,6 +305,13 @@ Current status:
 - [ ] Real client source-system access is available.
 - [ ] Real source-system sample payloads have been collected.
 - [ ] Real source-record ingestion is designed.
+- [x] Narrow accepted-output JobAdder persistence path is implemented for:
+  - [x] Source records.
+  - [x] Person upsert.
+  - [x] Candidate upsert.
+  - [x] Current company upsert.
+  - [x] Resume document persistence.
+  - [x] Candidate-skill refresh.
 - [x] JobAdder developer application is registered.
 - [x] Local JobAdder callback URI is implemented.
 - [x] Live Vercel JobAdder callback URI is implemented.
@@ -425,6 +433,13 @@ Current note:
   - stable source failures are keyed from source-only state rather than prompt/scorer contract changes
 - The immediate remaining gap is score calibration across a real candidate sample,
   not the basic extraction/fallback plumbing.
+- Accepted `pass` extraction results can now be persisted on an opt-in basis from
+  the CLI runners into the current canonical schema.
+- That persistence slice is intentionally narrow and does not yet model:
+  - recruiter notes as first-class interactions
+  - full employment-history persistence
+  - full project persistence
+  - API-level ingestion endpoints
 
 </details>
 

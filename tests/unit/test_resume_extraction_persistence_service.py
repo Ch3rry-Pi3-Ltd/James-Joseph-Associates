@@ -1,0 +1,194 @@
+"""
+Unit tests for resume-extraction persistence service helpers.
+
+This module tests the business-side persistence rules in
+`backend.services.resume_extraction_persistence`.
+
+It gives the rest of the repository a stable way to check:
+
+- only accepted extraction results are considered persistable
+- the persistence payload keeps the key provenance material we care about
+- the service delegates the final write to the lower-level DB helper
+
+Keeping these tests at the service layer matters because the persistence rules
+are not only about SQL correctness. They also define when a result is allowed
+to become canonical state at all.
+"""
+
+from unittest.mock import patch
+
+import pytest
+
+from backend.services.resume_extraction_persistence import (
+    build_resume_extraction_persistence_payload,
+    persist_accepted_resume_extraction_result,
+)
+
+
+def _build_sample_result(*, quality_status: str = "pass") -> dict[str, object]:
+    """
+    Return a small accepted-result shape suitable for persistence tests.
+    """
+
+    return {
+        "source_system": "jobadder",
+        "source_candidate_id": 16496678,
+        "jobadder_account": 2236,
+        "model_profile": {
+            "provider": "openai",
+            "model_name": "gpt-4.1-mini",
+            "purpose": "extraction",
+            "temperature": 0.0,
+            "max_output_tokens": 2200,
+        },
+        "prompt_truncation": {
+            "any_truncation": False,
+            "resume_was_truncated": False,
+            "notes_were_truncated": False,
+        },
+        "extraction_input": {
+            "candidate_context": {
+                "first_name": "Roger",
+                "last_name": "Campbell",
+                "email": "roger@example.com",
+                "mobile": "+447700900111",
+                "location": None,
+                "status": "Active",
+            },
+            "latest_resume": {
+                "attachment_id": 12345,
+                "file_name": "Roger-Campbell-CV.pdf",
+                "mime_type": "application/pdf",
+                "created_at": "2026-05-11T12:00:00Z",
+            },
+            "cleaned_resume_text": "Roger Campbell CV body text",
+            "cleaned_candidate_notes": [
+                {
+                    "note_id": "abc",
+                    "type": "Phone call",
+                    "created_at": "2026-05-10T09:00:00Z",
+                    "updated_at": "2026-05-10T10:00:00Z",
+                    "cleaned_text": "Candidate is open to move.",
+                }
+            ],
+            "prompt_input_metrics": {
+                "resume_original_characters": 28,
+                "resume_prompt_characters": 28,
+                "resume_was_truncated": False,
+                "available_note_count": 1,
+                "prompt_note_count": 1,
+                "available_note_characters": 27,
+                "prompt_note_characters": 27,
+                "notes_were_truncated": False,
+            },
+        },
+        "structured_extraction": {
+            "current_employer": "Ch3rry Pi3 Ltd",
+            "current_title": "Software Engineer",
+            "professional_summary": "Builds backend systems.",
+            "location": "London",
+            "emails": ["roger@example.com"],
+            "phones": ["+447700900111"],
+            "skills": ["Python", "SQL"],
+            "tools_and_platforms": ["Postgres", "Supabase"],
+            "linkedin_url": "https://www.linkedin.com/in/roger-campbell",
+        },
+        "quality_assessment": {
+            "quality_score": 96,
+            "status": quality_status,
+            "reasons": [],
+        },
+        "cv_source_assessment": {
+            "richness_score": 88,
+            "richness_band": "rich",
+            "reasons": [],
+        },
+        "quality_gate": {
+            "enabled": True,
+            "first_pass_model_name": "gpt-4.1-mini",
+            "fallback_model_name": "gpt-5.4-mini",
+            "fallback_invoked": False,
+            "final_model_name": "gpt-4.1-mini",
+        },
+    }
+
+
+def test_build_resume_extraction_persistence_payload_keeps_key_provenance() -> None:
+    """
+    Verify that the persistence payload keeps the important provenance slices.
+
+    Notes
+    -----
+    The first persistence path is intentionally narrow, but it still needs to
+    preserve the source-side evidence that explains where the canonical update
+    came from:
+
+    - candidate snapshot
+    - selected resume snapshot
+    - cleaned recruiter notes
+    - accepted structured extraction
+    """
+
+    result = _build_sample_result()
+
+    payload = build_resume_extraction_persistence_payload(result)
+
+    assert payload["source_system"] == "jobadder"
+    assert payload["source_candidate_id"] == 16496678
+    assert payload["full_name"] == "Roger Campbell"
+    assert payload["primary_email"] == "roger@example.com"
+    assert payload["resume_source_uri"] == (
+        "jobadder://accounts/2236/candidates/16496678/attachments/12345"
+    )
+    assert payload["last_contacted_at"] == "2026-05-10T10:00:00Z"
+    assert payload["candidate_source_payload"]["cleaned_candidate_notes"][0][
+        "cleaned_text"
+    ] == "Candidate is open to move."
+    assert payload["resume_source_payload"]["resume_content_hash"]
+    assert payload["extraction_source_payload"]["quality_assessment"]["status"] == "pass"
+
+
+def test_persist_accepted_resume_extraction_result_rejects_non_pass_status() -> None:
+    """
+    Verify that non-pass results are blocked before any database write.
+    """
+
+    result = _build_sample_result(quality_status="review")
+
+    with pytest.raises(RuntimeError) as excinfo:
+        persist_accepted_resume_extraction_result(result)
+
+    assert 'quality_assessment.status == "pass"' in str(excinfo.value)
+
+
+def test_persist_accepted_resume_extraction_result_delegates_to_db_helper() -> None:
+    """
+    Verify that the service delegates accepted results to the DB helper.
+
+    Notes
+    -----
+    This test intentionally stops at the service boundary. The SQL write logic
+    is covered separately. Here we only want to prove that:
+
+    - accepted results are allowed through
+    - the prepared payload is handed to the lower layer
+    - the DB helper's summary is passed back unchanged
+    """
+
+    result = _build_sample_result()
+
+    with patch(
+        "backend.services.resume_extraction_persistence.persist_jobadder_resume_extraction_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+        }
+
+        persisted_summary = persist_accepted_resume_extraction_result(result)
+
+    assert persisted_summary == {
+        "candidate_id": "candidate-uuid",
+        "person_id": "person-uuid",
+    }
+    mock_persist.assert_called_once()

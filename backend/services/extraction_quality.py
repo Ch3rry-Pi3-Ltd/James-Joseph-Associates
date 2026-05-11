@@ -83,11 +83,15 @@ _DATE_RANGE_PATTERN = re.compile(
     r"|"
     r"\d{1,2}[./-]\d{4}"
     r"|"
+    r"\d{4}[./-]\d{1,2}"
+    r"|"
     r"\d{4}"
     r")\s*[-–—]\s*(?:"
     r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{4}"
     r"|"
     r"\d{1,2}[./-]\d{4}"
+    r"|"
+    r"\d{4}[./-]\d{1,2}"
     r"|"
     r"\d{4}"
     r"|Present"
@@ -843,6 +847,7 @@ def _looks_like_date_rangeish_phone_false_positive(value: str) -> bool:
 
     - `01.2021- 04.2022`
     - `06.2023- currently`
+    - `2011-12 - 2016-11`
 
     Example
     -------
@@ -864,7 +869,7 @@ def _looks_like_date_rangeish_phone_false_positive(value: str) -> bool:
 
     return bool(
         re.search(
-            r"\b\d{1,2}[./-]\d{4}\s*[-–—]\s*(?:\d{1,2}[./-]\d{4}|current(?:ly)?|present)\b",
+            r"\b(?:\d{1,2}[./-]\d{4}|\d{4}[./-]\d{1,2})\s*[-–—]\s*(?:\d{1,2}[./-]\d{4}|\d{4}[./-]\d{1,2}|current(?:ly)?|present)\b",
             stripped,
             re.IGNORECASE,
         )
