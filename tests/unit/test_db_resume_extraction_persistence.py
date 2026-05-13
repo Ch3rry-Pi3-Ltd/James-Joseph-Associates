@@ -43,6 +43,12 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
     - candidate upsert
     - source-link creation
     - commit
+
+    Example
+    -------
+    Even with a deliberately tiny payload, the helper should still return a
+    JSON-safe summary containing the canonical person and candidate IDs as
+    strings.
     """
 
     persistence_payload = {

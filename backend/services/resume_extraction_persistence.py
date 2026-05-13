@@ -127,6 +127,14 @@ def build_resume_extraction_persistence_payload(
 
     That makes the canonical writes traceable even before the project has a
     full first-class ingestion-run model.
+
+    Example
+    -------
+    The returned payload contains three provenance slices such as:
+
+        payload["candidate_source_payload"]
+        payload["resume_source_payload"]
+        payload["extraction_source_payload"]
     """
 
     extraction_input = result["extraction_input"]
@@ -163,6 +171,13 @@ def build_resume_extraction_persistence_payload(
         structured_extraction.get("current_employer")
     )
 
+    # Preserve the candidate-facing source slices separately because they answer
+    # different later questions:
+    #
+    # - candidate_source_payload: what upstream context did we ingest?
+    # - resume_source_payload: which resume artefact did we use?
+    # - extraction_source_payload: what accepted structured interpretation did
+    #   we derive from that source material?
     candidate_source_payload = {
         "candidate_context": candidate_context,
         "latest_resume": latest_resume,
@@ -245,6 +260,15 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
     The current write path is intentionally conservative. It accepts only
     quality-gated `pass` results so canonical tables are not fed by outputs the
     deterministic scorer already considers uncertain.
+
+    Example
+    -------
+    A result with:
+
+        quality_assessment={"status": "review"}
+
+    raises immediately instead of allowing the caller to persist a doubtful
+    extraction into canonical state.
     """
 
     if result.get("source_system") != "jobadder":
@@ -321,6 +345,18 @@ def _build_jobadder_resume_source_uri(
     This is intentionally an internal-style URI rather than a direct vendor URL.
     It gives the canonical `documents` row a meaningful source reference even
     though the backend is not storing a browser-openable attachment link yet.
+
+    Example
+    -------
+    A call with:
+
+        jobadder_account=2236
+        source_candidate_id=16496678
+        attachment_id=12345
+
+    returns:
+
+        "jobadder://accounts/2236/candidates/16496678/attachments/12345"
     """
 
     if jobadder_account is None or attachment_id is None:
@@ -366,6 +402,17 @@ def _select_latest_note_timestamp(
 def _build_full_name(*, first_name: str | None, last_name: str | None) -> str:
     """
     Build one display-safe full name from candidate-name parts.
+
+    Example
+    -------
+    A call with:
+
+        first_name="Roger"
+        last_name="Campbell"
+
+    returns:
+
+        "Roger Campbell"
     """
 
     joined_name = " ".join(
@@ -383,6 +430,16 @@ def _pick_first_nonempty(
 ) -> str | None:
     """
     Return the first non-empty string from a list, otherwise a fallback value.
+
+    Example
+    -------
+    A call such as:
+
+        _pick_first_nonempty(["", "roger@example.com"], fallback_value=None)
+
+    returns:
+
+        "roger@example.com"
     """
 
     for value in values:
@@ -396,6 +453,20 @@ def _pick_first_nonempty(
 def _clean_optional_string(value: Any) -> str | None:
     """
     Return a stripped string or `None` when the input is blank-like.
+
+    Example
+    -------
+    Inputs such as:
+
+        "  London  "
+        ""
+        None
+
+    become:
+
+        "London"
+        None
+        None
     """
 
     if not isinstance(value, str):
@@ -410,6 +481,11 @@ def _clean_optional_string(value: Any) -> str | None:
 def _hash_text(text: str) -> str:
     """
     Hash source text for document/provenance deduplication.
+
+    Example
+    -------
+    Two identical cleaned resume-text strings produce the same SHA-256 hash,
+    which lets the persistence layer spot obvious duplicate resume content.
     """
 
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -418,6 +494,11 @@ def _hash_text(text: str) -> str:
 def _hash_json_ready_payload(payload: dict[str, Any]) -> str:
     """
     Hash one provenance payload after a stable JSON-style normalisation step.
+
+    Example
+    -------
+    Two payloads with the same keys and values but different dictionary order
+    still produce the same hash because the JSON serialisation is sorted.
     """
 
     import json

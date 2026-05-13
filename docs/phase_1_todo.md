@@ -19,6 +19,43 @@ The objective is to create a project foundation that can support:
 </details>
 
 <details open>
+<summary><strong>0. Immediate Priority Queue</strong></summary>
+
+These items have now moved to the top of the practical working order because
+they were reinforced by recent live JobAdder extraction work and by the
+client's latest feedback.
+
+- [ ] Add a robust Supabase persistence verification mechanism for accepted
+  JobAdder CV ingests:
+  - [x] Verify the canonical person, candidate, company, document, and
+    candidate-skill rows after write.
+  - [x] Verify source-record provenance links after write.
+  - [x] Produce an operator-friendly inspection/check script for a persisted
+    candidate snapshot.
+  - [ ] Decide what should count as a persistence pass/fail before bulk loads.
+- [ ] Show the current Supabase canonical fields/entities clearly so they can
+  be reviewed against business requirements before wider ingestion.
+- [ ] Extend persistence design for no-CV / sparse-profile cases so valuable
+  JobAdder contacts are still retained even when there is no strong resume
+  document.
+- [ ] Confirm how JobAdder notes should move from provenance-bearing payloads
+  into first-class persisted interaction/note records.
+- [ ] Confirm LinkedIn URL handling as a first-class persisted identifier for
+  later refresh/reconciliation work.
+- [ ] Set up what is required for Dropbox source access and inspect the
+  expected file structure before broader import design.
+- [ ] Review the wider source-system landscape and recommended import order
+  before bulk loading old/static CV data:
+  - [ ] JobAdder.
+  - [ ] Dropbox CV folders.
+  - [ ] LinkedHelper / LinkedIn-derived refresh data.
+  - [ ] Recruiterflow JSON.
+  - [ ] Pipedrive hiring-manager data.
+  - [ ] Spreadsheets / Microsoft To Do / other legacy exports.
+
+</details>
+
+<details open>
 <summary><strong>1. Set Up the Vercel Project Foundation</strong></summary>
 
 This should come first because the backend will be the system boundary for API contracts, environment configuration, deployments, and future Make.com integration.
@@ -132,6 +169,15 @@ This step should happen before API implementation so the backend does not encode
   - [ ] Company domain.
   - [ ] Source-system IDs.
   - [ ] CV/document fingerprints.
+- [ ] Add the near-term modelling rules highlighted by the current JobAdder
+  ingestion work:
+  - [ ] No-CV / sparse-profile candidates must still be persistable as
+    valuable contacts.
+  - [ ] LinkedIn URL should be treated as a first-class reconciliation signal.
+  - [ ] Recruiter notes should move toward first-class interaction modelling,
+    not remain only in provenance payloads.
+  - [ ] Multiple CV/source documents must be retainable with a later
+    "preferred/current CV" policy rather than destructive overwrite.
 
 </details>
 
@@ -365,6 +411,9 @@ Current note:
 - JobAdder is still the leading first source system.
 - The application registration and callback plumbing are now in place.
 - The remaining blocker is the token exchange and first narrow API read.
+- Dropbox access/setup has now moved up the practical priority order because it
+  is likely to become one of the next major ingestion streams after the current
+  JobAdder path is verified more fully.
 
 </details>
 
@@ -440,6 +489,9 @@ Current note:
   - full employment-history persistence
   - full project persistence
   - API-level ingestion endpoints
+- The immediate next evaluation gap is now broader than extraction quality
+  alone. We also need a robust post-write Supabase verification mechanism so
+  accepted JobAdder CV ingests can be checked safely before any bulk push.
 
 </details>
 

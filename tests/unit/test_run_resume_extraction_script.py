@@ -41,6 +41,19 @@ def test_main_persists_accepted_output_when_flag_is_enabled() -> None:
     - run the quality-gated extraction path
     - enrich the result with `persistence_result`
     - write that enriched payload to the JSON output helper
+
+    Example
+    -------
+    A successful run with:
+
+        --persist-accepted-output
+        --output-json temp/resume_extraction_result_persisted.json
+
+    should hand a JSON payload to `write_json_output(...)` that already
+    contains both:
+
+        payload["persistence_requested"] == True
+        payload["persistence_result"] == {...}
     """
 
     captured_json_payloads: list[dict[str, object]] = []

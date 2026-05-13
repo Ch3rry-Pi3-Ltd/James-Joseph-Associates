@@ -225,6 +225,9 @@ In plain language:
   - current company
   - resume document
   - candidate skills
+- a persisted accepted-output write can now be verified through:
+  - `backend/services/resume_extraction_verification.py`
+  - `scripts/check_persisted_resume_extraction.py`
 
 ## Why Multi-Provider Routing Is Still Deferred
 
@@ -287,7 +290,11 @@ Not done yet:
 
 Recommended next project step:
 
-- calibrate the deterministic quality gate on a real multi-candidate batch
-- tighten the rerun/review thresholds using real disagreement cases
-- widen the accepted-output persistence slice beyond the current narrow canonical write path
-- then move from local JSON artifacts toward richer persistence and reporting
+- add a robust Supabase post-write verification/check path for accepted JobAdder
+  persistence
+- review the current canonical fields/entities against the wider planned source
+  systems before bulk ingestion
+- extend persistence design for no-CV / sparse-profile candidates and first-class
+  notes/interaction modelling
+- then widen the accepted-output persistence slice beyond the current narrow
+  canonical write path

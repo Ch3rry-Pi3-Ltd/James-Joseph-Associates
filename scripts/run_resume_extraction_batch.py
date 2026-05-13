@@ -803,6 +803,21 @@ def _source_markers_without_contract(source_markers: dict[str, Any]) -> dict[str
     `contract_fingerprint`. This helper strips that contract-only key so old
     rows can still participate in the newer source-only stable-failure skip
     logic.
+
+    Example
+    -------
+    A payload such as:
+
+        {
+            "candidate_id": 16496678,
+            "contract_fingerprint": "old-contract",
+        }
+
+    becomes:
+
+        {
+            "candidate_id": 16496678,
+        }
     """
 
     return {
@@ -914,6 +929,14 @@ def find_skip_manifest_record(
     this helper returns that row and the batch runner will skip the candidate.
     """
 
+    # Iterate newest-first because the manifest is append-only and later rows
+    # represent the most accurate known state for that candidate. That matters
+    # especially when a candidate moved from:
+    #
+    # - failure -> success
+    # - older fingerprint -> newer fingerprint
+    #
+    # A forward scan would risk treating stale history as the current truth.
     for record in reversed(manifest_records):
         record_outcome = record.get("processing_outcome")
 

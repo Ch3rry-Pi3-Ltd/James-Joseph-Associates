@@ -151,6 +151,14 @@ def persist_jobadder_resume_extraction_snapshot(
 
     with postgres_connection() as connection:
         with connection.cursor() as cursor:
+            # Keep the three provenance records separate even though they come
+            # from one accepted extraction run.
+            #
+            # That split is deliberate. Later debugging and lineage questions
+            # are easier to answer when we can point at:
+            # - the upstream candidate snapshot
+            # - the selected resume attachment
+            # - the accepted structured extraction derived from them
             candidate_source_record = _upsert_source_record(
                 cursor,
                 source_system="jobadder",
@@ -200,6 +208,9 @@ def persist_jobadder_resume_extraction_snapshot(
                 company_name=persistence_payload.get("current_employer"),
             )
 
+            # Link-or-create the canonical entities after the source records
+            # exist so later link tables can tie both provenance and canonical
+            # rows back to the same accepted extraction event.
             person_id = _upsert_person(
                 cursor,
                 source_record_id=candidate_source_record["id"],
@@ -238,6 +249,10 @@ def persist_jobadder_resume_extraction_snapshot(
                     extracted_text=persistence_payload.get("cleaned_resume_text"),
                 )
 
+            # Keep one source-record link row per canonical target rather than
+            # mixing several nullable foreign keys into one "wide" link row.
+            # That makes the existence checks simple and the resulting lineage
+            # much easier to inspect later.
             _ensure_source_record_link(
                 cursor,
                 source_record_id=candidate_source_record["id"],
@@ -290,6 +305,14 @@ def persist_jobadder_resume_extraction_snapshot(
                 )
 
             if document_id is not None:
+                # Document links answer a slightly different question from
+                # source-record links:
+                #
+                # - source-record links explain provenance
+                # - document links explain domain relationships
+                #
+                # We therefore write both when a selected resume document is
+                # present.
                 _ensure_document_link(
                     cursor,
                     document_id=document_id,
@@ -321,18 +344,18 @@ def persist_jobadder_resume_extraction_snapshot(
 
     return _make_json_safe_summary(
         {
-        "persisted_at": persisted_at.isoformat(),
-        "person_id": person_id,
-        "candidate_id": candidate_id,
-        "current_company_id": current_company_id,
-        "document_id": document_id,
-        "candidate_source_record_id": candidate_source_record["id"],
-        "resume_source_record_id": (
-            resume_source_record["id"] if resume_source_record is not None else None
-        ),
-        "extraction_source_record_id": extraction_source_record["id"],
-        "candidate_skill_count": len(linked_skill_ids),
-        "quality_status": persistence_payload.get("quality_status"),
+            "persisted_at": persisted_at.isoformat(),
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "current_company_id": current_company_id,
+            "document_id": document_id,
+            "candidate_source_record_id": candidate_source_record["id"],
+            "resume_source_record_id": (
+                resume_source_record["id"] if resume_source_record is not None else None
+            ),
+            "extraction_source_record_id": extraction_source_record["id"],
+            "candidate_skill_count": len(linked_skill_ids),
+            "quality_status": persistence_payload.get("quality_status"),
         }
     )
 
@@ -363,6 +386,16 @@ def _upsert_source_record(
     That makes `source_records` the right place to keep the latest accepted
     snapshot for each candidate / resume / extraction artefact without creating
     duplicate rows on every rerun.
+
+    Example
+    -------
+    A call with:
+
+        source_record_type="jobadder_resume_attachment"
+        source_record_id="12345"
+
+    updates the latest accepted resume-attachment snapshot for that upstream
+    attachment key rather than inserting a duplicate row on every rerun.
     """
 
     cursor.execute(
@@ -432,6 +465,15 @@ def _upsert_company_by_name(
     the richer company-identity policy still depends on wider source-system
     design work. Exact company modelling can become more sophisticated later
     without rewriting the rest of the persistence slice.
+
+    Example
+    -------
+    A value such as:
+
+        "NHS Practitioner Health"
+
+    returns the existing `companies.id` for that case-insensitive name match,
+    or creates one new row when no match exists yet.
     """
 
     if company_name is None or company_name.strip() == "":
@@ -492,6 +534,15 @@ def _upsert_person(
     4. otherwise create a new person row
 
     This avoids inventing fuzzy matching rules inside the first write helper.
+
+    Example
+    -------
+    If the candidate source record is not linked yet but the extracted result
+    contains:
+
+        linkedin_url="https://www.linkedin.com/in/example"
+
+    then an existing `people` row with that exact LinkedIn URL is reused.
     """
 
     existing_person_id = _find_linked_entity_id(
@@ -622,6 +673,12 @@ def _upsert_candidate(
     The schema already enforces one candidate row per person through
     `candidates.person_id unique`, so this helper uses that as the stable
     fallback identity after checking the source-record link.
+
+    Example
+    -------
+    If the candidate source record is not linked yet but the matched person row
+    already has a canonical candidate row, this helper updates that row rather
+    than inserting a duplicate candidate.
     """
 
     existing_candidate_id = _find_linked_entity_id(
@@ -736,6 +793,12 @@ def _upsert_resume_document(
     The resume-source record is treated as the primary identity when possible.
     If a document has not yet been linked to that source record, we fall back to
     the content hash to avoid obvious duplicate document rows for the same CV.
+
+    Example
+    -------
+    If the selected resume attachment changed upstream but still contains the
+    same extracted text, the `content_hash` path lets this helper reuse the
+    existing canonical resume document row instead of inserting a duplicate.
     """
 
     existing_document_id = _find_linked_entity_id(
@@ -844,6 +907,21 @@ def _refresh_candidate_skills(
     - ordinary skills first
     - tools/platforms second
     - duplicate labels collapse into one canonical skill row by name
+
+    Example
+    -------
+    Calling with:
+
+        extracted_skills=["Python", "SQL"]
+        extracted_tools=["Power BI", "SQL"]
+
+    results in candidate-skill links for:
+
+        - Python
+        - SQL
+        - Power BI
+
+    with the duplicate `SQL` label collapsing to one canonical skill row.
     """
 
     ordered_skill_entries = _build_ordered_skill_entries(
@@ -994,6 +1072,11 @@ def _upsert_skill(
     -----
     The schema already enforces `skills.name unique`, so the write path can use
     a straightforward upsert without needing a separate pre-read.
+
+    Example
+    -------
+    If `skill_name="Python"` already exists, this helper returns the existing
+    canonical row ID instead of creating a second `Python` entry.
     """
 
     cursor.execute(
@@ -1047,6 +1130,15 @@ def _find_linked_entity_id(
     -----
     The `entity_column` argument is restricted to a small literal set so the
     dynamic SQL here stays explicit and safe.
+
+    Example
+    -------
+    A call with:
+
+        entity_column="candidate_id"
+
+    returns the candidate linked to that source record when such a link already
+    exists, otherwise `None`.
     """
 
     cursor.execute(
@@ -1083,6 +1175,16 @@ def _ensure_source_record_link(
     nullable foreign-key columns, so the helper performs an existence check
     first. This keeps reruns idempotent without forcing a schema change in the
     same step.
+
+    Example
+    -------
+    A call with:
+
+        source_record_id="..."
+        candidate_id="..."
+
+    inserts one candidate-target link on the first accepted run and becomes a
+    no-op on later identical reruns.
     """
 
     column_name, entity_id = _pick_single_entity_target(
@@ -1147,6 +1249,23 @@ def _ensure_document_link(
 ) -> None:
     """
     Insert one `document_links` row only when it does not already exist.
+
+    Notes
+    -----
+    `document_links` capture domain relationships such as "this resume belongs
+    to this candidate" independently of the broader provenance graph recorded
+    in `source_record_links`.
+
+    Example
+    -------
+    A call with:
+
+        document_id="..."
+        candidate_id="..."
+        relationship_type="resume"
+
+    creates one candidate-resume link and then becomes idempotent on later
+    reruns.
     """
 
     column_name, entity_id = _pick_single_document_target(
@@ -1214,6 +1333,16 @@ def _pick_single_entity_target(
     These helpers intentionally insert one source-record link row per entity
     target rather than mixing several entity types into one row. That makes the
     existence checks and later debugging much easier to reason about.
+
+    Example
+    -------
+    A call with only:
+
+        person_id="person-uuid"
+
+    returns:
+
+        ("person_id", "person-uuid")
     """
 
     populated_targets = [
@@ -1241,6 +1370,16 @@ def _pick_single_document_target(
 ) -> tuple[str, str]:
     """
     Return the one non-null document-link target column and value.
+
+    Example
+    -------
+    A call with only:
+
+        candidate_id="candidate-uuid"
+
+    returns:
+
+        ("candidate_id", "candidate-uuid")
     """
 
     populated_targets = [

@@ -28,6 +28,17 @@ from backend.services.resume_extraction_persistence import (
 def _build_sample_result(*, quality_status: str = "pass") -> dict[str, object]:
     """
     Return a small accepted-result shape suitable for persistence tests.
+
+    Example
+    -------
+    The default call returns a minimal `jobadder` result with:
+
+    - one accepted quality assessment
+    - one selected resume attachment
+    - one cleaned recruiter note
+
+    which is enough to exercise the service-side persistence rules without
+    dragging in unrelated extraction detail.
     """
 
     return {
@@ -151,6 +162,11 @@ def test_build_resume_extraction_persistence_payload_keeps_key_provenance() -> N
 def test_persist_accepted_resume_extraction_result_rejects_non_pass_status() -> None:
     """
     Verify that non-pass results are blocked before any database write.
+
+    Example
+    -------
+    A `review` result should fail fast at the service boundary rather than
+    reaching the lower-level SQL helper.
     """
 
     result = _build_sample_result(quality_status="review")
