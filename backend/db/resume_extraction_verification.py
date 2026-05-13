@@ -62,7 +62,10 @@ Typical verification usage looks like:
 
 from __future__ import annotations
 
+from datetime import datetime
+from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 from backend.db.candidates import get_candidate_profile
 from backend.db.connection import postgres_connection
@@ -176,24 +179,40 @@ def get_resume_extraction_persistence_snapshot(
                 document_id=document_id,
             )
 
-    return {
-        "candidate_profile": candidate_profile,
-        "candidate_skills": candidate_skills,
-        "current_company": current_company,
-        "resume_document": resume_document,
-        "source_records": source_records,
-        "source_record_links": source_record_links,
-        "document_links": document_links,
-        "expected_ids": {
-            "candidate_id": candidate_id,
-            "person_id": person_id,
-            "current_company_id": current_company_id,
-            "document_id": document_id,
-            "candidate_source_record_id": candidate_source_record_id,
-            "resume_source_record_id": resume_source_record_id,
-            "extraction_source_record_id": extraction_source_record_id,
+    # Normalize DB-native values once at the verification-read boundary.
+    #
+    # The Postgres driver returns native Python objects such as `UUID` and
+    # `datetime`. Those are useful while querying, but the verification layer
+    # needs two simpler guarantees:
+    #
+    # - ID comparisons against the string IDs returned by the persistence
+    #   summary should behave predictably.
+    # - operator-facing verification reports should be JSON-serialisable
+    #   without every caller needing its own UUID/datetime special cases.
+    #
+    # Normalising the snapshot here keeps the rest of the verification flow
+    # simple and avoids repeating the same conversion logic in the service and
+    # script layers.
+    return _make_json_safe_value(
+        {
+            "candidate_profile": candidate_profile,
+            "candidate_skills": candidate_skills,
+            "current_company": current_company,
+            "resume_document": resume_document,
+            "source_records": source_records,
+            "source_record_links": source_record_links,
+            "document_links": document_links,
+            "expected_ids": {
+                "candidate_id": candidate_id,
+                "person_id": person_id,
+                "current_company_id": current_company_id,
+                "document_id": document_id,
+                "candidate_source_record_id": candidate_source_record_id,
+                "resume_source_record_id": resume_source_record_id,
+                "extraction_source_record_id": extraction_source_record_id,
+            },
         },
-    }
+    )
 
 
 def _fetch_optional_row_by_id(
@@ -350,6 +369,57 @@ def _fetch_document_links(
         {"document_id": document_id},
     )
     return [dict(row) for row in cursor.fetchall()]
+
+
+def _make_json_safe_value(value: Any) -> Any:
+    """
+    Convert verification snapshot values into JSON-safe plain Python types.
+
+    Notes
+    -----
+    Verification reads hit the same psycopg behaviour as the persistence write
+    summary did earlier: UUIDs and datetimes come back as native Python types.
+    The verification layer wants plain strings instead so:
+
+    - equality checks against persisted summary IDs stay reliable
+    - JSON report writing does not fail later in the operator script
+
+    Example
+    -------
+    A value such as:
+
+        {"candidate_id": UUID("...")}
+
+    becomes:
+
+        {"candidate_id": "..."}
+    """
+
+    if isinstance(value, UUID):
+        return str(value)
+
+    if isinstance(value, datetime):
+        return value.isoformat()
+
+    if isinstance(value, Decimal):
+        # Verification reports are JSON-facing artifacts. Converting Decimal to
+        # float here keeps the operator-facing output serializable while still
+        # preserving the simple numeric meaning of fields such as confidence.
+        return float(value)
+
+    if isinstance(value, dict):
+        return {
+            key: _make_json_safe_value(nested_value)
+            for key, nested_value in value.items()
+        }
+
+    if isinstance(value, list):
+        return [_make_json_safe_value(item) for item in value]
+
+    if isinstance(value, tuple):
+        return [_make_json_safe_value(item) for item in value]
+
+    return value
 
 
 __all__ = [
