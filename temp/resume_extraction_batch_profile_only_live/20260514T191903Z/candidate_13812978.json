@@ -1,0 +1,243 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13812978,
+  "jobadder_account": 2236,
+  "processing_outcome": "profile_only_persisted",
+  "profile_persistence_reason": "no_resume_attachment",
+  "candidate_context": {
+    "first_name": "tom-test",
+    "last_name": "owens-test",
+    "email": "tomas.owens75@gmail.com",
+    "mobile": "7545175393"
+  },
+  "attachments_summary": {
+    "attachment_count": 0,
+    "resume_attachment_count": 0
+  },
+  "cleaned_candidate_notes": [
+    {
+      "note_id": "99de7580-4c05-4a25-a756-e02dd4394eaf",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:40:45Z",
+      "updated_at": "2026-05-13T08:40:45Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "7bc4afeb-41d6-4b80-9f2d-7af861c12b78",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:40:20Z",
+      "updated_at": "2026-05-13T08:40:20Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "fa0a513d-cdd0-4aaf-88b3-b69b3fc64092",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:40:01Z",
+      "updated_at": "2026-05-13T08:40:01Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "ad10d306-15e6-4c6b-b0fb-556e6d2a04eb",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:38:48Z",
+      "updated_at": "2026-05-13T08:38:48Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "2230de91-f07a-496e-b8f5-ef93cb5edff5",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:38:19Z",
+      "updated_at": "2026-05-13T08:38:19Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "a718ca5c-e9a9-4484-80f5-17644b21acad",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:37:37Z",
+      "updated_at": "2026-05-13T08:37:37Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "e1fe9f10-9ffb-413f-9ccc-bfd6e6e8da10",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:37:12Z",
+      "updated_at": "2026-05-13T08:37:12Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "5167ffc9-1d3d-4de5-ae0b-1eeb9b435a3a",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:36:39Z",
+      "updated_at": "2026-05-13T08:36:39Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "d5c5901e-a069-4dc2-9833-71cd4ac556df",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:36:22Z",
+      "updated_at": "2026-05-13T08:36:22Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "ba73fc98-07ad-430e-bd02-8450b8bbb6f2",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:35:50Z",
+      "updated_at": "2026-05-13T08:35:50Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "e03bc07f-cd88-4e6c-9e5b-ff3bbb56d245",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:35:25Z",
+      "updated_at": "2026-05-13T08:35:25Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "53b5dc3e-b9ec-40f8-932a-2be2eb906944",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:34:56Z",
+      "updated_at": "2026-05-13T08:34:56Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "3bee1c5d-b951-42b9-9ba9-66fb6fe517be",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:34:36Z",
+      "updated_at": "2026-05-13T08:34:36Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "cc8e7502-71e3-4c29-9cce-b2de1763db5f",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:34:13Z",
+      "updated_at": "2026-05-13T08:34:13Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "962e19ee-6acb-43fe-91f6-41655ca13c5b",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:33:14Z",
+      "updated_at": "2026-05-13T08:33:14Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "640e8fe7-57f3-43fc-89be-bbfbe76d4d4f",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:25:15Z",
+      "updated_at": "2026-05-13T08:25:15Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "10b161a0-b17c-466f-a702-5c85e60e20b0",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:23:08Z",
+      "updated_at": "2026-05-13T08:23:08Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "f8267e70-8f5f-4c75-b934-fd4a694a8945",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:21:52Z",
+      "updated_at": "2026-05-13T08:21:52Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "2cd1a2ca-bc7e-4b5a-94bc-14fde719507e",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:13:31Z",
+      "updated_at": "2026-05-13T08:13:31Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "492766af-8a30-4ff3-bded-291b90c33ec4",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:13:13Z",
+      "updated_at": "2026-05-13T08:13:13Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "ceb10d1c-df2b-4977-91e1-808819246491",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:12:49Z",
+      "updated_at": "2026-05-13T08:12:49Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "bbde17bf-af64-403c-9b0c-246f262a82a3",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:12:26Z",
+      "updated_at": "2026-05-13T08:12:26Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "c1939e5c-fa3f-4d16-97ec-df0cf938d844",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:12:02Z",
+      "updated_at": "2026-05-13T08:12:02Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "7b24183f-2c75-46e4-9d5f-e384790fd437",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:11:34Z",
+      "updated_at": "2026-05-13T08:11:34Z",
+      "text": "",
+      "cleaned_text": ""
+    },
+    {
+      "note_id": "94f0d14a-aa2b-4df3-ac4b-6afac7b07d39",
+      "type": "Email Received",
+      "created_at": "2026-05-13T08:11:15Z",
+      "updated_at": "2026-05-13T08:11:15Z",
+      "text": "",
+      "cleaned_text": ""
+    }
+  ],
+  "latest_resume": null,
+  "persistence_requested": true,
+  "persistence_result": {
+    "persisted_at": "2026-05-14T19:19:07.376066+00:00",
+    "person_id": "c9084fb1-5af4-4532-b0bd-4bf54593f634",
+    "candidate_id": "ac9d0fe9-a28d-4dbb-b0ac-b505467d4690",
+    "current_company_id": null,
+    "document_id": null,
+    "candidate_source_record_id": "8ba7fed7-969e-4e6e-b270-405370fcc589",
+    "resume_source_record_id": null,
+    "profile_source_record_id": "4a926c8f-6f48-4e39-b5e6-dbde526ce634",
+    "extraction_source_record_id": "4a926c8f-6f48-4e39-b5e6-dbde526ce634",
+    "candidate_skill_count": 0,
+    "quality_status": "profile_only",
+    "profile_persistence_reason": "no_resume_attachment"
+  },
+  "failure_record": {
+    "timestamp": "2026-05-14T19:19:07.935753+00:00",
+    "candidate_id": 13812978,
+    "error_type": "JobAdderIngestPreparationError",
+    "message": "No likely JobAdder resume attachment was found for this candidate.",
+    "stage": "resume_selection",
+    "details": []
+  }
+}

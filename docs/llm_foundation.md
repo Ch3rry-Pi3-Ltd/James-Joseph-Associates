@@ -225,6 +225,12 @@ In plain language:
   - current company
   - resume document
   - candidate skills
+- no-resume JobAdder candidates can now also be persisted on an opt-in basis
+  as profile-only records, preserving:
+  - person
+  - candidate
+  - source provenance
+  - recruiter notes inside source payloads
 - a persisted accepted-output write can now be verified through:
   - `backend/services/resume_extraction_verification.py`
   - `scripts/check_persisted_resume_extraction.py`
@@ -290,11 +296,11 @@ Not done yet:
 
 Recommended next project step:
 
-- add a robust Supabase post-write verification/check path for accepted JobAdder
-  persistence
 - review the current canonical fields/entities against the wider planned source
   systems before bulk ingestion
-- extend persistence design for no-CV / sparse-profile candidates and first-class
-  notes/interaction modelling
+- promote recruiter notes from provenance payloads into first-class
+  interaction-style persistence
+- broaden sparse-profile handling beyond the current explicit no-resume JobAdder
+  profile-only path
 - then widen the accepted-output persistence slice beyond the current narrow
   canonical write path

@@ -35,6 +35,7 @@ from pathlib import Path
 from scripts.run_resume_extraction_batch import (
     build_batch_manifest_record,
     build_candidate_processing_fingerprint,
+    build_profile_only_persistence_result_payload,
     build_batch_summary,
     find_skip_manifest_record,
     find_success_manifest_record,
@@ -122,6 +123,12 @@ def test_build_batch_summary_counts_fallbacks_and_statuses() -> None:
                 "candidate_fingerprint": "abc123",
             }
         ],
+        profile_only_persisted=[
+            {
+                "candidate_id": 77,
+                "output_json": "temp/profile_only_77.json",
+            }
+        ],
         output_dir=Path("temp/resume_extraction_batch/20260508T120000Z"),
         quality_log_jsonl=Path("temp/resume_extraction_batch/20260508T120000Z/quality_log.jsonl"),
         manifest_jsonl=Path("temp/resume_extraction_batch_manifest.jsonl"),
@@ -129,10 +136,65 @@ def test_build_batch_summary_counts_fallbacks_and_statuses() -> None:
 
     assert summary["requested_count"] == 3
     assert summary["success_count"] == 2
+    assert summary["profile_only_persisted_count"] == 1
     assert summary["failure_count"] == 1
     assert summary["skipped_count"] == 1
     assert summary["fallback_count"] == 1
     assert summary["quality_status_counts"] == {"pass": 1, "review": 1}
+
+
+def test_build_profile_only_persistence_result_payload_keeps_reason_and_notes() -> None:
+    """
+    Verify that the saved no-resume artifact explains both the reason and the write.
+
+    Notes
+    -----
+    The profile-only persistence path needs its own per-candidate JSON artifact
+    because no CV extraction result exists to inspect later. This helper should
+    therefore preserve:
+
+    - the explicit no-resume reason
+    - the cleaned notes that justified keeping the contact
+    - the canonical IDs written by persistence
+    """
+
+    payload = build_profile_only_persistence_result_payload(
+        ingest_payload={
+            "source_system": "jobadder",
+            "source_candidate_id": 13812978,
+            "jobadder_account": 2236,
+            "attachments": {
+                "attachment_count": 0,
+                "resume_attachment_count": 0,
+            },
+            "notes": {
+                "cleaned_items": [
+                    {
+                        "note_id": "note-1",
+                        "cleaned_text": "Candidate open to move.",
+                    }
+                ]
+            },
+            "ingest_shell": {
+                "core_identity": {
+                    "first_name": "Roger",
+                    "last_name": "Campbell",
+                }
+            },
+        },
+        persistence_result={
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "profile_source_record_id": "profile-source-uuid",
+        },
+    )
+
+    assert payload["processing_outcome"] == "profile_only_persisted"
+    assert payload["profile_persistence_reason"] == "no_resume_attachment"
+    assert payload["cleaned_candidate_notes"][0]["cleaned_text"] == (
+        "Candidate open to move."
+    )
+    assert payload["persistence_result"]["candidate_id"] == "candidate-uuid"
 
 
 def test_find_success_manifest_record_ignores_failure_rows() -> None:

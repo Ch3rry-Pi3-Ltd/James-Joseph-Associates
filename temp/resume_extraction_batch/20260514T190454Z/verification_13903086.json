@@ -1,0 +1,607 @@
+{
+  "verification_passed": true,
+  "passed_check_count": 16,
+  "failed_check_count": 0,
+  "expected": {
+    "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+    "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+    "candidate_source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+    "extraction_source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+    "current_company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+    "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+    "resume_source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0"
+  },
+  "checks": [
+    {
+      "name": "candidate_profile_exists",
+      "passed": true,
+      "details": "Candidate profile row was found for the expected candidate ID."
+    },
+    {
+      "name": "candidate_profile_person_matches",
+      "passed": true,
+      "details": "Candidate profile points at the expected person row."
+    },
+    {
+      "name": "candidate_source_record_exists",
+      "passed": true,
+      "details": "Candidate source-record row was found."
+    },
+    {
+      "name": "extraction_source_record_exists",
+      "passed": true,
+      "details": "Extraction source-record row was found."
+    },
+    {
+      "name": "candidate_source_links_candidate",
+      "passed": true,
+      "details": "Candidate source record links to the expected candidate row."
+    },
+    {
+      "name": "candidate_source_links_person",
+      "passed": true,
+      "details": "Candidate source record links to the expected person row."
+    },
+    {
+      "name": "extraction_source_links_candidate",
+      "passed": true,
+      "details": "Extraction source record links to the expected candidate row."
+    },
+    {
+      "name": "extraction_source_links_person",
+      "passed": true,
+      "details": "Extraction source record links to the expected person row."
+    },
+    {
+      "name": "current_company_exists",
+      "passed": true,
+      "details": "Expected current company row was found."
+    },
+    {
+      "name": "extraction_source_links_company",
+      "passed": true,
+      "details": "Extraction source record links to the expected company row."
+    },
+    {
+      "name": "resume_document_exists",
+      "passed": true,
+      "details": "Expected resume document row was found."
+    },
+    {
+      "name": "resume_source_record_exists",
+      "passed": true,
+      "details": "Resume source-record row was found."
+    },
+    {
+      "name": "document_link_candidate_exists",
+      "passed": true,
+      "details": "Resume document links to the expected candidate row."
+    },
+    {
+      "name": "document_link_person_exists",
+      "passed": true,
+      "details": "Resume document links to the expected person row."
+    },
+    {
+      "name": "extraction_source_links_document",
+      "passed": true,
+      "details": "Extraction source record links to the expected document row."
+    },
+    {
+      "name": "candidate_skill_count_matches",
+      "passed": true,
+      "details": "Expected 35 candidate-skill rows and found 35."
+    }
+  ],
+  "snapshot": {
+    "candidate_profile": {
+      "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+      "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+      "full_name": "Kaz Chuttun",
+      "first_name": "Kaz",
+      "last_name": "Chuttun",
+      "primary_email": "kazchuttun@gmail.com",
+      "primary_phone": "07742 956064",
+      "linkedin_url": null,
+      "location": "London",
+      "headline": "Group Finance Systems Accountant",
+      "summary": "Experienced Finance Systems Accountant with extensive expertise in SunSystems, Proactis, and related finance systems. Skilled in project management, finance systems implementation, data migration, and user support. Strong background in system upgrades, data cleansing, and report design. Fluent in English and French, with additional language skills.",
+      "current_title": "Group Finance Systems Accountant",
+      "candidate_status": "Active - Interviewing",
+      "availability_status": null,
+      "salary_expectation": null,
+      "notice_period": null,
+      "last_contacted_at": "2025-09-11T05:51:55+00:00",
+      "resume_updated_at": "2025-07-23T20:19:20+00:00",
+      "current_company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+      "current_company_name": "EnQuest Plc"
+    },
+    "candidate_skills": [
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "2535b588-a096-4ad3-8d95-9f9aaa604cc7",
+        "skill_name": "Albany",
+        "canonical_name": "Albany",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "bc0c4419-441b-473b-aa07-8f41b535970e",
+        "skill_name": "B4B",
+        "canonical_name": "B4B",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "5ccaefd1-e46e-4ebb-8b61-3788d5b50518",
+        "skill_name": "Cascade",
+        "canonical_name": "Cascade",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "95464e69-58c0-46d1-9a0d-2794c06456f9",
+        "skill_name": "Collect",
+        "canonical_name": "Collect",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "ea5dc99f-e9af-4fd9-b2a0-ba64e8c39439",
+        "skill_name": "Data Cleansing",
+        "canonical_name": "Data Cleansing",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "99bf8860-cec2-4796-997a-6aa50026a9a5",
+        "skill_name": "Data Migration",
+        "canonical_name": "Data Migration",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "b146f9ac-392c-4c8a-aa08-ffab979824e0",
+        "skill_name": "DOS",
+        "canonical_name": "DOS",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "ba0a71a9-7aac-4505-8d39-06c9f3592cba",
+        "skill_name": "Eremit",
+        "canonical_name": "Eremit",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "f5d91bfa-f5b5-4529-bf2f-391f9995111f",
+        "skill_name": "Excel",
+        "canonical_name": "Excel",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "0bc5c3b6-7ad7-48ec-9ecd-69350cd3f8f6",
+        "skill_name": "Finance Systems Implementation",
+        "canonical_name": "Finance Systems Implementation",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "0fddd0f1-5aed-4ab6-ae8b-4de598665a5c",
+        "skill_name": "Maximo",
+        "canonical_name": "Maximo",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "e3ae7ee0-0924-4b33-961a-2ac5964885ad",
+        "skill_name": "MaxiSun",
+        "canonical_name": "MaxiSun",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "e2a3b3a8-33e6-48f7-9c2d-ca9d7af61d83",
+        "skill_name": "Microsoft Teams",
+        "canonical_name": "Microsoft Teams",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "e65299fd-92bb-491f-85ae-4d78f37856dd",
+        "skill_name": "MS Exchange",
+        "canonical_name": "MS Exchange",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "07efa28e-b7c3-4653-b608-bb8a73457ddd",
+        "skill_name": "MS Office",
+        "canonical_name": "MS Office",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "b2010b21-1ddb-4494-84c7-dca401b62e2b",
+        "skill_name": "MYOB",
+        "canonical_name": "MYOB",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "bd5d0cec-4854-4a71-b65a-a2793a82fbf1",
+        "skill_name": "Palantir",
+        "canonical_name": "Palantir",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "ef40296d-7be5-404b-83d8-8183236fc2d0",
+        "skill_name": "Pegasus",
+        "canonical_name": "Pegasus",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "0d4d6743-6e68-4ba6-ac2a-1d5c1ef3d131",
+        "skill_name": "Proactis",
+        "canonical_name": "Proactis",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "595ffe2f-30ae-4c65-842d-649af236a2ed",
+        "skill_name": "Project Management",
+        "canonical_name": "Project Management",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "8e6d6dfb-f7ff-493e-bc14-44abcc62d90f",
+        "skill_name": "Report Design",
+        "canonical_name": "Report Design",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "9292658c-1a6c-4406-8d12-f645e8c74400",
+        "skill_name": "Sage Line 50",
+        "canonical_name": "Sage Line 50",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "753f3512-cf8e-47eb-a04e-8d99450e9876",
+        "skill_name": "Sage P11D",
+        "canonical_name": "Sage P11D",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "cd861ff3-10ef-468b-a90e-942f78309796",
+        "skill_name": "Sage Payroll",
+        "canonical_name": "Sage Payroll",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "21c0e172-b872-4469-b89f-1f54ffb4588d",
+        "skill_name": "Service Now",
+        "canonical_name": "Service Now",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "eab248c1-a649-4428-9b35-0b4131b48800",
+        "skill_name": "SQL",
+        "canonical_name": "SQL",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "55ef7844-65ff-4013-aec4-85686218fbd4",
+        "skill_name": "SunSystems",
+        "canonical_name": "SunSystems",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "24c2d111-6921-4965-9b0d-5c006e5fd384",
+        "skill_name": "System Upgrades",
+        "canonical_name": "System Upgrades",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "7c7d0fac-25ef-4dc9-aecb-88ed9b9de940",
+        "skill_name": "TAS Books",
+        "canonical_name": "TAS Books",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "81ee60d8-ca7b-4bbe-97c8-27e08cd17e4b",
+        "skill_name": "TAS Payroll",
+        "canonical_name": "TAS Payroll",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "6888adb4-aebb-4f04-a3c1-4ce744e4968f",
+        "skill_name": "User Support",
+        "canonical_name": "User Support",
+        "skill_type": "skill",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume skills list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "ae3252b4-3d4d-437e-becf-bd1681cf8dfa",
+        "skill_name": "VBA",
+        "canonical_name": "VBA",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "8a8500ff-1cf8-4b5b-9492-c5b664a70814",
+        "skill_name": "Vision QA10",
+        "canonical_name": "Vision QA10",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "f750b239-865f-4d5c-9c3d-f5ad788b5e92",
+        "skill_name": "Windows",
+        "canonical_name": "Windows",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      },
+      {
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "skill_id": "d71e5614-12a0-4a0b-8316-64aa88643cea",
+        "skill_name": "Workday",
+        "canonical_name": "Workday",
+        "skill_type": "tool",
+        "confidence": 1.0,
+        "evidence_text": "Extracted from the structured resume tools/platforms list."
+      }
+    ],
+    "current_company": {
+      "id": "c29bc649-db40-4378-af55-7c7225c73dce",
+      "name": "EnQuest Plc",
+      "domain": null,
+      "website_url": null,
+      "linkedin_url": null,
+      "industry": null,
+      "size_range": null,
+      "location": null,
+      "description": null,
+      "status": null,
+      "created_at": "2026-05-14T19:06:42.402820+00:00",
+      "updated_at": "2026-05-14T19:06:42.402820+00:00"
+    },
+    "resume_document": {
+      "id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+      "document_type": "resume",
+      "title": "Kaz-Chuttun_cv-library.docx",
+      "source_uri": "jobadder://accounts/2236/candidates/13903086/attachments/17956774",
+      "storage_path": null,
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "content_hash": "3ea2b52af58dd65b18082ee307e0bd1cdcb8c9084556064f0c449b307eb762c2",
+      "extracted_text": "NAME\n\nMr Kaz Chuttun\n\nMOBILE\n\n07742 956064\n\nADDRESS\n\nLondon\n\nE-MAIL\n\nkazchuttun@gmail.com\n\nKEY STRENGTHS\n\nSunSystems, Proactis, Vision /QA10, B4B, MaxiSun, Excel incl VBA, SQL, Workday\n\nProject management, Finance Systems Implementation\n\nAbility and willingness to learn new systems\n\nProduce results within tight deadlines and budget\n\nMay17 – Current EnQuest Plc – Group Finance Systems Accountant\n\nData mapping & conversion from SAP to SunSystems\n\nNew entity implementation in existing SunSystems and ensuring the various accounting functions were transferred appropriately\n\nSunSystems Upgrade to 6.3 - UAT and post go live support\n\nWorkday Timewriting restructuring and EIB template upload implementation\n\nDec 16 – Notting Hill Housing Group – Project Systems Accountant\n\nSun upgrade / Corp Allocation implementation\n\nManaged a team of 4 and Finance systems vendors\n\nSept 15 – Nov 16 – World First Ltd – Systems Accountant\n\nRedesigned COA to align with Sun structure, Report design and training\n\nImplementation of (Sun 6, Proactis, Q&A10) with integration to custom Back office\n\nSupport Year end accounts for 6 entities incl group, Cash & Banking, Costings, and AP & AR\n\nProject managed Implementation using Agile methodology.\n\nData cleansing, WorkDay systems testing\n\nEnd user support through Service Now\n\nMar 14 – Sept 15 - Afren Plc- Business Applications Analyst\t/ Systems Accountant\n\nSupport, Maintenance, Training - Business Applications (Sun 6, Proactis, B4B, Q&A10)\n\nAd hoc reporting & training using Vision QA10\n\nProject managed Applications upgrade including  Palantir & Cascade to latest version.\n\nData cleansing, systems testing & COA restructured for conversion to Maximo from Proactis\n\nProject Managed Inventory Application / Purchasing for Maximo Implementation\n\nGeneral accounting duties including Inventory accounting\n\nMay 11 –Mar 14   - Tullow Oil - Financial Systems Analyst\n\nAdministering and Supporting SunSystems 531 with 150 business units, Vision QA 10, MaxiSun, Maximo & B4B for 100 users worldwide\n\nAd hoc reporting using Vision QA10 with VBA and training.\n\nData cleansing, Data migration COA redesign and supporting SAP implementation\n\nQA for SunSystems 54 upgrade from version 531 – Systems testing, data checking\n\nProject managed Applications upgrade\n\nJun 10 – May 11 \tRoyal Society of Chemistry \tSystems Accountant\n\nManaging the Finance Systems team\n\nResponsible for Sun 5 upgrade, Vision Q&A10, Proactis, Collect, Albany, ERemit.\n\nProject managed Upgrade of Vision 6 to Q&A10, Implemented Collect & Eremit\n\nSun 426 upgrade to Sun 541 & Proactis Expense implementation.\n\nSupporting 15 finance users and 150 Proactis users.\n\nDesigned reports in Proactis\n\nJun 08 – May 10    \tPeabody Trust \t Finance Systems Project Coordinator\n\nImplement Proactis Contract Register, Supplier Adoption and support end users on Proactis P2P, Sun Systems & Corvu in accordance with SLA.\n\nAdministration and implement changes on Proactis, SunSystems v4 & Vision 6.\n\nDesigned a suite of reports in Proactis and Vision\n\nMonth end reconciliation P2P to Sun Systems\n\nSupporting end users with Office and Windows queries.\n\nEnd user training - authorisers and normal users of P2P, Vision and Sun Systems one to one and classroom\n\nTesting new releases pre implementation\n\nNov 07 – Jun 08\n\nRan a franchise business\n\nAug 05 – Nov 07 Sapphire Systems PLC  \tApplications Consultant\n\nSupporting users and consultants on the various SunSystems applications on site & in house.\n\nSunSystems version 4 & 5, Vision Exec & XL 5 & 6, IPOS Domino and .Net, PA Bank Rec, E-remit amongst various others.\n\nGoing on site to analyse and resolve issues clients’ experience.\n\nTesting of new releases pre and post implementation.\n\nTraining users face to face, 1-2-1, and via webinar.\n\nMYOB \tJan 05 – Aug05\n\nImplementation Consultant – contracting\n\nInstalling & implementing their award winning Accountancy Practice suite of software at clients’ site. New installations and upgrade from previous version. Platforms from Windows 98 through to Win server 2003. SQL or MSDE installs.\n\nSage Software PLC (TAS Software) OCT 92 – Oct 04 (Various roles)\n\nProduct Manager                                                  Apr 2003 –Oct 04\n\nManaging the entire product line life cycle from strategic planning to tactical activities\n\nSpecifying market requirements for current and future products by conducting market research supported by ongoing visits to customers and non-customers.\n\nDriving a solution set across development teams (primarily Development, and Marketing Communications) through market requirements, product contract, and positioning.\n\nDeveloping and implementing a company-wide go-to-market plan, working with all departments to execute.\n\nAnalysing potential partner relationships for the product\n\nAnalysing different routes to market\n\nTraining / implementation consultant                     Jan 2000 – Mar 2003\n\nImplementation/ Training / consultancy for customers on site (business and accountancy practices)\n\nTraining customers in house (class room or 1-2-1)\n\nFully responsible for constant development and training needs of the technical support department\n\nTechnical / desktop Support (various roles)\t\t    October 1992 – January 2000\n\nStarted in a support role and ended up as helpdesk manager in charge of 15 strong team supporting TAS Books and TAS Payroll.\n\nJuly 1989 – September 1992 Maloney Stephens & Co Certified Accountants\n\nAccounts to TB for sole traders to Ltd companies\n\nVAT returns\n\nManagement accounts\n\nSole trader Tax Computation\n\nEDUCATION AND QUALIFICATIONS\n\n1989 - 1991 South Bank University (Part Time)\n\nACCA Level 1\n\nACCA Level 2\n\n1983 – 1987\tErnest Bevin Secondary School\n\n6 O levels\n\n3 A levels\n\n2000 - Current\tMCP Windows 2000, Server 2000, Various Sun systems courses.\n\nIT SKILLS\n\nFully conversant with various software packages, specifically;\n\nSUN Systems 4 & 5, Vision 5 & 6, IPOS, Sage Line 50, Sage Payroll, Sage P11D, TAS Books, TAS Payroll, and Pegasus – Various other SUN systems related products Collect, Bank Rec, Advanced Inquiry\n\nMS Office suite. DOS / Windows operating systems\n\nPC repair & assembly, network setup from cabling to server setup. Exposure to MS exchange\n\nBasic- Intermediate SQL scripting\n\nLanguages\n\nEnglish, Fluent in French written & spoken. Creole (broken French). Currently learning Russian.\n\nPERSONAL SUMMARY\n\nNATIONALITY:\t\tBritish\n\nDRIVING LICENCE:\tUK license\n\nMy personal interests include: Travelling and gadgets",
+      "created_at": "2026-05-14T19:06:42.402820+00:00",
+      "updated_at": "2026-05-14T19:06:42.402820+00:00"
+    },
+    "source_records": [
+      {
+        "id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+        "source_system": "jobadder",
+        "source_record_type": "jobadder_candidate_snapshot",
+        "source_record_id": "13903086",
+        "source_payload_hash": "9299e8d2e0cca5e95ca051996585e0858742cdc6b013b779572289cf68c20fa0",
+        "import_run_id": "jobadder_resume_extraction:13903086:2026-05-14T19:06:43.215947+00:00",
+        "processed_at": "2026-05-14T19:06:43.216956+00:00",
+        "sync_status": "accepted"
+      },
+      {
+        "id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "source_system": "jobadder",
+        "source_record_type": "jobadder_resume_attachment",
+        "source_record_id": "17956774",
+        "source_payload_hash": "216c57bb2711abd97a4bebebf21bec91e689fd9810ca9cf6d8a1b11101e2e8ac",
+        "import_run_id": "jobadder_resume_extraction:13903086:2026-05-14T19:06:43.215947+00:00",
+        "processed_at": "2026-05-14T19:06:43.216956+00:00",
+        "sync_status": "accepted"
+      },
+      {
+        "id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "source_system": "jobadder",
+        "source_record_type": "jobadder_resume_extraction",
+        "source_record_id": "13903086:17956774",
+        "source_payload_hash": "1bb6d1a30cf6c64d5e0c48da360c2edeafcbed5b0b60ac7474718aee224a1fdd",
+        "import_run_id": "jobadder_resume_extraction:13903086:2026-05-14T19:06:43.215947+00:00",
+        "processed_at": "2026-05-14T19:06:43.216956+00:00",
+        "sync_status": "accepted"
+      }
+    ],
+    "source_record_links": [
+      {
+        "id": "9190f107-3b88-4ae2-a69b-15efe890e023",
+        "source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+        "candidate_id": null,
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "89a55e43-a848-4d90-9d01-325dc60fb6b4",
+        "source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "person_id": null,
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "c193c9dd-d927-4940-adf4-abb51145f43b",
+        "source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "person_id": null,
+        "candidate_id": null,
+        "company_id": null,
+        "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "e199cf23-40fb-4883-ad19-bb795602909f",
+        "source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "person_id": null,
+        "candidate_id": null,
+        "company_id": null,
+        "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "11bfe40c-ca86-4723-a64e-f81ec6fde91f",
+        "source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "person_id": null,
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "dae878c3-87aa-4ec0-b071-2a39b024ddcd",
+        "source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "person_id": null,
+        "candidate_id": null,
+        "company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "a543fdd2-3d1b-4e83-bf5e-cb908428358f",
+        "source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+        "candidate_id": null,
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "aa45a4cc-ba93-4600-86d3-3dd9a6c624cf",
+        "source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+        "person_id": null,
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "c6681e1d-3129-4b19-97dc-6ba4566ce9f3",
+        "source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+        "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+        "candidate_id": null,
+        "company_id": null,
+        "document_id": null,
+        "linked_at": "2026-05-14T19:06:42.402820+00:00"
+      }
+    ],
+    "document_links": [
+      {
+        "id": "437fd198-ebd7-40ae-99b0-74c0fc101d39",
+        "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+        "person_id": null,
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "relationship_type": "resume",
+        "created_at": "2026-05-14T19:06:42.402820+00:00"
+      },
+      {
+        "id": "9e2509b0-efa4-4107-9b24-801b44250516",
+        "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+        "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+        "candidate_id": null,
+        "source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "relationship_type": "resume",
+        "created_at": "2026-05-14T19:06:42.402820+00:00"
+      }
+    ],
+    "expected_ids": {
+      "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+      "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+      "current_company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+      "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+      "candidate_source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+      "resume_source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+      "extraction_source_record_id": "ea362661-b722-41d6-bc3c-993d75542096"
+    }
+  }
+}

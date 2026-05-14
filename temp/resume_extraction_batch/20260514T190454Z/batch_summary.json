@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-05-14T19:06:45.824448+00:00",
+  "requested_candidate_ids": [
+    13844870,
+    13902889,
+    13903086
+  ],
+  "requested_count": 3,
+  "success_count": 3,
+  "failure_count": 0,
+  "skipped_count": 0,
+  "fallback_count": 0,
+  "quality_status_counts": {
+    "pass": 3
+  },
+  "output_dir": "temp\\resume_extraction_batch\\20260514T190454Z",
+  "quality_log_jsonl": "temp\\resume_extraction_batch\\20260514T190454Z\\quality_log.jsonl",
+  "manifest_jsonl": "temp\\resume_extraction_batch_manifest.jsonl",
+  "successes": [
+    {
+      "candidate_id": 13844870,
+      "output_json": "temp\\resume_extraction_batch\\20260514T190454Z\\candidate_13844870.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 72,
+      "cv_richness_band": "adequate",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini",
+      "persistence_result": {
+        "persisted_at": "2026-05-14T19:05:13.926348+00:00",
+        "person_id": "7f3ac759-eecf-4764-82fe-359cb599662b",
+        "candidate_id": "08c8a096-ca38-4415-a2b0-d3a2a9f28d51",
+        "current_company_id": "d5760b93-5016-489a-9297-2211fc034ce8",
+        "document_id": "34ca980f-4812-476b-b94f-ca5d1df3aad8",
+        "candidate_source_record_id": "024283fa-52a4-45f0-856e-b76089a02ccf",
+        "resume_source_record_id": "65b67f1e-de38-4032-94c8-8a5767333fd0",
+        "extraction_source_record_id": "c54f96d1-6324-43c1-89ba-03d0c5247ae3",
+        "candidate_skill_count": 4,
+        "quality_status": "pass"
+      }
+    },
+    {
+      "candidate_id": 13902889,
+      "output_json": "temp\\resume_extraction_batch\\20260514T190454Z\\candidate_13902889.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 100,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini",
+      "persistence_result": {
+        "persisted_at": "2026-05-14T19:05:36.599909+00:00",
+        "person_id": "33091a70-2f98-4d9f-9652-06727f8e7d40",
+        "candidate_id": "5c39c803-35f1-4d63-ab34-61b380b1d74e",
+        "current_company_id": "9bd7da66-7042-4f39-a053-d4fcc26d21f2",
+        "document_id": "f9412d15-d671-498b-8279-7162fc09f745",
+        "candidate_source_record_id": "9768cfb9-82f9-418b-8bc8-0d94c29513c5",
+        "resume_source_record_id": "a8d6f835-3b4c-4959-a4af-863fb88b1658",
+        "extraction_source_record_id": "0a1a48b4-79a4-4c63-9fcf-f81860282a6e",
+        "candidate_skill_count": 27,
+        "quality_status": "pass"
+      }
+    },
+    {
+      "candidate_id": 13903086,
+      "output_json": "temp\\resume_extraction_batch\\20260514T190454Z\\candidate_13903086.json",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_status": "pass",
+      "cv_richness_score": 92,
+      "cv_richness_band": "rich",
+      "fallback_invoked": false,
+      "final_model_name": "gpt-4.1-mini",
+      "persistence_result": {
+        "persisted_at": "2026-05-14T19:06:43.216956+00:00",
+        "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+        "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+        "current_company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+        "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+        "candidate_source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+        "resume_source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+        "extraction_source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+        "candidate_skill_count": 35,
+        "quality_status": "pass"
+      }
+    }
+  ],
+  "failures": [],
+  "skipped": []
+}

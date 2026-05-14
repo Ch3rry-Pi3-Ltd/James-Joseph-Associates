@@ -1,5 +1,5 @@
 """
-Database helpers for persisting accepted JobAdder resume-extraction results.
+Database helpers for persisting narrow JobAdder candidate-ingestion results.
 
 This module contains the first narrow write path for turning a successful
 resume-extraction result into canonical Supabase/Postgres records.
@@ -7,6 +7,8 @@ resume-extraction result into canonical Supabase/Postgres records.
 It gives the rest of the repository a stable way to talk about:
 
 - saving the accepted extraction result as provenance-bearing source records
+- saving no-resume JobAdder candidate profiles as provenance-bearing source
+  records
 - upserting the linked person, candidate, company, and resume document rows
 - refreshing candidate-skill links from the latest accepted extraction
 - keeping direct SQL write logic out of scripts and service orchestration code
@@ -34,15 +36,15 @@ It does not attempt to:
 - persist every project or employment-history row into a fully modelled graph
 - replace later API-level ingestion endpoints
 
-Instead, it implements the smallest reliable persistence slice that is already
-justified by the current extraction maturity:
+Instead, it implements the smallest reliable persistence slices that are
+already justified by the current extraction maturity:
 
 - source records
 - person
 - candidate
 - current company
-- resume document
-- candidate skills
+- optional resume document
+- optional candidate skills
 
 Example
 -------
@@ -73,6 +75,7 @@ from backend.db.connection import postgres_connection
 
 SourceRecordType = Literal[
     "jobadder_candidate_snapshot",
+    "jobadder_candidate_profile_only",
     "jobadder_resume_attachment",
     "jobadder_resume_extraction",
 ]
@@ -356,6 +359,174 @@ def persist_jobadder_resume_extraction_snapshot(
             "extraction_source_record_id": extraction_source_record["id"],
             "candidate_skill_count": len(linked_skill_ids),
             "quality_status": persistence_payload.get("quality_status"),
+        }
+    )
+
+
+def persist_jobadder_candidate_profile_snapshot(
+    persistence_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one JobAdder candidate as a profile-only canonical snapshot.
+
+    Parameters
+    ----------
+    persistence_payload : dict[str, Any]
+        Normalised profile-only payload prepared by the service layer.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small persistence summary containing the canonical IDs and provenance
+        rows written by the transaction.
+
+    Notes
+    -----
+    This helper is the narrow answer to the business case where a candidate
+    still matters even though JobAdder does not expose a usable resume
+    attachment yet.
+
+    The transaction currently persists:
+
+    - one upstream candidate snapshot source record
+    - one profile-only decision source record
+    - one canonical person
+    - one canonical candidate
+    - zero or one current company
+
+    It does not create:
+
+    - resume documents
+    - document links
+    - candidate skills
+
+    Example
+    -------
+    Persisting a prepared payload returns a summary such as:
+
+        {
+            "person_id": "...",
+            "candidate_id": "...",
+            "profile_source_record_id": "...",
+            "document_id": None,
+        }
+    """
+
+    source_candidate_id = str(persistence_payload["source_candidate_id"])
+    persisted_at = datetime.now(timezone.utc)
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            candidate_source_record = _upsert_source_record(
+                cursor,
+                source_system="jobadder",
+                source_record_type="jobadder_candidate_snapshot",
+                source_record_id=source_candidate_id,
+                source_payload=persistence_payload["candidate_source_payload"],
+                source_payload_hash=persistence_payload[
+                    "candidate_source_payload_hash"
+                ],
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+                sync_status="profile_only",
+            )
+
+            profile_source_record = _upsert_source_record(
+                cursor,
+                source_system="jobadder",
+                source_record_type="jobadder_candidate_profile_only",
+                source_record_id=f"{source_candidate_id}:no-resume",
+                source_payload=persistence_payload["profile_source_payload"],
+                source_payload_hash=persistence_payload["profile_source_payload_hash"],
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+                sync_status="profile_only",
+            )
+
+            current_company_id = _upsert_company_by_name(
+                cursor,
+                company_name=persistence_payload.get("current_employer"),
+            )
+
+            # Preserve the same canonical person/candidate upsert rules as the
+            # accepted CV path so a later resume-backed write can converge on
+            # the same rows instead of fragmenting the candidate into two
+            # parallel identities.
+            person_id = _upsert_person(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                full_name=persistence_payload["full_name"],
+                first_name=persistence_payload.get("first_name"),
+                last_name=persistence_payload.get("last_name"),
+                primary_email=persistence_payload.get("primary_email"),
+                primary_phone=persistence_payload.get("primary_phone"),
+                linkedin_url=persistence_payload.get("linkedin_url"),
+                location=persistence_payload.get("location"),
+                headline=persistence_payload.get("headline"),
+                summary=persistence_payload.get("summary"),
+            )
+
+            candidate_id = _upsert_candidate(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                person_id=person_id,
+                current_title=persistence_payload.get("current_title"),
+                current_company_id=current_company_id,
+                candidate_status=persistence_payload.get("candidate_status"),
+                availability_status=persistence_payload.get("availability_status"),
+                last_contacted_at=persistence_payload.get("last_contacted_at"),
+                resume_updated_at=persistence_payload.get("resume_updated_at"),
+            )
+
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                person_id=person_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                candidate_id=candidate_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=profile_source_record["id"],
+                person_id=person_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=profile_source_record["id"],
+                candidate_id=candidate_id,
+            )
+            if current_company_id is not None:
+                _ensure_source_record_link(
+                    cursor,
+                    source_record_id=profile_source_record["id"],
+                    company_id=current_company_id,
+                )
+
+        connection.commit()
+
+    return _make_json_safe_summary(
+        {
+            "persisted_at": persisted_at.isoformat(),
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "current_company_id": current_company_id,
+            "document_id": None,
+            "candidate_source_record_id": candidate_source_record["id"],
+            "resume_source_record_id": None,
+            # Keep the existing verifier-compatible alias alongside the more
+            # honest `profile_source_record_id` name so operator tooling can
+            # validate this narrower path without a second bespoke report
+            # format.
+            "profile_source_record_id": profile_source_record["id"],
+            "extraction_source_record_id": profile_source_record["id"],
+            "candidate_skill_count": 0,
+            "quality_status": "profile_only",
+            "profile_persistence_reason": persistence_payload.get(
+                "profile_persistence_reason"
+            ),
         }
     )
 
@@ -1445,5 +1616,6 @@ def _make_json_safe_summary(value: Any) -> Any:
 
 
 __all__ = [
+    "persist_jobadder_candidate_profile_snapshot",
     "persist_jobadder_resume_extraction_snapshot",
 ]

@@ -1,5 +1,5 @@
 """
-Service helpers for persisting accepted resume-extraction results.
+Service helpers for persisting JobAdder candidate-ingestion results.
 
 This module sits above the raw SQL helper in
 `backend.db.resume_extraction_persistence` and below the operator-facing
@@ -8,16 +8,20 @@ scripts.
 It gives the rest of the repository a stable way to talk about:
 
 - deciding whether an extraction result is safe to persist
+- deciding whether a no-resume JobAdder candidate is still worth persisting as
+  a profile-only contact
 - normalising one accepted result into a persistence payload
 - hashing provenance payloads before they are written to `source_records`
 - keeping business-level persistence rules out of the CLI scripts
 
 Why this module exists
 ----------------------
-The project now has two distinct concerns:
+The project now has three distinct concerns:
 
 - extracting structured candidate data reliably
 - deciding when that structured data is safe enough to become canonical state
+- deciding when a candidate without a usable CV is still valuable enough to
+  persist as a profile-only record
 
 The database helper should only care about writes. It should not decide whether
 the extraction result deserves persistence in the first place.
@@ -26,11 +30,14 @@ That decision belongs here.
 
 Current policy
 --------------
-The first persistence policy is intentionally narrow:
+The current persistence policy is intentionally staged:
 
 - only accepted JobAdder extraction results are persisted
 - "accepted" currently means `quality_assessment.status == "pass"`
 - review/rerun/failure results stay as local batch artefacts for now
+- no-resume JobAdder candidates may be persisted separately through a profile-
+  only path that keeps identity/contact data and source provenance without
+  pretending that a CV extraction happened
 
 This keeps the first write path conservative while the wider ingestion design
 is still settling.
@@ -43,6 +50,7 @@ import hashlib
 from typing import Any
 
 from backend.db.resume_extraction_persistence import (
+    persist_jobadder_candidate_profile_snapshot,
     persist_jobadder_resume_extraction_snapshot,
 )
 
@@ -94,6 +102,75 @@ def persist_accepted_resume_extraction_result(
     _validate_result_is_persistable(result)
     persistence_payload = build_resume_extraction_persistence_payload(result)
     return persist_jobadder_resume_extraction_snapshot(persistence_payload)
+
+
+def persist_jobadder_candidate_profile_without_resume(
+    ingest_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one JobAdder candidate as a profile-only record when no CV exists.
+
+    Parameters
+    ----------
+    ingest_payload : dict[str, Any]
+        JobAdder ingest payload returned by
+        `build_jobadder_candidate_ingest_shell(...)`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Persistence summary returned by the lower-level database helper.
+
+    Raises
+    ------
+    RuntimeError
+        If the ingest payload is not a JobAdder payload or still has a selected
+        resume attachment.
+
+    Notes
+    -----
+    This helper exists to address the specific business case where a candidate
+    still matters operationally even though JobAdder does not expose a usable
+    resume attachment yet.
+
+    The current profile-only path is intentionally narrow. It keeps:
+
+    - person identity/contact fields
+    - candidate status and last-contacted timestamp
+    - source notes and attachment summary as provenance
+
+    It does not pretend there is:
+
+    - a resume document
+    - a structured extraction result
+    - a skill extraction
+
+    Example
+    -------
+    A caller can persist a no-resume candidate directly from the ingest shell:
+
+        from backend.services.jobadder_ingest import (
+            build_jobadder_candidate_ingest_shell,
+        )
+        from backend.services.resume_extraction_persistence import (
+            persist_jobadder_candidate_profile_without_resume,
+        )
+
+        ingest_payload = build_jobadder_candidate_ingest_shell(
+            jobadder_account=2236,
+            candidate_id=13812978,
+        )
+        persisted = persist_jobadder_candidate_profile_without_resume(
+            ingest_payload
+        )
+        print(persisted["candidate_id"])
+    """
+
+    _validate_ingest_payload_is_profile_only_persistable(ingest_payload)
+    persistence_payload = build_jobadder_candidate_profile_persistence_payload(
+        ingest_payload
+    )
+    return persist_jobadder_candidate_profile_snapshot(persistence_payload)
 
 
 def build_resume_extraction_persistence_payload(
@@ -251,6 +328,145 @@ def build_resume_extraction_persistence_payload(
     }
 
 
+def build_jobadder_candidate_profile_persistence_payload(
+    ingest_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build the narrow persistence payload for one no-resume JobAdder candidate.
+
+    Parameters
+    ----------
+    ingest_payload : dict[str, Any]
+        JobAdder ingest payload returned by
+        `build_jobadder_candidate_ingest_shell(...)`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised payload ready for the profile-only SQL persistence helper.
+
+    Notes
+    -----
+    The key design choice here is that "no CV" should still produce a useful,
+    provenance-bearing canonical write when the source payload contains enough
+    person/candidate signal to matter later.
+
+    We therefore preserve two distinct provenance slices:
+
+    - `candidate_source_payload`: the richer upstream JobAdder snapshot
+    - `profile_source_payload`: the smaller statement of what profile-only
+      candidate data we decided to persist and why
+
+    Example
+    -------
+    The returned payload contains provenance such as:
+
+        payload["candidate_source_payload"]["notes"]["cleaned_items"]
+        payload["profile_source_payload"]["persistence_reason"]
+    """
+
+    candidate_payload = ingest_payload["candidate"]
+    attachments_payload = ingest_payload.get("attachments", {})
+    notes_payload = ingest_payload.get("notes", {})
+    ingest_shell = ingest_payload.get("ingest_shell", {})
+    candidate_context = ingest_shell.get("core_identity", {})
+    cleaned_candidate_notes = notes_payload.get("cleaned_items", [])
+
+    first_name = _clean_optional_string(
+        candidate_context.get("first_name")
+    ) or _clean_optional_string(candidate_payload.get("firstName"))
+    last_name = _clean_optional_string(
+        candidate_context.get("last_name")
+    ) or _clean_optional_string(candidate_payload.get("lastName"))
+    full_name = _build_full_name(
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+    primary_email = _clean_optional_string(
+        candidate_context.get("email")
+    ) or _clean_optional_string(candidate_payload.get("email"))
+    primary_phone = _clean_optional_string(
+        candidate_context.get("mobile")
+    ) or _clean_optional_string(candidate_payload.get("mobile"))
+    location = _clean_optional_string(
+        candidate_context.get("location")
+    ) or _clean_optional_string(candidate_payload.get("location"))
+    linkedin_url = _pick_first_present_key(
+        candidate_payload,
+        "linkedinUrl",
+        "linkedInUrl",
+        "linkedin",
+    )
+    current_title = _pick_first_present_key(
+        candidate_payload,
+        "currentTitle",
+        "currentPosition",
+        "title",
+    )
+    current_employer = _pick_first_present_key(
+        candidate_payload,
+        "currentEmployer",
+        "currentCompany",
+        "employer",
+        "company",
+    )
+
+    candidate_source_payload = {
+        "candidate": candidate_payload,
+        "attachments": attachments_payload,
+        "notes": notes_payload,
+        "ingest_shell": ingest_shell,
+        "latest_resume": None,
+    }
+    profile_source_payload = {
+        "persistence_reason": "no_resume_attachment",
+        "candidate_context": candidate_context,
+        "attachments_summary": {
+            "attachment_count": attachments_payload.get("attachment_count"),
+            "resume_attachment_count": attachments_payload.get(
+                "resume_attachment_count"
+            ),
+        },
+        "cleaned_candidate_notes": cleaned_candidate_notes,
+    }
+
+    return {
+        "source_system": ingest_payload["source_system"],
+        "source_candidate_id": ingest_payload["source_candidate_id"],
+        "jobadder_account": ingest_payload.get("jobadder_account"),
+        "import_run_id": _build_profile_only_import_run_id(
+            ingest_payload=ingest_payload
+        ),
+        "candidate_status": _clean_optional_string(
+            candidate_context.get("status")
+        ) or _clean_optional_string(candidate_payload.get("status")),
+        "availability_status": None,
+        "current_title": current_title,
+        "current_employer": current_employer,
+        "full_name": full_name,
+        "first_name": first_name,
+        "last_name": last_name,
+        "primary_email": primary_email,
+        "primary_phone": primary_phone,
+        "linkedin_url": linkedin_url,
+        "location": location,
+        "headline": current_title,
+        "summary": None,
+        "last_contacted_at": _select_latest_note_timestamp(cleaned_candidate_notes),
+        "resume_updated_at": None,
+        "candidate_source_payload": candidate_source_payload,
+        "candidate_source_payload_hash": _hash_json_ready_payload(
+            candidate_source_payload
+        ),
+        "profile_source_payload": profile_source_payload,
+        "profile_source_payload_hash": _hash_json_ready_payload(
+            profile_source_payload
+        ),
+        "profile_persistence_reason": "no_resume_attachment",
+    }
+
+
 def _validate_result_is_persistable(result: dict[str, Any]) -> None:
     """
     Validate that one extraction result is currently safe to persist.
@@ -315,6 +531,57 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
             )
 
 
+def _validate_ingest_payload_is_profile_only_persistable(
+    ingest_payload: dict[str, Any],
+) -> None:
+    """
+    Validate that one JobAdder ingest payload is suitable for profile-only persistence.
+
+    Notes
+    -----
+    The profile-only path is intentionally reserved for candidates without a
+    usable selected resume attachment. If a resume exists, callers should use
+    the normal CV extraction path instead so the system does not split one
+    candidate across two inconsistent write policies.
+
+    Example
+    -------
+    An ingest payload with:
+
+        {"latest_resume": None}
+
+    can pass this validator, while a payload with:
+
+        {"latest_resume": {"attachmentId": 12345}}
+
+    is rejected here.
+    """
+
+    if ingest_payload.get("source_system") != "jobadder":
+        raise RuntimeError(
+            "Only JobAdder ingest payloads are currently supported for "
+            "profile-only persistence."
+        )
+
+    for required_key in (
+        "source_candidate_id",
+        "candidate",
+        "attachments",
+        "notes",
+        "ingest_shell",
+    ):
+        if required_key not in ingest_payload:
+            raise RuntimeError(
+                f"The JobAdder ingest payload is missing `{required_key}`."
+            )
+
+    if ingest_payload.get("latest_resume") is not None:
+        raise RuntimeError(
+            "Profile-only persistence is only intended for candidates without "
+            "a selected resume attachment."
+        )
+
+
 def _build_import_run_id(*, result: dict[str, Any]) -> str:
     """
     Build a simple stable import-run identifier for persistence bookkeeping.
@@ -329,6 +596,22 @@ def _build_import_run_id(*, result: dict[str, Any]) -> str:
     candidate_id = result["source_candidate_id"]
     timestamp = datetime.now(timezone.utc).isoformat()
     return f"jobadder_resume_extraction:{candidate_id}:{timestamp}"
+
+
+def _build_profile_only_import_run_id(*, ingest_payload: dict[str, Any]) -> str:
+    """
+    Build a simple import-run identifier for no-resume profile-only persistence.
+
+    Example
+    -------
+    A JobAdder candidate such as `13812978` might yield:
+
+        jobadder_candidate_profile_only:13812978:2026-05-14T18:00:00+00:00
+    """
+
+    candidate_id = ingest_payload["source_candidate_id"]
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return f"jobadder_candidate_profile_only:{candidate_id}:{timestamp}"
 
 
 def _build_jobadder_resume_source_uri(
@@ -450,6 +733,33 @@ def _pick_first_nonempty(
     return _clean_optional_string(fallback_value)
 
 
+def _pick_first_present_key(source: dict[str, Any], *keys: str) -> str | None:
+    """
+    Return the first non-empty string found for the supplied dictionary keys.
+
+    Example
+    -------
+    A call such as:
+
+        _pick_first_present_key(
+            {"currentPosition": "Data Analyst"},
+            "currentTitle",
+            "currentPosition",
+        )
+
+    returns:
+
+        "Data Analyst"
+    """
+
+    for key in keys:
+        cleaned_value = _clean_optional_string(source.get(key))
+        if cleaned_value is not None:
+            return cleaned_value
+
+    return None
+
+
 def _clean_optional_string(value: Any) -> str | None:
     """
     Return a stripped string or `None` when the input is blank-like.
@@ -509,6 +819,8 @@ def _hash_json_ready_payload(payload: dict[str, Any]) -> str:
 
 
 __all__ = [
+    "build_jobadder_candidate_profile_persistence_payload",
     "build_resume_extraction_persistence_payload",
+    "persist_jobadder_candidate_profile_without_resume",
     "persist_accepted_resume_extraction_result",
 ]

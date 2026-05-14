@@ -20,7 +20,9 @@ from unittest.mock import patch
 import pytest
 
 from backend.services.resume_extraction_persistence import (
+    build_jobadder_candidate_profile_persistence_payload,
     build_resume_extraction_persistence_payload,
+    persist_jobadder_candidate_profile_without_resume,
     persist_accepted_resume_extraction_result,
 )
 
@@ -124,6 +126,71 @@ def _build_sample_result(*, quality_status: str = "pass") -> dict[str, object]:
     }
 
 
+def _build_profile_only_ingest_payload() -> dict[str, object]:
+    """
+    Return a small no-resume JobAdder ingest payload for profile-only tests.
+
+    Example
+    -------
+    The returned payload keeps:
+
+    - candidate identity/contact data
+    - attachment counts showing no resume exists
+    - cleaned recruiter notes
+
+    while deliberately leaving `latest_resume` as `None`.
+    """
+
+    return {
+        "source_system": "jobadder",
+        "jobadder_account": 2236,
+        "source_candidate_id": 13812978,
+        "candidate": {
+            "candidateId": 13812978,
+            "firstName": "Roger",
+            "lastName": "Campbell",
+            "email": "roger@example.com",
+            "mobile": "+447700900111",
+            "status": "Active",
+            "location": "London",
+            "updatedAt": "2026-05-14T12:00:00Z",
+        },
+        "attachments": {
+            "items": [],
+            "attachment_count": 0,
+            "resume_attachment_count": 0,
+            "links": {},
+        },
+        "notes": {
+            "items": [],
+            "cleaned_items": [
+                {
+                    "note_id": "note-1",
+                    "type": "Phone Call",
+                    "created_at": "2026-05-13T09:00:00Z",
+                    "updated_at": "2026-05-13T10:30:00Z",
+                    "text": "Candidate open to new opportunities.",
+                    "cleaned_text": "Candidate open to new opportunities.",
+                }
+            ],
+            "note_count": 1,
+            "total_count": 1,
+            "links": {},
+        },
+        "latest_resume": None,
+        "ingest_shell": {
+            "core_identity": {
+                "first_name": "Roger",
+                "last_name": "Campbell",
+                "email": "roger@example.com",
+                "mobile": "+447700900111",
+                "location": "London",
+                "status": "Active",
+            }
+        },
+    }
+
+
 def test_build_resume_extraction_persistence_payload_keeps_key_provenance() -> None:
     """
     Verify that the persistence payload keeps the important provenance slices.
@@ -206,5 +273,90 @@ def test_persist_accepted_resume_extraction_result_delegates_to_db_helper() -> N
     assert persisted_summary == {
         "candidate_id": "candidate-uuid",
         "person_id": "person-uuid",
+    }
+    mock_persist.assert_called_once()
+
+
+def test_build_jobadder_candidate_profile_persistence_payload_keeps_no_resume_provenance() -> None:
+    """
+    Verify that the profile-only payload keeps the source notes and no-resume reason.
+
+    Notes
+    -----
+    This is the narrow business case Tom highlighted:
+
+    - no usable CV exists
+    - but the candidate/contact data still matters
+    - and the source notes still need to survive into provenance
+    """
+
+    ingest_payload = _build_profile_only_ingest_payload()
+
+    payload = build_jobadder_candidate_profile_persistence_payload(ingest_payload)
+
+    assert payload["source_system"] == "jobadder"
+    assert payload["source_candidate_id"] == 13812978
+    assert payload["full_name"] == "Roger Campbell"
+    assert payload["primary_email"] == "roger@example.com"
+    assert payload["resume_updated_at"] is None
+    assert payload["profile_persistence_reason"] == "no_resume_attachment"
+    assert payload["profile_source_payload"]["persistence_reason"] == (
+        "no_resume_attachment"
+    )
+    assert payload["candidate_source_payload"]["latest_resume"] is None
+    assert payload["candidate_source_payload"]["notes"]["cleaned_items"][0][
+        "cleaned_text"
+    ] == "Candidate open to new opportunities."
+
+
+def test_persist_jobadder_candidate_profile_without_resume_rejects_payload_with_resume() -> None:
+    """
+    Verify that the profile-only path refuses candidates that already have a resume.
+
+    Example
+    -------
+    A payload with `latest_resume={"attachmentId": 12345}` should be routed
+    through the normal CV extraction path, not the profile-only path.
+    """
+
+    ingest_payload = _build_profile_only_ingest_payload()
+    ingest_payload["latest_resume"] = {"attachmentId": 12345}
+
+    with pytest.raises(RuntimeError) as excinfo:
+        persist_jobadder_candidate_profile_without_resume(ingest_payload)
+
+    assert "without a selected resume attachment" in str(excinfo.value)
+
+
+def test_persist_jobadder_candidate_profile_without_resume_delegates_to_db_helper() -> None:
+    """
+    Verify that a valid no-resume payload delegates to the DB helper unchanged.
+
+    Notes
+    -----
+    This test stops at the service boundary for the same reason as the accepted
+    CV tests above: here we are proving the business rule and delegation path,
+    not re-testing the SQL write implementation.
+    """
+
+    ingest_payload = _build_profile_only_ingest_payload()
+
+    with patch(
+        "backend.services.resume_extraction_persistence.persist_jobadder_candidate_profile_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "profile_source_record_id": "profile-source-uuid",
+        }
+
+        persisted_summary = persist_jobadder_candidate_profile_without_resume(
+            ingest_payload
+        )
+
+    assert persisted_summary == {
+        "candidate_id": "candidate-uuid",
+        "person_id": "person-uuid",
+        "profile_source_record_id": "profile-source-uuid",
     }
     mock_persist.assert_called_once()

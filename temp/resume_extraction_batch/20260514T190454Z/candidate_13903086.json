@@ -1,0 +1,805 @@
+{
+  "source_system": "jobadder",
+  "source_candidate_id": 13903086,
+  "jobadder_account": 2236,
+  "model_profile": {
+    "provider": "openai",
+    "model_name": "gpt-4.1-mini",
+    "purpose": "extraction",
+    "temperature": 0.0,
+    "max_output_tokens": 3400
+  },
+  "extraction_input": {
+    "source_system": "jobadder",
+    "source_candidate_id": 13903086,
+    "jobadder_account": 2236,
+    "candidate_context": {
+      "candidate_id": 13903086,
+      "first_name": "Kaz",
+      "last_name": "Chuttun",
+      "email": "kazchuttun@gmail.com",
+      "mobile": "07742 956064",
+      "location": null,
+      "status": "Active - Interviewing",
+      "skill_tags": [],
+      "created_at": "2025-07-23T20:19:20Z",
+      "updated_at": "2025-09-11T05:51:55Z"
+    },
+    "latest_resume": {
+      "attachment_id": 17956774,
+      "file_name": "Kaz-Chuttun_cv-library.docx",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "created_at": "2025-07-23T20:19:20Z",
+      "page_count": null,
+      "character_count": 6468,
+      "extractor": "docx_xml"
+    },
+    "cleaned_resume_text": "NAME\n\nMr Kaz Chuttun\n\nMOBILE\n\n07742 956064\n\nADDRESS\n\nLondon\n\nE-MAIL\n\nkazchuttun@gmail.com\n\nKEY STRENGTHS\n\nSunSystems, Proactis, Vision /QA10, B4B, MaxiSun, Excel incl VBA, SQL, Workday\n\nProject management, Finance Systems Implementation\n\nAbility and willingness to learn new systems\n\nProduce results within tight deadlines and budget\n\nMay17 – Current EnQuest Plc – Group Finance Systems Accountant\n\nData mapping & conversion from SAP to SunSystems\n\nNew entity implementation in existing SunSystems and ensuring the various accounting functions were transferred appropriately\n\nSunSystems Upgrade to 6.3 - UAT and post go live support\n\nWorkday Timewriting restructuring and EIB template upload implementation\n\nDec 16 – Notting Hill Housing Group – Project Systems Accountant\n\nSun upgrade / Corp Allocation implementation\n\nManaged a team of 4 and Finance systems vendors\n\nSept 15 – Nov 16 – World First Ltd – Systems Accountant\n\nRedesigned COA to align with Sun structure, Report design and training\n\nImplementation of (Sun 6, Proactis, Q&A10) with integration to custom Back office\n\nSupport Year end accounts for 6 entities incl group, Cash & Banking, Costings, and AP & AR\n\nProject managed Implementation using Agile methodology.\n\nData cleansing, WorkDay systems testing\n\nEnd user support through Service Now\n\nMar 14 – Sept 15 - Afren Plc- Business Applications Analyst\t/ Systems Accountant\n\nSupport, Maintenance, Training - Business Applications (Sun 6, Proactis, B4B, Q&A10)\n\nAd hoc reporting & training using Vision QA10\n\nProject managed Applications upgrade including  Palantir & Cascade to latest version.\n\nData cleansing, systems testing & COA restructured for conversion to Maximo from Proactis\n\nProject Managed Inventory Application / Purchasing for Maximo Implementation\n\nGeneral accounting duties including Inventory accounting\n\nMay 11 –Mar 14   - Tullow Oil - Financial Systems Analyst\n\nAdministering and Supporting SunSystems 531 with 150 business units, Vision QA 10, MaxiSun, Maximo & B4B for 100 users worldwide\n\nAd hoc reporting using Vision QA10 with VBA and training.\n\nData cleansing, Data migration COA redesign and supporting SAP implementation\n\nQA for SunSystems 54 upgrade from version 531 – Systems testing, data checking\n\nProject managed Applications upgrade\n\nJun 10 – May 11 \tRoyal Society of Chemistry \tSystems Accountant\n\nManaging the Finance Systems team\n\nResponsible for Sun 5 upgrade, Vision Q&A10, Proactis, Collect, Albany, ERemit.\n\nProject managed Upgrade of Vision 6 to Q&A10, Implemented Collect & Eremit\n\nSun 426 upgrade to Sun 541 & Proactis Expense implementation.\n\nSupporting 15 finance users and 150 Proactis users.\n\nDesigned reports in Proactis\n\nJun 08 – May 10    \tPeabody Trust \t Finance Systems Project Coordinator\n\nImplement Proactis Contract Register, Supplier Adoption and support end users on Proactis P2P, Sun Systems & Corvu in accordance with SLA.\n\nAdministration and implement changes on Proactis, SunSystems v4 & Vision 6.\n\nDesigned a suite of reports in Proactis and Vision\n\nMonth end reconciliation P2P to Sun Systems\n\nSupporting end users with Office and Windows queries.\n\nEnd user training - authorisers and normal users of P2P, Vision and Sun Systems one to one and classroom\n\nTesting new releases pre implementation\n\nNov 07 – Jun 08\n\nRan a franchise business\n\nAug 05 – Nov 07 Sapphire Systems PLC  \tApplications Consultant\n\nSupporting users and consultants on the various SunSystems applications on site & in house.\n\nSunSystems version 4 & 5, Vision Exec & XL 5 & 6, IPOS Domino and .Net, PA Bank Rec, E-remit amongst various others.\n\nGoing on site to analyse and resolve issues clients’ experience.\n\nTesting of new releases pre and post implementation.\n\nTraining users face to face, 1-2-1, and via webinar.\n\nMYOB \tJan 05 – Aug05\n\nImplementation Consultant – contracting\n\nInstalling & implementing their award winning Accountancy Practice suite of software at clients’ site. New installations and upgrade from previous version. Platforms from Windows 98 through to Win server 2003. SQL or MSDE installs.\n\nSage Software PLC (TAS Software) OCT 92 – Oct 04 (Various roles)\n\nProduct Manager                                                  Apr 2003 –Oct 04\n\nManaging the entire product line life cycle from strategic planning to tactical activities\n\nSpecifying market requirements for current and future products by conducting market research supported by ongoing visits to customers and non-customers.\n\nDriving a solution set across development teams (primarily Development, and Marketing Communications) through market requirements, product contract, and positioning.\n\nDeveloping and implementing a company-wide go-to-market plan, working with all departments to execute.\n\nAnalysing potential partner relationships for the product\n\nAnalysing different routes to market\n\nTraining / implementation consultant                     Jan 2000 – Mar 2003\n\nImplementation/ Training / consultancy for customers on site (business and accountancy practices)\n\nTraining customers in house (class room or 1-2-1)\n\nFully responsible for constant development and training needs of the technical support department\n\nTechnical / desktop Support (various roles)\t\t    October 1992 – January 2000\n\nStarted in a support role and ended up as helpdesk manager in charge of 15 strong team supporting TAS Books and TAS Payroll.\n\nJuly 1989 – September 1992 Maloney Stephens & Co Certified Accountants\n\nAccounts to TB for sole traders to Ltd companies\n\nVAT returns\n\nManagement accounts\n\nSole trader Tax Computation\n\nEDUCATION AND QUALIFICATIONS\n\n1989 - 1991 South Bank University (Part Time)\n\nACCA Level 1\n\nACCA Level 2\n\n1983 – 1987\tErnest Bevin Secondary School\n\n6 O levels\n\n3 A levels\n\n2000 - Current\tMCP Windows 2000, Server 2000, Various Sun systems courses.\n\nIT SKILLS\n\nFully conversant with various software packages, specifically;\n\nSUN Systems 4 & 5, Vision 5 & 6, IPOS, Sage Line 50, Sage Payroll, Sage P11D, TAS Books, TAS Payroll, and Pegasus – Various other SUN systems related products Collect, Bank Rec, Advanced Inquiry\n\nMS Office suite. DOS / Windows operating systems\n\nPC repair & assembly, network setup from cabling to server setup. Exposure to MS exchange\n\nBasic- Intermediate SQL scripting\n\nLanguages\n\nEnglish, Fluent in French written & spoken. Creole (broken French). Currently learning Russian.\n\nPERSONAL SUMMARY\n\nNATIONALITY:\t\tBritish\n\nDRIVING LICENCE:\tUK license\n\nMy personal interests include: Travelling and gadgets",
+    "cleaned_candidate_notes": [
+      {
+        "note_id": "b50e3b66-7604-4ca3-b2a9-d26ea71cf2c9",
+        "type": "Email Received",
+        "created_at": "2025-09-11T05:51:55Z",
+        "updated_at": "2025-09-11T05:51:55Z",
+        "cleaned_text": "Hi Tom\n\nAny updates ? Positive or negative is fine\n\nKaz Chuttun\n\nOn 9 Sep 2025, at 14:09, Kaz Chuttun <kazchuttun@gmail.com> wrote:\n\n﻿Hi Tom\n\nJust wondering if you had any feedback please\nThanks\n\nKaz Chuttun\n\nOn 5 Sep 2025, at 18:03, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz,\n\nUnfortunately Simon and Paris are busy at the suggested times. Could 16:00 on Monday 1st or Thursday 11th at 15:00 work?"
+      },
+      {
+        "note_id": "f65934a7-d317-4626-9acd-4b912ac1ed9e",
+        "type": "Email Received",
+        "created_at": "2025-09-09T10:09:43Z",
+        "updated_at": "2025-09-09T10:09:43Z",
+        "cleaned_text": "Hi Tom\n\nJust wondering if you had any feedback please\nThanks\n\nKaz Chuttun\n\nOn 5 Sep 2025, at 18:03, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz,\n\nUnfortunately Simon and Paris are busy at the suggested times. Could 16:00 on Monday 1st or Thursday 11th at 15:00 work?"
+      },
+      {
+        "note_id": "7304250c-306f-483a-a831-de699833419a",
+        "type": "Email Reply",
+        "created_at": "2025-09-05T16:47:17Z",
+        "updated_at": "2025-09-05T16:47:17Z",
+        "cleaned_text": "Hi Kaz,\n\nAs discussed via SMS your Teams interview will now take place at 4pm UK time on Monday the 8th of September. All details below (Including the TEAMS link and password etc.) will remain the same.\n\nIs that ok with you Kaz?"
+      },
+      {
+        "note_id": "abd20cc0-152a-4305-84b2-f4b9a28cd6f0",
+        "type": "Email Received",
+        "created_at": "2025-09-05T16:38:43Z",
+        "updated_at": "2025-09-05T16:38:43Z",
+        "cleaned_text": "Hi Tom\n\nMonday 4 pm is god with me\n\nKaz\n\nOn 5 Sep 2025, at 17:03, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz,\n\nUnfortunately Simon and Paris are busy at the suggested times. Could 16:00 on Monday 1st or Thursday 11th at 15:00 work?"
+      },
+      {
+        "note_id": "03b140bc-2e97-42c3-8cfe-190c6314d02a",
+        "type": "Email Reply",
+        "created_at": "2025-09-05T14:03:41Z",
+        "updated_at": "2025-09-05T14:03:41Z",
+        "cleaned_text": "Hi Kaz,\n\nUnfortunately Simon and Paris are busy at the suggested times. Could 16:00 on Monday 1st or Thursday 11th at 15:00 work?"
+      },
+      {
+        "note_id": "04200704-fec3-459e-9d9e-a093ed3bfd5f",
+        "type": "General",
+        "created_at": "2025-09-04T13:06:06Z",
+        "updated_at": "2025-09-04T13:06:06Z",
+        "cleaned_text": "ls= 1st INT tw382 is booked for 050925@1430"
+      },
+      {
+        "note_id": "d5d02431-8e7a-446a-8292-4f6c53bb5b27",
+        "type": "Email Received",
+        "created_at": "2025-09-04T13:05:30Z",
+        "updated_at": "2025-09-04T13:05:30Z",
+        "cleaned_text": "Thank you Tom\n\nWill keep you updated on progress tomorrow\n\nKind regards\n\nKaz Chuttun\n\nOn 4 Sep 2025, at 16:59, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz\n\nI'm pleased to confirm that your interview with IQUW will take place as per the \"Interview Details\" section below....Please be prepared for a mix of technical and competency-based questions. I have also included some attached documents that are summarised in the \"Documents Attached\" section below....\n\n+ DOCUMENTS ATTACHED:\n\n* \"IQUW - Infor Sunsystems Administrator\"\n\n* The official job spec for the role\n\n* \"Job-Spec Update - IQUW - Infor SunSystems Administrator\"\n\n* These are my notes from the briefing I had with the hiring manager for further context on the role\n\n* \"Interview Guide - Competency Questions - IQUW & ERS Group\"\n\n* This is the framework that IQUW/ERS Group use for their competency-based questions\n\n* \"ABOUT - ERS Group & IQUW\"\n\n* This is a document I have prepared to save you some time researching the company/industry 😊\n\n* \"INTERVIEW QUESTIONS - Suggested Questions to Prepare for your Interview\"\n\n* This is a document I have updated myself over the years of taking feedback on 1000's of interviews. One thing I have noticed is that preparing suitable questions is important....\n\n+ INTERVIEW DETAILS:\n\nDate: Friday 5th September\n\nTime: 14:30\n\nDuration: 1 Hour\n\nFormat: Microsoft Teams\n\nLink:\n\nMicrosoft Teams Need help?\n\nJoin the meeting now\n\nMeeting ID: 371 743 470 595 5\n\nPasscode: JU2wf23F\n\n*\nInterviewers:\n\n*  Paris Burgess (Finance Systems Accountant) - linkedin.com/in/paris-burgess-b3b626184\n\n* Simon Dove (Head of Business Management Information) - linkedin.com/in/simon-dove\n\n*"
+      },
+      {
+        "note_id": "c12c18d3-2899-4b24-bb4b-9a43dc591dd0",
+        "type": "Email Sent",
+        "created_at": "2025-09-04T12:59:25Z",
+        "updated_at": "2025-09-04T12:59:25Z",
+        "cleaned_text": "Hi Kaz\n\nI'm pleased to confirm that your interview with IQUW will take place as per the \"Interview Details\" section below....Please be prepared for a mix of technical and competency-based questions. I have also included some attached documents that are summarised in the \"Documents Attached\" section below....\n\n+ DOCUMENTS ATTACHED:\n\n* \"IQUW - Infor Sunsystems Administrator\"\n\n* The official job spec for the role\n\n* \"Job-Spec Update - IQUW - Infor SunSystems Administrator\"\n\n* These are my notes from the briefing I had with the hiring manager for further context on the role\n\n* \"Interview Guide - Competency Questions - IQUW & ERS Group\"\n\n* This is the framework that IQUW/ERS Group use for their competency-based questions\n\n* \"ABOUT - ERS Group & IQUW\"\n\n* This is a document I have prepared to save you some time researching the company/industry 😊\n\n* \"INTERVIEW QUESTIONS - Suggested Questions to Prepare for your Interview\"\n\n* This is a document I have updated myself over the years of taking feedback on 1000's of interviews. One thing I have noticed is that preparing suitable questions is important....\n\n+ INTERVIEW DETAILS:\n\nDate: Friday 5th September\n\nTime: 14:30\n\nDuration: 1 Hour\n\nFormat: Microsoft Teams\n\nLink:\n\nMicrosoft Teams Need help?\n\nJoin the meeting now\n\nMeeting ID: 371 743 470 595 5\n\nPasscode: JU2wf23F\n\n*\nInterviewers:\n\n*  Paris Burgess (Finance Systems Accountant) - linkedin.com/in/paris-burgess-b3b626184\n\n* Simon Dove (Head of Business Management Information) - linkedin.com/in/simon-dove\n\n*"
+      },
+      {
+        "note_id": "b09feeb5-c42e-44af-b63d-bc8dc4f3721f",
+        "type": "Phone call",
+        "created_at": "2025-09-04T12:09:43Z",
+        "updated_at": "2025-09-04T12:09:43Z",
+        "cleaned_text": "INT prep tw382\n\nhe is open to moving bck to london\n\nrelocation and notice period - has to stay until December 2025 in Dubai an then from Jan he can reutrn to London"
+      },
+      {
+        "note_id": "a64135f9-95cf-49d2-a7e8-4a6dbebbfd31",
+        "type": "Phone call",
+        "created_at": "2025-09-03T17:06:50Z",
+        "updated_at": "2025-09-03T17:06:50Z",
+        "cleaned_text": "INT PREP DISCUSSION......\n\n>>1. once the time is ocnfimred I will email documents that give you their typical interview framework (internal shhh)\n>>2. Also one about questions to answer (your expeirenced but some ppl still find it useful\n>>3. \"Remote for next few months\" what does this mean? If offered are you still wanting to move back?\n>>4. Any questions for me?"
+      },
+      {
+        "note_id": "2ad08ada-3e63-40fc-9f75-21cf97ffae2a",
+        "type": "Email Reply",
+        "created_at": "2025-09-03T17:02:46Z",
+        "updated_at": "2025-09-03T17:02:46Z",
+        "cleaned_text": "Thanks Kaz,\n\nPlease give me a call on +447545175393 :)"
+      },
+      {
+        "note_id": "d50dcc4e-7630-457d-9c40-5d798374e54a",
+        "type": "Email Received",
+        "created_at": "2025-09-03T16:25:33Z",
+        "updated_at": "2025-09-03T16:25:33Z",
+        "cleaned_text": "Great for Friday\n\nTomorrow can do 1 pm your time - I will call you from a Dubai number as I get free uk calls in my plan - let me know your number\nKaz\n\nOn 3 Sep 2025, at 19:56, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Thanks Kaz,\n\nTomorrow is cutting it fine for the HR team to schedule things in so I'll suggest 1pm UK time onwards this Friday the 5th\n\nIt will be worth us having a quick chat beforehand too, what time (Uk time) are you free for a quick chat with me tomorrow? (the 4th) and what is the best way for me to reach you? (Normal Call/WhatsApp call etc)\n\nThanks again Kaz.... :)"
+      },
+      {
+        "note_id": "7dab52dc-3126-4476-ae56-fee29b8967b9",
+        "type": "Email Reply",
+        "created_at": "2025-09-03T15:56:02Z",
+        "updated_at": "2025-09-03T15:56:02Z",
+        "cleaned_text": "Thanks Kaz,\n\nTomorrow is cutting it fine for the HR team to schedule things in so I'll suggest 1pm UK time onwards this Friday the 5th\n\nIt will be worth us having a quick chat beforehand too, what time (Uk time) are you free for a quick chat with me tomorrow? (the 4th) and what is the best way for me to reach you? (Normal Call/WhatsApp call etc)\n\nThanks again Kaz.... :)"
+      },
+      {
+        "note_id": "98f02b4a-263b-47b4-9076-f93cdee882fc",
+        "type": "Email Received",
+        "created_at": "2025-09-03T15:18:06Z",
+        "updated_at": "2025-09-03T15:18:06Z",
+        "cleaned_text": "Hi Tom\n\nI am available tomorrow  or Friday from 1pm  uk time  - re next week looks like I may have time on Tuesday\n\nThanks\n\nKaz Chuttun\n\nOn 3 Sep 2025, at 19:12, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz,\n\nI have explained your situation, so this is ok with them (You are happy to return to London for the right role but are currently based in Dubai)\n\nCan you advise what dates and timeslots (In UK time) you will be able to have a Teams call with them this week/next week please?\n\nOnce we have a time confirmed it would also be good for us to have a quick cha so that I can advise what questions/format you can expect at interview too...."
+      },
+      {
+        "note_id": "b686ab86-ce79-41d2-91fa-7769fcc35463",
+        "type": "Email Reply",
+        "created_at": "2025-09-03T15:12:11Z",
+        "updated_at": "2025-09-03T15:12:11Z",
+        "cleaned_text": "Hi Kaz,\n\nI have explained your situation, so this is ok with them (You are happy to return to London for the right role but are currently based in Dubai)\n\nCan you advise what dates and timeslots (In UK time) you will be able to have a Teams call with them this week/next week please?\n\nOnce we have a time confirmed it would also be good for us to have a quick cha so that I can advise what questions/format you can expect at interview too...."
+      },
+      {
+        "note_id": "8d24a65f-7db9-407f-bc81-4b83ba92929c",
+        "type": "Email Received",
+        "created_at": "2025-09-03T15:07:50Z",
+        "updated_at": "2025-09-03T15:07:50Z",
+        "cleaned_text": "Hi Tom\n\nI am away but still keen . However I can only do remote for the next few months , if this is something they are open to then I will interview\n\nThanks\n\nKaz Chuttun\n\nOn 3 Sep 2025, at 18:29, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿ Hi Kaz,\n\nI've just tried calling as I have some interesting news, IQUW has reached out to me and are keen to have a video interview with you if you are still interested?\n\nI've tried giving you a call on your mobile and via WhatsApp, when are you free to speak?\n\n+ FYI - Updates:\n\n* It's been a while since we last spoke, so I have given some updates below....\n\n* The team has realised that they are not getting the quality of candidate they need at the original budget (Which is why we didn't get an interview request) but this has now been adjusted\n\n* I have attached a summary of the expanded scope of the role for you too\n\n* The team has also acknowledged that there has been a delay in focusing on this role, this has not been intentional. A combination of it being \"Holiday Season\" and ongoing project work and business growth has meant their bandwidth has been strained but they are really hoping you are open to talking to them.... :)\n\nThe team"
+      },
+      {
+        "note_id": "04e65f9c-0423-47ef-b342-e083eba3fbc5",
+        "type": "Email Reply",
+        "created_at": "2025-09-03T14:29:41Z",
+        "updated_at": "2025-09-03T14:29:41Z",
+        "cleaned_text": "Hi Kaz,\n\nI've just tried calling as I have some interesting news, IQUW has reached out to me and are keen to have a video interview with you if you are still interested?\n\nI've tried giving you a call on your mobile and via WhatsApp, when are you free to speak?\n\n+ FYI - Updates:\n\n* It's been a while since we last spoke, so I have given some updates below....\n\n* The team has realised that they are not getting the quality of candidate they need at the original budget (Which is why we didn't get an interview request) but this has now been adjusted\n\n* I have attached a summary of the expanded scope of the role for you too\n\n* The team has also acknowledged that there has been a delay in focusing on this role, this has not been intentional. A combination of it being \"Holiday Season\" and ongoing project work and business growth has meant their bandwidth has been strained but they are really hoping you are open to talking to them.... :)\n\nThe team"
+      },
+      {
+        "note_id": "fa4c99ac-4608-4664-8f68-cc65712f252d",
+        "type": "Status Change",
+        "created_at": "2025-09-03T14:11:10Z",
+        "updated_at": "2025-09-03T14:11:10Z",
+        "cleaned_text": "Candidate status changed automatically from Active to Active - Interviewing by Tom Owens when Job Application status was changed to Client interview 1, Job: tw382 - Infor Sunsystems Administrator,  at 3:11pm on September 3, 2025"
+      },
+      {
+        "note_id": "3b441bc0-d637-4de4-95b3-e8b888f2dcb4",
+        "type": "Client interview",
+        "created_at": "2025-09-03T14:11:09Z",
+        "updated_at": "2025-09-03T14:11:09Z",
+        "cleaned_text": "Status changed from CV Sent Via Portal to Client interview 1 by Tom Owens at 3:11pm on September 3, 2025"
+      },
+      {
+        "note_id": "cbecdd1c-f24d-4850-b34e-5ee055e47d4b",
+        "type": "Submitted Via Portal",
+        "created_at": "2025-07-25T13:16:19Z",
+        "updated_at": "2025-07-25T13:16:19Z",
+        "cleaned_text": "Status changed from Screening Call to CV Sent Via Portal by Tom Owens at 2:16pm on July 25, 2025"
+      },
+      {
+        "note_id": "9dbb488b-7780-46f0-990e-90763374a804",
+        "type": "Submitted to client",
+        "created_at": "2025-07-25T13:15:41Z",
+        "updated_at": "2025-07-25T13:15:41Z",
+        "cleaned_text": "IQUW badging CV for iCIMS template\n\n++++++++++++++++++++\n\nBenefits and bonus=\n\n£ 70k sterling\n£ ideally looking for £80k but not set in stone n 1\nmonth - rolling off a the moment\nv british - loc - in london from 9th august...\nwfh - sold ldn property would rent or buy it depends etc why?\n----------------------- contract –\n\ncoming to end company is moving - he is in dubai, bahrain etc.... hes been there for 4 years, debating on dubai or london, he likes it here.... kanish mistry nottoingin g hill gensys\n\nCandidates’ summary\n\n- When talking to Kaz it is clear that he has extensive experience beyond administrator level but is a relaxed and affable individual with a pleasant demeanour, I explained the scope of this role to him and is very keen to pursue it further\n- Whilst Kaz also has extensive project management experience he is used to being the sole “SME” for SunSytems and/or other applications and has been continuously praised for his fast, effective and polite customer support and client service driven approach\n- Has extensive SunSystems experience (Recently upgraded to v.6.3) across ALL modules\n- Also has extensive Proactis experience\n- ACCA Level 2 accountant with extensive systems accountant experience\n- Has used VBA and SQL throughout his career\n- Has worked with a number of different systems and has successfully picked up how to use/implement/upgrade/configure them effectively\n- FYI Kaz is back in London again from the 9th of August and keen to meet in person if the feeling is mutual\n\nMotivation for application\n\n- Kaz has spent most of his life living in London as British Citizen but has been living in Dubai for the past 4 years and is keen to return to the UK and establish himself with a reputable firm on a permanent basis for the duration of his career.\n- Kaz regularly returns to the UK and is back in London again from the 9th of August and keen to meet in person if the feeling is mutual\n- That said, he was keen to point out that despite his years of experience he still enjoys his job and is a “People person” who enjoy helping and interacting with end users too"
+      },
+      {
+        "note_id": "e0809cbe-3876-43ad-9f05-a20e04f13730",
+        "type": "Email Reply",
+        "created_at": "2025-07-24T14:03:01Z",
+        "updated_at": "2025-07-24T14:03:01Z",
+        "cleaned_text": "Hi Kaz,\n\nNo problem at all, I can confirm your CV has gone across and I will be in touch as soon as they respond!"
+      },
+      {
+        "note_id": "25b98a9e-3f90-47ed-b302-1f7d1875fb6d",
+        "type": "Email Received",
+        "created_at": "2025-07-24T13:56:11Z",
+        "updated_at": "2025-07-24T13:56:11Z",
+        "cleaned_text": "Hi Tom\n\nIt was really great catching up today . As mentioned I am really interested in this role and would like to be put forward for an intshould you think I am suitable.\n\nApologies I had to cut our call short but had a project meeting\n\nThanks\n\nKaz Chuttun\n\nOn 24 Jul 2025, at 00:51, Tom Owens <tom.owens@jamesjosephassociates.co.uk> wrote:\n\n﻿\nHi Kaz,\n\nMany thanks for responding to the Advert we placed for our Clients Vacancy, IQUW (I have deliberately disclosed the name of the company, but your discretion is appreciated!)\n\nIs this of interest?\n\nI'm keen to tell you more about this and answer your questions (The job spec does not tell the full story)...\n\nWhat is a convenient time for you to speak for a few minutes tomorrow, Kaz?\n\nP.S. I will only need 10 minutes of your time (Max 15 if you have questions) and my deadline to submit my shortlist is Friday morning.... :)"
+      },
+      {
+        "note_id": "71609aa4-cf3e-43d0-a37d-9167a8f58dd1",
+        "type": "Left Message",
+        "created_at": "2025-07-24T10:03:59Z",
+        "updated_at": "2025-07-24T10:03:59Z",
+        "cleaned_text": "Status changed from Emailed Job Spec to Screening Call by Tom Owens at 11:03am on July 24, 2025"
+      },
+      {
+        "note_id": "8ba7a3b9-b1a6-4c65-98f2-c87b5fe77899",
+        "type": "Phone call",
+        "created_at": "2025-07-24T10:02:16Z",
+        "updated_at": "2025-07-24T10:02:16Z",
+        "cleaned_text": "£ 70k sterling\n£ ideally looking for £80k but not set in stone\nn 1 month - rolling off a the moment\nv british -\nloc - in london from 9th august...\nwfh - sold ldn property would rent or buy it depends etc\nwhy?\n-----------------------\n\ncontract - coming to end company is moving - he is in dubai, bahrain etc....\n\nhes been there for 4 years, debating on dubai or london, he likes it here....\n\nkanish mistry nottoingin g hill gensys"
+      }
+    ],
+    "prompt_input_metrics": {
+      "resume_file_name": "Kaz-Chuttun_cv-library.docx",
+      "resume_original_characters": 6468,
+      "resume_prompt_characters": 6468,
+      "resume_was_truncated": false,
+      "available_note_count": 25,
+      "prompt_note_count": 25,
+      "available_note_characters": 13451,
+      "prompt_note_characters": 13451,
+      "notes_were_truncated": false
+    }
+  },
+  "prompt_truncation": {
+    "any_truncation": false,
+    "resume_was_truncated": false,
+    "notes_were_truncated": false
+  },
+  "structured_extraction": {
+    "current_employer": "EnQuest Plc",
+    "current_title": "Group Finance Systems Accountant",
+    "professional_summary": "Experienced Finance Systems Accountant with extensive expertise in SunSystems, Proactis, and related finance systems. Skilled in project management, finance systems implementation, data migration, and user support. Strong background in system upgrades, data cleansing, and report design. Fluent in English and French, with additional language skills.",
+    "location": "London",
+    "emails": [
+      "kazchuttun@gmail.com"
+    ],
+    "phones": [
+      "07742 956064"
+    ],
+    "skills": [
+      "Finance Systems Implementation",
+      "Project Management",
+      "Data Migration",
+      "User Support",
+      "Report Design",
+      "System Upgrades",
+      "Data Cleansing"
+    ],
+    "tools_and_platforms": [
+      "SunSystems",
+      "Proactis",
+      "Vision QA10",
+      "B4B",
+      "MaxiSun",
+      "Excel",
+      "VBA",
+      "SQL",
+      "Workday",
+      "Palantir",
+      "Cascade",
+      "Maximo",
+      "Service Now",
+      "Collect",
+      "Eremit",
+      "Albany",
+      "Microsoft Teams",
+      "MYOB",
+      "Sage Line 50",
+      "Sage Payroll",
+      "Sage P11D",
+      "TAS Books",
+      "TAS Payroll",
+      "Pegasus",
+      "MS Office",
+      "DOS",
+      "Windows",
+      "MS Exchange"
+    ],
+    "certifications": [
+      "ACCA Level 1",
+      "ACCA Level 2",
+      "MCP Windows 2000",
+      "Server 2000"
+    ],
+    "linkedin_url": null,
+    "portfolio_references": [],
+    "education": [
+      {
+        "institution": "South Bank University",
+        "qualification": "ACCA Level 1",
+        "subject": null,
+        "completion_date": "1989 - 1991"
+      },
+      {
+        "institution": "South Bank University",
+        "qualification": "ACCA Level 2",
+        "subject": null,
+        "completion_date": "1989 - 1991"
+      },
+      {
+        "institution": "Ernest Bevin Secondary School",
+        "qualification": "6 O levels",
+        "subject": null,
+        "completion_date": "1983 – 1987"
+      },
+      {
+        "institution": "Ernest Bevin Secondary School",
+        "qualification": "3 A levels",
+        "subject": null,
+        "completion_date": "1983 – 1987"
+      }
+    ],
+    "employment_history": [
+      {
+        "employer": "EnQuest Plc",
+        "title": "Group Finance Systems Accountant",
+        "start_date": "May 2017",
+        "end_date": null,
+        "is_current": true,
+        "summary": "Responsible for data mapping and conversion from SAP to SunSystems, new entity implementation, SunSystems upgrade to 6.3 with UAT and post go live support, and Workday Timewriting restructuring and EIB template upload implementation."
+      },
+      {
+        "employer": "Notting Hill Housing Group",
+        "title": "Project Systems Accountant",
+        "start_date": "Dec 2016",
+        "end_date": "May 2017",
+        "is_current": false,
+        "summary": "Managed Sun upgrade and Corporate Allocation implementation; managed a team of 4 and finance systems vendors."
+      },
+      {
+        "employer": "World First Ltd",
+        "title": "Systems Accountant",
+        "start_date": "Sept 2015",
+        "end_date": "Nov 2016",
+        "is_current": false,
+        "summary": "Redesigned Chart of Accounts to align with Sun structure, report design and training; implemented Sun 6, Proactis, Q&A10 with integration to custom back office; supported year-end accounts for 6 entities; project managed implementation using Agile methodology; data cleansing and WorkDay systems testing; end user support through Service Now."
+      },
+      {
+        "employer": "Afren Plc",
+        "title": "Business Applications Analyst / Systems Accountant",
+        "start_date": "Mar 2014",
+        "end_date": "Sept 2015",
+        "is_current": false,
+        "summary": "Supported, maintained, and trained on business applications including Sun 6, Proactis, B4B, Q&A10; project managed applications upgrade including Palantir and Cascade; data cleansing, systems testing, and COA restructuring for Maximo conversion; project managed inventory application and purchasing for Maximo implementation; general accounting duties including inventory accounting."
+      },
+      {
+        "employer": "Tullow Oil",
+        "title": "Financial Systems Analyst",
+        "start_date": "May 2011",
+        "end_date": "Mar 2014",
+        "is_current": false,
+        "summary": "Administered and supported SunSystems 531 with 150 business units, Vision QA10, MaxiSun, Maximo, and B4B for 100 users worldwide; ad hoc reporting using Vision QA10 with VBA and training; data cleansing, data migration, COA redesign, and supporting SAP implementation; QA for SunSystems 54 upgrade; project managed applications upgrade."
+      },
+      {
+        "employer": "Royal Society of Chemistry",
+        "title": "Systems Accountant",
+        "start_date": "Jun 2010",
+        "end_date": "May 2011",
+        "is_current": false,
+        "summary": "Managed finance systems team; responsible for Sun 5 upgrade, Vision Q&A10, Proactis, Collect, Albany, ERemit; project managed upgrade of Vision 6 to Q&A10; implemented Collect and Eremit; Sun 426 upgrade to Sun 541 and Proactis Expense implementation; supported 15 finance users and 150 Proactis users; designed reports in Proactis."
+      },
+      {
+        "employer": "Peabody Trust",
+        "title": "Finance Systems Project Coordinator",
+        "start_date": "Jun 2008",
+        "end_date": "May 2010",
+        "is_current": false,
+        "summary": "Implemented Proactis Contract Register and Supplier Adoption; supported end users on Proactis P2P, Sun Systems, and Corvu; administered and implemented changes on Proactis, SunSystems v4, and Vision 6; designed reports in Proactis and Vision; month end reconciliation P2P to Sun Systems; end user training and support; testing new releases pre implementation."
+      },
+      {
+        "employer": "Sapphire Systems PLC",
+        "title": "Applications Consultant",
+        "start_date": "Aug 2005",
+        "end_date": "Nov 2007",
+        "is_current": false,
+        "summary": "Supported users and consultants on various SunSystems applications on site and in house; worked with SunSystems versions 4 and 5, Vision Exec and XL 5 and 6, IPOS Domino and .Net, PA Bank Rec, E-remit; analyzed and resolved client issues; tested new releases pre and post implementation; trained users face to face and via webinar."
+      },
+      {
+        "employer": "MYOB",
+        "title": "Implementation Consultant (Contracting)",
+        "start_date": "Jan 2005",
+        "end_date": "Aug 2005",
+        "is_current": false,
+        "summary": "Installed and implemented Accountancy Practice suite of software at client sites; managed new installations and upgrades; worked with platforms from Windows 98 through to Windows Server 2003; SQL or MSDE installs."
+      },
+      {
+        "employer": "Sage Software PLC (TAS Software)",
+        "title": "Product Manager",
+        "start_date": "Apr 2003",
+        "end_date": "Oct 2004",
+        "is_current": false,
+        "summary": "Managed entire product line life cycle from strategic planning to tactical activities; specified market requirements; drove solution set across development teams; developed and implemented company-wide go-to-market plan; analyzed potential partner relationships and routes to market."
+      },
+      {
+        "employer": "Sage Software PLC (TAS Software)",
+        "title": "Training / Implementation Consultant",
+        "start_date": "Jan 2000",
+        "end_date": "Mar 2003",
+        "is_current": false,
+        "summary": "Provided implementation, training, and consultancy for customers on site; trained customers in house; responsible for development and training needs of technical support department."
+      },
+      {
+        "employer": "Sage Software PLC (TAS Software)",
+        "title": "Technical / Desktop Support (various roles)",
+        "start_date": "Oct 1992",
+        "end_date": "Jan 2000",
+        "is_current": false,
+        "summary": "Started in support role and ended as helpdesk manager in charge of 15-strong team supporting TAS Books and TAS Payroll."
+      },
+      {
+        "employer": "Maloney Stephens & Co Certified Accountants",
+        "title": "Accountant",
+        "start_date": "Jul 1989",
+        "end_date": "Sept 1992",
+        "is_current": false,
+        "summary": "Prepared accounts to trial balance for sole traders to limited companies; VAT returns; management accounts; sole trader tax computation."
+      }
+    ],
+    "projects": [
+      {
+        "name": "SunSystems Upgrade to 6.3",
+        "employer": "EnQuest Plc",
+        "role": "Group Finance Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": true,
+        "summary": "Led UAT and post go live support for SunSystems upgrade to version 6.3.",
+        "responsibilities": [
+          "Led UAT and post go live support for SunSystems upgrade."
+        ],
+        "deliverables": [
+          "Successful upgrade of SunSystems to version 6.3."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "SunSystems"
+        ],
+        "domains": [
+          "Finance Systems Upgrade"
+        ]
+      },
+      {
+        "name": "Workday Timewriting Restructuring and EIB Template Upload Implementation",
+        "employer": "EnQuest Plc",
+        "role": "Group Finance Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": true,
+        "summary": "Implemented Workday Timewriting restructuring and EIB template upload.",
+        "responsibilities": [
+          "Implemented Workday Timewriting restructuring and EIB template upload."
+        ],
+        "deliverables": [
+          "Workday Timewriting restructuring and EIB template upload completed."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Workday"
+        ],
+        "domains": [
+          "Finance Systems Implementation"
+        ]
+      },
+      {
+        "name": "Sun Upgrade / Corporate Allocation Implementation",
+        "employer": "Notting Hill Housing Group",
+        "role": "Project Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Managed Sun upgrade and Corporate Allocation implementation.",
+        "responsibilities": [
+          "Managed Sun upgrade and Corporate Allocation implementation."
+        ],
+        "deliverables": [
+          "Successful Sun upgrade and Corporate Allocation implementation."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "SunSystems"
+        ],
+        "domains": [
+          "Finance Systems Upgrade"
+        ]
+      },
+      {
+        "name": "Implementation of Sun 6, Proactis, Q&A10 with Integration to Custom Back Office",
+        "employer": "World First Ltd",
+        "role": "Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Implemented Sun 6, Proactis, and Q&A10 with integration to custom back office.",
+        "responsibilities": [
+          "Implemented Sun 6, Proactis, and Q&A10 with integration to custom back office."
+        ],
+        "deliverables": [
+          "Integrated finance systems with custom back office."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "SunSystems",
+          "Proactis",
+          "Vision QA10"
+        ],
+        "domains": [
+          "Finance Systems Implementation"
+        ]
+      },
+      {
+        "name": "Applications Upgrade Including Palantir & Cascade",
+        "employer": "Afren Plc",
+        "role": "Business Applications Analyst / Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Project managed applications upgrade including Palantir and Cascade to latest version.",
+        "responsibilities": [
+          "Project managed applications upgrade including Palantir and Cascade."
+        ],
+        "deliverables": [
+          "Upgraded applications to latest versions."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Palantir",
+          "Cascade"
+        ],
+        "domains": [
+          "Applications Upgrade"
+        ]
+      },
+      {
+        "name": "Inventory Application / Purchasing for Maximo Implementation",
+        "employer": "Afren Plc",
+        "role": "Business Applications Analyst / Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Project managed inventory application and purchasing for Maximo implementation.",
+        "responsibilities": [
+          "Project managed inventory application and purchasing for Maximo implementation."
+        ],
+        "deliverables": [
+          "Implemented inventory application and purchasing for Maximo."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Maximo"
+        ],
+        "domains": [
+          "Inventory Management"
+        ]
+      },
+      {
+        "name": "SunSystems 54 Upgrade QA and Testing",
+        "employer": "Tullow Oil",
+        "role": "Financial Systems Analyst",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Quality assurance and testing for SunSystems 54 upgrade from version 531.",
+        "responsibilities": [
+          "Performed QA and systems testing for SunSystems upgrade."
+        ],
+        "deliverables": [
+          "Successful upgrade of SunSystems from version 531 to 54."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "SunSystems"
+        ],
+        "domains": [
+          "Finance Systems Upgrade"
+        ]
+      },
+      {
+        "name": "Upgrade of Vision 6 to Q&A10, Implementation of Collect & Eremit",
+        "employer": "Royal Society of Chemistry",
+        "role": "Systems Accountant",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Project managed upgrade of Vision 6 to Q&A10 and implemented Collect and Eremit.",
+        "responsibilities": [
+          "Project managed upgrade of Vision 6 to Q&A10.",
+          "Implemented Collect and Eremit."
+        ],
+        "deliverables": [
+          "Upgraded Vision to Q&A10.",
+          "Implemented Collect and Eremit systems."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Vision QA10",
+          "Collect",
+          "Eremit"
+        ],
+        "domains": [
+          "Finance Systems Upgrade",
+          "Expense Management"
+        ]
+      },
+      {
+        "name": "Proactis Contract Register Implementation and Supplier Adoption",
+        "employer": "Peabody Trust",
+        "role": "Finance Systems Project Coordinator",
+        "start_date": null,
+        "end_date": null,
+        "is_current": false,
+        "summary": "Implemented Proactis Contract Register and Supplier Adoption; supported end users on Proactis P2P, Sun Systems, and Corvu.",
+        "responsibilities": [
+          "Implemented Proactis Contract Register and Supplier Adoption.",
+          "Supported end users on Proactis P2P, Sun Systems, and Corvu."
+        ],
+        "deliverables": [
+          "Implemented contract register and supplier adoption.",
+          "Provided end user training and support."
+        ],
+        "business_outcomes": [],
+        "tools_and_platforms": [
+          "Proactis",
+          "SunSystems",
+          "Corvu"
+        ],
+        "domains": [
+          "Procurement",
+          "Finance Systems Support"
+        ]
+      }
+    ],
+    "evidence_notes": [
+      "Contact details from resume contact block.",
+      "Professional summary and skills from resume key strengths and personal summary sections.",
+      "Employment history and project details from resume role descriptions and project bullets.",
+      "Certifications from resume education and qualifications section.",
+      "Tools and platforms from resume IT skills and role descriptions.",
+      "Location from resume address line."
+    ],
+    "ambiguity_notes": [
+      "Candidate notes mention current location as Dubai with plans to return to London in January 2026, but resume states London as address; current location set to London based on resume.",
+      "Candidate notes discuss potential future projects and roles but do not provide additional confirmed project experience beyond resume.",
+      "No LinkedIn URL explicitly visible in source material."
+    ]
+  },
+  "quality_assessment": {
+    "quality_score": 100,
+    "status": "pass",
+    "reasons": [],
+    "source_hints": {
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "resume_emails": [
+        "kazchuttun@gmail.com"
+      ],
+      "resume_phones": [
+        "07742 956064"
+      ],
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_certifications_section": false,
+      "has_projects_section": false,
+      "resume_contains_bp": false
+    },
+    "check_results": {
+      "has_current_employer": true,
+      "has_current_title": true,
+      "email_count": 1,
+      "phone_count": 1,
+      "employment_history_count": 13,
+      "projects_count": 9,
+      "education_count": 4,
+      "evidence_notes_count": 6,
+      "skills_count": 7,
+      "tools_and_platforms_count": 28,
+      "certifications_count": 4,
+      "empty_project_detail_count": 0,
+      "duplicate_skill_count": 0,
+      "duplicate_tool_count": 0,
+      "suspicious_terms_present": []
+    }
+  },
+  "cv_source_assessment": {
+    "richness_score": 92,
+    "richness_band": "rich",
+    "reasons": [
+      "no_bullet_like_content",
+      "no_explicit_projects_section"
+    ],
+    "source_metrics": {
+      "character_count": 6468,
+      "word_count": 909,
+      "nonempty_line_count": 106,
+      "substantial_line_count": 55,
+      "bullet_like_line_count": 0,
+      "employment_signal_count": 6,
+      "resume_email_count": 1,
+      "resume_phone_count": 1,
+      "has_experience_section": true,
+      "has_education_section": true,
+      "has_skills_section": true,
+      "has_projects_section": false,
+      "has_certifications_section": false
+    }
+  },
+  "quality_gate": {
+    "enabled": true,
+    "first_pass_model_name": "gpt-4.1-mini",
+    "fallback_model_name": "gpt-5.4-mini",
+    "fallback_invoked": false,
+    "final_model_name": "gpt-4.1-mini",
+    "first_pass_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "kazchuttun@gmail.com"
+        ],
+        "resume_phones": [
+          "07742 956064"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 13,
+        "projects_count": 9,
+        "education_count": 4,
+        "evidence_notes_count": 6,
+        "skills_count": 7,
+        "tools_and_platforms_count": 28,
+        "certifications_count": 4,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    },
+    "final_quality_assessment": {
+      "quality_score": 100,
+      "status": "pass",
+      "reasons": [],
+      "source_hints": {
+        "resume_email_count": 1,
+        "resume_phone_count": 1,
+        "resume_emails": [
+          "kazchuttun@gmail.com"
+        ],
+        "resume_phones": [
+          "07742 956064"
+        ],
+        "has_experience_section": true,
+        "has_education_section": true,
+        "has_skills_section": true,
+        "has_certifications_section": false,
+        "has_projects_section": false,
+        "resume_contains_bp": false
+      },
+      "check_results": {
+        "has_current_employer": true,
+        "has_current_title": true,
+        "email_count": 1,
+        "phone_count": 1,
+        "employment_history_count": 13,
+        "projects_count": 9,
+        "education_count": 4,
+        "evidence_notes_count": 6,
+        "skills_count": 7,
+        "tools_and_platforms_count": 28,
+        "certifications_count": 4,
+        "empty_project_detail_count": 0,
+        "duplicate_skill_count": 0,
+        "duplicate_tool_count": 0,
+        "suspicious_terms_present": []
+      }
+    }
+  },
+  "persistence_result": {
+    "persisted_at": "2026-05-14T19:06:43.216956+00:00",
+    "person_id": "1db6eaed-4497-4afc-8f8a-a80e2173fa52",
+    "candidate_id": "cc8c24e9-124e-4a2a-b84e-3333a23984b3",
+    "current_company_id": "c29bc649-db40-4378-af55-7c7225c73dce",
+    "document_id": "346ffd02-5da5-476a-aa78-84848bd48e01",
+    "candidate_source_record_id": "f66eff65-7e8d-45e9-850d-0cc223d87452",
+    "resume_source_record_id": "cd84d9e4-da98-4623-9771-f2a977c453c0",
+    "extraction_source_record_id": "ea362661-b722-41d6-bc3c-993d75542096",
+    "candidate_skill_count": 35,
+    "quality_status": "pass"
+  }
+}

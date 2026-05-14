@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from backend.db.resume_extraction_persistence import (
+    persist_jobadder_candidate_profile_snapshot,
     persist_jobadder_resume_extraction_snapshot,
 )
 
@@ -127,4 +128,100 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
     assert summary["candidate_skill_count"] == 0
     assert isinstance(summary["person_id"], str)
     assert isinstance(summary["candidate_id"], str)
+    mock_connection.commit.assert_called_once()
+
+
+def test_persist_jobadder_candidate_profile_snapshot_commits_and_returns_summary() -> None:
+    """
+    Verify that the profile-only persistence helper commits and returns JSON-safe IDs.
+
+    Notes
+    -----
+    This path is narrower than the accepted CV flow:
+
+    - no resume document
+    - no extraction source record
+    - no candidate skills
+
+    It still needs to upsert the source rows, person, candidate, and the
+    provenance links that explain why the candidate exists canonically.
+
+    Example
+    -------
+    The returned summary should expose both:
+
+        - `profile_source_record_id`
+        - verifier-compatible `extraction_source_record_id`
+
+    as strings.
+    """
+
+    persistence_payload = {
+        "source_candidate_id": 13812978,
+        "candidate_source_payload": {"candidate": {"firstName": "Roger"}},
+        "candidate_source_payload_hash": "candidate-hash",
+        "profile_source_payload": {
+            "persistence_reason": "no_resume_attachment",
+        },
+        "profile_source_payload_hash": "profile-hash",
+        "profile_persistence_reason": "no_resume_attachment",
+        "import_run_id": "run-456",
+        "current_employer": None,
+        "full_name": "Roger Campbell",
+        "first_name": "Roger",
+        "last_name": "Campbell",
+        "primary_email": "roger@example.com",
+        "primary_phone": "+447700900111",
+        "linkedin_url": None,
+        "location": "London",
+        "headline": None,
+        "summary": None,
+        "candidate_status": "Active",
+        "availability_status": None,
+        "current_title": None,
+        "last_contacted_at": "2026-05-13T10:30:00Z",
+        "resume_updated_at": None,
+    }
+
+    mock_cursor = MagicMock()
+    person_uuid = uuid4()
+    candidate_uuid = uuid4()
+    candidate_source_record_uuid = uuid4()
+    profile_source_record_uuid = uuid4()
+    mock_cursor.fetchone.side_effect = [
+        {"id": candidate_source_record_uuid},
+        {"id": profile_source_record_uuid},
+        None,
+        None,
+        {"id": person_uuid},
+        None,
+        {"id": candidate_uuid},
+        None,
+        None,
+        None,
+        None,
+    ]
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.resume_extraction_persistence.postgres_connection"
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        summary = persist_jobadder_candidate_profile_snapshot(persistence_payload)
+
+    assert summary["person_id"] == str(person_uuid)
+    assert summary["candidate_id"] == str(candidate_uuid)
+    assert (
+        summary["candidate_source_record_id"] == str(candidate_source_record_uuid)
+    )
+    assert summary["profile_source_record_id"] == str(profile_source_record_uuid)
+    assert summary["extraction_source_record_id"] == str(profile_source_record_uuid)
+    assert summary["document_id"] is None
+    assert summary["candidate_skill_count"] == 0
+    assert summary["quality_status"] == "profile_only"
     mock_connection.commit.assert_called_once()

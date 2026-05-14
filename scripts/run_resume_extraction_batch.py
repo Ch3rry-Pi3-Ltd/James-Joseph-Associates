@@ -17,6 +17,8 @@ already present in `scripts/run_resume_extraction.py`, while adding:
 - one summary file for later review
 - a manifest-based skip layer so unchanged candidates are not reprocessed
 - a narrow stable-failure skip for unchanged no-resume cases
+- an optional profile-only persistence path for no-resume candidates that still
+  carry useful contact data and notes
 
 What this script does
 ---------------------
@@ -35,6 +37,7 @@ What this script does not do
 It does not, by default:
 
 - write accepted structured data into the database
+- write profile-only no-resume candidates into the database
 - define the final evaluation threshold policy
 - replace later Supabase persistence or dashboards
 - guarantee zero source-system reads for skipped candidates
@@ -65,6 +68,13 @@ Run a batch and persist accepted outputs into the canonical schema:
         --candidate-id 12345678 ^
         --enable-quality-gate ^
         --persist-accepted-output
+
+Run a batch and persist known no-resume candidates as profile-only records:
+
+    uv run python scripts/run_resume_extraction_batch.py ^
+        --jobadder-account 2236 ^
+        --candidate-id 13812978 ^
+        --persist-no-resume-candidates
 
 Force a reprocess even if the manifest says the candidate has already been
 handled successfully with the same fingerprint:
@@ -108,6 +118,7 @@ from backend.services.jobadder_ingest import (
 )
 from backend.services.resume_extraction import ResumeExtractionError
 from backend.services.resume_extraction_persistence import (
+    persist_jobadder_candidate_profile_without_resume,
     persist_accepted_resume_extraction_result,
 )
 from scripts.run_resume_extraction import (
@@ -128,6 +139,9 @@ BATCH_FINGERPRINT_RELEVANT_FILES = (
     Path("backend/services/text_cleaning.py"),
     Path("backend/services/resume_text.py"),
     Path("scripts/run_resume_extraction.py"),
+)
+NO_RESUME_FAILURE_MESSAGE = (
+    "No likely JobAdder resume attachment was found for this candidate."
 )
 
 
@@ -269,6 +283,14 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help=(
             "Persist accepted quality-gated candidate outputs into the "
             "canonical Supabase/Postgres schema."
+        ),
+    )
+    parser.add_argument(
+        "--persist-no-resume-candidates",
+        action="store_true",
+        help=(
+            "Persist JobAdder candidates that have no selected resume "
+            "attachment as profile-only canonical records."
         ),
     )
     parser.add_argument(
@@ -778,8 +800,115 @@ def is_stable_source_failure_manifest_record(record: dict[str, Any]) -> bool:
 
     return (
         failure_message.strip()
-        == "No likely JobAdder resume attachment was found for this candidate."
+        == NO_RESUME_FAILURE_MESSAGE
     )
+
+
+def build_no_resume_failure_record(*, candidate_id: int) -> dict[str, Any]:
+    """
+    Build the stable failure record used for known no-resume candidates.
+
+    Parameters
+    ----------
+    candidate_id : int
+        Candidate ID for the current batch item.
+
+    Returns
+    -------
+    dict[str, Any]
+        Structured failure record matching the existing manifest skip rule.
+
+    Notes
+    -----
+    This helper centralises the known terminal no-resume message so the batch
+    runner does not accidentally drift into using slightly different wording in
+    different branches. That wording matters because the stable-failure skip
+    rule intentionally matches this case narrowly.
+
+    Example
+    -------
+    A returned record looks like:
+
+        {
+            "candidate_id": 13812978,
+            "stage": "resume_selection",
+            "message": "No likely JobAdder resume attachment was found for this candidate.",
+        }
+    """
+
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "candidate_id": candidate_id,
+        "error_type": "JobAdderIngestPreparationError",
+        "message": NO_RESUME_FAILURE_MESSAGE,
+        "stage": "resume_selection",
+        "details": [],
+    }
+
+
+def build_profile_only_persistence_result_payload(
+    *,
+    ingest_payload: dict[str, Any],
+    persistence_result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build one saved JSON artifact for a persisted no-resume candidate profile.
+
+    Parameters
+    ----------
+    ingest_payload : dict[str, Any]
+        JobAdder ingest shell used to detect the no-resume candidate.
+
+    persistence_result : dict[str, Any]
+        Persistence summary returned by the profile-only write path.
+
+    Returns
+    -------
+    dict[str, Any]
+        JSON-ready payload suitable for per-candidate batch output.
+
+    Notes
+    -----
+    This artifact is intentionally smaller than a full extraction result
+    because no CV extraction actually happened. The goal is to preserve:
+
+    - who the candidate was
+    - why the extraction path did not run
+    - what canonical IDs were written instead
+
+    Example
+    -------
+    The saved payload contains:
+
+        payload["processing_outcome"] == "profile_only_persisted"
+        payload["persistence_result"]["candidate_id"]
+    """
+
+    notes_payload = ingest_payload.get("notes", {})
+    attachments_payload = ingest_payload.get("attachments", {})
+    ingest_shell = ingest_payload.get("ingest_shell", {})
+
+    return {
+        "source_system": ingest_payload.get("source_system"),
+        "source_candidate_id": ingest_payload.get("source_candidate_id"),
+        "jobadder_account": ingest_payload.get("jobadder_account"),
+        "processing_outcome": "profile_only_persisted",
+        "profile_persistence_reason": "no_resume_attachment",
+        "candidate_context": ingest_shell.get("core_identity", {}),
+        "attachments_summary": {
+            "attachment_count": attachments_payload.get("attachment_count"),
+            "resume_attachment_count": attachments_payload.get(
+                "resume_attachment_count"
+            ),
+        },
+        "cleaned_candidate_notes": notes_payload.get("cleaned_items", []),
+        "latest_resume": None,
+        "persistence_requested": True,
+        "persistence_result": persistence_result,
+        "failure_record": build_no_resume_failure_record(
+            candidate_id=int(ingest_payload["source_candidate_id"])
+        ),
+    }
 
 
 def _source_markers_without_contract(source_markers: dict[str, Any]) -> dict[str, Any]:
@@ -1102,6 +1231,7 @@ def build_batch_summary(
     *,
     candidate_ids: list[int],
     successes: list[dict[str, Any]],
+    profile_only_persisted: list[dict[str, Any]],
     failures: list[dict[str, Any]],
     skipped: list[dict[str, Any]],
     output_dir: Path,
@@ -1118,6 +1248,10 @@ def build_batch_summary(
 
     successes : list[dict[str, Any]]
         Per-candidate success records built during the batch loop.
+
+    profile_only_persisted : list[dict[str, Any]]
+        Candidates persisted as profile-only records because no selected resume
+        attachment existed.
 
     failures : list[dict[str, Any]]
         Per-candidate failure records built during the batch loop.
@@ -1167,6 +1301,7 @@ def build_batch_summary(
         "requested_candidate_ids": candidate_ids,
         "requested_count": len(candidate_ids),
         "success_count": len(successes),
+        "profile_only_persisted_count": len(profile_only_persisted),
         "failure_count": len(failures),
         "skipped_count": len(skipped),
         "fallback_count": fallback_count,
@@ -1175,6 +1310,7 @@ def build_batch_summary(
         "quality_log_jsonl": str(quality_log_jsonl) if quality_log_jsonl is not None else None,
         "manifest_jsonl": str(manifest_jsonl) if manifest_jsonl is not None else None,
         "successes": successes,
+        "profile_only_persisted": profile_only_persisted,
         "failures": failures,
         "skipped": skipped,
     }
@@ -1204,6 +1340,7 @@ def print_batch_summary(summary: dict[str, Any]) -> None:
         "",
         f"Requested candidates: {summary['requested_count']}",
         f"Successful candidates: {summary['success_count']}",
+        f"Profile-only persisted candidates: {summary['profile_only_persisted_count']}",
         f"Failed candidates: {summary['failure_count']}",
         f"Skipped candidates: {summary['skipped_count']}",
         f"Fallback reruns: {summary['fallback_count']}",
@@ -1301,6 +1438,7 @@ def main(argv: list[str] | None = None) -> int:
         contract_fingerprint = build_extraction_contract_fingerprint(args=args)
 
         successes: list[dict[str, Any]] = []
+        profile_only_persisted: list[dict[str, Any]] = []
         failures: list[dict[str, Any]] = []
         skipped: list[dict[str, Any]] = []
 
@@ -1320,6 +1458,7 @@ def main(argv: list[str] | None = None) -> int:
             # mutable namespace object was reused across the whole loop.
             candidate_args = argparse.Namespace(**deepcopy(vars(args)))
             candidate_args.candidate_id = candidate_id
+            ingest_payload: dict[str, Any] | None = None
             source_fingerprint: str | None = None
             candidate_fingerprint: str | None = None
             source_markers: dict[str, Any] | None = None
@@ -1398,6 +1537,54 @@ def main(argv: list[str] | None = None) -> int:
                                 "  Skipped: identical no-resume source failure already exists."
                             )
                         continue
+
+                if (
+                    args.persist_no_resume_candidates
+                    and not isinstance(ingest_payload.get("latest_resume"), dict)
+                ):
+                    profile_persistence_result = (
+                        persist_jobadder_candidate_profile_without_resume(
+                            ingest_payload
+                        )
+                    )
+                    output_path = build_candidate_output_path(
+                        output_dir=batch_output_dir,
+                        candidate_id=candidate_id,
+                    )
+                    write_json_output(
+                        payload=build_profile_only_persistence_result_payload(
+                            ingest_payload=ingest_payload,
+                            persistence_result=profile_persistence_result,
+                        ),
+                        output_path=output_path,
+                    )
+                    profile_only_record = {
+                        "candidate_id": candidate_id,
+                        "output_json": str(output_path),
+                        "persistence_result": profile_persistence_result,
+                        "profile_persistence_reason": "no_resume_attachment",
+                    }
+                    profile_only_persisted.append(profile_only_record)
+                    manifest_record = build_batch_manifest_record(
+                        candidate_id=candidate_id,
+                        source_fingerprint=source_fingerprint,
+                        candidate_fingerprint=candidate_fingerprint,
+                        source_markers=source_markers,
+                        output_json=str(output_path),
+                        processing_outcome="failure",
+                        failure_record=build_no_resume_failure_record(
+                            candidate_id=candidate_id
+                        ),
+                    )
+                    append_jsonl_log(
+                        payload=manifest_record,
+                        output_path=args.manifest_jsonl,
+                    )
+                    manifest_records.append(manifest_record)
+                    print(
+                        "  Persisted profile-only candidate record: no resume attachment was available."
+                    )
+                    continue
 
                 result = run_live_resume_extraction_with_optional_quality_gate(
                     candidate_args
@@ -1514,6 +1701,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_ids=candidate_ids,
             successes=successes,
             failures=failures,
+            profile_only_persisted=profile_only_persisted,
             skipped=skipped,
             output_dir=batch_output_dir,
             quality_log_jsonl=args.quality_log_jsonl,

@@ -33,9 +33,9 @@ client's latest feedback.
   - [x] Produce an operator-friendly inspection/check script for a persisted
     candidate snapshot.
   - [ ] Decide what should count as a persistence pass/fail before bulk loads.
-- [ ] Show the current Supabase canonical fields/entities clearly so they can
+- [x] Show the current Supabase canonical fields/entities clearly so they can
   be reviewed against business requirements before wider ingestion.
-- [ ] Extend persistence design for no-CV / sparse-profile cases so valuable
+- [x] Extend persistence design for no-CV / sparse-profile cases so valuable
   JobAdder contacts are still retained even when there is no strong resume
   document.
 - [ ] Confirm how JobAdder notes should move from provenance-bearing payloads
@@ -171,7 +171,7 @@ This step should happen before API implementation so the backend does not encode
   - [ ] CV/document fingerprints.
 - [ ] Add the near-term modelling rules highlighted by the current JobAdder
   ingestion work:
-  - [ ] No-CV / sparse-profile candidates must still be persistable as
+  - [x] No-CV / sparse-profile candidates must still be persistable as
     valuable contacts.
   - [ ] LinkedIn URL should be treated as a first-class reconciliation signal.
   - [ ] Recruiter notes should move toward first-class interaction modelling,
