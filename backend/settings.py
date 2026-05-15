@@ -16,6 +16,7 @@ It gives the rest of the repository a stable way to talk about:
 - the OpenRouter API key used by the shared LLM provider layer
 - the OpenRouter base URL used for OpenAI-compatible routing
 - the default timeout used for backend LLM provider calls
+- the Dropbox OAuth app credentials used for Dropbox integration routes
 
 Keeping settings in one place makes the project easier to understand because:
 
@@ -130,6 +131,22 @@ class Settings(BaseSettings):
 
         This must match the callback URI used later during the OAuth flow.
 
+    dropbox_client_id : str
+        OAuth app key for the registered Dropbox application.
+
+        This should come from the Dropbox App Console once the shared project
+        app has been created.
+
+    dropbox_client_secret : str
+        OAuth app secret for the registered Dropbox application.
+
+        This is a server-side secret and must never be committed.
+
+    dropbox_redirect_uri : str
+        Exact redirect URI registered for the Dropbox application.
+
+        This must match the callback URI used later during the OAuth flow.
+
     openai_api_key : str
         OpenAI API key used by the backend LLM provider layer.
 
@@ -179,6 +196,9 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_ID
         JOBADDER_CLIENT_SECRET
         JOBADDER_REDIRECT_URI
+        DROPBOX_CLIENT_ID
+        DROPBOX_CLIENT_SECRET
+        DROPBOX_REDIRECT_URI
         OPENAI_API_KEY
         OPENROUTER_API_KEY
         OPENROUTER_BASE_URL
@@ -199,6 +219,9 @@ class Settings(BaseSettings):
         JOBADDER_CLIENT_ID=""
         JOBADDER_CLIENT_SECRET=""
         JOBADDER_REDIRECT_URI=""
+        DROPBOX_CLIENT_ID=""
+        DROPBOX_CLIENT_SECRET=""
+        DROPBOX_REDIRECT_URI=""
         OPENAI_API_KEY=""
         OPENROUTER_API_KEY=""
         OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
@@ -307,6 +330,31 @@ class Settings(BaseSettings):
     jobadder_redirect_uri: str = Field(
         default="",
         validation_alias="JOBADDER_REDIRECT_URI",
+    )
+
+    # OAuth app key for the shared Dropbox developer application.
+    #   - This comes from the Dropbox App Console, not from each end user.
+    #   - An empty default keeps local development safe until the app has been
+    #     registered and the real credential is configured.
+    dropbox_client_id: str = Field(
+        default="",
+        validation_alias="DROPBOX_CLIENT_ID",
+    )
+
+    # OAuth app secret for the shared Dropbox developer application.
+    #   - This is a backend-only secret and must never be exposed to client-side
+    #     code or committed to the repository.
+    dropbox_client_secret: str = Field(
+        default="",
+        validation_alias="DROPBOX_CLIENT_SECRET",
+    )
+
+    # Exact callback URI registered in the Dropbox App Console.
+    #   - Dropbox validates that the runtime redirect URI matches one of the
+    #     registered app redirect URIs exactly.
+    dropbox_redirect_uri: str = Field(
+        default="",
+        validation_alias="DROPBOX_REDIRECT_URI",
     )
 
     # Shared OpenAI API key for the backend LLM provider layer.

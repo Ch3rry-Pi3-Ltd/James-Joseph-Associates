@@ -301,6 +301,7 @@ def build_resume_extraction_persistence_payload(
         ),
         "last_contacted_at": _select_latest_note_timestamp(cleaned_candidate_notes),
         "resume_updated_at": _clean_optional_string(latest_resume.get("created_at")),
+        "cleaned_candidate_notes": cleaned_candidate_notes,
         "latest_resume": latest_resume,
         "cleaned_resume_text": extraction_input.get("cleaned_resume_text"),
         "resume_content_hash": _hash_text(
@@ -455,6 +456,7 @@ def build_jobadder_candidate_profile_persistence_payload(
         "summary": None,
         "last_contacted_at": _select_latest_note_timestamp(cleaned_candidate_notes),
         "resume_updated_at": None,
+        "cleaned_candidate_notes": cleaned_candidate_notes,
         "candidate_source_payload": candidate_source_payload,
         "candidate_source_payload_hash": _hash_json_ready_payload(
             candidate_source_payload

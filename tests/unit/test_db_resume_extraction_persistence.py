@@ -110,10 +110,13 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
 
     with patch(
         "backend.db.resume_extraction_persistence.postgres_connection"
-    ) as mock_postgres_connection:
+    ) as mock_postgres_connection, patch(
+        "backend.db.resume_extraction_persistence._refresh_candidate_note_interactions"
+    ) as mock_refresh_note_interactions:
         mock_postgres_connection.return_value.__enter__.return_value = (
             mock_connection
         )
+        mock_refresh_note_interactions.return_value = ["interaction-1"]
 
         summary = persist_jobadder_resume_extraction_snapshot(persistence_payload)
 
@@ -126,6 +129,7 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
     assert summary["resume_source_record_id"] is None
     assert summary["document_id"] is None
     assert summary["candidate_skill_count"] == 0
+    assert summary["candidate_note_interaction_count"] == 1
     assert isinstance(summary["person_id"], str)
     assert isinstance(summary["candidate_id"], str)
     mock_connection.commit.assert_called_once()
@@ -207,10 +211,13 @@ def test_persist_jobadder_candidate_profile_snapshot_commits_and_returns_summary
 
     with patch(
         "backend.db.resume_extraction_persistence.postgres_connection"
-    ) as mock_postgres_connection:
+    ) as mock_postgres_connection, patch(
+        "backend.db.resume_extraction_persistence._refresh_candidate_note_interactions"
+    ) as mock_refresh_note_interactions:
         mock_postgres_connection.return_value.__enter__.return_value = (
             mock_connection
         )
+        mock_refresh_note_interactions.return_value = ["interaction-1", "interaction-2"]
 
         summary = persist_jobadder_candidate_profile_snapshot(persistence_payload)
 
@@ -223,5 +230,6 @@ def test_persist_jobadder_candidate_profile_snapshot_commits_and_returns_summary
     assert summary["extraction_source_record_id"] == str(profile_source_record_uuid)
     assert summary["document_id"] is None
     assert summary["candidate_skill_count"] == 0
+    assert summary["candidate_note_interaction_count"] == 2
     assert summary["quality_status"] == "profile_only"
     mock_connection.commit.assert_called_once()

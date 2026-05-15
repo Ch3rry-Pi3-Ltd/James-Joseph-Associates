@@ -2,7 +2,7 @@
 Schemas for integration-facing API routes.
 
 This module contains response models for endpoints that sit at the boundary
-between this backend and external systems such as JobAdder.
+between this backend and external systems such as JobAdder and Dropbox.
 
 It gives the rest of the repository a stable way to talk about:
 
@@ -13,6 +13,10 @@ It gives the rest of the repository a stable way to talk about:
 - authenticated JobAdder candidate-detail responses
 - authenticated JobAdder candidate-skills responses
 - authenticated JobAdder candidate-notes responses
+- Dropbox authorization-link responses
+- Dropbox callback responses
+- authenticated Dropbox account-preview responses
+- authenticated Dropbox folder-preview responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
 - keeping integration response shapes out of route modules
@@ -503,6 +507,229 @@ class JobAdderCandidateNotesResponse(BaseModel):
     )
 
 
+class DropboxAuthorizationUrlResponse(BaseModel):
+    """
+    Response returned when the backend builds a Dropbox approval URL.
+
+    Attributes
+    ----------
+    authorization_url : str
+        Fully assembled Dropbox OAuth authorization URL.
+
+    oauth_configuration_ready : bool
+        Whether the backend had the minimum settings needed to build the URL.
+
+    state : str | None
+        Optional opaque state value included in the URL.
+
+    Notes
+    -----
+    - This response is intentionally small.
+    - It exists to let the backend return one clean approval link for Tom to
+      open.
+    - The URL itself still points at Dropbox, not at our backend.
+
+    Example
+    -------
+    A response might look like:
+
+        {
+            "authorization_url": "https://www.dropbox.com/oauth2/authorize?...",
+            "oauth_configuration_ready": true,
+            "state": "connect-dropbox-dev"
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    authorization_url: str = Field(
+        min_length=1,
+        description="Fully assembled Dropbox OAuth authorization URL.",
+    )
+    oauth_configuration_ready: bool = Field(
+        description=(
+            "Whether the backend had the minimum settings needed to build the "
+            "URL."
+        ),
+    )
+    state: str | None = Field(
+        default=None,
+        description="Optional opaque state value included in the URL.",
+    )
+
+
+class DropboxOAuthConnectionSavedResponse(BaseModel):
+    """
+    Response returned when the Dropbox OAuth callback completes successfully.
+
+    Attributes
+    ----------
+    status : Literal["connected"]
+        Fixed status confirming the Dropbox connection was completed and saved.
+
+    message : str
+        Short human-readable summary of the successful connection result.
+
+    oauth_connection_id : str
+        Primary key of the saved Dropbox OAuth connection row.
+
+    dropbox_account_id : str
+        Dropbox account identifier returned by the provider and used as the
+        natural key for persistence.
+
+    state : str | None
+        Optional opaque state value returned by Dropbox.
+
+    next_step : str
+        Short explanation of what should happen next after the connection was
+        saved.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "status": "connected",
+            "message": "Dropbox connection completed successfully.",
+            "oauth_connection_id": "11111111-1111-1111-1111-111111111111",
+            "dropbox_account_id": "dbid:AAExample",
+            "state": "connect-dropbox-dev",
+            "next_step": "The Dropbox tokens were saved successfully. The next step is to make the first authenticated Dropbox API read."
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["connected"] = Field(
+        description="Fixed status confirming the Dropbox connection was saved."
+    )
+    message: str = Field(
+        min_length=1,
+        description="Safe human-readable summary of the successful connection result.",
+    )
+    oauth_connection_id: str = Field(
+        min_length=1,
+        description="Primary key of the saved Dropbox OAuth connection row.",
+    )
+    dropbox_account_id: str = Field(
+        min_length=1,
+        description="Dropbox account identifier associated with the saved connection.",
+    )
+    state: str | None = Field(
+        default=None,
+        description="Optional opaque state value returned by Dropbox.",
+    )
+    next_step: str = Field(
+        min_length=1,
+        description="Short explanation of the next integration step.",
+    )
+
+
+class DropboxCurrentAccountResponse(BaseModel):
+    """
+    Response returned when the backend fetches the connected Dropbox account.
+
+    Attributes
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used to locate the stored OAuth connection.
+
+    account : dict[str, Any]
+        Current-account object returned by Dropbox.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "dropbox_account_id": "dbid:AAExample",
+            "account": {...}
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    dropbox_account_id: str = Field(
+        min_length=1,
+        description="Dropbox account identifier used for the authenticated read.",
+    )
+    account: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Current-account object returned by Dropbox.",
+    )
+
+
+class DropboxFolderPreviewResponse(BaseModel):
+    """
+    Response returned when the backend fetches a first-page Dropbox folder
+    preview.
+
+    Attributes
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used to locate the stored OAuth connection.
+
+    path : str
+        Dropbox folder path that was requested.
+
+    entry_count : int
+        Number of entries returned in this response.
+
+    has_more : bool
+        Whether Dropbox reported more entries beyond this first page.
+
+    cursor : str | None
+        Dropbox cursor returned for later continuation, when present.
+
+    entries : list[dict[str, Any]]
+        Folder entries returned by Dropbox.
+
+    Notes
+    -----
+    - This is intentionally a first-page preview rather than a complete cursor
+      traversal workflow.
+    - That makes it suitable for early source-shape inspection work.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "dropbox_account_id": "dbid:AAExample",
+            "path": "",
+            "entry_count": 2,
+            "has_more": false,
+            "cursor": "...",
+            "entries": [...]
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    dropbox_account_id: str = Field(
+        min_length=1,
+        description="Dropbox account identifier used for the authenticated read.",
+    )
+    path: str = Field(
+        description="Dropbox folder path that was requested.",
+    )
+    entry_count: int = Field(
+        ge=0,
+        description="Number of folder entries returned in this response.",
+    )
+    has_more: bool = Field(
+        description="Whether Dropbox reported more entries beyond this first page.",
+    )
+    cursor: str | None = Field(
+        default=None,
+        description="Dropbox cursor returned for later continuation, when present.",
+    )
+    entries: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Folder entries returned by Dropbox.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
     "JobAdderCandidateDetailResponse",
@@ -510,4 +737,8 @@ __all__ = [
     "JobAdderCandidateSkillsResponse",
     "JobAdderCandidatesPreviewResponse",
     "JobAdderOAuthConnectionSavedResponse",
+    "DropboxAuthorizationUrlResponse",
+    "DropboxCurrentAccountResponse",
+    "DropboxFolderPreviewResponse",
+    "DropboxOAuthConnectionSavedResponse",
 ]

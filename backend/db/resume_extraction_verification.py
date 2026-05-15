@@ -40,6 +40,8 @@ the first accepted-output persistence slice:
 - source-record links
 - document links
 - candidate skills
+- JobAdder candidate-note interactions
+- interaction participants
 
 Example
 -------
@@ -81,6 +83,7 @@ def get_resume_extraction_persistence_snapshot(
     candidate_source_record_id: str | None = None,
     resume_source_record_id: str | None = None,
     extraction_source_record_id: str | None = None,
+    candidate_note_interaction_count: int | None = None,
 ) -> dict[str, Any]:
     """
     Return the persisted canonical snapshot for one accepted extraction write.
@@ -107,6 +110,12 @@ def get_resume_extraction_persistence_snapshot(
 
     extraction_source_record_id : str | None
         Expected source-record UUID for the accepted structured extraction.
+
+    candidate_note_interaction_count : int | None
+        Expected count of persisted JobAdder candidate-note interactions when
+        known. This value is not used to fetch rows directly, but the snapshot
+        keeps it in `expected_ids` so the higher-level verifier can compare the
+        stored note interactions against the write summary cleanly.
 
     Returns
     -------
@@ -178,6 +187,16 @@ def get_resume_extraction_persistence_snapshot(
                 cursor,
                 document_id=document_id,
             )
+            candidate_note_interactions = _fetch_candidate_note_interactions(
+                cursor,
+                candidate_id=candidate_id,
+            )
+            interaction_participants = _fetch_interaction_participants(
+                cursor,
+                interaction_ids=[
+                    row["id"] for row in candidate_note_interactions if row.get("id")
+                ],
+            )
 
     # Normalize DB-native values once at the verification-read boundary.
     #
@@ -202,6 +221,8 @@ def get_resume_extraction_persistence_snapshot(
             "source_records": source_records,
             "source_record_links": source_record_links,
             "document_links": document_links,
+            "candidate_note_interactions": candidate_note_interactions,
+            "interaction_participants": interaction_participants,
             "expected_ids": {
                 "candidate_id": candidate_id,
                 "person_id": person_id,
@@ -210,6 +231,7 @@ def get_resume_extraction_persistence_snapshot(
                 "candidate_source_record_id": candidate_source_record_id,
                 "resume_source_record_id": resume_source_record_id,
                 "extraction_source_record_id": extraction_source_record_id,
+                "candidate_note_interaction_count": candidate_note_interaction_count,
             },
         },
     )
@@ -367,6 +389,79 @@ def _fetch_document_links(
         order by relationship_type, created_at
         """,
         {"document_id": document_id},
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def _fetch_candidate_note_interactions(
+    cursor: Any,
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    """
+    Return the persisted JobAdder note interactions for one candidate.
+
+    Example
+    -------
+    A candidate with three persisted JobAdder notes should return three
+    interaction rows here.
+    """
+
+    cursor.execute(
+        """
+        select distinct
+            i.id,
+            i.interaction_type,
+            i.occurred_at,
+            i.subject,
+            i.body,
+            i.summary,
+            i.source_system,
+            i.created_at
+        from interactions i
+        inner join interaction_participants ip
+            on ip.interaction_id = i.id
+        where i.source_system = 'jobadder'
+          and i.interaction_type = 'jobadder_candidate_note'
+          and ip.candidate_id = %(candidate_id)s
+        order by i.occurred_at nulls last, i.created_at
+        """,
+        {"candidate_id": candidate_id},
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def _fetch_interaction_participants(
+    cursor: Any,
+    *,
+    interaction_ids: list[str],
+) -> list[dict[str, Any]]:
+    """
+    Return participant rows for the supplied interaction IDs.
+
+    Example
+    -------
+    Passing the IDs of persisted JobAdder note interactions returns the
+    participant rows that should point back to the candidate and person.
+    """
+
+    if not interaction_ids:
+        return []
+
+    cursor.execute(
+        """
+        select
+            id,
+            interaction_id,
+            person_id,
+            candidate_id,
+            role_in_interaction,
+            created_at
+        from interaction_participants
+        where interaction_id = any(%(interaction_ids)s)
+        order by interaction_id, created_at
+        """,
+        {"interaction_ids": interaction_ids},
     )
     return [dict(row) for row in cursor.fetchall()]
 

@@ -342,6 +342,14 @@ def persist_jobadder_resume_extraction_snapshot(
                 extracted_skills=persistence_payload.get("skills", []),
                 extracted_tools=persistence_payload.get("tools_and_platforms", []),
             )
+            note_interaction_ids = _refresh_candidate_note_interactions(
+                cursor,
+                candidate_id=candidate_id,
+                person_id=person_id,
+                cleaned_candidate_notes=persistence_payload.get(
+                    "cleaned_candidate_notes", []
+                ),
+            )
 
         connection.commit()
 
@@ -358,6 +366,7 @@ def persist_jobadder_resume_extraction_snapshot(
             ),
             "extraction_source_record_id": extraction_source_record["id"],
             "candidate_skill_count": len(linked_skill_ids),
+            "candidate_note_interaction_count": len(note_interaction_ids),
             "quality_status": persistence_payload.get("quality_status"),
         }
     )
@@ -504,6 +513,14 @@ def persist_jobadder_candidate_profile_snapshot(
                     source_record_id=profile_source_record["id"],
                     company_id=current_company_id,
                 )
+            note_interaction_ids = _refresh_candidate_note_interactions(
+                cursor,
+                candidate_id=candidate_id,
+                person_id=person_id,
+                cleaned_candidate_notes=persistence_payload.get(
+                    "cleaned_candidate_notes", []
+                ),
+            )
 
         connection.commit()
 
@@ -523,6 +540,7 @@ def persist_jobadder_candidate_profile_snapshot(
             "profile_source_record_id": profile_source_record["id"],
             "extraction_source_record_id": profile_source_record["id"],
             "candidate_skill_count": 0,
+            "candidate_note_interaction_count": len(note_interaction_ids),
             "quality_status": "profile_only",
             "profile_persistence_reason": persistence_payload.get(
                 "profile_persistence_reason"
@@ -1171,6 +1189,335 @@ def _refresh_candidate_skills(
     return target_skill_ids
 
 
+def _refresh_candidate_note_interactions(
+    cursor: Cursor[Any],
+    *,
+    candidate_id: str,
+    person_id: str,
+    cleaned_candidate_notes: list[dict[str, Any]],
+) -> list[str]:
+    """
+    Refresh first-class JobAdder note interactions for one candidate.
+
+    Parameters
+    ----------
+    cursor : Cursor[Any]
+        Open transaction cursor.
+
+    candidate_id : str
+        Canonical candidate UUID receiving the refreshed note interactions.
+
+    person_id : str
+        Canonical person UUID linked to that candidate.
+
+    cleaned_candidate_notes : list[dict[str, Any]]
+        Cleaned JobAdder note payload prepared by the service layer.
+
+    Returns
+    -------
+    list[str]
+        Interaction IDs created for the current note set.
+
+    Notes
+    -----
+    This first interaction slice is intentionally narrow and source-synchronised.
+
+    We currently treat JobAdder candidate notes as:
+
+    - `interactions.source_system = "jobadder"`
+    - `interactions.interaction_type = "jobadder_candidate_note"`
+
+    The helper first removes the previously persisted JobAdder note
+    interactions for this candidate, then recreates the current set from the
+    latest source snapshot.
+
+    That replacement strategy is deliberate:
+
+    - the source of truth is still the latest JobAdder note set
+    - the current schema has no direct `interaction_id` target inside
+      `source_record_links`
+    - replacing the candidate's JobAdder-note interactions is simpler and more
+      reliable than guessing note identity across reruns
+
+    Empty notes are still preserved in provenance payloads, but they are not
+    promoted into first-class `interactions` rows because they add no useful
+    queryable body content.
+
+    Example
+    -------
+    A note item such as:
+
+        {
+            "type": "Phone Call",
+            "created_at": "2026-05-13T09:00:00Z",
+            "cleaned_text": "Candidate open to move.",
+        }
+
+    becomes one `interactions` row plus:
+
+        - one candidate participant link
+        - one person participant link
+    """
+
+    interaction_entries = _build_candidate_note_interaction_entries(
+        cleaned_candidate_notes=cleaned_candidate_notes
+    )
+    _delete_existing_candidate_note_interactions(
+        cursor,
+        candidate_id=candidate_id,
+    )
+
+    interaction_ids: list[str] = []
+
+    for entry in interaction_entries:
+        cursor.execute(
+            """
+            insert into interactions (
+                interaction_type,
+                occurred_at,
+                subject,
+                body,
+                summary,
+                source_system
+            )
+            values (
+                %(interaction_type)s,
+                %(occurred_at)s,
+                %(subject)s,
+                %(body)s,
+                %(summary)s,
+                %(source_system)s
+            )
+            returning id
+            """,
+            entry,
+        )
+        row = cursor.fetchone()
+        if row is None:
+            raise RuntimeError("Failed to create interaction row.")
+
+        interaction_id = row["id"]
+        interaction_ids.append(interaction_id)
+
+        _insert_interaction_participant(
+            cursor,
+            interaction_id=interaction_id,
+            candidate_id=candidate_id,
+            role_in_interaction="candidate_subject",
+        )
+        _insert_interaction_participant(
+            cursor,
+            interaction_id=interaction_id,
+            person_id=person_id,
+            role_in_interaction="person_subject",
+        )
+
+    return interaction_ids
+
+
+def _build_candidate_note_interaction_entries(
+    *,
+    cleaned_candidate_notes: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Convert cleaned JobAdder note items into insert-ready interaction entries.
+
+    Parameters
+    ----------
+    cleaned_candidate_notes : list[dict[str, Any]]
+        Cleaned note dictionaries prepared by the service layer.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Interaction insert payloads for non-empty note bodies.
+
+    Notes
+    -----
+    We keep the interaction model deliberately factual:
+
+    - `subject` is the JobAdder note type when available
+    - `body` is the cleaned note text
+    - `summary` is a short preview of that body
+
+    Notes with no usable text are skipped here because the first-class
+    interaction layer should stay queryable and meaningful. Their existence is
+    still preserved in the upstream provenance payloads.
+
+    Example
+    -------
+    A cleaned note such as:
+
+        {
+            "type": "Email Reply",
+            "cleaned_text": "Happy to discuss the role next week.",
+        }
+
+    becomes an interaction entry with:
+
+        subject="Email Reply"
+        body="Happy to discuss the role next week."
+    """
+
+    entries: list[dict[str, Any]] = []
+
+    for note in cleaned_candidate_notes:
+        body = _build_candidate_note_interaction_body(note)
+        if body is None:
+            continue
+
+        subject = _clean_optional_string(note.get("type")) or "JobAdder note"
+        occurred_at = _clean_optional_string(
+            note.get("updated_at")
+        ) or _clean_optional_string(note.get("created_at"))
+
+        entries.append(
+            {
+                "interaction_type": "jobadder_candidate_note",
+                "occurred_at": occurred_at,
+                "subject": subject,
+                "body": body,
+                "summary": _build_interaction_summary_preview(body),
+                "source_system": "jobadder",
+            }
+        )
+
+    return entries
+
+
+def _build_candidate_note_interaction_body(note: dict[str, Any]) -> str | None:
+    """
+    Return the queryable interaction body for one cleaned JobAdder note.
+
+    Example
+    -------
+    A note with:
+
+        cleaned_text="Candidate open to new roles."
+
+    returns:
+
+        "Candidate open to new roles."
+    """
+
+    for key in ("cleaned_text", "text"):
+        body = _clean_optional_string(note.get(key))
+        if body is not None:
+            return body
+    return None
+
+
+def _build_interaction_summary_preview(body: str) -> str:
+    """
+    Build a short summary preview for one interaction body.
+
+    Example
+    -------
+    A long note body is shortened to a compact preview of at most 240
+    characters for easier operator inspection.
+    """
+
+    if len(body) <= 240:
+        return body
+    return body[:237].rstrip() + "..."
+
+
+def _delete_existing_candidate_note_interactions(
+    cursor: Cursor[Any],
+    *,
+    candidate_id: str,
+) -> None:
+    """
+    Delete the previously persisted JobAdder note interactions for one candidate.
+
+    Notes
+    -----
+    This helper removes only the narrow interaction slice created by
+    `_refresh_candidate_note_interactions(...)`:
+
+    - `source_system = "jobadder"`
+    - `interaction_type = "jobadder_candidate_note"`
+    - linked to the supplied candidate
+
+    It intentionally leaves any future non-note interactions untouched.
+    """
+
+    cursor.execute(
+        """
+        select distinct i.id
+        from interactions i
+        inner join interaction_participants ip
+            on ip.interaction_id = i.id
+        where i.source_system = 'jobadder'
+          and i.interaction_type = 'jobadder_candidate_note'
+          and ip.candidate_id = %(candidate_id)s
+        """,
+        {"candidate_id": candidate_id},
+    )
+    interaction_ids = [row["id"] for row in cursor.fetchall()]
+
+    if not interaction_ids:
+        return
+
+    cursor.execute(
+        """
+        delete from interaction_participants
+        where interaction_id = any(%(interaction_ids)s)
+        """,
+        {"interaction_ids": interaction_ids},
+    )
+    cursor.execute(
+        """
+        delete from interactions
+        where id = any(%(interaction_ids)s)
+        """,
+        {"interaction_ids": interaction_ids},
+    )
+
+
+def _insert_interaction_participant(
+    cursor: Cursor[Any],
+    *,
+    interaction_id: str,
+    role_in_interaction: str,
+    person_id: str | None = None,
+    candidate_id: str | None = None,
+) -> None:
+    """
+    Insert one interaction participant row.
+
+    Example
+    -------
+    A note interaction can create both:
+
+        - a candidate participant row
+        - a person participant row
+    """
+
+    cursor.execute(
+        """
+        insert into interaction_participants (
+            interaction_id,
+            person_id,
+            candidate_id,
+            role_in_interaction
+        )
+        values (
+            %(interaction_id)s,
+            %(person_id)s,
+            %(candidate_id)s,
+            %(role_in_interaction)s
+        )
+        """,
+        {
+            "interaction_id": interaction_id,
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "role_in_interaction": role_in_interaction,
+        },
+    )
+
+
 def _build_ordered_skill_entries(
     *,
     extracted_skills: list[str],
@@ -1613,6 +1960,34 @@ def _make_json_safe_summary(value: Any) -> Any:
         return [_make_json_safe_summary(item) for item in value]
 
     return value
+
+
+def _clean_optional_string(value: Any) -> str | None:
+    """
+    Return a stripped string or `None` when the input is blank-like.
+
+    Example
+    -------
+    Inputs such as:
+
+        "  Phone Call  "
+        ""
+        None
+
+    become:
+
+        "Phone Call"
+        None
+        None
+    """
+
+    if not isinstance(value, str):
+        return None
+
+    cleaned_value = value.strip()
+    if cleaned_value == "":
+        return None
+    return cleaned_value
 
 
 __all__ = [

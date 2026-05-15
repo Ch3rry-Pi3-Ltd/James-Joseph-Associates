@@ -39,6 +39,7 @@ def test_verify_persisted_resume_extraction_result_passes_for_matching_snapshot(
         "resume_source_record_id": "source-resume",
         "extraction_source_record_id": "source-extraction",
         "candidate_skill_count": 2,
+        "candidate_note_interaction_count": 2,
     }
 
     snapshot = {
@@ -66,6 +67,16 @@ def test_verify_persisted_resume_extraction_result_passes_for_matching_snapshot(
             {"candidate_id": "candidate-uuid"},
             {"person_id": "person-uuid"},
         ],
+        "candidate_note_interactions": [
+            {"id": "interaction-1"},
+            {"id": "interaction-2"},
+        ],
+        "interaction_participants": [
+            {"interaction_id": "interaction-1", "candidate_id": "candidate-uuid"},
+            {"interaction_id": "interaction-1", "person_id": "person-uuid"},
+            {"interaction_id": "interaction-2", "candidate_id": "candidate-uuid"},
+            {"interaction_id": "interaction-2", "person_id": "person-uuid"},
+        ],
         "expected_ids": {},
     }
 
@@ -80,6 +91,70 @@ def test_verify_persisted_resume_extraction_result_passes_for_matching_snapshot(
     assert report.verification_passed is True
     assert report.failed_check_count == 0
     assert report.passed_check_count == len(report.checks)
+
+
+def test_verify_persisted_resume_extraction_result_flags_note_participant_mismatch() -> None:
+    """
+    Verify that missing note participant links produce a failed verification check.
+
+    Example
+    -------
+    A persistence summary that expects one candidate note interaction should
+    fail verification when the person participant row is missing.
+    """
+
+    from unittest.mock import patch
+
+    persistence_result = {
+        "candidate_id": "candidate-uuid",
+        "person_id": "person-uuid",
+        "candidate_source_record_id": "source-candidate",
+        "extraction_source_record_id": "source-extraction",
+        "candidate_note_interaction_count": 1,
+    }
+
+    snapshot = {
+        "candidate_profile": {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+        },
+        "candidate_skills": [],
+        "current_company": None,
+        "resume_document": None,
+        "source_records": [
+            {"id": "source-candidate"},
+            {"id": "source-extraction"},
+        ],
+        "source_record_links": [
+            {"source_record_id": "source-candidate", "candidate_id": "candidate-uuid"},
+            {"source_record_id": "source-candidate", "person_id": "person-uuid"},
+            {"source_record_id": "source-extraction", "candidate_id": "candidate-uuid"},
+            {"source_record_id": "source-extraction", "person_id": "person-uuid"},
+        ],
+        "document_links": [],
+        "candidate_note_interactions": [
+            {"id": "interaction-1"},
+        ],
+        "interaction_participants": [
+            {"interaction_id": "interaction-1", "candidate_id": "candidate-uuid"},
+        ],
+        "expected_ids": {},
+    }
+
+    with patch(
+        "backend.services.resume_extraction_verification.get_resume_extraction_persistence_snapshot",
+        return_value=snapshot,
+    ):
+        report = verify_persisted_resume_extraction_result(
+            persistence_result=persistence_result,
+        )
+
+    assert report.verification_passed is False
+    assert any(
+        check.name == "candidate_note_interaction_person_links_match"
+        and not check.passed
+        for check in report.checks
+    )
 
 
 def test_verify_persisted_resume_extraction_result_flags_missing_document_link() -> None:

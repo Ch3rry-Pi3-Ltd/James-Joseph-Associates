@@ -338,26 +338,32 @@ Conclusion:
 
 ## 4.6 "Are notes being stored?"
 
-**Status:** partially covered.
+**Status:** now covered in a first narrow interaction slice.
 
 What exists now:
 
 - cleaned recruiter notes are preserved inside `candidate_source_payload`
   provenance stored in `source_records.source_payload`
+- JobAdder candidate notes are now also promoted into first-class
+  `interactions`
+- those note interactions are linked back to the persisted person/candidate via
+  `interaction_participants`
 - `last_contacted_at` is derived from cleaned notes and written onto the
   canonical candidate row
 
 What is not yet implemented:
 
-- first-class recruiter notes / interactions written into the `interactions`
-  table
-- note participants written into `interaction_participants`
-- note-level query/reporting semantics
+- broader cross-source interaction modelling beyond JobAdder candidate notes
+- direct provenance links from note source records to interactions in the
+  current schema
+- richer note-level querying/reporting semantics
 
 Conclusion:
 
-- notes are currently retained in provenance
-- notes are **not yet** modelled as first-class canonical interactions
+- notes are now retained both:
+  - in provenance payloads
+  - and as first-class canonical interactions
+- the interaction slice is still intentionally narrow and JobAdder-specific
 
 ## 4.7 "Are LinkedIn URLs captured?"
 
@@ -424,12 +430,15 @@ Conclusion:
 
 These are the biggest current gaps relative to Tom's concerns.
 
-### Gap 2: first-class notes / interactions
+### Gap 2: broader interaction modelling beyond the first JobAdder note slice
 
-Notes are currently preserved in provenance, but not yet written into:
+Notes are now written into:
 
 - `interactions`
 - `interaction_participants`
+
+But the broader interaction model is still incomplete across other sources and
+other communication/event types.
 
 ### Gap 3: preferred/current CV policy
 
@@ -474,24 +483,29 @@ foundation while the broader modelling questions are handled deliberately.
 Based on this review and the latest implementation work, the next sensible
 implementation move is now:
 
-### promote notes into first-class interactions
+### broaden sparse-profile handling beyond explicit no-resume JobAdder cases
 
 Reason:
 
 - the first narrow no-resume/profile-only persistence path now exists
-- the biggest remaining mismatch with Tom's requirements is that notes are
-  still held in provenance payloads rather than queryable interaction rows
+- the first JobAdder note-to-interaction slice now exists
+- the next bigger mismatch with Tom's source landscape is wider sparse-profile
+  handling across non-CV and non-JobAdder inputs
 
 ## 8. Secondary next move after that
 
-After note promotion, the next sensible move is:
+After that, the next sensible move is:
 
-### broaden sparse-profile handling beyond explicit no-resume JobAdder cases
+### Dropbox access and source-shape review
 
 That would align the model more closely with Tom's wider source landscape,
 including:
 
 - LinkedIn-PDF-style profiles
 - partial profile snapshots from non-CV sources
+
+The current first-pass operational checklist for that work now lives in:
+
+- [dropbox_access_setup_checklist.md](C:\Users\HP\OneDrive\Documents\Ch3rryPi3 Ltd\Clients\james-joseph-associates\docs\dropbox_access_setup_checklist.md)
 - other valuable contact records that are not yet rich enough to count as a
   full CV ingestion

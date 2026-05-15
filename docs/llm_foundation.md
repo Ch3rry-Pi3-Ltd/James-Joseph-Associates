@@ -231,6 +231,10 @@ In plain language:
   - candidate
   - source provenance
   - recruiter notes inside source payloads
+- persisted JobAdder candidate notes now also write a first narrow
+  interaction slice into:
+  - `interactions`
+  - `interaction_participants`
 - a persisted accepted-output write can now be verified through:
   - `backend/services/resume_extraction_verification.py`
   - `scripts/check_persisted_resume_extraction.py`
@@ -298,9 +302,9 @@ Recommended next project step:
 
 - review the current canonical fields/entities against the wider planned source
   systems before bulk ingestion
-- promote recruiter notes from provenance payloads into first-class
-  interaction-style persistence
 - broaden sparse-profile handling beyond the current explicit no-resume JobAdder
   profile-only path
+- set up Dropbox access and inspect the expected source shape before broader
+  import design
 - then widen the accepted-output persistence slice beyond the current narrow
   canonical write path

@@ -38,12 +38,25 @@ client's latest feedback.
 - [x] Extend persistence design for no-CV / sparse-profile cases so valuable
   JobAdder contacts are still retained even when there is no strong resume
   document.
-- [ ] Confirm how JobAdder notes should move from provenance-bearing payloads
+- [x] Confirm how JobAdder notes should move from provenance-bearing payloads
   into first-class persisted interaction/note records.
 - [ ] Confirm LinkedIn URL handling as a first-class persisted identifier for
   later refresh/reconciliation work.
 - [ ] Set up what is required for Dropbox source access and inspect the
   expected file structure before broader import design.
+  - [x] Document the first-pass Dropbox access/setup and source-shape review
+    checklist in `docs/dropbox_access_setup_checklist.md`.
+  - [x] Scaffold Dropbox OAuth backend support:
+    - [x] Dropbox authorize URL route.
+    - [x] Dropbox callback route.
+    - [x] Dropbox token persistence.
+    - [x] First authenticated Dropbox reads for:
+      - [x] current account
+      - [x] folder preview
+  - [ ] Confirm Dropbox app registration ownership and live app credentials.
+  - [ ] Confirm first folders in scope.
+  - [ ] Confirm whether the first pass should be strictly read-only.
+  - [ ] Inspect a 20-30 file sample and record matching/source-shape findings.
 - [ ] Review the wider source-system landscape and recommended import order
   before bulk loading old/static CV data:
   - [ ] JobAdder.
@@ -174,7 +187,7 @@ This step should happen before API implementation so the backend does not encode
   - [x] No-CV / sparse-profile candidates must still be persistable as
     valuable contacts.
   - [ ] LinkedIn URL should be treated as a first-class reconciliation signal.
-  - [ ] Recruiter notes should move toward first-class interaction modelling,
+  - [x] Recruiter notes should move toward first-class interaction modelling,
     not remain only in provenance payloads.
   - [ ] Multiple CV/source documents must be retainable with a later
     "preferred/current CV" policy rather than destructive overwrite.
@@ -362,8 +375,8 @@ Current status:
 - [x] Local JobAdder callback URI is implemented.
 - [x] Live Vercel JobAdder callback URI is implemented.
 - [x] JobAdder OAuth environment variables are wired into backend settings.
-- [ ] Server-side JobAdder token exchange is implemented.
-- [ ] JobAdder token storage is implemented.
+- [x] Server-side JobAdder token exchange is implemented.
+- [x] JobAdder token storage is implemented.
 
 </details>
 
@@ -410,10 +423,11 @@ Current note:
 
 - JobAdder is still the leading first source system.
 - The application registration and callback plumbing are now in place.
-- The remaining blocker is the token exchange and first narrow API read.
-- Dropbox access/setup has now moved up the practical priority order because it
-  is likely to become one of the next major ingestion streams after the current
-  JobAdder path is verified more fully.
+- Dropbox OAuth scaffolding is now in place in the backend.
+- The next Dropbox blocker is no longer auth design. It is:
+  - final app registration/credentials
+  - first live authorization by Tom
+  - first narrow folder inspection against real Dropbox paths such as ADV-CVR
 
 </details>
 

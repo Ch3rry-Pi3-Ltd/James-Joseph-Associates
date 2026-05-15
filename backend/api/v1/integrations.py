@@ -2,7 +2,7 @@
 Integration endpoints for version 1 of the intelligence API.
 
 This module contains small endpoints that sit at the boundary between the
-backend and external systems such as JobAdder.
+backend and external systems such as JobAdder and Dropbox.
 
 It gives the rest of the repository a stable way to verify:
 
@@ -12,19 +12,22 @@ It gives the rest of the repository a stable way to verify:
 - provider callback query parameters are handled safely
 - configuration readiness can be reported clearly during setup
 - the backend can make a first authenticated read against the JobAdder API
+- the backend can make the same first authenticated reads against Dropbox
 
 Keeping integration endpoints in their own module makes the project easier to
 extend because:
 
 - `backend.api.router` stays focused on route registration
-- JobAdder-specific HTTP handling stays separate from candidate and Make.com
+- provider-specific HTTP handling stays separate from candidate and Make.com
   endpoints
 - future provider callbacks can follow the same local pattern
+- Dropbox integration can grow without inventing a second route style
 - later token exchange and token storage can be added without mixing concerns
 
 Example
 -------
-This module now covers the first few live JobAdder integration steps:
+This module now covers the first few live integration steps for both JobAdder
+and Dropbox:
 
 - `GET /api/v1/integrations/jobadder/authorize`
 - `GET /api/v1/integrations/jobadder/callback`
@@ -32,12 +35,16 @@ This module now covers the first few live JobAdder integration steps:
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
+- `GET /api/v1/integrations/dropbox/authorize`
+- `GET /api/v1/integrations/dropbox/callback`
+- `GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/current-account`
+- `GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/list-folder`
 
 In plain language:
 
 - this module answers the question:
 
-    "Does the backend have the pieces needed to start the JobAdder OAuth flow?"
+    "Does the backend have the pieces needed to start the JobAdder and Dropbox OAuth flows?"
 
 - it exchanges the returned JobAdder authorization code server-side
 - it saves the returned JobAdder token set in Postgres
@@ -55,14 +62,37 @@ from backend.db.jobadder_oauth import (
     get_jobadder_oauth_connection,
     save_jobadder_oauth_connection,
 )
+from backend.db.dropbox_oauth import (
+    get_dropbox_oauth_connection,
+    save_dropbox_oauth_connection,
+)
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
+    DropboxAuthorizationUrlResponse,
+    DropboxCurrentAccountResponse,
+    DropboxFolderPreviewResponse,
+    DropboxOAuthConnectionSavedResponse,
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateDetailResponse,
     JobAdderCandidateNotesResponse,
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
+)
+from backend.services.dropbox_api import (
+    DropboxApiError,
+    fetch_dropbox_current_account,
+    fetch_dropbox_list_folder,
+)
+from backend.services.dropbox_oauth import (
+    DropboxOAuthExchangeError,
+    DropboxTokenSet,
+    build_dropbox_authorization_url,
+    exchange_dropbox_authorization_code,
+    has_dropbox_oauth_configuration,
+    has_dropbox_token_exchange_configuration,
+    is_dropbox_access_token_expired,
+    refresh_dropbox_access_token,
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
@@ -1348,6 +1378,727 @@ def get_jobadder_candidate_skills_route(
         category_count=candidate_skills["category_count"],
         links=candidate_skills["links"],
         categories=candidate_skills["categories"],
+    )
+
+
+def _refresh_dropbox_stored_connection(
+    *,
+    dropbox_account_id: str,
+    refresh_token_value: Any,
+    stored_scope_value: Any,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Refresh the stored Dropbox token set and persist the replacement row.
+
+    Parameters
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used as the natural key for the stored
+        connection row.
+
+    refresh_token_value : Any
+        Raw refresh-token value read from the current stored connection row.
+
+    stored_scope_value : Any
+        Raw scope value read from the current stored connection row.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Updated stored connection row on success.
+
+        Standard API error response when the refresh token is missing, the
+        Dropbox refresh request fails, or the refreshed token set could not be
+        saved.
+
+    Example
+    -------
+    This helper is used when:
+
+    - a stored token is already expired before the first Dropbox read
+    - a Dropbox read comes back with `401` and a refresh/retry is needed
+    """
+
+    if not isinstance(refresh_token_value, str) or refresh_token_value.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored Dropbox connection is missing a refresh token.",
+            details=[{"dropbox_account_id": dropbox_account_id}],
+        )
+
+    try:
+        refreshed_token_set = refresh_dropbox_access_token(
+            refresh_token=refresh_token_value,
+        )
+    except DropboxOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = [
+            {"dropbox_account_id": dropbox_account_id}
+        ]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="Dropbox token refresh failed.",
+            details=details,
+        )
+
+    # Dropbox refresh responses typically contain the new short-lived access
+    # token and expiry window only. They may omit:
+    # - `refresh_token`
+    # - `scope`
+    # - `account_id`
+    #
+    # Persisting the raw refresh response directly would therefore risk wiping
+    # stable connection metadata from the stored row. Merge the new access-token
+    # fields with the stable identifiers already held locally before saving.
+    merged_scope = (
+        refreshed_token_set.scope
+        if isinstance(refreshed_token_set.scope, str)
+        and refreshed_token_set.scope.strip() != ""
+        else (
+            stored_scope_value
+            if isinstance(stored_scope_value, str)
+            and stored_scope_value.strip() != ""
+            else None
+        )
+    )
+
+    merged_refresh_token = (
+        refreshed_token_set.refresh_token
+        if isinstance(refreshed_token_set.refresh_token, str)
+        and refreshed_token_set.refresh_token.strip() != ""
+        else refresh_token_value
+    )
+
+    merged_raw_payload = dict(refreshed_token_set.raw_payload)
+    merged_raw_payload.setdefault("account_id", dropbox_account_id)
+
+    refreshed_token_set = DropboxTokenSet(
+        access_token=refreshed_token_set.access_token,
+        token_type=refreshed_token_set.token_type,
+        expires_in=refreshed_token_set.expires_in,
+        refresh_token=merged_refresh_token,
+        scope=merged_scope,
+        account_id=dropbox_account_id,
+        raw_payload=merged_raw_payload,
+    )
+
+    try:
+        return save_dropbox_oauth_connection(refreshed_token_set)
+    except (RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Dropbox token refresh succeeded, but the refreshed connection could not be saved.",
+            details=[
+                {"dropbox_account_id": dropbox_account_id},
+                {"reason": str(exc)},
+            ],
+        )
+
+
+def _prepare_dropbox_connection_for_api_read(
+    *,
+    dropbox_account_id: str,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Load one stored Dropbox connection row and ensure it is ready for an API
+    read.
+
+    Parameters
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used to locate the stored OAuth connection.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Stored connection row that contains at least a usable access token.
+
+        Standard API error response when the stored connection is missing,
+        incomplete, or requires a refresh that fails.
+
+    Example
+    -------
+    A route that needs to read from Dropbox can call:
+
+        stored_connection = _prepare_dropbox_connection_for_api_read(
+            dropbox_account_id="dbid:AAExample",
+        )
+
+    and either receive:
+
+    - a usable stored connection row
+    - or a ready-to-return `JSONResponse` error
+    """
+    # Start by loading the one stored connection row for this Dropbox account.
+    #
+    # Every later decision in this helper depends on that row:
+    # - whether the account has been connected at all
+    # - whether the required local fields exist
+    # - whether the token should be refreshed before the provider read
+    stored_connection = get_dropbox_oauth_connection(dropbox_account_id)
+
+    if stored_connection is None:
+        return build_error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="not_found",
+            message="Stored Dropbox connection was not found.",
+            details=[{"dropbox_account_id": dropbox_account_id}],
+        )
+
+    raw_access_token = stored_connection.get("access_token")
+    raw_refresh_token = stored_connection.get("refresh_token")
+    raw_scope = stored_connection.get("scope")
+    raw_obtained_at = stored_connection.get("obtained_at")
+    raw_expires_in_seconds = stored_connection.get("expires_in_seconds")
+
+    if not isinstance(raw_access_token, str) or raw_access_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored Dropbox connection is missing an access token.",
+            details=[{"dropbox_account_id": dropbox_account_id}],
+        )
+
+    # Refresh proactively when the stored token timing data says the access
+    # token is already expired or too close to expiry. That keeps the normal
+    # first provider read on the strongest available credential state.
+    if is_dropbox_access_token_expired(
+        obtained_at=raw_obtained_at,
+        expires_in_seconds=raw_expires_in_seconds,
+    ):
+        refreshed_connection = _refresh_dropbox_stored_connection(
+            dropbox_account_id=dropbox_account_id,
+            refresh_token_value=raw_refresh_token,
+            stored_scope_value=raw_scope,
+        )
+
+        if isinstance(refreshed_connection, JSONResponse):
+            return refreshed_connection
+
+        refreshed_access_token = refreshed_connection.get("access_token")
+
+        if (
+            not isinstance(refreshed_access_token, str)
+            or refreshed_access_token.strip() == ""
+        ):
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed Dropbox connection is missing an access token.",
+                details=[{"dropbox_account_id": dropbox_account_id}],
+            )
+
+        return refreshed_connection
+
+    return stored_connection
+
+
+def _perform_dropbox_read_with_refresh_retry(
+    *,
+    dropbox_account_id: str,
+    stored_connection: dict[str, Any],
+    read_callable,
+    provider_failure_message: str,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Perform one Dropbox read and retry once with a refreshed token after `401`.
+
+    Parameters
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used for error reporting and refresh saves.
+
+    stored_connection : dict[str, Any]
+        Stored Dropbox connection row that already passed the initial local
+        validation checks.
+
+    read_callable : callable
+        Small function that accepts keyword argument `access_token` and
+        performs one provider read.
+
+    provider_failure_message : str
+        Safe route-level error message to use when the provider read fails.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Normalized read result returned by the service helper.
+
+        Standard API error response when the provider read fails definitively
+        or the refresh-and-retry path cannot recover.
+
+    Example
+    -------
+    Routes can pass small resource-specific lambdas such as:
+
+        lambda *, access_token: fetch_dropbox_current_account(...)
+
+    or:
+
+        lambda *, access_token: fetch_dropbox_list_folder(...)
+    """
+    # Pull the relevant stored fields into local names once so the retry logic
+    # below reads clearly and does not repeatedly index into the connection
+    # dictionary.
+    raw_access_token = stored_connection.get("access_token")
+    raw_refresh_token = stored_connection.get("refresh_token")
+    raw_scope = stored_connection.get("scope")
+
+    try:
+        read_result = read_callable(access_token=raw_access_token)
+    except DropboxApiError as exc:
+        if exc.status_code == 401:
+            # `401` is the one provider failure we treat as potentially
+            # recoverable here.
+            #
+            # The intent is narrow and deliberate:
+            # - refresh once
+            # - retry once
+            # - if that still fails, surface the failure clearly
+            refreshed_connection = _refresh_dropbox_stored_connection(
+                dropbox_account_id=dropbox_account_id,
+                refresh_token_value=raw_refresh_token,
+                stored_scope_value=raw_scope,
+            )
+
+            if isinstance(refreshed_connection, JSONResponse):
+                return refreshed_connection
+
+            refreshed_access_token = refreshed_connection.get("access_token")
+
+            if (
+                not isinstance(refreshed_access_token, str)
+                or refreshed_access_token.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed Dropbox connection is missing an access token.",
+                    details=[{"dropbox_account_id": dropbox_account_id}],
+                )
+
+            # Retry exactly once with the refreshed token set.
+            #
+            # More than one retry would start hiding genuine provider or data
+            # problems behind repeated automatic behaviour.
+            try:
+                return read_callable(access_token=refreshed_access_token)
+            except DropboxApiError as retry_exc:
+                details: list[dict[str, Any]] = [
+                    {"dropbox_account_id": dropbox_account_id}
+                ]
+
+                if retry_exc.status_code is not None:
+                    details.append({"provider_status_code": retry_exc.status_code})
+
+                if retry_exc.endpoint_url is not None:
+                    details.append({"endpoint_url": retry_exc.endpoint_url})
+
+                return build_error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    code="internal_error",
+                    message=provider_failure_message,
+                    details=details,
+                )
+
+        details: list[dict[str, Any]] = [{"dropbox_account_id": dropbox_account_id}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message=provider_failure_message,
+            details=details,
+        )
+
+    return read_result
+
+
+@router.get(
+    "/dropbox/authorize",
+    response_model=DropboxAuthorizationUrlResponse,
+    responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox OAuth is not configured.",
+        }
+    },
+)
+def get_dropbox_authorization_url_route(
+    state: str | None = Query(
+        default=None,
+        description=(
+            "Optional opaque state value to round-trip through the Dropbox OAuth "
+            "approval flow."
+        ),
+    ),
+) -> DropboxAuthorizationUrlResponse | JSONResponse:
+    """
+    Return a ready-to-open Dropbox authorization URL.
+
+    Notes
+    -----
+    - This route mirrors the JobAdder authorize route shape so the frontend or
+      operator flow can obtain one approval URL to send to Tom.
+    - Dropbox still requires one registered Dropbox app first. This route only
+      builds the URL once the backend has the app key and redirect URI.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/dropbox/authorize?state=connect-dropbox-dev
+    """
+
+    if not has_dropbox_oauth_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Dropbox OAuth is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "DROPBOX_CLIENT_ID",
+                        "DROPBOX_REDIRECT_URI",
+                    ]
+                }
+            ],
+        )
+
+    try:
+        authorization_url = build_dropbox_authorization_url(state=state)
+    except ValueError as exc:
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message=str(exc),
+        )
+
+    return DropboxAuthorizationUrlResponse(
+        authorization_url=authorization_url,
+        oauth_configuration_ready=True,
+        state=state,
+    )
+
+
+@router.get(
+    "/dropbox/callback",
+    response_model=DropboxOAuthConnectionSavedResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox authorization was not completed.",
+        },
+        401: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox token exchange is not configured.",
+        },
+        422: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox authorization code is required.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox token exchange succeeded but saving failed.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox token exchange failed.",
+        },
+    },
+)
+def complete_dropbox_oauth_callback_route(
+    code: str | None = Query(
+        default=None,
+        description="One-time Dropbox authorization code returned by the callback.",
+    ),
+    state: str | None = Query(
+        default=None,
+        description="Optional opaque state value originally sent to Dropbox.",
+    ),
+    error: str | None = Query(
+        default=None,
+        description="Optional Dropbox OAuth error code returned by the provider.",
+    ),
+    error_description: str | None = Query(
+        default=None,
+        description=(
+            "Optional human-readable Dropbox OAuth error description returned "
+            "by the provider."
+        ),
+    ),
+) -> DropboxOAuthConnectionSavedResponse | JSONResponse:
+    """
+    Complete the Dropbox OAuth callback by exchanging the code and saving the
+    resulting token set.
+
+    Example
+    -------
+    A successful callback request looks like:
+
+        GET /api/v1/integrations/dropbox/callback?code=...
+    """
+
+    if error is not None:
+        details: list[dict[str, Any]] = [{"provider": "dropbox", "error": error}]
+
+        if error_description:
+            details.append({"provider_error_description": error_description})
+
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="unauthorized",
+            message="Dropbox authorization was not completed.",
+            details=details,
+        )
+
+    if code is None or code.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="validation_error",
+            message="Dropbox authorization code is required.",
+            details=[{"query_param": "code", "reason": "missing_or_empty"}],
+        )
+
+    if not has_dropbox_token_exchange_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Dropbox token exchange is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "DROPBOX_CLIENT_ID",
+                        "DROPBOX_CLIENT_SECRET",
+                        "DROPBOX_REDIRECT_URI",
+                    ]
+                }
+            ],
+        )
+
+    try:
+        token_set = exchange_dropbox_authorization_code(code=code)
+    except DropboxOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = []
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="Dropbox token exchange failed.",
+            details=details,
+        )
+
+    try:
+        saved_connection = save_dropbox_oauth_connection(token_set)
+    except (RuntimeError, ValueError) as exc:
+        details: list[dict[str, Any]] = [{"reason": str(exc)}]
+
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Dropbox token exchange succeeded, but the connection could not be saved.",
+            details=details,
+        )
+
+    return DropboxOAuthConnectionSavedResponse(
+        status="connected",
+        message="Dropbox connection completed successfully.",
+        oauth_connection_id=str(saved_connection["id"]),
+        dropbox_account_id=str(saved_connection["dropbox_account_id"]),
+        state=state,
+        next_step=(
+            "The Dropbox tokens were saved successfully. The next step is to "
+            "make the first authenticated Dropbox API read."
+        ),
+    )
+
+
+@router.get(
+    "/dropbox/accounts/{dropbox_account_id}/current-account",
+    response_model=DropboxCurrentAccountResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox current-account read failed.",
+        },
+    },
+)
+def get_dropbox_current_account_route(
+    dropbox_account_id: str,
+) -> DropboxCurrentAccountResponse | JSONResponse:
+    """
+    Return the currently connected Dropbox account profile.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/current-account
+    """
+    # Start from the shared connection-preparation path so every authenticated
+    # Dropbox read inherits the same local validation and proactive-refresh
+    # behaviour.
+    stored_connection = _prepare_dropbox_connection_for_api_read(
+        dropbox_account_id=dropbox_account_id
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    account_result = _perform_dropbox_read_with_refresh_retry(
+        dropbox_account_id=dropbox_account_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_dropbox_current_account(
+            access_token=access_token,
+        ),
+        provider_failure_message="Dropbox current-account read failed.",
+    )
+
+    if isinstance(account_result, JSONResponse):
+        return account_result
+
+    return DropboxCurrentAccountResponse(
+        dropbox_account_id=dropbox_account_id,
+        account=account_result["account"],
+    )
+
+
+@router.get(
+    "/dropbox/accounts/{dropbox_account_id}/files/list-folder",
+    response_model=DropboxFolderPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox folder listing failed.",
+        },
+    },
+)
+def get_dropbox_folder_preview_route(
+    dropbox_account_id: str,
+    path: str = Query(
+        default="",
+        description=(
+            "Dropbox folder path to inspect. Use the empty string to list the "
+            "root folder."
+        ),
+    ),
+    recursive: bool = Query(
+        default=False,
+        description="Whether Dropbox should traverse subfolders recursively.",
+    ),
+    limit: int = Query(
+        default=25,
+        ge=1,
+        le=200,
+        description="Maximum number of folder entries to request in the first page.",
+    ),
+) -> DropboxFolderPreviewResponse | JSONResponse:
+    """
+    Return a first-page preview of a Dropbox folder.
+
+    Notes
+    -----
+    - This route is intentionally a preview route rather than a full cursor
+      traversal workflow.
+    - It is designed for early Dropbox source-shape inspection, where the
+      immediate question is "what is in this folder?" rather than "ingest the
+      entire tree right now".
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/files/list-folder?path=
+    """
+    # As with the current-account route, start from the shared
+    # connection-preparation path so the folder read inherits the same:
+    # - missing-connection handling
+    # - proactive refresh handling
+    # - local field validation
+    stored_connection = _prepare_dropbox_connection_for_api_read(
+        dropbox_account_id=dropbox_account_id
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    folder_result = _perform_dropbox_read_with_refresh_retry(
+        dropbox_account_id=dropbox_account_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_dropbox_list_folder(
+            access_token=access_token,
+            path=path,
+            recursive=recursive,
+            limit=limit,
+        ),
+        provider_failure_message="Dropbox folder listing failed.",
+    )
+
+    if isinstance(folder_result, JSONResponse):
+        return folder_result
+
+    return DropboxFolderPreviewResponse(
+        dropbox_account_id=dropbox_account_id,
+        path=folder_result["path"],
+        entry_count=folder_result["entry_count"],
+        has_more=folder_result["has_more"],
+        cursor=folder_result["cursor"],
+        entries=folder_result["entries"],
     )
 
 

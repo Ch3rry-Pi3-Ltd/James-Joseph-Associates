@@ -30,6 +30,8 @@ first narrow accepted-output persistence slice:
 - source-record links
 - document links
 - candidate skills
+- JobAdder candidate-note interactions
+- note interaction participants
 
 Example
 -------
@@ -212,6 +214,13 @@ def _validate_and_normalize_persistence_result(
             else None
         )
 
+    note_interaction_count = persistence_result.get("candidate_note_interaction_count")
+    normalized["candidate_note_interaction_count"] = (
+        note_interaction_count
+        if isinstance(note_interaction_count, int)
+        else None
+    )
+
     return normalized
 
 
@@ -238,6 +247,8 @@ def _build_verification_checks(
     source_record_links = snapshot.get("source_record_links", [])
     document_links = snapshot.get("document_links", [])
     candidate_skills = snapshot.get("candidate_skills", [])
+    candidate_note_interactions = snapshot.get("candidate_note_interactions", [])
+    interaction_participants = snapshot.get("interaction_participants", [])
 
     # Keep the checks explicit and named rather than collapsing everything into
     # one boolean too early.
@@ -496,6 +507,55 @@ def _build_verification_checks(
             )
         )
 
+    expected_note_interaction_count = expected.get("candidate_note_interaction_count")
+    if isinstance(expected_note_interaction_count, int):
+        checks.extend(
+            [
+                PersistenceVerificationCheck(
+                    name="candidate_note_interaction_count_matches",
+                    passed=(
+                        len(candidate_note_interactions)
+                        == expected_note_interaction_count
+                    ),
+                    details=(
+                        "Expected "
+                        f"{expected_note_interaction_count} candidate-note interactions "
+                        f"and found {len(candidate_note_interactions)}."
+                    ),
+                ),
+                PersistenceVerificationCheck(
+                    name="candidate_note_interaction_candidate_links_match",
+                    passed=(
+                        _count_interaction_participants(
+                            interaction_participants,
+                            candidate_id=expected["candidate_id"],
+                        )
+                        == expected_note_interaction_count
+                    ),
+                    details=(
+                        "Expected "
+                        f"{expected_note_interaction_count} candidate-linked note participants "
+                        "for the persisted JobAdder notes."
+                    ),
+                ),
+                PersistenceVerificationCheck(
+                    name="candidate_note_interaction_person_links_match",
+                    passed=(
+                        _count_interaction_participants(
+                            interaction_participants,
+                            person_id=expected["person_id"],
+                        )
+                        == expected_note_interaction_count
+                    ),
+                    details=(
+                        "Expected "
+                        f"{expected_note_interaction_count} person-linked note participants "
+                        "for the persisted JobAdder notes."
+                    ),
+                ),
+            ]
+        )
+
     return checks
 
 
@@ -589,6 +649,30 @@ def _has_document_link(
         if candidate_id is not None and row.get("candidate_id") == candidate_id:
             return True
     return False
+
+
+def _count_interaction_participants(
+    interaction_participants: list[dict[str, Any]],
+    *,
+    person_id: str | None = None,
+    candidate_id: str | None = None,
+) -> int:
+    """
+    Return the number of interaction-participant rows matching one entity target.
+
+    Example
+    -------
+    A persisted note slice with three note interactions should usually produce
+    three candidate participant rows and three person participant rows.
+    """
+
+    count = 0
+    for row in interaction_participants:
+        if person_id is not None and row.get("person_id") == person_id:
+            count += 1
+        elif candidate_id is not None and row.get("candidate_id") == candidate_id:
+            count += 1
+    return count
 
 
 __all__ = [
