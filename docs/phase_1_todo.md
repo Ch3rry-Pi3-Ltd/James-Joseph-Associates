@@ -53,6 +53,8 @@ client's latest feedback.
     - [x] First authenticated Dropbox reads for:
       - [x] current account
       - [x] folder preview
+    - [x] Broaden Dropbox app scopes up front so later Outlook-to-Dropbox file
+      staging does not require a second consent flow.
   - [ ] Confirm Dropbox app registration ownership and live app credentials.
   - [ ] Confirm first folders in scope.
   - [ ] Confirm whether the first pass should be strictly read-only.
@@ -61,6 +63,19 @@ client's latest feedback.
   before bulk loading old/static CV data:
   - [ ] JobAdder.
   - [ ] Dropbox CV folders.
+  - [ ] Outlook / Microsoft 365 CV attachments.
+    - [x] Scaffold Outlook OAuth backend support:
+      - [x] Outlook authorize URL route.
+      - [x] Outlook callback route.
+      - [x] Outlook token persistence.
+      - [x] First authenticated Microsoft Graph reads for:
+        - [x] current user
+        - [x] mail folders
+        - [x] folder messages
+        - [x] message attachments
+    - [ ] Confirm Microsoft app registration ownership and live app credentials.
+    - [ ] Confirm whether the first mailbox read should target Tom directly or a delegated/shared mailbox path.
+    - [ ] Inspect a first mailbox folder sample and record attachment/source-shape findings.
   - [ ] LinkedHelper / LinkedIn-derived refresh data.
   - [ ] Recruiterflow JSON.
   - [ ] Pipedrive hiring-manager data.

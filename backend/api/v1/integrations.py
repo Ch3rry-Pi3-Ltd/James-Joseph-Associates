@@ -2,7 +2,7 @@
 Integration endpoints for version 1 of the intelligence API.
 
 This module contains small endpoints that sit at the boundary between the
-backend and external systems such as JobAdder and Dropbox.
+backend and external systems such as JobAdder, Dropbox, and Outlook.
 
 It gives the rest of the repository a stable way to verify:
 
@@ -13,6 +13,7 @@ It gives the rest of the repository a stable way to verify:
 - configuration readiness can be reported clearly during setup
 - the backend can make a first authenticated read against the JobAdder API
 - the backend can make the same first authenticated reads against Dropbox
+- the backend can make the same first authenticated reads against Outlook
 
 Keeping integration endpoints in their own module makes the project easier to
 extend because:
@@ -22,12 +23,13 @@ extend because:
   endpoints
 - future provider callbacks can follow the same local pattern
 - Dropbox integration can grow without inventing a second route style
+- Outlook integration can grow in the same pattern
 - later token exchange and token storage can be added without mixing concerns
 
 Example
 -------
-This module now covers the first few live integration steps for both JobAdder
-and Dropbox:
+This module now covers the first few live integration steps for JobAdder,
+Dropbox, and Outlook:
 
 - `GET /api/v1/integrations/jobadder/authorize`
 - `GET /api/v1/integrations/jobadder/callback`
@@ -39,12 +41,18 @@ and Dropbox:
 - `GET /api/v1/integrations/dropbox/callback`
 - `GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/current-account`
 - `GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/list-folder`
+- `GET /api/v1/integrations/outlook/authorize`
+- `GET /api/v1/integrations/outlook/callback`
+- `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/current-user`
+- `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders`
+- `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages`
+- `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments`
 
 In plain language:
 
 - this module answers the question:
 
-    "Does the backend have the pieces needed to start the JobAdder and Dropbox OAuth flows?"
+    "Does the backend have the pieces needed to start the JobAdder, Dropbox, and Outlook OAuth flows?"
 
 - it exchanges the returned JobAdder authorization code server-side
 - it saves the returned JobAdder token set in Postgres
@@ -66,6 +74,10 @@ from backend.db.dropbox_oauth import (
     get_dropbox_oauth_connection,
     save_dropbox_oauth_connection,
 )
+from backend.db.outlook_oauth import (
+    get_outlook_oauth_connection,
+    save_outlook_oauth_connection,
+)
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.schemas.integrations import (
     DropboxAuthorizationUrlResponse,
@@ -78,6 +90,12 @@ from backend.schemas.integrations import (
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
+    OutlookAuthorizationUrlResponse,
+    OutlookCurrentUserResponse,
+    OutlookMailFoldersResponse,
+    OutlookMessageAttachmentsResponse,
+    OutlookMessagesResponse,
+    OutlookOAuthConnectionSavedResponse,
 )
 from backend.services.dropbox_api import (
     DropboxApiError,
@@ -93,6 +111,23 @@ from backend.services.dropbox_oauth import (
     has_dropbox_token_exchange_configuration,
     is_dropbox_access_token_expired,
     refresh_dropbox_access_token,
+)
+from backend.services.outlook_api import (
+    OutlookApiError,
+    fetch_outlook_current_user,
+    fetch_outlook_mail_folders,
+    fetch_outlook_message_attachments,
+    fetch_outlook_messages,
+)
+from backend.services.outlook_oauth import (
+    OutlookOAuthExchangeError,
+    OutlookTokenSet,
+    build_outlook_authorization_url,
+    exchange_outlook_authorization_code,
+    has_outlook_oauth_configuration,
+    has_outlook_token_exchange_configuration,
+    is_outlook_access_token_expired,
+    refresh_outlook_access_token,
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
@@ -2099,6 +2134,636 @@ def get_dropbox_folder_preview_route(
         has_more=folder_result["has_more"],
         cursor=folder_result["cursor"],
         entries=folder_result["entries"],
+    )
+
+
+def _refresh_outlook_stored_connection(
+    *,
+    microsoft_user_id: str,
+    refresh_token_value: Any,
+    stored_connection: dict[str, Any],
+) -> dict[str, Any] | JSONResponse:
+    """
+    Refresh the stored Outlook token set and persist the replacement row.
+
+    Example
+    -------
+    This helper is used when:
+
+    - a stored token is already expired before the first Graph read
+    - a Graph read comes back with `401` and a refresh/retry is needed
+    """
+
+    if not isinstance(refresh_token_value, str) or refresh_token_value.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored Outlook connection is missing a refresh token.",
+            details=[{"microsoft_user_id": microsoft_user_id}],
+        )
+
+    try:
+        refreshed_token_set = refresh_outlook_access_token(
+            refresh_token=refresh_token_value,
+        )
+    except OutlookOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = [{"microsoft_user_id": microsoft_user_id}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="Outlook token refresh failed.",
+            details=details,
+        )
+
+    merged_raw_payload = dict(refreshed_token_set.raw_payload)
+
+    merged_raw_payload.setdefault("refresh_token", refresh_token_value)
+    merged_raw_payload.setdefault("oid", stored_connection.get("microsoft_user_id"))
+    merged_raw_payload.setdefault("tid", stored_connection.get("tenant_id"))
+    merged_raw_payload.setdefault(
+        "preferred_username",
+        stored_connection.get("user_principal_name"),
+    )
+
+    refreshed_token_set = OutlookTokenSet(
+        access_token=refreshed_token_set.access_token,
+        token_type=refreshed_token_set.token_type,
+        expires_in=refreshed_token_set.expires_in,
+        refresh_token=(
+            refreshed_token_set.refresh_token
+            or refresh_token_value
+        ),
+        scope=refreshed_token_set.scope or stored_connection.get("scope"),
+        microsoft_user_id=(
+            refreshed_token_set.microsoft_user_id
+            or stored_connection.get("microsoft_user_id")
+        ),
+        tenant_id=refreshed_token_set.tenant_id or stored_connection.get("tenant_id"),
+        user_principal_name=(
+            refreshed_token_set.user_principal_name
+            or stored_connection.get("user_principal_name")
+        ),
+        raw_payload=merged_raw_payload,
+    )
+
+    try:
+        return save_outlook_oauth_connection(refreshed_token_set)
+    except (RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Outlook token refresh succeeded, but the refreshed connection could not be saved.",
+            details=[
+                {"microsoft_user_id": microsoft_user_id},
+                {"reason": str(exc)},
+            ],
+        )
+
+
+def _prepare_outlook_connection_for_api_read(
+    *,
+    microsoft_user_id: str,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Load one stored Outlook connection row and ensure it is ready for a Graph
+    API read.
+    """
+
+    stored_connection = get_outlook_oauth_connection(microsoft_user_id)
+
+    if stored_connection is None:
+        return build_error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="not_found",
+            message="Stored Outlook connection was not found.",
+            details=[{"microsoft_user_id": microsoft_user_id}],
+        )
+
+    access_token = stored_connection.get("access_token")
+
+    if not isinstance(access_token, str) or access_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored Outlook connection is missing an access token.",
+            details=[{"microsoft_user_id": microsoft_user_id}],
+        )
+
+    obtained_at = stored_connection.get("obtained_at")
+    expires_in_seconds = stored_connection.get("expires_in_seconds")
+
+    if (
+        obtained_at is not None
+        and isinstance(expires_in_seconds, int)
+        and is_outlook_access_token_expired(
+            obtained_at=obtained_at,
+            expires_in_seconds=expires_in_seconds,
+        )
+    ):
+        refreshed_connection = _refresh_outlook_stored_connection(
+            microsoft_user_id=microsoft_user_id,
+            refresh_token_value=stored_connection.get("refresh_token"),
+            stored_connection=stored_connection,
+        )
+
+        if isinstance(refreshed_connection, JSONResponse):
+            return refreshed_connection
+
+        refreshed_access_token = refreshed_connection.get("access_token")
+        if (
+            not isinstance(refreshed_access_token, str)
+            or refreshed_access_token.strip() == ""
+        ):
+            return build_error_response(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                code="internal_error",
+                message="The refreshed Outlook connection is missing an access token.",
+                details=[{"microsoft_user_id": microsoft_user_id}],
+            )
+
+        return refreshed_connection
+
+    return stored_connection
+
+
+def _perform_outlook_read_with_refresh_retry(
+    *,
+    microsoft_user_id: str,
+    stored_connection: dict[str, Any],
+    read_callable,
+    provider_failure_message: str,
+) -> dict[str, Any] | JSONResponse:
+    """
+    Perform one Graph read and retry once with a refreshed token after `401`.
+    """
+
+    access_token = stored_connection.get("access_token")
+    if not isinstance(access_token, str) or access_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="The stored Outlook connection is missing an access token.",
+            details=[{"microsoft_user_id": microsoft_user_id}],
+        )
+
+    try:
+        return read_callable(access_token=access_token)
+    except OutlookApiError as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            refreshed_connection = _refresh_outlook_stored_connection(
+                microsoft_user_id=microsoft_user_id,
+                refresh_token_value=stored_connection.get("refresh_token"),
+                stored_connection=stored_connection,
+            )
+
+            if isinstance(refreshed_connection, JSONResponse):
+                return refreshed_connection
+
+            refreshed_access_token = refreshed_connection.get("access_token")
+            if (
+                not isinstance(refreshed_access_token, str)
+                or refreshed_access_token.strip() == ""
+            ):
+                return build_error_response(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    code="internal_error",
+                    message="The refreshed Outlook connection is missing an access token.",
+                    details=[{"microsoft_user_id": microsoft_user_id}],
+                )
+
+            try:
+                return read_callable(access_token=refreshed_access_token)
+            except OutlookApiError as retry_exc:
+                details: list[dict[str, Any]] = [
+                    {"microsoft_user_id": microsoft_user_id}
+                ]
+
+                if retry_exc.status_code is not None:
+                    details.append({"provider_status_code": retry_exc.status_code})
+
+                if retry_exc.endpoint_url is not None:
+                    details.append({"endpoint_url": retry_exc.endpoint_url})
+
+                return build_error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    code="internal_error",
+                    message=provider_failure_message,
+                    details=details,
+                )
+
+        details: list[dict[str, Any]] = [{"microsoft_user_id": microsoft_user_id}]
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message=provider_failure_message,
+            details=details,
+        )
+
+
+@router.get(
+    "/outlook/authorize",
+    response_model=OutlookAuthorizationUrlResponse,
+    responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "Outlook OAuth is not configured.",
+        }
+    },
+)
+def get_outlook_authorization_url_route(
+    state: str | None = Query(
+        default=None,
+        description=(
+            "Optional opaque state value to round-trip through the Outlook "
+            "approval flow."
+        ),
+    ),
+) -> OutlookAuthorizationUrlResponse | JSONResponse:
+    """
+    Return a ready-to-open Outlook authorization URL.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/authorize?state=connect-outlook-dev
+    """
+
+    if not has_outlook_oauth_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Outlook OAuth is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "MICROSOFT_CLIENT_ID",
+                        "MICROSOFT_REDIRECT_URI",
+                    ]
+                }
+            ],
+        )
+
+    try:
+        authorization_url = build_outlook_authorization_url(state=state)
+    except ValueError as exc:
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message=str(exc),
+        )
+
+    return OutlookAuthorizationUrlResponse(
+        authorization_url=authorization_url,
+        oauth_configuration_ready=True,
+        state=state,
+    )
+
+
+@router.get(
+    "/outlook/callback",
+    response_model=OutlookOAuthConnectionSavedResponse,
+    responses={
+        400: {"model": ApiErrorResponse, "description": "Outlook authorization was not completed."},
+        401: {"model": ApiErrorResponse, "description": "Outlook token exchange is not configured."},
+        422: {"model": ApiErrorResponse, "description": "Outlook authorization code is required."},
+        500: {"model": ApiErrorResponse, "description": "Outlook token exchange succeeded but saving failed."},
+        502: {"model": ApiErrorResponse, "description": "Outlook token exchange failed."},
+    },
+)
+def complete_outlook_oauth_callback_route(
+    code: str | None = Query(
+        default=None,
+        description="One-time Microsoft authorization code returned by the callback.",
+    ),
+    state: str | None = Query(
+        default=None,
+        description="Optional opaque state value originally sent to Microsoft.",
+    ),
+    error: str | None = Query(
+        default=None,
+        description="Optional Microsoft OAuth error code returned by the provider.",
+    ),
+    error_description: str | None = Query(
+        default=None,
+        description="Optional human-readable Microsoft OAuth error description returned by the provider.",
+    ),
+) -> OutlookOAuthConnectionSavedResponse | JSONResponse:
+    """
+    Complete the Outlook OAuth callback by exchanging the code and saving the
+    resulting token set.
+    """
+
+    if error is not None:
+        details: list[dict[str, Any]] = [{"provider": "microsoft", "error": error}]
+        if error_description:
+            details.append({"provider_error_description": error_description})
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="unauthorized",
+            message="Outlook authorization was not completed.",
+            details=details,
+        )
+
+    if code is None or code.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="validation_error",
+            message="Outlook authorization code is required.",
+            details=[{"query_param": "code", "reason": "missing_or_empty"}],
+        )
+
+    if not has_outlook_token_exchange_configuration():
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Outlook token exchange is not configured.",
+            details=[
+                {
+                    "required_settings": [
+                        "MICROSOFT_CLIENT_ID",
+                        "MICROSOFT_CLIENT_SECRET",
+                        "MICROSOFT_REDIRECT_URI",
+                    ]
+                }
+            ],
+        )
+
+    try:
+        token_set = exchange_outlook_authorization_code(code=code)
+    except OutlookOAuthExchangeError as exc:
+        details: list[dict[str, Any]] = []
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+        if exc.provider_error is not None:
+            details.append({"provider_error": exc.provider_error})
+        if exc.provider_error_description is not None:
+            details.append(
+                {"provider_error_description": exc.provider_error_description}
+            )
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="approval_required",
+            message="Outlook token exchange failed.",
+            details=details,
+        )
+
+    try:
+        saved_connection = save_outlook_oauth_connection(token_set)
+    except (RuntimeError, ValueError) as exc:
+        details: list[dict[str, Any]] = [{"reason": str(exc)}]
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Outlook token exchange succeeded, but the connection could not be saved.",
+            details=details,
+        )
+
+    return OutlookOAuthConnectionSavedResponse(
+        status="connected",
+        message="Outlook connection completed successfully.",
+        oauth_connection_id=str(saved_connection["id"]),
+        microsoft_user_id=str(saved_connection["microsoft_user_id"]),
+        tenant_id=(
+            str(saved_connection["tenant_id"])
+            if saved_connection.get("tenant_id") is not None
+            else None
+        ),
+        user_principal_name=(
+            str(saved_connection["user_principal_name"])
+            if saved_connection.get("user_principal_name") is not None
+            else None
+        ),
+        state=state,
+        next_step=(
+            "The Outlook tokens were saved successfully. The next step is to "
+            "make the first authenticated Microsoft Graph read."
+        ),
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/current-user",
+    response_model=OutlookCurrentUserResponse,
+)
+def get_outlook_current_user_route(
+    microsoft_user_id: str,
+) -> OutlookCurrentUserResponse | JSONResponse:
+    """
+    Return the currently connected Microsoft user profile.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    user_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_outlook_current_user(
+            access_token=access_token
+        ),
+        provider_failure_message="Outlook current-user read failed.",
+    )
+    if isinstance(user_result, JSONResponse):
+        return user_result
+
+    return OutlookCurrentUserResponse(
+        microsoft_user_id=microsoft_user_id,
+        user=user_result["user"],
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/mail-folders",
+    response_model=OutlookMailFoldersResponse,
+)
+def get_outlook_mail_folders_route(
+    microsoft_user_id: str,
+    mailbox: str | None = Query(
+        default=None,
+        description=(
+            "Optional delegated mailbox identifier such as a user principal "
+            "name or mailbox email."
+        ),
+    ),
+    limit: int = Query(
+        default=25,
+        ge=1,
+        le=200,
+        description="Maximum number of mail folders to request in the first page.",
+    ),
+) -> OutlookMailFoldersResponse | JSONResponse:
+    """
+    Return a first-page preview of Outlook mail folders.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    folder_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_outlook_mail_folders(
+            access_token=access_token,
+            mailbox=mailbox,
+            limit=limit,
+        ),
+        provider_failure_message="Outlook mail-folder read failed.",
+    )
+    if isinstance(folder_result, JSONResponse):
+        return folder_result
+
+    return OutlookMailFoldersResponse(
+        microsoft_user_id=microsoft_user_id,
+        mailbox=mailbox,
+        folder_count=folder_result["folder_count"],
+        folders=folder_result["folders"],
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/messages",
+    response_model=OutlookMessagesResponse,
+)
+def get_outlook_messages_route(
+    microsoft_user_id: str,
+    folder_id: str = Query(
+        ...,
+        description="Mail folder identifier whose messages should be listed."
+    ),
+    mailbox: str | None = Query(
+        default=None,
+        description=(
+            "Optional delegated mailbox identifier such as a user principal "
+            "name or mailbox email."
+        ),
+    ),
+    limit: int = Query(
+        default=25,
+        ge=1,
+        le=200,
+        description="Maximum number of messages to request in the first page.",
+    ),
+) -> OutlookMessagesResponse | JSONResponse:
+    """
+    Return a first-page preview of messages in one Outlook mail folder.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    message_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_outlook_messages(
+            access_token=access_token,
+            folder_id=folder_id,
+            mailbox=mailbox,
+            limit=limit,
+        ),
+        provider_failure_message="Outlook message-list read failed.",
+    )
+    if isinstance(message_result, JSONResponse):
+        return message_result
+
+    return OutlookMessagesResponse(
+        microsoft_user_id=microsoft_user_id,
+        mailbox=mailbox,
+        folder_id=folder_id,
+        message_count=message_result["message_count"],
+        messages=message_result["messages"],
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments",
+    response_model=OutlookMessageAttachmentsResponse,
+)
+def get_outlook_message_attachments_route(
+    microsoft_user_id: str,
+    message_id: str,
+    mailbox: str | None = Query(
+        default=None,
+        description=(
+            "Optional delegated mailbox identifier such as a user principal "
+            "name or mailbox email."
+        ),
+    ),
+    limit: int = Query(
+        default=50,
+        ge=1,
+        le=200,
+        description="Maximum number of attachments to request in the first page.",
+    ),
+) -> OutlookMessageAttachmentsResponse | JSONResponse:
+    """
+    Return a first-page preview of attachments on one Outlook message.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    attachment_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_outlook_message_attachments(
+            access_token=access_token,
+            message_id=message_id,
+            mailbox=mailbox,
+            limit=limit,
+        ),
+        provider_failure_message="Outlook attachment-list read failed.",
+    )
+    if isinstance(attachment_result, JSONResponse):
+        return attachment_result
+
+    return OutlookMessageAttachmentsResponse(
+        microsoft_user_id=microsoft_user_id,
+        mailbox=mailbox,
+        message_id=message_id,
+        attachment_count=attachment_result["attachment_count"],
+        attachments=attachment_result["attachments"],
     )
 
 

@@ -48,6 +48,26 @@ scope boundary.
   - configure the backend
   - send Tom the approval URL
 
+### Current app-scope decision
+
+- The shared Dropbox app is now expected to support both:
+  - immediate Dropbox reads for source discovery
+  - later Dropbox writes for staged document pushes such as Outlook CV
+    attachments
+- Because Dropbox scopes are attached to the granted token set, and adding new
+  scopes later would force a re-authorization flow, the current app should ask
+  for the broader first-pass scope set **before** Tom approves access.
+- The current intended Dropbox scopes are:
+  - `account_info.read`
+  - `files.metadata.read`
+  - `files.content.read`
+  - `sharing.read`
+  - `files.metadata.write`
+  - `files.content.write`
+- This is still intentionally narrower than full sharing/admin write access.
+- We are **not** currently asking for `sharing.write` because simply uploading
+  Outlook-derived CVs into Dropbox does not require it.
+
 ### Access
 
 - Confirm whether the Dropbox area Tom wants us to inspect is:
@@ -57,6 +77,8 @@ scope boundary.
 - Confirm whether the first pass should be strictly read-only.
 - Confirm whether there are any policy reasons to prefer exported samples over
   live API reads for the very first inspection pass.
+- Confirm whether staged write-back into Dropbox is acceptable once the Outlook
+  attachment flow is live.
 
 ### Scope
 
@@ -254,7 +276,23 @@ The practical next ask to Tom should be:
 4. whether there are any folders to exclude
 5. whether a 20-30 file sample is acceptable for the first review
 
-## 10. Immediate recommendation
+## 10. Dropbox OAuth status
+
+The current live Dropbox work has now reached the point where:
+
+- the backend can build a working Dropbox authorization URL
+- the redirect URI mismatch has been resolved
+- Tom can now reach the Dropbox approval flow
+- the `dropbox_oauth_connections` table has been applied to the live database
+
+That means the remaining Dropbox setup work is no longer backend scaffolding.
+It is:
+
+- completing Tom's real authorization successfully
+- confirming the saved Dropbox connection
+- performing the first authenticated folder read
+
+## 11. Immediate recommendation
 
 The right next Dropbox move is:
 

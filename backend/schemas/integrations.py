@@ -17,6 +17,10 @@ It gives the rest of the repository a stable way to talk about:
 - Dropbox callback responses
 - authenticated Dropbox account-preview responses
 - authenticated Dropbox folder-preview responses
+- Outlook authorization-link responses
+- Outlook callback responses
+- authenticated Outlook current-user responses
+- authenticated Outlook folder/message/attachment preview responses
 - OAuth setup status
 - provider-specific metadata we choose to expose safely
 - keeping integration response shapes out of route modules
@@ -730,6 +734,206 @@ class DropboxFolderPreviewResponse(BaseModel):
     )
 
 
+class OutlookAuthorizationUrlResponse(BaseModel):
+    """
+    Response returned when the backend builds an Outlook approval URL.
+
+    Example
+    -------
+    A response might look like:
+
+        {
+            "authorization_url": "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?...",
+            "oauth_configuration_ready": true,
+            "state": "connect-outlook-dev"
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    authorization_url: str = Field(
+        min_length=1,
+        description="Fully assembled Microsoft OAuth authorization URL.",
+    )
+    oauth_configuration_ready: bool = Field(
+        description=(
+            "Whether the backend had the minimum settings needed to build the "
+            "URL."
+        ),
+    )
+    state: str | None = Field(
+        default=None,
+        description="Optional opaque state value included in the URL.",
+    )
+
+
+class OutlookOAuthConnectionSavedResponse(BaseModel):
+    """
+    Response returned when the Outlook OAuth callback completes successfully.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "status": "connected",
+            "message": "Outlook connection completed successfully.",
+            "oauth_connection_id": "11111111-1111-1111-1111-111111111111",
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "tenant_id": "ffffffff-1111-2222-3333-444444444444",
+            "user_principal_name": "tom@example.com",
+            "state": "connect-outlook-dev",
+            "next_step": "The Outlook tokens were saved successfully. The next step is to make the first authenticated Microsoft Graph read."
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["connected"] = Field(
+        description="Fixed status confirming the Outlook connection was saved."
+    )
+    message: str = Field(
+        min_length=1,
+        description="Safe human-readable summary of the successful connection result.",
+    )
+    oauth_connection_id: str = Field(
+        min_length=1,
+        description="Primary key of the saved Outlook OAuth connection row.",
+    )
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier associated with the saved connection.",
+    )
+    tenant_id: str | None = Field(
+        default=None,
+        description="Optional Microsoft Entra tenant identifier.",
+    )
+    user_principal_name: str | None = Field(
+        default=None,
+        description="Optional Microsoft username or mailbox login returned by the provider.",
+    )
+    state: str | None = Field(
+        default=None,
+        description="Optional opaque state value returned by Microsoft.",
+    )
+    next_step: str = Field(
+        min_length=1,
+        description="Short explanation of the next integration step.",
+    )
+
+
+class OutlookCurrentUserResponse(BaseModel):
+    """
+    Response returned when the backend fetches the connected Outlook user.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "user": {...}
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier used for the authenticated read.",
+    )
+    user: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Current-user object returned by Microsoft Graph.",
+    )
+
+
+class OutlookMailFoldersResponse(BaseModel):
+    """
+    Response returned when the backend fetches a first-page Outlook mail-folder
+    preview.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier used to locate the stored connection.",
+    )
+    mailbox: str | None = Field(
+        default=None,
+        description="Optional delegated mailbox identifier used for the read.",
+    )
+    folder_count: int = Field(
+        ge=0,
+        description="Number of mail folders returned in this response.",
+    )
+    folders: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="First-page mail-folder objects returned by Microsoft Graph.",
+    )
+
+
+class OutlookMessagesResponse(BaseModel):
+    """
+    Response returned when the backend fetches a first-page Outlook message
+    preview for one folder.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier used to locate the stored connection.",
+    )
+    mailbox: str | None = Field(
+        default=None,
+        description="Optional delegated mailbox identifier used for the read.",
+    )
+    folder_id: str = Field(
+        min_length=1,
+        description="Mail folder identifier used for the message read.",
+    )
+    message_count: int = Field(
+        ge=0,
+        description="Number of messages returned in this response.",
+    )
+    messages: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="First-page message objects returned by Microsoft Graph.",
+    )
+
+
+class OutlookMessageAttachmentsResponse(BaseModel):
+    """
+    Response returned when the backend fetches a first-page Outlook attachment
+    preview for one message.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier used to locate the stored connection.",
+    )
+    mailbox: str | None = Field(
+        default=None,
+        description="Optional delegated mailbox identifier used for the read.",
+    )
+    message_id: str = Field(
+        min_length=1,
+        description="Message identifier whose attachments were requested.",
+    )
+    attachment_count: int = Field(
+        ge=0,
+        description="Number of attachments returned in this response.",
+    )
+    attachments: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="First-page attachment objects returned by Microsoft Graph.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
     "JobAdderCandidateDetailResponse",
@@ -741,4 +945,10 @@ __all__ = [
     "DropboxCurrentAccountResponse",
     "DropboxFolderPreviewResponse",
     "DropboxOAuthConnectionSavedResponse",
+    "OutlookAuthorizationUrlResponse",
+    "OutlookCurrentUserResponse",
+    "OutlookMailFoldersResponse",
+    "OutlookMessageAttachmentsResponse",
+    "OutlookMessagesResponse",
+    "OutlookOAuthConnectionSavedResponse",
 ]

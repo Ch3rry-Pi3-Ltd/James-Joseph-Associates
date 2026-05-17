@@ -17,6 +17,7 @@ It gives the rest of the repository a stable way to talk about:
 - the OpenRouter base URL used for OpenAI-compatible routing
 - the default timeout used for backend LLM provider calls
 - the Dropbox OAuth app credentials used for Dropbox integration routes
+- the Microsoft / Outlook OAuth app credentials used for Outlook integration routes
 
 Keeping settings in one place makes the project easier to understand because:
 
@@ -147,6 +148,25 @@ class Settings(BaseSettings):
 
         This must match the callback URI used later during the OAuth flow.
 
+    microsoft_client_id : str
+        OAuth client ID for the registered Microsoft Entra application used for
+        Outlook and Microsoft Graph access.
+
+    microsoft_client_secret : str
+        OAuth client secret for the registered Microsoft Entra application.
+
+        This is a server-side secret and must never be committed.
+
+    microsoft_tenant_id : str
+        Microsoft Entra tenant segment to use in OAuth URLs.
+
+        For the first delegated Outlook slice, `organizations` is a sensible
+        default because it supports work and school accounts without opening the
+        flow to consumer Microsoft accounts.
+
+    microsoft_redirect_uri : str
+        Exact redirect URI registered for the Microsoft Entra application.
+
     openai_api_key : str
         OpenAI API key used by the backend LLM provider layer.
 
@@ -199,6 +219,10 @@ class Settings(BaseSettings):
         DROPBOX_CLIENT_ID
         DROPBOX_CLIENT_SECRET
         DROPBOX_REDIRECT_URI
+        MICROSOFT_CLIENT_ID
+        MICROSOFT_CLIENT_SECRET
+        MICROSOFT_TENANT_ID
+        MICROSOFT_REDIRECT_URI
         OPENAI_API_KEY
         OPENROUTER_API_KEY
         OPENROUTER_BASE_URL
@@ -222,6 +246,10 @@ class Settings(BaseSettings):
         DROPBOX_CLIENT_ID=""
         DROPBOX_CLIENT_SECRET=""
         DROPBOX_REDIRECT_URI=""
+        MICROSOFT_CLIENT_ID=""
+        MICROSOFT_CLIENT_SECRET=""
+        MICROSOFT_TENANT_ID="organizations"
+        MICROSOFT_REDIRECT_URI=""
         OPENAI_API_KEY=""
         OPENROUTER_API_KEY=""
         OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
@@ -355,6 +383,38 @@ class Settings(BaseSettings):
     dropbox_redirect_uri: str = Field(
         default="",
         validation_alias="DROPBOX_REDIRECT_URI",
+    )
+
+    # OAuth client ID for the shared Microsoft Entra application used to
+    # access Outlook mail through Microsoft Graph.
+    microsoft_client_id: str = Field(
+        default="",
+        validation_alias="MICROSOFT_CLIENT_ID",
+    )
+
+    # OAuth client secret for the shared Microsoft Entra application.
+    #   - This is a backend-only secret and must never be exposed to client-side
+    #     code or committed to the repository.
+    microsoft_client_secret: str = Field(
+        default="",
+        validation_alias="MICROSOFT_CLIENT_SECRET",
+    )
+
+    # Tenant segment to use in Microsoft OAuth URLs.
+    #   - `organizations` is a good default for the first business-mailbox
+    #     slice because it supports Microsoft 365 work accounts while keeping
+    #     personal Microsoft accounts out of scope.
+    microsoft_tenant_id: str = Field(
+        default="organizations",
+        validation_alias="MICROSOFT_TENANT_ID",
+    )
+
+    # Exact callback URI registered in Microsoft Entra.
+    #   - Microsoft validates that the runtime redirect URI matches one of the
+    #     application redirect URIs exactly.
+    microsoft_redirect_uri: str = Field(
+        default="",
+        validation_alias="MICROSOFT_REDIRECT_URI",
     )
 
     # Shared OpenAI API key for the backend LLM provider layer.
