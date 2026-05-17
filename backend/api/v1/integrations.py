@@ -103,6 +103,7 @@ from backend.services.dropbox_api import (
     fetch_dropbox_list_folder,
 )
 from backend.services.dropbox_oauth import (
+    DEFAULT_DROPBOX_SCOPE,
     DropboxOAuthExchangeError,
     DropboxTokenSet,
     build_dropbox_authorization_url,
@@ -148,6 +149,27 @@ from backend.services.jobadder_oauth import (
 
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
+
+
+def _split_scope_string(scope_value: str | None) -> list[str]:
+    """
+    Split one space-separated OAuth scope string into normalized scope items.
+
+    Example
+    -------
+    Calling:
+
+        _split_scope_string("files.metadata.read files.content.read")
+
+    returns:
+
+        ["files.metadata.read", "files.content.read"]
+    """
+
+    if not isinstance(scope_value, str):
+        return []
+
+    return [item for item in scope_value.split() if item.strip() != ""]
 
 
 def build_error_response(
@@ -589,6 +611,16 @@ def _perform_jobadder_read_with_refresh_retry(
                 if retry_exc.endpoint_url is not None:
                     details.append({"endpoint_url": retry_exc.endpoint_url})
 
+                if retry_exc.response_body:
+                    details.append(
+                        {"provider_response_body": retry_exc.response_body}
+                    )
+
+                if retry_exc.request_payload is not None:
+                    details.append(
+                        {"provider_request_payload": retry_exc.request_payload}
+                    )
+
                 return build_error_response(
                     status_code=status.HTTP_502_BAD_GATEWAY,
                     code="internal_error",
@@ -628,6 +660,12 @@ def _perform_jobadder_read_with_refresh_retry(
 
         if exc.endpoint_url is not None:
             details.append({"endpoint_url": exc.endpoint_url})
+
+        if exc.response_body:
+            details.append({"provider_response_body": exc.response_body})
+
+        if exc.request_payload is not None:
+            details.append({"provider_request_payload": exc.request_payload})
 
         return build_error_response(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -1974,11 +2012,23 @@ def complete_dropbox_oauth_callback_route(
             details=details,
         )
 
+    requested_scope_items = _split_scope_string(DEFAULT_DROPBOX_SCOPE)
+    granted_scope_items = _split_scope_string(token_set.scope)
+    granted_scope_set = set(granted_scope_items)
+    missing_requested_scopes = [
+        scope_item
+        for scope_item in requested_scope_items
+        if scope_item not in granted_scope_set
+    ]
+
     return DropboxOAuthConnectionSavedResponse(
         status="connected",
         message="Dropbox connection completed successfully.",
         oauth_connection_id=str(saved_connection["id"]),
         dropbox_account_id=str(saved_connection["dropbox_account_id"]),
+        requested_scope=DEFAULT_DROPBOX_SCOPE,
+        granted_scope=token_set.scope,
+        missing_requested_scopes=missing_requested_scopes,
         state=state,
         next_step=(
             "The Dropbox tokens were saved successfully. The next step is to "

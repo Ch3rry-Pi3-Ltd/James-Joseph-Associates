@@ -68,6 +68,10 @@ class DropboxApiError(RuntimeError):
     response_body : dict[str, Any] | None
         Safe decoded provider response body when available.
 
+    request_payload : dict[str, Any] | None
+        Safe JSON payload that the backend attempted to send to Dropbox, when
+        one existed.
+
     Notes
     -----
     - This exception is meant for backend control flow.
@@ -97,12 +101,14 @@ class DropboxApiError(RuntimeError):
         status_code: int | None = None,
         endpoint_url: str | None = None,
         response_body: dict[str, Any] | None = None,
+        request_payload: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.status_code = status_code
         self.endpoint_url = endpoint_url
         self.response_body = response_body
+        self.request_payload = request_payload
 
     def __str__(self) -> str:
         """
@@ -340,23 +346,35 @@ def _post_to_dropbox_api(
         raise DropboxApiError(
             "Dropbox API access token cannot be empty.",
             endpoint_url=endpoint_url,
+            request_payload=json_payload,
         )
+
+    request_headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {cleaned_access_token}",
+    }
+    request_kwargs: dict[str, Any] = {
+        "headers": request_headers,
+        "timeout": timeout_seconds,
+    }
+
+    # Some Dropbox endpoints, such as `users/get_current_account`, expect no
+    # request body at all. Sending JSON `null` is still a body, and Dropbox
+    # rejects that shape as malformed JSON input.
+    if json_payload is not None:
+        request_headers["Content-Type"] = "application/json"
+        request_kwargs["json"] = json_payload
 
     try:
         response = httpx.post(
             endpoint_url,
-            json=json_payload,
-            headers={
-                "Accept": "application/json",
-                "Authorization": f"Bearer {cleaned_access_token}",
-                "Content-Type": "application/json",
-            },
-            timeout=timeout_seconds,
+            **request_kwargs,
         )
     except httpx.HTTPError as exc:
         raise DropboxApiError(
             "Could not reach the Dropbox API endpoint.",
             endpoint_url=endpoint_url,
+            request_payload=json_payload,
         ) from exc
 
     response_payload = _decode_dropbox_json_response(response)
@@ -367,6 +385,7 @@ def _post_to_dropbox_api(
             status_code=response.status_code,
             endpoint_url=endpoint_url,
             response_body=response_payload,
+            request_payload=json_payload,
         )
 
     return response_payload

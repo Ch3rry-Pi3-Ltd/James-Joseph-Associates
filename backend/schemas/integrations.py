@@ -581,6 +581,18 @@ class DropboxOAuthConnectionSavedResponse(BaseModel):
         Dropbox account identifier returned by the provider and used as the
         natural key for persistence.
 
+    requested_scope : str
+        Space-separated Dropbox scope string the backend asked Dropbox to
+        approve.
+
+    granted_scope : str | None
+        Space-separated Dropbox scope string returned by Dropbox in the token
+        response.
+
+    missing_requested_scopes : list[str]
+        Requested Dropbox scopes that were not present in the returned provider
+        scope string.
+
     state : str | None
         Optional opaque state value returned by Dropbox.
 
@@ -597,6 +609,9 @@ class DropboxOAuthConnectionSavedResponse(BaseModel):
             "message": "Dropbox connection completed successfully.",
             "oauth_connection_id": "11111111-1111-1111-1111-111111111111",
             "dropbox_account_id": "dbid:AAExample",
+            "requested_scope": "account_info.read files.metadata.read ...",
+            "granted_scope": "account_info.read files.metadata.read ...",
+            "missing_requested_scopes": [],
             "state": "connect-dropbox-dev",
             "next_step": "The Dropbox tokens were saved successfully. The next step is to make the first authenticated Dropbox API read."
         }
@@ -618,6 +633,18 @@ class DropboxOAuthConnectionSavedResponse(BaseModel):
     dropbox_account_id: str = Field(
         min_length=1,
         description="Dropbox account identifier associated with the saved connection.",
+    )
+    requested_scope: str = Field(
+        min_length=1,
+        description="Space-separated Dropbox scope string the backend requested.",
+    )
+    granted_scope: str | None = Field(
+        default=None,
+        description="Scope string returned by Dropbox in the token response, when present.",
+    )
+    missing_requested_scopes: list[str] = Field(
+        default_factory=list,
+        description="Requested Dropbox scopes that were not present in the returned provider scope string.",
     )
     state: str | None = Field(
         default=None,

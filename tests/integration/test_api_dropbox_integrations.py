@@ -24,7 +24,11 @@ from fastapi.testclient import TestClient
 
 from backend.main import create_app
 from backend.services.dropbox_api import DropboxApiError
-from backend.services.dropbox_oauth import DropboxOAuthExchangeError, DropboxTokenSet
+from backend.services.dropbox_oauth import (
+    DEFAULT_DROPBOX_SCOPE,
+    DropboxOAuthExchangeError,
+    DropboxTokenSet,
+)
 from backend.settings import get_settings
 
 DROPBOX_AUTHORIZE_PATH = "/api/v1/integrations/dropbox/authorize"
@@ -143,6 +147,7 @@ def test_dropbox_callback_exchanges_and_saves_connection_successfully(
     client = TestClient(create_app())
 
     fake_token_set = MagicMock()
+    fake_token_set.scope = DEFAULT_DROPBOX_SCOPE
     fake_saved_connection = {
         "id": "11111111-1111-1111-1111-111111111111",
         "dropbox_account_id": "dbid:AAExample",
@@ -168,6 +173,9 @@ def test_dropbox_callback_exchanges_and_saves_connection_successfully(
     assert payload["message"] == "Dropbox connection completed successfully."
     assert payload["oauth_connection_id"] == "11111111-1111-1111-1111-111111111111"
     assert payload["dropbox_account_id"] == "dbid:AAExample"
+    assert payload["requested_scope"] == DEFAULT_DROPBOX_SCOPE
+    assert payload["granted_scope"] == DEFAULT_DROPBOX_SCOPE
+    assert payload["missing_requested_scopes"] == []
     assert payload["state"] == "connect-dev"
 
     mock_exchange.assert_called_once_with(code="test-dropbox-code")
