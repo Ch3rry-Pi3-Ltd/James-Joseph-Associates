@@ -738,6 +738,23 @@ class OutlookAuthorizationUrlResponse(BaseModel):
     """
     Response returned when the backend builds an Outlook approval URL.
 
+    Attributes
+    ----------
+    authorization_url : str
+        Fully assembled Microsoft OAuth authorization URL.
+
+    oauth_configuration_ready : bool
+        Whether the backend had the minimum settings needed to build the URL.
+
+    state : str | None
+        Optional opaque state value included in the URL.
+
+    Notes
+    -----
+    - This response mirrors the JobAdder and Dropbox setup pattern so the
+      frontend or operator has one consistent approval-link contract.
+    - The URL itself points at Microsoft, not at our backend.
+
     Example
     -------
     A response might look like:
@@ -770,6 +787,40 @@ class OutlookAuthorizationUrlResponse(BaseModel):
 class OutlookOAuthConnectionSavedResponse(BaseModel):
     """
     Response returned when the Outlook OAuth callback completes successfully.
+
+    Attributes
+    ----------
+    status : Literal["connected"]
+        Fixed status confirming the Outlook connection was completed and saved.
+
+    message : str
+        Short human-readable summary of the successful connection result.
+
+    oauth_connection_id : str
+        Primary key of the saved Outlook OAuth connection row.
+
+    microsoft_user_id : str
+        Microsoft Graph user identifier associated with the saved connection.
+
+    tenant_id : str | None
+        Optional Microsoft Entra tenant identifier returned by the provider.
+
+    user_principal_name : str | None
+        Optional mailbox login or preferred username returned by Microsoft.
+
+    state : str | None
+        Optional opaque state value returned by Microsoft.
+
+    next_step : str
+        Short explanation of what should happen next after the connection was
+        saved.
+
+    Notes
+    -----
+    - This response deliberately confirms persistence without exposing the raw
+      authorization code or token values.
+    - Its job is to prove that the callback completed and that the backend now
+      has enough information to start authenticated Graph reads.
 
     Example
     -------
@@ -826,6 +877,20 @@ class OutlookCurrentUserResponse(BaseModel):
     """
     Response returned when the backend fetches the connected Outlook user.
 
+    Attributes
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used for the authenticated read.
+
+    user : dict[str, Any]
+        Current-user object returned by Microsoft Graph.
+
+    Notes
+    -----
+    - This is the smallest useful authenticated Graph proof after OAuth.
+    - It tells us the stored connection works against `/me` before we move into
+      folder, message, or attachment discovery.
+
     Example
     -------
     A response looks like:
@@ -852,6 +917,37 @@ class OutlookMailFoldersResponse(BaseModel):
     """
     Response returned when the backend fetches a first-page Outlook mail-folder
     preview.
+
+    Attributes
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used to locate the stored connection.
+
+    mailbox : str | None
+        Optional delegated mailbox identifier used for the read.
+
+    folder_count : int
+        Number of mail folders returned in this response.
+
+    folders : list[dict[str, Any]]
+        First-page mail-folder objects returned by Microsoft Graph.
+
+    Notes
+    -----
+    - This response is intentionally a preview, not a full traversal contract.
+    - That keeps the first Outlook slice aligned with the early Dropbox folder
+      preview approach.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "mailbox": "recruitment@example.com",
+            "folder_count": 5,
+            "folders": [...]
+        }
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -878,6 +974,41 @@ class OutlookMessagesResponse(BaseModel):
     """
     Response returned when the backend fetches a first-page Outlook message
     preview for one folder.
+
+    Attributes
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used to locate the stored connection.
+
+    mailbox : str | None
+        Optional delegated mailbox identifier used for the read.
+
+    folder_id : str
+        Mail folder identifier used for the message read.
+
+    message_count : int
+        Number of messages returned in this response.
+
+    messages : list[dict[str, Any]]
+        First-page message objects returned by Microsoft Graph.
+
+    Notes
+    -----
+    - The first Outlook slice is about discovery, not mailbox synchronization.
+    - Message items therefore stay flexible dictionaries so we can inspect the
+      source shape before freezing a canonical import model.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "mailbox": null,
+            "folder_id": "inbox",
+            "message_count": 10,
+            "messages": [...]
+        }
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -908,6 +1039,42 @@ class OutlookMessageAttachmentsResponse(BaseModel):
     """
     Response returned when the backend fetches a first-page Outlook attachment
     preview for one message.
+
+    Attributes
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used to locate the stored connection.
+
+    mailbox : str | None
+        Optional delegated mailbox identifier used for the read.
+
+    message_id : str
+        Message identifier whose attachments were requested.
+
+    attachment_count : int
+        Number of attachments returned in this response.
+
+    attachments : list[dict[str, Any]]
+        First-page attachment objects returned by Microsoft Graph.
+
+    Notes
+    -----
+    - This preview response is the bridge between mailbox discovery and later
+      CV-ingestion work.
+    - It proves attachment visibility without yet defining the eventual file
+      download or Dropbox-staging workflow.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "mailbox": "recruitment@example.com",
+            "message_id": "AAMkAGI2...",
+            "attachment_count": 3,
+            "attachments": [...]
+        }
     """
 
     model_config = ConfigDict(extra="forbid")

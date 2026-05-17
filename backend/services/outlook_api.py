@@ -134,6 +134,8 @@ def fetch_outlook_mail_folders(
     reads folders from that mailbox through Graph.
     """
 
+    # Keep the first slice intentionally to one page so we can prove mailbox
+    # access and inspect source shape before adding cursor / pagination state.
     query = urlencode({"$top": limit})
     endpoint_url = f"{_mailbox_base_path(mailbox=mailbox)}/mailFolders?{query}"
     payload = _get_from_graph(
@@ -181,6 +183,9 @@ def fetch_outlook_messages(
     if not isinstance(folder_id, str) or folder_id.strip() == "":
         raise OutlookApiError("Outlook folder_id cannot be empty.")
 
+    # Request only the message fields needed for early CV-ingestion discovery.
+    # That keeps preview reads small while still exposing the identifiers and
+    # attachment signal we need for follow-on attachment fetches.
     query = urlencode(
         {
             "$top": limit,
@@ -240,6 +245,9 @@ def fetch_outlook_message_attachments(
     if not isinstance(message_id, str) or message_id.strip() == "":
         raise OutlookApiError("Outlook message_id cannot be empty.")
 
+    # Like the folder and message reads, this attachment read is intentionally
+    # a preview. The goal of the first slice is to prove delegated mailbox
+    # access and attachment visibility before we add full download workflows.
     query = urlencode({"$top": limit})
     endpoint_url = (
         f"{_mailbox_base_path(mailbox=mailbox)}/messages/{message_id}/attachments?{query}"
@@ -294,6 +302,43 @@ def _get_from_graph(
     """
     Send one authenticated GET request to Microsoft Graph and decode the
     response.
+
+    Parameters
+    ----------
+    endpoint_url : str
+        Fully assembled Microsoft Graph endpoint URL to call.
+
+    access_token : str
+        Delegated bearer token previously obtained through Outlook OAuth.
+
+    provider_failure_message : str
+        Route-safe message to surface if Graph rejects the request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Decoded JSON object returned by Microsoft Graph.
+
+    Notes
+    -----
+    - This helper owns the repetitive HTTP pieces shared by every first-pass
+      Outlook read:
+        - bearer-token header
+        - JSON accept header
+        - standard timeout
+        - provider error normalization
+    - The higher-level helpers stay focused on mailbox semantics rather than
+      repeating the raw HTTP mechanics.
+
+    Example
+    -------
+    This helper is used internally by calls such as:
+
+        _get_from_graph(
+            endpoint_url="https://graph.microsoft.com/v1.0/me",
+            access_token="...",
+            provider_failure_message="Outlook current-user read failed.",
+        )
     """
 
     if not isinstance(access_token, str) or access_token.strip() == "":

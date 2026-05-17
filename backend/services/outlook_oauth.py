@@ -187,7 +187,16 @@ def _tenant_segment() -> str:
 
 
 def _authorize_url() -> str:
-    """Return the Microsoft OAuth authorize endpoint for the configured tenant."""
+    """
+    Return the Microsoft OAuth authorize endpoint for the configured tenant.
+
+    Example
+    -------
+    With tenant segment `organizations`, this helper returns a URL starting
+    with:
+
+        https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize
+    """
 
     return (
         f"https://login.microsoftonline.com/{_tenant_segment()}"
@@ -196,7 +205,16 @@ def _authorize_url() -> str:
 
 
 def _token_url() -> str:
-    """Return the Microsoft OAuth token endpoint for the configured tenant."""
+    """
+    Return the Microsoft OAuth token endpoint for the configured tenant.
+
+    Example
+    -------
+    With tenant segment `organizations`, this helper returns a URL starting
+    with:
+
+        https://login.microsoftonline.com/organizations/oauth2/v2.0/token
+    """
 
     return (
         f"https://login.microsoftonline.com/{_tenant_segment()}"
@@ -482,6 +500,9 @@ def _request_outlook_token_set(
 
     settings = get_settings()
 
+    # Keep the raw token HTTP exchange in one helper so both the initial code
+    # exchange and later refresh flow share the same timeout, error handling,
+    # and response normalization rules.
     try:
         response = httpx.post(
             _token_url(),
@@ -520,6 +541,9 @@ def _request_outlook_token_set(
             response_body=response_payload,
         ) from exc
 
+    # The ID token is optional metadata alongside the delegated token set. We
+    # decode a few convenient identity hints from it, but the access and
+    # refresh tokens remain the real credentials that matter for API calls.
     id_token_claims = _decode_jwt_claims(
         _read_optional_string(response_payload, "id_token")
     )

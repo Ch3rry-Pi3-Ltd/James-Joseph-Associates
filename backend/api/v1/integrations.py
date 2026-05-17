@@ -2146,6 +2146,31 @@ def _refresh_outlook_stored_connection(
     """
     Refresh the stored Outlook token set and persist the replacement row.
 
+    Parameters
+    ----------
+    microsoft_user_id : str
+        Natural key for the stored Outlook OAuth connection.
+
+    refresh_token_value : Any
+        Raw refresh-token value currently stored in Postgres.
+
+    stored_connection : dict[str, Any]
+        Existing persisted Outlook connection row used to preserve stable
+        metadata if Microsoft omits it from the refresh response.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Updated stored connection row on success, otherwise a ready-to-return
+        API error response.
+
+    Notes
+    -----
+    - Microsoft refresh responses can omit fields we still care about locally,
+      such as the previous refresh token, tenant ID, or mailbox login.
+    - This helper therefore merges the new token response with the stable
+      stored metadata before saving the replacement row.
+
     Example
     -------
     This helper is used when:
@@ -2187,6 +2212,9 @@ def _refresh_outlook_stored_connection(
             details=details,
         )
 
+    # Microsoft refresh responses are not guaranteed to repeat every identity
+    # hint we captured earlier. Preserve the stable stored metadata so the
+    # refreshed row remains fully usable for later reads and debugging.
     merged_raw_payload = dict(refreshed_token_set.raw_payload)
 
     merged_raw_payload.setdefault("refresh_token", refresh_token_value)
@@ -2239,6 +2267,30 @@ def _prepare_outlook_connection_for_api_read(
     """
     Load one stored Outlook connection row and ensure it is ready for a Graph
     API read.
+
+    Parameters
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used to locate the stored connection row.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Usable stored connection row when the backend can proceed with a Graph
+        read, otherwise a ready-to-return API error response.
+
+    Example
+    -------
+    A route can call:
+
+        stored_connection = _prepare_outlook_connection_for_api_read(
+            microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        )
+
+    and then either:
+
+    - perform the Graph read immediately
+    - or return the already-built error response
     """
 
     stored_connection = get_outlook_oauth_connection(microsoft_user_id)
@@ -2264,6 +2316,9 @@ def _prepare_outlook_connection_for_api_read(
     obtained_at = stored_connection.get("obtained_at")
     expires_in_seconds = stored_connection.get("expires_in_seconds")
 
+    # Refresh proactively when the stored timing data says the token is
+    # expired or too close to expiry. That gives the first Graph read the best
+    # available credential state instead of waiting for a predictable `401`.
     if (
         obtained_at is not None
         and isinstance(expires_in_seconds, int)
@@ -2307,6 +2362,44 @@ def _perform_outlook_read_with_refresh_retry(
 ) -> dict[str, Any] | JSONResponse:
     """
     Perform one Graph read and retry once with a refreshed token after `401`.
+
+    Parameters
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used for error reporting and refresh saves.
+
+    stored_connection : dict[str, Any]
+        Stored Outlook connection row that already passed the initial local
+        validation checks.
+
+    read_callable : callable
+        Small function that accepts keyword argument `access_token` and performs
+        one Graph read.
+
+    provider_failure_message : str
+        Safe route-level message to use if Graph rejects the read.
+
+    Returns
+    -------
+    dict[str, Any] | JSONResponse
+        Normalized read result on success, otherwise a ready-to-return API
+        error response.
+
+    Notes
+    -----
+    - The only provider failure treated as recoverable here is `401`.
+    - The retry policy is deliberately narrow:
+        - refresh once
+        - retry once
+        - surface the failure clearly if Graph still rejects the call
+
+    Example
+    -------
+    Routes can pass lambdas such as:
+
+        lambda *, access_token: fetch_outlook_current_user(
+            access_token=access_token
+        )
     """
 
     access_token = stored_connection.get("access_token")
@@ -2471,6 +2564,12 @@ def complete_outlook_oauth_callback_route(
     """
     Complete the Outlook OAuth callback by exchanging the code and saving the
     resulting token set.
+
+    Example
+    -------
+    A successful callback request looks like:
+
+        GET /api/v1/integrations/outlook/callback?code=...
     """
 
     if error is not None:
@@ -2580,6 +2679,12 @@ def get_outlook_current_user_route(
 ) -> OutlookCurrentUserResponse | JSONResponse:
     """
     Return the currently connected Microsoft user profile.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/current-user
     """
 
     stored_connection = _prepare_outlook_connection_for_api_read(
@@ -2627,6 +2732,12 @@ def get_outlook_mail_folders_route(
 ) -> OutlookMailFoldersResponse | JSONResponse:
     """
     Return a first-page preview of Outlook mail folders.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders?mailbox=recruitment@example.com&limit=25
     """
 
     stored_connection = _prepare_outlook_connection_for_api_read(
@@ -2682,6 +2793,12 @@ def get_outlook_messages_route(
 ) -> OutlookMessagesResponse | JSONResponse:
     """
     Return a first-page preview of messages in one Outlook mail folder.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages?folder_id=inbox
     """
 
     stored_connection = _prepare_outlook_connection_for_api_read(
@@ -2736,6 +2853,12 @@ def get_outlook_message_attachments_route(
 ) -> OutlookMessageAttachmentsResponse | JSONResponse:
     """
     Return a first-page preview of attachments on one Outlook message.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments
     """
 
     stored_connection = _prepare_outlook_connection_for_api_read(

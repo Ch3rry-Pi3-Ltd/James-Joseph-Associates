@@ -68,7 +68,8 @@ from backend.settings import get_settings
 DROPBOX_AUTHORIZE_URL = "https://www.dropbox.com/oauth2/authorize"
 DROPBOX_TOKEN_URL = "https://api.dropboxapi.com/oauth2/token"
 DEFAULT_DROPBOX_SCOPE = (
-    "account_info.read files.metadata.read files.content.read sharing.read"
+    "account_info.read files.metadata.read files.content.read sharing.read "
+    "files.metadata.write files.content.write"
 )
 
 
@@ -118,7 +119,10 @@ class DropboxTokenSet:
             token_type="bearer",
             expires_in=14400,
             refresh_token="...",
-            scope="account_info.read files.metadata.read",
+            scope=(
+                "account_info.read files.metadata.read files.content.read "
+                "sharing.read files.metadata.write files.content.write"
+            ),
             account_id="dbid:AAExample",
             raw_payload={...},
         )

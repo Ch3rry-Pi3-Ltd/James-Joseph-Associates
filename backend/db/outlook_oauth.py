@@ -30,12 +30,40 @@ def save_outlook_oauth_connection(token_set: OutlookTokenSet) -> dict[str, objec
     """
     Insert or replace the current Outlook OAuth connection record.
 
+    Parameters
+    ----------
+    token_set : OutlookTokenSet
+        Normalized Microsoft token payload returned by the OAuth helper.
+
+    Returns
+    -------
+    dict[str, object]
+        Saved Postgres row for the Outlook connection, including timestamps and
+        identity fields used for later Graph reads.
+
+    Notes
+    -----
+    - The natural key for this table is `microsoft_user_id`, not the one-time
+      authorization code.
+    - Re-authorizing the same mailbox identity should replace the stored token
+      material in-place rather than creating duplicate connection rows.
+    - That keeps later authenticated reads simple: look up one user ID and use
+      the newest stored delegated token set.
+
     Example
     -------
     Reconnecting the same Microsoft user updates the stored tokens rather than
-    creating duplicates.
+    creating duplicates:
+
+        saved = save_outlook_oauth_connection(token_set)
+        same_user = get_outlook_oauth_connection(
+            saved["microsoft_user_id"]
+        )
     """
 
+    # Microsoft returns `expires_in`, not an absolute expiry timestamp, so the
+    # backend records the moment this token set became the active stored
+    # credential state.
     obtained_at = datetime.now(timezone.utc)
     microsoft_user_id = token_set.microsoft_user_id
 
@@ -93,6 +121,8 @@ def save_outlook_oauth_connection(token_set: OutlookTokenSet) -> dict[str, objec
             updated_at
     """
 
+    # Keep the SQL parameter map explicit so the persistence step stays easy to
+    # audit against both the token-set model and the table definition.
     params = {
         "access_token": token_set.access_token,
         "refresh_token": token_set.refresh_token,
@@ -105,6 +135,9 @@ def save_outlook_oauth_connection(token_set: OutlookTokenSet) -> dict[str, objec
         "user_principal_name": token_set.user_principal_name,
     }
 
+    # Upsert on `microsoft_user_id` because one connected mailbox should have
+    # one current stored delegated token set. Reconnects then become updates,
+    # not duplicate rows with competing credentials.
     with postgres_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -123,6 +156,16 @@ def get_outlook_oauth_connection(
 ) -> dict[str, object] | None:
     """
     Fetch the stored Outlook OAuth connection for one Microsoft user.
+
+    Parameters
+    ----------
+    microsoft_user_id : str
+        Microsoft Graph user identifier previously captured during OAuth.
+
+    Returns
+    -------
+    dict[str, object] | None
+        Stored Outlook OAuth row when present, otherwise `None`.
 
     Example
     -------
