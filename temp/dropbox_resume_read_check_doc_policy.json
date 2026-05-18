@@ -1,0 +1,23 @@
+{
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "checked_file_count": 1,
+  "results": [
+    {
+      "status": "extraction_failed",
+      "path": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/tw337 adv-cvr upload/John Kennedy CVJK23PB_U.doc",
+      "file_name": "John Kennedy CVJK23PB_U.doc",
+      "content_type": "application/octet-stream",
+      "byte_count": 57344,
+      "reason": "The resume file format is not supported for text extraction.",
+      "resume_text_stage": "input_validation",
+      "details": [
+        {
+          "file_name": "John Kennedy CVJK23PB_U.doc"
+        },
+        {
+          "content_type": "application/octet-stream"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "checked_file_count": 2,
+  "results": [
+    {
+      "status": "download_failed",
+      "path": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/tw337 adv-cvr upload/Shamsul Abdin (... - Totaljobs).docx",
+      "reason": "Dropbox file download failed.",
+      "provider_status_code": 409,
+      "endpoint_url": "https://content.dropboxapi.com/2/files/download",
+      "provider_response_body": {
+        "error_summary": "path/not_found/...",
+        "error": {
+          ".tag": "path",
+          "path": {
+            ".tag": "not_found"
+          }
+        }
+      }
+    },
+    {
+      "status": "ok",
+      "path": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/tw337 adv-cvr upload/Sapna Hazel Batra CV - September 2023.pdf",
+      "file_name": "Sapna Hazel Batra CV - September 2023.pdf",
+      "content_type": "application/octet-stream",
+      "byte_count": 150002,
+      "extractor": "pypdf",
+      "character_count": 5418,
+      "page_count": 2,
+      "text_preview": "Vaibhav Parsia\n+44 7951 536721 | vaibhav.parsia@hotmail.com | LinkedIn www.linkedin.com/in/vaibhavparsia\nTown: Potters Bar EN6\n\nOperations Analyst\nAn accomplished and diligent Middle Office / Operations Analyst with a strong background in corporate actions,\nclient service, trade support and project "
+    }
+  ]
+}

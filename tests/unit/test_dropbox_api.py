@@ -8,6 +8,7 @@ It gives the rest of the repository a stable way to check:
 
 - whether current-account reads omit a JSON body when Dropbox expects none
 - whether folder-list reads still send the expected JSON payload
+- whether file-download reads use the Dropbox content-API request shape
 - whether provider responses are normalized into one small backend exception
 
 In plain language:
@@ -15,15 +16,21 @@ In plain language:
 - this module answers the question:
 
     "Does the backend call the Dropbox read endpoints in the shape Dropbox expects?"
+
+- this now covers both Dropbox API families used by the backend:
+  - the normal JSON API for account and folder reads
+  - the content API for transient file downloads
 """
 
 import httpx
 import pytest
 
 from backend.services.dropbox_api import (
+    DROPBOX_DOWNLOAD_FILE_URL,
     DROPBOX_GET_CURRENT_ACCOUNT_URL,
     DROPBOX_LIST_FOLDER_URL,
     DropboxApiError,
+    download_dropbox_file,
     fetch_dropbox_current_account,
     fetch_dropbox_list_folder,
 )
@@ -165,3 +172,108 @@ def test_fetch_dropbox_current_account_raises_for_provider_http_error() -> None:
     error = exc_info.value
     assert error.status_code == 400
     assert error.endpoint_url == DROPBOX_GET_CURRENT_ACCOUNT_URL
+
+
+def test_download_dropbox_file_sends_dropbox_api_arg_and_returns_bytes() -> None:
+    """
+    Verify that the file-download helper uses the Dropbox content-API request
+    shape and returns transient file bytes plus metadata.
+
+    Example
+    -------
+    The helper should:
+
+    - send the bearer token
+    - send a `Dropbox-API-Arg` header containing the target path
+    - avoid a JSON request body
+    - return file bytes, file name, and decoded metadata
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_post(url, **kwargs):
+        captured_request["url"] = url
+        captured_request["kwargs"] = kwargs
+        return httpx.Response(
+            200,
+            headers={
+                "Content-Type": (
+                    "application/vnd.openxmlformats-officedocument."
+                    "wordprocessingml.document"
+                ),
+                "Dropbox-API-Result": (
+                    '{"name":"Aman-Raja_cv-library.docx",'
+                    '"path_display":"/tw394 = to CVR/Aman-Raja_cv-library.docx"}'
+                ),
+            },
+            content=b"PK\x03\x04 fake docx bytes",
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = download_dropbox_file(
+            access_token="test-token",
+            path="/tw394 = to CVR/Aman-Raja_cv-library.docx",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert captured_request["url"] == DROPBOX_DOWNLOAD_FILE_URL
+
+    request_kwargs = captured_request["kwargs"]
+    assert isinstance(request_kwargs, dict)
+    assert "json" not in request_kwargs
+
+    headers = request_kwargs["headers"]
+    assert isinstance(headers, dict)
+    assert headers["Authorization"] == "Bearer test-token"
+    assert headers["Dropbox-API-Arg"] == (
+        '{"path": "/tw394 = to CVR/Aman-Raja_cv-library.docx"}'
+    )
+
+    assert result["file_name"] == "Aman-Raja_cv-library.docx"
+    assert result["content_type"] == (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    assert result["content_bytes"] == b"PK\x03\x04 fake docx bytes"
+    assert result["file_metadata"]["path_display"] == (
+        "/tw394 = to CVR/Aman-Raja_cv-library.docx"
+    )
+
+
+def test_download_dropbox_file_raises_when_metadata_header_is_invalid() -> None:
+    """
+    Verify that an invalid `Dropbox-API-Result` header becomes a normalized
+    backend error instead of being ignored silently.
+
+    Example
+    -------
+    If Dropbox returns a malformed metadata header, the helper should raise
+    `DropboxApiError` with the endpoint and safe request payload attached.
+    """
+
+    def fake_post(url, **kwargs):
+        return httpx.Response(
+            200,
+            headers={
+                "Dropbox-API-Result": "not-json",
+            },
+            content=b"fake-bytes",
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        with pytest.raises(DropboxApiError) as exc_info:
+            download_dropbox_file(
+                access_token="test-token",
+                path="/tw394 = to CVR/Broken.docx",
+            )
+    finally:
+        httpx.post = original_post
+
+    error = exc_info.value
+    assert error.endpoint_url == DROPBOX_DOWNLOAD_FILE_URL
+    assert error.request_payload == {"path": "/tw394 = to CVR/Broken.docx"}
+    assert error.response_body == {"raw_dropbox_api_result": "not-json"}

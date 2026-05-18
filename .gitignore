@@ -60,3 +60,6 @@ passwords.txt
 # Supabase local CLI artifacts
 supabase/.temp/
 supabase/remote_public_schema.sql
+
+# locally pulled secret snapshots
+temp/*_env.tmp

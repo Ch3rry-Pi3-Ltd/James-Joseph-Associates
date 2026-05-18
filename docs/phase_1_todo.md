@@ -57,12 +57,52 @@ client's latest feedback.
       staging does not require a second consent flow.
   - [ ] Confirm Dropbox app registration ownership and live app credentials.
   - [ ] Confirm first folders in scope.
+    - [x] Record the current candidate first-target folders:
+      - [x] `/tw394 = to CVR`
+      - [x] `/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/tw337 adv-cvr upload`
+    - [ ] Confirm whether the first narrow file-read/download slice should use
+      `tw394 = to CVR` or `tw337 adv-cvr upload`.
   - [ ] Confirm whether the first pass should be strictly read-only.
   - [ ] Inspect a 20-30 file sample and record matching/source-shape findings.
+    - [x] Record the first live folder-shape findings in
+      `docs/dropbox_source_shape_review.md`.
+    - [x] Build the first Dropbox file download/read helper for a narrow sample.
+    - [x] Verify PDF reads from Dropbox end to end.
+    - [x] Verify DOCX reads from Dropbox end to end.
+      - [x] Note that at least one real Dropbox DOCX is malformed and fails
+        local extraction with "The resume DOCX does not contain the main
+        document body."
+    - [x] Decide how to handle legacy `.doc` files:
+      - [ ] add native extraction support
+      - [x] classify them as a staged/manual-conversion path
+      - [x] current decision basis:
+        - [x] no obvious local `.doc` conversion tool is installed
+        - [x] first target folder `tw394 = to CVR` contains `0` `.doc` files
+        - [x] `tw337 adv-cvr upload` contains `1` `.doc` file
+        - [x] `tw396/WIP in GPT` contains `1` `.doc` file
+        - [x] one real `.doc` download fails with the current expected error:
+          `The resume file format is not supported for text extraction.`
+    - [ ] Record file-type handling policy in documentation:
+      - [x] PDF supported
+      - [x] DOCX supported
+      - [x] DOC not supported in the first automated path; stage for manual
+        conversion or later tooling if volume justifies it
 - [ ] Review the wider source-system landscape and recommended import order
   before bulk loading old/static CV data:
   - [ ] JobAdder.
   - [ ] Dropbox CV folders.
+    - [ ] Split Dropbox ingestion policy into:
+      - [ ] generic CV/document-source folders
+      - [ ] advert-response / vacancy-linked folders
+      - [x] Prove that a small advert-response folder can feed the existing
+        PDF/DOCX extraction path:
+        - [x] `tw337 adv-cvr upload` PDF proof
+        - [x] `tw337 adv-cvr upload` DOCX proof
+    - [ ] Preserve vacancy-code (`tw...`) metadata for advert-response folders.
+    - [ ] Decide whether advert-response Dropbox CVs should be modelled as:
+      - [ ] document-first candidate evidence
+      - [ ] vacancy-aware applications
+      - [ ] or a hybrid path
   - [ ] Outlook / Microsoft 365 CV attachments.
     - [x] Scaffold Outlook OAuth backend support:
       - [x] Outlook authorize URL route.
@@ -80,6 +120,17 @@ client's latest feedback.
   - [ ] Recruiterflow JSON.
   - [ ] Pipedrive hiring-manager data.
   - [ ] Spreadsheets / Microsoft To Do / other legacy exports.
+  - [ ] Inspect the JobAdder jobs / job ads / job applications surface before
+    finalising advert-response ingestion design:
+    - [x] confirm the exact endpoints and fields we care about
+      - [x] `GET /jobads`
+      - [x] `GET /jobads/{adId}`
+      - [x] `GET /jobads/{adId}/applications`
+      - [x] `GET /jobads/{adId}/applications/active`
+    - [ ] check whether vacancy codes or job-ad references can anchor
+      Dropbox/Outlook advert-response CVs
+    - [ ] decide whether JobAdder should be the structured system of record for
+      advert-response/application context
 
 </details>
 

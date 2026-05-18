@@ -342,6 +342,183 @@ class JobAdderCandidateDetailResponse(BaseModel):
     )
 
 
+class JobAdderJobAdsPreviewResponse(BaseModel):
+    """
+    Response returned when the backend performs the first authenticated
+    JobAdder job-ad list read.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    item_count : int
+        Number of job-ad items returned in this preview response.
+
+    total_count : int | None
+        Provider-reported total job-ad count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    jobads : list[dict[str, Any]]
+        Small first-page preview of job-ad items returned by JobAdder.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "item_count": 2,
+            "total_count": 25,
+            "links": {...},
+            "jobads": [...],
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    item_count: int = Field(
+        ge=0,
+        description="Number of job-ad items returned in this preview response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total job-ad count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    jobads: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small first-page preview of job-ad items from JobAdder.",
+    )
+
+
+class JobAdderJobAdApplicationsPreviewResponse(BaseModel):
+    """
+    Response returned when the backend previews applications for one JobAdder
+    job ad.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    ad_id : int
+        JobAdder job-ad identifier whose applications were requested.
+
+    active_only : bool
+        Whether the preview came from the active-applications endpoint.
+
+    item_count : int
+        Number of application items returned in this preview response.
+
+    total_count : int | None
+        Provider-reported total application count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    applications : list[dict[str, Any]]
+        Small first-page preview of application items returned by JobAdder.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "ad_id": 12345,
+            "active_only": true,
+            "item_count": 2,
+            "total_count": 10,
+            "links": {...},
+            "applications": [...],
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    ad_id: int = Field(
+        ge=1,
+        description="JobAdder job-ad identifier whose applications were requested.",
+    )
+
+    active_only: bool = Field(
+        description="Whether the preview came from the active-applications endpoint.",
+    )
+
+    item_count: int = Field(
+        ge=0,
+        description="Number of application items returned in this preview response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total application count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    applications: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small first-page preview of application items from JobAdder.",
+    )
+
+
 class JobAdderCandidateSkillsResponse(BaseModel):
     """
     Response returned when the backend fetches the structured skills tree for

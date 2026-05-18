@@ -1,0 +1,17 @@
+{
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "checked_file_count": 1,
+  "results": [
+    {
+      "status": "ok",
+      "path": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/tw337 adv-cvr upload/Shamsul Abdin (ecb3a311-738d-40d4-85a5-0b40038a9a54 - Totaljobs).docx",
+      "file_name": "Shamsul Abdin (ecb3a311-738d-40d4-85a5-0b40038a9a54 - Totaljobs).docx",
+      "content_type": "application/octet-stream",
+      "byte_count": 39109,
+      "extractor": "docx_xml",
+      "character_count": 11777,
+      "page_count": null,
+      "text_preview": "Shamsul Abdin\n\nLondon, UK\n\nabdins@outlook.com\n\nhttps://www.linkedin.com/in/ShamsulAbdin\n\n+447946325083\n\nProfile\n\nInnovative thinker with over fifteen years of corporate finance experience in asset management covering the financial, information technology and service industries.  Possesses exceptiona"
+    }
+  ]
+}

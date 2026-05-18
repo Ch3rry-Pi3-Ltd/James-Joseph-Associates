@@ -34,6 +34,8 @@ This module still stays intentionally narrow, but it now covers the core
 read-side surfaces we need for the first ingestion pipeline:
 
 - fetch a first-page preview of candidates
+- fetch a first-page preview of job ads
+- fetch a first-page preview of job-ad applications
 - fetch one full candidate record
 - fetch candidate attachments
 - fetch candidate skills
@@ -764,6 +766,256 @@ def fetch_jobadder_candidates_preview(
     # - we only need a small inspection-friendly preview
     # - trimming locally keeps the public route contract predictable even if the
     #   provider's default page size is much larger
+    items = raw_items[:item_limit]
+
+    return {
+        "items": items,
+        "item_count": len(items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
+def fetch_jobadder_jobads_preview(
+    *,
+    api_url: str,
+    access_token: str,
+    item_limit: int = 10,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch a first-page preview of job ads from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    item_limit : int
+        Maximum number of job-ad items to return from the first page of the
+        JobAdder response.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small normalised dictionary containing:
+
+        - `items`
+        - `item_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or item limit is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This is the job-ad analogue of the candidate-preview helper.
+    - The immediate goal is payload inspection rather than long-term contract
+      design, so nested job-ad items remain flexible dictionaries.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_jobads_preview(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            item_limit=5,
+        )
+
+    returns a small wrapper around JobAdder's first job-ad page.
+    """
+    if item_limit < 1:
+        raise ValueError("JobAdder job-ad preview item_limit must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path="/jobads",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder job-ad read failed.",
+    )
+
+    raw_items = response_payload.get("items")
+
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder job-ad read response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
+    items = raw_items[:item_limit]
+
+    return {
+        "items": items,
+        "item_count": len(items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
+def fetch_jobadder_jobad_applications_preview(
+    *,
+    api_url: str,
+    access_token: str,
+    ad_id: int,
+    item_limit: int = 10,
+    active_only: bool = False,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch a first-page preview of applications for one JobAdder job ad.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    ad_id : int
+        JobAdder job-ad identifier whose applications should be fetched.
+
+    item_limit : int
+        Maximum number of application items to return from the first page of
+        the JobAdder response.
+
+    active_only : bool
+        Whether to read only active applications using
+        `/jobads/{adId}/applications/active`.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small normalised dictionary containing:
+
+        - `items`
+        - `item_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, ad ID, or item limit is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This is the first vacancy/application-aware JobAdder helper.
+    - It is intentionally bounded to a small preview because the current goal
+      is payload inspection, not bulk ingestion.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_jobad_applications_preview(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            ad_id=12345,
+            item_limit=5,
+            active_only=True,
+        )
+
+    returns a small wrapper around JobAdder's application list for that ad.
+    """
+    if ad_id < 1:
+        raise ValueError("JobAdder ad_id must be at least 1.")
+
+    if item_limit < 1:
+        raise ValueError(
+            "JobAdder job-ad applications preview item_limit must be at least 1."
+        )
+
+    applications_resource_path = (
+        f"/jobads/{ad_id}/applications/active"
+        if active_only
+        else f"/jobads/{ad_id}/applications"
+    )
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=applications_resource_path,
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder job-ad applications read failed.",
+    )
+
+    raw_items = response_payload.get("items")
+
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder job-ad applications response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
     items = raw_items[:item_limit]
 
     return {
@@ -1842,6 +2094,8 @@ __all__ = [
     "build_jobadder_api_headers",
     "download_jobadder_candidate_attachment",
     "fetch_jobadder_candidate_attachments",
+    "fetch_jobadder_jobad_applications_preview",
+    "fetch_jobadder_jobads_preview",
     "fetch_jobadder_candidates_page",
     "fetch_jobadder_candidate_detail",
     "fetch_jobadder_candidate_notes",

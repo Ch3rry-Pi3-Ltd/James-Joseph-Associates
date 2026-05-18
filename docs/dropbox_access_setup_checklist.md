@@ -6,6 +6,10 @@ inspection plan.
 It is not yet an ingestion design. It is the checklist we should work through
 before deciding how Dropbox CVs should enter the canonical Supabase model.
 
+The current observed folder structure and folder-meaning notes now live in:
+
+- `docs/dropbox_source_shape_review.md`
+
 ## Why this document exists
 
 The JobAdder path is now in a materially better place:

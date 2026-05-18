@@ -47,6 +47,8 @@ from backend.services.jobadder_api import (
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_jobad_applications_preview,
+    fetch_jobadder_jobads_preview,
     fetch_jobadder_candidates_page,
     fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
@@ -209,6 +211,116 @@ def test_fetch_jobadder_candidates_preview_does_not_duplicate_v2_segment(
     assert preview["endpoint_url"] == "https://eu2api.jobadder.com/v2/candidates"
     assert preview["item_count"] == 0
     assert captured_request["url"] == "https://eu2api.jobadder.com/v2/candidates"
+
+
+def test_fetch_jobadder_jobads_preview_returns_trimmed_preview(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that a successful JobAdder job-ad list response is normalised
+    correctly and trimmed to the requested preview size.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"adId": 101, "title": "Platform Engineer"},
+                    {"adId": 102, "title": "Data Engineer"},
+                    {"adId": 103, "title": "DevOps Engineer"},
+                ],
+                "totalCount": 3,
+                "links": {
+                    "first": "https://api.jobadder.com/v2/jobads?page=1",
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    preview = fetch_jobadder_jobads_preview(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        item_limit=2,
+    )
+
+    assert preview["item_count"] == 2
+    assert preview["total_count"] == 3
+    assert preview["links"] == {
+        "first": "https://api.jobadder.com/v2/jobads?page=1",
+    }
+    assert preview["items"] == [
+        {"adId": 101, "title": "Platform Engineer"},
+        {"adId": 102, "title": "Data Engineer"},
+    ]
+    assert preview["endpoint_url"] == "https://api.jobadder.com/v2/jobads"
+
+    assert captured_request["url"] == "https://api.jobadder.com/v2/jobads"
+    assert captured_request["headers"] == {
+        "Authorization": "Bearer jobadder-access-token",
+        "Accept": "application/json",
+    }
+    assert captured_request["timeout"] == 30.0
+
+
+def test_fetch_jobadder_jobad_applications_preview_uses_active_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the job-ad applications helper switches to the active-only
+    endpoint when requested.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"applicationId": 501, "status": "Active"},
+                    {"applicationId": 502, "status": "Active"},
+                ],
+                "totalCount": 2,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    preview = fetch_jobadder_jobad_applications_preview(
+        api_url="https://eu2api.jobadder.com/v2",
+        access_token="jobadder-access-token",
+        ad_id=101,
+        item_limit=10,
+        active_only=True,
+    )
+
+    assert preview["item_count"] == 2
+    assert preview["total_count"] == 2
+    assert preview["items"] == [
+        {"applicationId": 501, "status": "Active"},
+        {"applicationId": 502, "status": "Active"},
+    ]
+    assert (
+        preview["endpoint_url"]
+        == "https://eu2api.jobadder.com/v2/jobads/101/applications/active"
+    )
+    assert (
+        captured_request["url"]
+        == "https://eu2api.jobadder.com/v2/jobads/101/applications/active"
+    )
 
 
 def test_fetch_jobadder_candidates_page_requests_first_page_with_explicit_params(
