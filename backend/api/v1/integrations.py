@@ -36,6 +36,7 @@ Dropbox, and Outlook:
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
@@ -91,6 +92,7 @@ from backend.schemas.integrations import (
     JobAdderCandidateNotesResponse,
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
+    JobAdderApplicationsPreviewResponse,
     JobAdderJobAdApplicationsPreviewResponse,
     JobAdderJobAdsPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
@@ -140,6 +142,7 @@ from backend.services.jobadder_api import (
     fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
+    fetch_jobadder_applications_preview,
     fetch_jobadder_jobad_applications_preview,
     fetch_jobadder_jobads_preview,
 )
@@ -1003,6 +1006,120 @@ def get_jobadder_oauth_callback(
             "The JobAdder tokens were saved successfully. The next step is to "
             "make the first authenticated JobAdder API read."
         ),
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/applications-preview",
+    response_model=JobAdderApplicationsPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder applications read failed.",
+        },
+    },
+)
+def get_jobadder_applications_preview_route(
+    jobadder_account: int,
+    item_limit: int = Query(
+        default=10,
+        ge=1,
+        le=25,
+        description=(
+            "Maximum number of application items to return from the first page "
+            "of the JobAdder response."
+        ),
+    ),
+    active_only: bool = Query(
+        default=False,
+        description="Whether to request only active applications.",
+    ),
+    rejected_only: bool = Query(
+        default=False,
+        description="Whether to request only rejected applications.",
+    ),
+) -> JobAdderApplicationsPreviewResponse | JSONResponse:
+    """
+    Return a small first-page preview of JobAdder applications.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    item_limit : int
+        Maximum number of application items to return from the first page of
+        the JobAdder response.
+
+    active_only : bool
+        Whether to request only active applications.
+
+    rejected_only : bool
+        Whether to request only rejected applications.
+
+    Returns
+    -------
+    JobAdderApplicationsPreviewResponse | JSONResponse
+        First-page application preview when the stored connection exists and
+        the JobAdder API call succeeds.
+    """
+    if active_only and rejected_only:
+        return build_error_response(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            code="validation_error",
+            message=(
+                "JobAdder applications preview cannot request both active_only "
+                "and rejected_only."
+            ),
+            details=[
+                {"query_params": ["active_only", "rejected_only"]},
+                {"reason": "mutually_exclusive"},
+            ],
+        )
+
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    preview_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_applications_preview(
+            api_url=api_url,
+            access_token=access_token,
+            item_limit=item_limit,
+            active_only=active_only,
+            rejected_only=rejected_only,
+        ),
+        provider_failure_message="JobAdder applications read failed.",
+    )
+
+    if isinstance(preview_result, JSONResponse):
+        return preview_result
+
+    preview, api_url, jobadder_instance = preview_result
+
+    return JobAdderApplicationsPreviewResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        active_only=active_only,
+        rejected_only=rejected_only,
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        links=preview["links"],
+        applications=preview["items"],
     )
 
 

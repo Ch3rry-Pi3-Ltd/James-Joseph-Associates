@@ -5,6 +5,7 @@ These tests verify the real FastAPI route wiring for:
 
     GET /api/v1/integrations/jobadder/authorize
     GET /api/v1/integrations/jobadder/callback
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
@@ -50,6 +51,9 @@ from backend.services.jobadder_oauth import JobAdderOAuthExchangeError
 
 JOBADDER_AUTHORIZE_PATH = "/api/v1/integrations/jobadder/authorize"
 JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
+JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview"
+)
 JOBADDER_JOBADS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview"
 )
@@ -425,6 +429,100 @@ def test_jobadder_callback_requires_authorization_code_when_no_provider_error_ex
     assert payload["error"]["message"] == "JobAdder authorization code is required."
     assert payload["error"]["details"] == [
         {"query_param": "code", "reason": "missing_or_empty"},
+    ]
+
+
+def test_jobadder_applications_preview_returns_first_page_preview_successfully() -> None:
+    """
+    Verify that the generic applications preview route returns a bounded first
+    page from the shared authenticated-read path.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_preview = {
+        "items": [
+            {"applicationId": 701, "status": "Active"},
+            {"applicationId": 702, "status": "Rejected"},
+        ],
+        "item_count": 2,
+        "total_count": 20,
+        "links": {
+            "first": "https://api.jobadder.com/v2/applications?page=1",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/applications",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_applications_preview",
+            return_value=fake_preview,
+        ) as mock_fetch_preview:
+            response = client.get(
+                JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE.format(
+                    jobadder_account=2236
+                )
+                + "?active_only=true"
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["active_only"] is True
+    assert payload["rejected_only"] is False
+    assert payload["item_count"] == 2
+    assert payload["total_count"] == 20
+    assert payload["applications"] == [
+        {"applicationId": 701, "status": "Active"},
+        {"applicationId": 702, "status": "Rejected"},
+    ]
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_fetch_preview.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        item_limit=10,
+        active_only=True,
+        rejected_only=False,
+    )
+
+
+def test_jobadder_applications_preview_rejects_mutually_exclusive_filters() -> None:
+    """
+    Verify that the route rejects `active_only` and `rejected_only` together.
+    """
+
+    client = TestClient(create_app())
+
+    response = client.get(
+        JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE.format(jobadder_account=2236)
+        + "?active_only=true&rejected_only=true"
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    payload = response.json()
+    assert payload["error"]["code"] == "validation_error"
+    assert "cannot request both active_only and rejected_only" in payload["error"][
+        "message"
     ]
 
 

@@ -519,6 +519,86 @@ class JobAdderJobAdApplicationsPreviewResponse(BaseModel):
     )
 
 
+class JobAdderApplicationsPreviewResponse(BaseModel):
+    """
+    Response returned when the backend previews the top-level JobAdder
+    applications collection.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    active_only : bool
+        Whether the preview requested only active applications.
+
+    rejected_only : bool
+        Whether the preview requested only rejected applications.
+
+    item_count : int
+        Number of application items returned in this preview response.
+
+    total_count : int | None
+        Provider-reported total application count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    applications : list[dict[str, Any]]
+        Small first-page preview of application items returned by JobAdder.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    active_only: bool = Field(
+        description="Whether the preview requested only active applications.",
+    )
+
+    rejected_only: bool = Field(
+        description="Whether the preview requested only rejected applications.",
+    )
+
+    item_count: int = Field(
+        ge=0,
+        description="Number of application items returned in this preview response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total application count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    applications: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small first-page preview of application items from JobAdder.",
+    )
+
+
 class JobAdderCandidateSkillsResponse(BaseModel):
     """
     Response returned when the backend fetches the structured skills tree for

@@ -34,6 +34,7 @@ This module still stays intentionally narrow, but it now covers the core
 read-side surfaces we need for the first ingestion pipeline:
 
 - fetch a first-page preview of candidates
+- fetch a first-page preview of applications
 - fetch a first-page preview of job ads
 - fetch a first-page preview of job-ad applications
 - fetch one full candidate record
@@ -863,6 +864,141 @@ def fetch_jobadder_jobads_preview(
     if not isinstance(raw_items, list):
         raise JobAdderApiError(
             "JobAdder job-ad read response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
+    items = raw_items[:item_limit]
+
+    return {
+        "items": items,
+        "item_count": len(items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
+def fetch_jobadder_applications_preview(
+    *,
+    api_url: str,
+    access_token: str,
+    item_limit: int = 10,
+    active_only: bool = False,
+    rejected_only: bool = False,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch a first-page preview of job applications from the JobAdder API.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    item_limit : int
+        Maximum number of application items to return from the first page of
+        the JobAdder response.
+
+    active_only : bool
+        Whether to request only active applications.
+
+    rejected_only : bool
+        Whether to request only rejected applications.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small normalised dictionary containing:
+
+        - `items`
+        - `item_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or item limit is invalid, or if mutually
+        exclusive filters are requested together.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_applications_preview(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            item_limit=5,
+            active_only=True,
+        )
+
+    returns a small wrapper around JobAdder's first applications page.
+    """
+    if item_limit < 1:
+        raise ValueError(
+            "JobAdder applications preview item_limit must be at least 1."
+        )
+
+    if active_only and rejected_only:
+        raise ValueError(
+            "JobAdder applications preview cannot request both active_only and rejected_only."
+        )
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path="/applications",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    params: dict[str, Any] | None = None
+    # The applications collection is filter-driven rather than path-driven, so
+    # keep these booleans in query params instead of inventing separate local
+    # endpoints for each list shape.
+    if active_only:
+        params = {"active": True}
+    elif rejected_only:
+        params = {"rejected": True}
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder applications read failed.",
+        params=params,
+    )
+
+    raw_items = response_payload.get("items")
+
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder applications read response did not include an items list.",
             status_code=200,
             endpoint_url=endpoint_url,
             response_body=response_payload,
@@ -2093,6 +2229,7 @@ __all__ = [
     "JobAdderApiError",
     "build_jobadder_api_headers",
     "download_jobadder_candidate_attachment",
+    "fetch_jobadder_applications_preview",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_jobad_applications_preview",
     "fetch_jobadder_jobads_preview",

@@ -46,6 +46,7 @@ from backend.services.jobadder_api import (
     JobAdderApiError,
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
+    fetch_jobadder_applications_preview,
     fetch_jobadder_candidate_detail,
     fetch_jobadder_jobad_applications_preview,
     fetch_jobadder_jobads_preview,
@@ -268,6 +269,68 @@ def test_fetch_jobadder_jobads_preview_returns_trimmed_preview(
         "Accept": "application/json",
     }
     assert captured_request["timeout"] == 30.0
+
+
+def test_fetch_jobadder_applications_preview_sends_active_filter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the generic applications preview helper sends the active-only
+    filter as a query parameter.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout, params=None):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+        captured_request["params"] = params
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"applicationId": 701, "status": "Active"},
+                    {"applicationId": 702, "status": "Active"},
+                ],
+                "totalCount": 2,
+                "links": {},
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    preview = fetch_jobadder_applications_preview(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        item_limit=2,
+        active_only=True,
+    )
+
+    assert preview["item_count"] == 2
+    assert preview["total_count"] == 2
+    assert preview["endpoint_url"] == "https://api.jobadder.com/v2/applications"
+    assert captured_request["url"] == "https://api.jobadder.com/v2/applications"
+    assert captured_request["params"] == {"active": True}
+
+
+def test_fetch_jobadder_applications_preview_rejects_conflicting_filters() -> None:
+    """
+    Verify that the helper rejects active-only and rejected-only together.
+    """
+
+    with pytest.raises(ValueError) as exc_info:
+        fetch_jobadder_applications_preview(
+            api_url="https://api.jobadder.com",
+            access_token="jobadder-access-token",
+            active_only=True,
+            rejected_only=True,
+        )
+
+    assert "cannot request both active_only and rejected_only" in str(
+        exc_info.value
+    )
 
 
 def test_fetch_jobadder_jobad_applications_preview_uses_active_endpoint(
