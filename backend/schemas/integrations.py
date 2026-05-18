@@ -599,6 +599,72 @@ class JobAdderApplicationsPreviewResponse(BaseModel):
     )
 
 
+class JobAdderApplicationAttachmentsResponse(BaseModel):
+    """
+    Response returned when the backend fetches application attachments from
+    JobAdder.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    application_id : int
+        JobAdder application identifier whose attachments were requested.
+
+    attachment_count : int
+        Number of attachment items returned in this response.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    attachments : list[dict[str, Any]]
+        Application attachments returned by JobAdder.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    application_id: int = Field(
+        ge=1,
+        description="JobAdder application identifier whose attachments were requested.",
+    )
+
+    attachment_count: int = Field(
+        ge=0,
+        description="Number of attachment items returned in this response.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    attachments: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Application attachments returned by JobAdder.",
+    )
+
+
 class JobAdderCandidateSkillsResponse(BaseModel):
     """
     Response returned when the backend fetches the structured skills tree for

@@ -37,6 +37,7 @@ Dropbox, and Outlook:
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
@@ -93,6 +94,7 @@ from backend.schemas.integrations import (
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderApplicationsPreviewResponse,
+    JobAdderApplicationAttachmentsResponse,
     JobAdderJobAdApplicationsPreviewResponse,
     JobAdderJobAdsPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
@@ -143,6 +145,7 @@ from backend.services.jobadder_api import (
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
     fetch_jobadder_applications_preview,
+    fetch_jobadder_application_attachments,
     fetch_jobadder_jobad_applications_preview,
     fetch_jobadder_jobads_preview,
 )
@@ -1006,6 +1009,79 @@ def get_jobadder_oauth_callback(
             "The JobAdder tokens were saved successfully. The next step is to "
             "make the first authenticated JobAdder API read."
         ),
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview",
+    response_model=JobAdderApplicationAttachmentsResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder application attachments read failed.",
+        },
+    },
+)
+def get_jobadder_application_attachments_route(
+    jobadder_account: int,
+    application_id: int,
+) -> JobAdderApplicationAttachmentsResponse | JSONResponse:
+    """
+    Return the attachment list for one JobAdder application.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    application_id : int
+        JobAdder application identifier whose attachments should be fetched.
+
+    Returns
+    -------
+    JobAdderApplicationAttachmentsResponse | JSONResponse
+        Application attachments response when the stored connection exists and
+        the JobAdder API call succeeds.
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    attachment_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_application_attachments(
+            api_url=api_url,
+            access_token=access_token,
+            application_id=application_id,
+        ),
+        provider_failure_message="JobAdder application attachments read failed.",
+    )
+
+    if isinstance(attachment_result, JSONResponse):
+        return attachment_result
+
+    attachments_result, api_url, jobadder_instance = attachment_result
+
+    return JobAdderApplicationAttachmentsResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        application_id=application_id,
+        attachment_count=attachments_result["attachment_count"],
+        links=attachments_result["links"],
+        attachments=attachments_result["items"],
     )
 
 

@@ -35,6 +35,7 @@ read-side surfaces we need for the first ingestion pipeline:
 
 - fetch a first-page preview of candidates
 - fetch a first-page preview of applications
+- fetch one application's attachment list
 - fetch a first-page preview of job ads
 - fetch a first-page preview of job-ad applications
 - fetch one full candidate record
@@ -464,6 +465,106 @@ def fetch_jobadder_candidate_attachments(
     if not isinstance(raw_items, list):
         raise JobAdderApiError(
             "JobAdder candidate attachments response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    return {
+        "items": raw_items,
+        "attachment_count": len(raw_items),
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
+def fetch_jobadder_application_attachments(
+    *,
+    api_url: str,
+    access_token: str,
+    application_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch the attachment list for one JobAdder application.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    application_id : int
+        JobAdder application identifier whose attachments should be fetched.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `items`
+        - `attachment_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or application ID is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This is the application-level counterpart to candidate attachments.
+    - It is still read-only. It does not download attachment bytes.
+    - The immediate use is payload inspection and source reconciliation.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_application_attachments(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            application_id=12204918,
+        )
+
+    returns a small wrapper around the application's attachment list.
+    """
+    if application_id < 1:
+        raise ValueError("JobAdder application_id must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/applications/{application_id}/attachments",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder application attachments read failed.",
+    )
+
+    raw_items = response_payload.get("items")
+
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder application attachments response did not include an items list.",
             status_code=200,
             endpoint_url=endpoint_url,
             response_body=response_payload,
@@ -2229,6 +2330,7 @@ __all__ = [
     "JobAdderApiError",
     "build_jobadder_api_headers",
     "download_jobadder_candidate_attachment",
+    "fetch_jobadder_application_attachments",
     "fetch_jobadder_applications_preview",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_jobad_applications_preview",

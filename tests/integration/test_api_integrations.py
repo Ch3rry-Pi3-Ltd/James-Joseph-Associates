@@ -6,6 +6,7 @@ These tests verify the real FastAPI route wiring for:
     GET /api/v1/integrations/jobadder/authorize
     GET /api/v1/integrations/jobadder/callback
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
@@ -53,6 +54,9 @@ JOBADDER_AUTHORIZE_PATH = "/api/v1/integrations/jobadder/authorize"
 JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
 JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview"
+)
+JOBADDER_APPLICATION_ATTACHMENTS_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview"
 )
 JOBADDER_JOBADS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview"
@@ -524,6 +528,73 @@ def test_jobadder_applications_preview_rejects_mutually_exclusive_filters() -> N
     assert "cannot request both active_only and rejected_only" in payload["error"][
         "message"
     ]
+
+
+def test_jobadder_application_attachments_returns_attachment_list_successfully() -> None:
+    """
+    Verify that the application-attachments route returns the JobAdder
+    attachment list cleanly.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_attachments = {
+        "items": [
+            {"attachmentId": 9001, "name": "Candidate CV.pdf"},
+            {"attachmentId": 9002, "name": "Cover Letter.docx"},
+        ],
+        "attachment_count": 2,
+        "links": {
+            "self": "https://api.jobadder.com/v2/applications/12204918/attachments"
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/applications/12204918/attachments",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_application_attachments",
+            return_value=fake_attachments,
+        ) as mock_fetch_attachments:
+            response = client.get(
+                JOBADDER_APPLICATION_ATTACHMENTS_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    application_id=12204918,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["application_id"] == 12204918
+    assert payload["attachment_count"] == 2
+    assert payload["attachments"] == [
+        {"attachmentId": 9001, "name": "Candidate CV.pdf"},
+        {"attachmentId": 9002, "name": "Cover Letter.docx"},
+    ]
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_fetch_attachments.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        application_id=12204918,
+    )
 
 
 def test_jobadder_jobads_preview_returns_first_page_preview_successfully() -> None:

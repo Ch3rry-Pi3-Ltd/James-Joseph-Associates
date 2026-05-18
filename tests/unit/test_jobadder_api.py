@@ -46,6 +46,7 @@ from backend.services.jobadder_api import (
     JobAdderApiError,
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
+    fetch_jobadder_application_attachments,
     fetch_jobadder_applications_preview,
     fetch_jobadder_candidate_detail,
     fetch_jobadder_jobad_applications_preview,
@@ -330,6 +331,60 @@ def test_fetch_jobadder_applications_preview_rejects_conflicting_filters() -> No
 
     assert "cannot request both active_only and rejected_only" in str(
         exc_info.value
+    )
+
+
+def test_fetch_jobadder_application_attachments_returns_attachment_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the application-attachments helper normalises the returned
+    attachment list correctly.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"attachmentId": 9001, "name": "Candidate CV.pdf"},
+                    {"attachmentId": 9002, "name": "Cover Letter.docx"},
+                ],
+                "links": {
+                    "self": "https://api.jobadder.com/v2/applications/12204918/attachments"
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    result = fetch_jobadder_application_attachments(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        application_id=12204918,
+    )
+
+    assert result["attachment_count"] == 2
+    assert result["links"] == {
+        "self": "https://api.jobadder.com/v2/applications/12204918/attachments"
+    }
+    assert result["items"] == [
+        {"attachmentId": 9001, "name": "Candidate CV.pdf"},
+        {"attachmentId": 9002, "name": "Cover Letter.docx"},
+    ]
+    assert (
+        result["endpoint_url"]
+        == "https://api.jobadder.com/v2/applications/12204918/attachments"
+    )
+    assert (
+        captured_request["url"]
+        == "https://api.jobadder.com/v2/applications/12204918/attachments"
     )
 
 
