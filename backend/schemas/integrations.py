@@ -422,6 +422,75 @@ class JobAdderJobAdsPreviewResponse(BaseModel):
     )
 
 
+class JobAdderJobDetailResponse(BaseModel):
+    """
+    Response returned when the backend fetches one full JobAdder job record.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    job_id : int
+        JobAdder job identifier requested by the route.
+
+    job : dict[str, Any]
+        Full job object returned by JobAdder.
+
+    Notes
+    -----
+    - This keeps the nested job flexible because the current purpose is
+      inspection and schema-mapping.
+    - The main operational use is to compare the structured JobAdder
+      opportunity record with Dropbox job-spec folders and PDFs that use the
+      same `tw...` vacancy code.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "job_id": 936462,
+            "job": {...},
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    job_id: int = Field(
+        ge=1,
+        description="JobAdder job identifier requested by the route.",
+    )
+
+    job: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Full job object returned by JobAdder.",
+    )
+
+
 class JobAdderJobAdApplicationsPreviewResponse(BaseModel):
     """
     Response returned when the backend previews applications for one JobAdder
@@ -552,6 +621,28 @@ class JobAdderApplicationsPreviewResponse(BaseModel):
 
     applications : list[dict[str, Any]]
         Small first-page preview of application items returned by JobAdder.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "active_only": true,
+            "rejected_only": false,
+            "item_count": 5,
+            "total_count": 608,
+            "links": {...},
+            "applications": [...],
+        }
+
+    Notes
+    -----
+    This response became the key advert-response discovery surface because the
+    live account exposed meaningful vacancy/application context here even when
+    the job-ad preview was empty.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -626,6 +717,27 @@ class JobAdderApplicationAttachmentsResponse(BaseModel):
 
     attachments : list[dict[str, Any]]
         Application attachments returned by JobAdder.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "application_id": 12204918,
+            "attachment_count": 0,
+            "links": {...},
+            "attachments": [],
+        }
+
+    Notes
+    -----
+    This schema is intentionally light because the payload is mainly used to
+    answer a structural question:
+
+    - does this application actually carry CV attachments?
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -735,6 +847,206 @@ class JobAdderCandidateSkillsResponse(BaseModel):
     categories: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Structured skills category tree returned by JobAdder.",
+    )
+
+
+class JobAdderCandidateAttachmentsResponse(BaseModel):
+    """
+    Response returned when the backend fetches candidate attachments from
+    JobAdder.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    candidate_id : int
+        JobAdder candidate identifier whose attachments were requested.
+
+    attachment_count : int
+        Number of attachment items returned in this response.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    attachments : list[dict[str, Any]]
+        Candidate attachments returned by JobAdder.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "candidate_id": 17071060,
+            "attachment_count": 1,
+            "links": {...},
+            "attachments": [...],
+        }
+
+    Notes
+    -----
+    For the tw398 sample, this surface turned out to be the structured CV
+    attachment source, unlike the application-level attachment list.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    candidate_id: int = Field(
+        ge=1,
+        description="JobAdder candidate identifier whose attachments were requested.",
+    )
+
+    attachment_count: int = Field(
+        ge=0,
+        description="Number of attachment items returned in this response.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    attachments: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Candidate attachments returned by JobAdder.",
+    )
+
+
+class JobAdderCandidateAttachmentDownloadProofResponse(BaseModel):
+    """
+    Response returned when the backend downloads one JobAdder candidate
+    attachment transiently and reports proof metadata for comparison work.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    candidate_id : int
+        JobAdder candidate identifier that owns the attachment.
+
+    attachment_id : int
+        JobAdder attachment identifier that was downloaded transiently.
+
+    file_name : str | None
+        File name inferred from the provider response headers when present.
+
+    content_type : str | None
+        MIME type reported by JobAdder for the downloaded file.
+
+    content_length : int | None
+        Byte length reported by JobAdder in the response headers when present.
+
+    byte_count : int
+        Actual number of bytes downloaded by the backend.
+
+    sha256 : str
+        SHA-256 hash of the downloaded file bytes.
+
+    Notes
+    -----
+    - This response exists to compare one JobAdder attachment against another
+      source such as Dropbox without exposing the raw file bytes through the
+      API route itself.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "candidate_id": 17071060,
+            "attachment_id": 21562882,
+            "file_name": "sanjeev sadha.docx",
+            "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "content_length": 123456,
+            "byte_count": 123456,
+            "sha256": "...",
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    candidate_id: int = Field(
+        ge=1,
+        description="JobAdder candidate identifier that owns the attachment.",
+    )
+
+    attachment_id: int = Field(
+        ge=1,
+        description="JobAdder attachment identifier that was downloaded.",
+    )
+
+    file_name: str | None = Field(
+        default=None,
+        description="File name inferred from the provider response headers when present.",
+    )
+
+    content_type: str | None = Field(
+        default=None,
+        description="MIME type reported by JobAdder for the downloaded file.",
+    )
+
+    content_length: int | None = Field(
+        default=None,
+        ge=0,
+        description="Byte length reported by JobAdder when present.",
+    )
+
+    byte_count: int = Field(
+        ge=0,
+        description="Actual number of bytes downloaded by the backend.",
+    )
+
+    sha256: str = Field(
+        min_length=64,
+        max_length=64,
+        description="SHA-256 hash of the downloaded file bytes.",
     )
 
 
@@ -1453,7 +1765,14 @@ class OutlookMessageAttachmentsResponse(BaseModel):
 
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
+    "JobAdderApplicationAttachmentsResponse",
+    "JobAdderApplicationsPreviewResponse",
+    "JobAdderCandidateAttachmentDownloadProofResponse",
+    "JobAdderCandidateAttachmentsResponse",
     "JobAdderCandidateDetailResponse",
+    "JobAdderJobDetailResponse",
+    "JobAdderJobAdApplicationsPreviewResponse",
+    "JobAdderJobAdsPreviewResponse",
     "JobAdderCandidateNotesResponse",
     "JobAdderCandidateSkillsResponse",
     "JobAdderCandidatesPreviewResponse",

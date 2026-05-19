@@ -7,6 +7,9 @@ These tests verify the real FastAPI route wiring for:
     GET /api/v1/integrations/jobadder/callback
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments/{attachment_id}/download-proof
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
@@ -57,6 +60,15 @@ JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE = (
 )
 JOBADDER_APPLICATION_ATTACHMENTS_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview"
+)
+JOBADDER_CANDIDATE_ATTACHMENTS_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview"
+)
+JOBADDER_CANDIDATE_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments/{attachment_id}/download-proof"
+)
+JOBADDER_JOB_DETAIL_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}"
 )
 JOBADDER_JOBADS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview"
@@ -594,6 +606,204 @@ def test_jobadder_application_attachments_returns_attachment_list_successfully()
         api_url="https://api.jobadder.com",
         access_token="jobadder-access-token",
         application_id=12204918,
+    )
+
+
+def test_jobadder_candidate_attachments_returns_attachment_list_successfully() -> None:
+    """
+    Verify that the candidate-attachments route returns the JobAdder
+    attachment list cleanly.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_attachments = {
+        "items": [
+            {"attachmentId": 8001, "name": "Candidate CV.pdf"},
+            {"attachmentId": 8002, "name": "Candidate Profile.docx"},
+        ],
+        "attachment_count": 2,
+        "links": {
+            "self": "https://api.jobadder.com/v2/candidates/17071060/attachments"
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/candidates/17071060/attachments",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_candidate_attachments",
+            return_value=fake_attachments,
+        ) as mock_fetch_attachments:
+            response = client.get(
+                JOBADDER_CANDIDATE_ATTACHMENTS_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    candidate_id=17071060,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["candidate_id"] == 17071060
+    assert payload["attachment_count"] == 2
+    assert payload["attachments"] == [
+        {"attachmentId": 8001, "name": "Candidate CV.pdf"},
+        {"attachmentId": 8002, "name": "Candidate Profile.docx"},
+    ]
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_fetch_attachments.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=17071060,
+    )
+
+
+def test_jobadder_candidate_attachment_download_proof_returns_hash_successfully() -> None:
+    """
+    Verify that the candidate-attachment download-proof route returns the
+    expected metadata and SHA-256 hash wrapper.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_download = {
+        "content_bytes": b"cv-bytes",
+        "content_type": "application/pdf",
+        "content_length": 8,
+        "file_name": "Candidate CV.pdf",
+        "endpoint_url": "https://api.jobadder.com/v2/candidates/17071060/attachments/21562882",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.download_jobadder_candidate_attachment",
+            return_value=fake_download,
+        ) as mock_download_attachment:
+            response = client.get(
+                JOBADDER_CANDIDATE_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    candidate_id=17071060,
+                    attachment_id=21562882,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["candidate_id"] == 17071060
+    assert payload["attachment_id"] == 21562882
+    assert payload["file_name"] == "Candidate CV.pdf"
+    assert payload["content_type"] == "application/pdf"
+    assert payload["content_length"] == 8
+    assert payload["byte_count"] == 8
+    assert payload["sha256"] == (
+        "ee6734cd3d0d94ee39a08ced674f7f821de7c65c2f555df01f315961ea98c4d2"
+    )
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_download_attachment.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=17071060,
+        attachment_id=21562882,
+    )
+
+
+def test_jobadder_job_detail_returns_full_job_successfully() -> None:
+    """
+    Verify that the job-detail route returns one full JobAdder job payload
+    through the shared authenticated-read path.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_job_detail = {
+        "job": {
+            "jobId": 936462,
+            "jobTitle": "tw398 - KDB Developer",
+            "status": "Open",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/jobs/936462",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_job_detail",
+            return_value=fake_job_detail,
+        ) as mock_fetch_job_detail:
+            response = client.get(
+                JOBADDER_JOB_DETAIL_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    job_id=936462,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["job_id"] == 936462
+    assert payload["job"] == {
+        "jobId": 936462,
+        "jobTitle": "tw398 - KDB Developer",
+        "status": "Open",
+    }
+
+    mock_fetch_job_detail.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        job_id=936462,
     )
 
 

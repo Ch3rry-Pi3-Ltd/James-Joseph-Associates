@@ -63,7 +63,7 @@ client's latest feedback.
     - [ ] Confirm whether the first narrow file-read/download slice should use
       `tw394 = to CVR` or `tw337 adv-cvr upload`.
   - [ ] Confirm whether the first pass should be strictly read-only.
-  - [ ] Inspect a 20-30 file sample and record matching/source-shape findings.
+  - [x] Inspect a 20-30 file sample and record matching/source-shape findings.
     - [x] Record the first live folder-shape findings in
       `docs/dropbox_source_shape_review.md`.
     - [x] Build the first Dropbox file download/read helper for a narrow sample.
@@ -98,10 +98,10 @@ client's latest feedback.
         PDF/DOCX extraction path:
         - [x] `tw337 adv-cvr upload` PDF proof
         - [x] `tw337 adv-cvr upload` DOCX proof
-    - [ ] Preserve vacancy-code (`tw...`) metadata for advert-response folders.
-    - [ ] Decide whether advert-response Dropbox CVs should be modelled as:
+    - [x] Preserve vacancy-code (`tw...`) metadata for advert-response folders.
+    - [x] Decide whether advert-response Dropbox CVs should be modelled as:
       - [ ] document-first candidate evidence
-      - [ ] vacancy-aware applications
+      - [x] vacancy-aware applications
       - [ ] or a hybrid path
   - [ ] Outlook / Microsoft 365 CV attachments.
     - [x] Scaffold Outlook OAuth backend support:
@@ -127,10 +127,73 @@ client's latest feedback.
       - [x] `GET /jobads/{adId}`
       - [x] `GET /jobads/{adId}/applications`
       - [x] `GET /jobads/{adId}/applications/active`
-    - [ ] check whether vacancy codes or job-ad references can anchor
+    - [x] check whether vacancy codes or job-ad references can anchor
       Dropbox/Outlook advert-response CVs
-    - [ ] decide whether JobAdder should be the structured system of record for
+    - [x] decide whether JobAdder should be the structured system of record for
       advert-response/application context
+    - [x] inspect whether advert-response CVs sit on JobAdder applications or
+      on JobAdder candidates:
+      - [x] sample `tw398` applications have zero application attachments
+      - [x] sample `tw398` candidates each have one resume attachment
+      - [x] Dropbox `tw398` search shows:
+        - [x] job-spec folder
+        - [x] archive `.eml` files
+        - [x] duplicate CV files in archive / IN-JAD areas
+      - [x] parse one real `tw398` Dropbox `.eml` file to confirm what the
+        advert-response archive actually preserves:
+        - [x] source channel (`Totaljobs`)
+        - [x] destination mailbox (`tom.owens@...`)
+        - [x] received timestamp
+        - [x] vacancy code (`tw398`)
+        - [x] candidate-specific attachment filename
+      - [x] compare one real JobAdder candidate attachment against the
+        matching Dropbox CV copy:
+        - [x] first proof pair completed:
+          - [x] candidate `17071060`
+          - [x] attachment `21562882`
+          - [x] Dropbox file `/#################----CV's- IN-JAD-JobAdder/sanjeev sadha.docx`
+          - [x] filename match
+          - [x] byte size match
+          - [x] SHA-256 match
+        - [x] second proof pair completed from `ACHTUNG! in RFL!`:
+          - [x] candidate `17068569`
+          - [x] attachment `21558363`
+          - [x] Dropbox file `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Zafar_Lead_Finance.docx`
+          - [x] filename match
+          - [x] byte size match
+          - [x] SHA-256 match
+      - [ ] extract text comparison only if a later pair differs by hash
+      - [ ] Add a narrow live JobAdder job-detail preview for the linked role:
+        - [x] fetch `GET /jobs/{jobId}` for `jobId = 936462`
+        - [x] confirm that the live JobAdder job record aligns with the
+          Dropbox `tw398` job-spec area:
+          - [x] `jobTitle = tw398 - KDB Developer`
+          - [x] company = `B2C2`
+          - [x] full HTML `jobDescription` present in JobAdder
+          - [x] JobAdder job description materially overlaps the Dropbox PDF
+            `B2C2 - Snr. KDB Developer - London - 2026.pdf`
+        - [x] compare the JobAdder job record with the Dropbox job-spec folder
+          `tw398 - B2C2 - KDB Developer x2`
+        - [x] decide the first narrow persistence shape for job specs in
+          Supabase:
+          - [x] JobAdder job -> canonical `jobs` row
+          - [x] Dropbox job-spec PDF -> canonical `documents` row with
+            `document_type = job_spec`
+          - [x] provenance-bearing `source_records`
+          - [x] `source_record_links`
+          - [x] `document_links` with `relationship_type = job_spec`
+        - [x] implement the first narrow job/job-spec persistence slice:
+          - [x] `backend/db/job_spec_persistence.py`
+          - [x] `backend/services/job_spec_persistence.py`
+          - [x] `scripts/persist_tw398_job_spec.py`
+        - [x] run the first live `tw398` persistence proof and verify the
+          canonical rows/links landed in Supabase
+      - [ ] Formalise the advert-response ingestion rule in docs:
+        - [ ] JobAdder application = vacancy/application context
+        - [ ] JobAdder candidate attachment = structured CV source of truth
+        - [ ] Dropbox `.eml` = provenance/history layer
+        - [ ] Dropbox CV file copies = archive/mirror layer unless a later
+          hash comparison disproves that assumption
 
 </details>
 

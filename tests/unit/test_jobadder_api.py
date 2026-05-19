@@ -48,7 +48,9 @@ from backend.services.jobadder_api import (
     download_jobadder_candidate_attachment,
     fetch_jobadder_application_attachments,
     fetch_jobadder_applications_preview,
+    fetch_jobadder_candidate_attachments,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_job_detail,
     fetch_jobadder_jobad_applications_preview,
     fetch_jobadder_jobads_preview,
     fetch_jobadder_candidates_page,
@@ -272,6 +274,52 @@ def test_fetch_jobadder_jobads_preview_returns_trimmed_preview(
     assert captured_request["timeout"] == 30.0
 
 
+def test_fetch_jobadder_job_detail_returns_full_job(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the job-detail helper returns one full JobAdder job payload
+    without forcing a premature local schema.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "jobId": 936462,
+                "jobTitle": "tw398 - KDB Developer",
+                "status": "Open",
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    result = fetch_jobadder_job_detail(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        job_id=936462,
+    )
+
+    assert result["job"] == {
+        "jobId": 936462,
+        "jobTitle": "tw398 - KDB Developer",
+        "status": "Open",
+    }
+    assert result["endpoint_url"] == "https://api.jobadder.com/v2/jobs/936462"
+    assert captured_request["url"] == "https://api.jobadder.com/v2/jobs/936462"
+    assert captured_request["headers"] == {
+        "Authorization": "Bearer jobadder-access-token",
+        "Accept": "application/json",
+    }
+    assert captured_request["timeout"] == 30.0
+
+
 def test_fetch_jobadder_applications_preview_sends_active_filter(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -385,6 +433,76 @@ def test_fetch_jobadder_application_attachments_returns_attachment_list(
     assert (
         captured_request["url"]
         == "https://api.jobadder.com/v2/applications/12204918/attachments"
+    )
+
+
+def test_fetch_jobadder_candidate_attachments_returns_attachment_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the candidate-attachments helper normalises the returned
+    attachment list correctly.
+
+    Notes
+    -----
+    - This is the candidate-record counterpart to the application-attachments
+      helper above.
+    - It matters because the advert-response investigation now needs to answer
+      where CVs actually live:
+        - on the application
+        - on the candidate
+        - or only in Dropbox
+
+    In plain language:
+
+    - pretend JobAdder returned two candidate attachments
+    - confirm the helper called the expected candidate endpoint
+    - confirm the helper returned a predictable attachment-list wrapper
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"attachmentId": 8001, "name": "Candidate CV.pdf"},
+                    {"attachmentId": 8002, "name": "Candidate Profile.docx"},
+                ],
+                "links": {
+                    "self": "https://api.jobadder.com/v2/candidates/17071060/attachments"
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    result = fetch_jobadder_candidate_attachments(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        candidate_id=17071060,
+    )
+
+    assert result["attachment_count"] == 2
+    assert result["links"] == {
+        "self": "https://api.jobadder.com/v2/candidates/17071060/attachments"
+    }
+    assert result["items"] == [
+        {"attachmentId": 8001, "name": "Candidate CV.pdf"},
+        {"attachmentId": 8002, "name": "Candidate Profile.docx"},
+    ]
+    assert (
+        result["endpoint_url"]
+        == "https://api.jobadder.com/v2/candidates/17071060/attachments"
+    )
+    assert (
+        captured_request["url"]
+        == "https://api.jobadder.com/v2/candidates/17071060/attachments"
     )
 
 

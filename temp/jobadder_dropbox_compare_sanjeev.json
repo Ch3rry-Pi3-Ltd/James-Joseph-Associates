@@ -1,0 +1,45 @@
+{
+  "jobadder_proof": {
+    "jobadder_account": 2236,
+    "jobadder_instance": "eu2",
+    "api_url": "https://eu2api.jobadder.com/v2/",
+    "candidate_id": 17071060,
+    "attachment_id": 21562882,
+    "file_name": "sanjeev sadha.docx",
+    "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "content_length": null,
+    "byte_count": 18396,
+    "sha256": "8c105d129f4b338b5efaee68df859eeb73ad38b584d5178073953c50c9669a9a"
+  },
+  "dropbox_proof": {
+    "path": "/#################----CV's- IN-JAD-JobAdder/sanjeev sadha.docx",
+    "file_name": "sanjeev sadha.docx",
+    "content_type": "application/octet-stream",
+    "content_length": 18396,
+    "byte_count": 18396,
+    "sha256": "8c105d129f4b338b5efaee68df859eeb73ad38b584d5178073953c50c9669a9a",
+    "file_metadata": {
+      "name": "sanjeev sadha.docx",
+      "path_lower": "/#################----cv's- in-jad-jobadder/sanjeev sadha.docx",
+      "path_display": "/#################----CV's- IN-JAD-JobAdder/sanjeev sadha.docx",
+      "id": "id:tdOCGswI9PAAAAAAAAImwA",
+      "client_modified": "2026-05-13T07:07:28Z",
+      "server_modified": "2026-05-13T07:07:30Z",
+      "rev": "651ada210dece3ff27aa3",
+      "size": 18396,
+      "is_downloadable": true,
+      "content_hash": "535c3feebb29dc2cbd042277d4df2743cbdfc0ad5ec22ac9ddc7094de5992b95"
+    }
+  },
+  "comparison": {
+    "file_name_match": true,
+    "byte_count_match": true,
+    "sha256_match": true,
+    "jobadder_file_name": "sanjeev sadha.docx",
+    "dropbox_file_name": "sanjeev sadha.docx",
+    "jobadder_byte_count": 18396,
+    "dropbox_byte_count": 18396,
+    "jobadder_sha256": "8c105d129f4b338b5efaee68df859eeb73ad38b584d5178073953c50c9669a9a",
+    "dropbox_sha256": "8c105d129f4b338b5efaee68df859eeb73ad38b584d5178073953c50c9669a9a"
+  }
+}

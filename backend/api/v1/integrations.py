@@ -38,6 +38,7 @@ Dropbox, and Outlook:
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/notes`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills`
@@ -65,6 +66,7 @@ In plain language:
 - it handles the approval-link, OAuth callback, and first preview-read HTTP steps
 """
 
+import hashlib
 from typing import Any
 
 from fastapi import APIRouter, Query, status
@@ -89,13 +91,16 @@ from backend.schemas.integrations import (
     DropboxFolderPreviewResponse,
     DropboxOAuthConnectionSavedResponse,
     JobAdderAuthorizationUrlResponse,
+    JobAdderCandidateAttachmentDownloadProofResponse,
     JobAdderCandidateDetailResponse,
+    JobAdderCandidateAttachmentsResponse,
     JobAdderCandidateNotesResponse,
     JobAdderCandidateSkillsResponse,
     JobAdderCandidatesPreviewResponse,
     JobAdderApplicationsPreviewResponse,
     JobAdderApplicationAttachmentsResponse,
     JobAdderJobAdApplicationsPreviewResponse,
+    JobAdderJobDetailResponse,
     JobAdderJobAdsPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
     OutlookAuthorizationUrlResponse,
@@ -140,13 +145,16 @@ from backend.services.outlook_oauth import (
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
+    download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_candidate_attachments,
     fetch_jobadder_candidate_notes,
     fetch_jobadder_candidate_skills,
     fetch_jobadder_candidates_preview,
     fetch_jobadder_applications_preview,
     fetch_jobadder_application_attachments,
     fetch_jobadder_jobad_applications_preview,
+    fetch_jobadder_job_detail,
     fetch_jobadder_jobads_preview,
 )
 from backend.services.jobadder_oauth import (
@@ -1013,6 +1021,193 @@ def get_jobadder_oauth_callback(
 
 
 @router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview",
+    response_model=JobAdderCandidateAttachmentsResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate attachments read failed.",
+        },
+    },
+)
+def get_jobadder_candidate_attachments_route(
+    jobadder_account: int,
+    candidate_id: int,
+) -> JobAdderCandidateAttachmentsResponse | JSONResponse:
+    """
+    Return the attachment list for one JobAdder candidate.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    candidate_id : int
+        JobAdder candidate identifier whose attachments should be fetched.
+
+    Returns
+    -------
+    JobAdderCandidateAttachmentsResponse | JSONResponse
+        Candidate attachments response when the stored connection exists and
+        the JobAdder API call succeeds.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/candidates/17071060/attachments-preview
+
+    In plain language:
+
+    - load the stored JobAdder connection
+    - refresh the token first if needed
+    - ask JobAdder for the candidate's attachment list
+    - return the small normalized attachment wrapper
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    # Candidate attachments turned out to matter more than application
+    # attachments for the tw398 sample. Keep this route symmetrical with the
+    # other preview routes so we can compare those surfaces consistently.
+    attachment_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_candidate_attachments(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+        ),
+        provider_failure_message="JobAdder candidate attachments read failed.",
+    )
+
+    if isinstance(attachment_result, JSONResponse):
+        return attachment_result
+
+    attachments_result, api_url, jobadder_instance = attachment_result
+
+    return JobAdderCandidateAttachmentsResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        candidate_id=candidate_id,
+        attachment_count=attachments_result["attachment_count"],
+        links=attachments_result["links"],
+        attachments=attachments_result["items"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments/{attachment_id}/download-proof",
+    response_model=JobAdderCandidateAttachmentDownloadProofResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder candidate attachment download failed.",
+        },
+    },
+)
+def get_jobadder_candidate_attachment_download_proof_route(
+    jobadder_account: int,
+    candidate_id: int,
+    attachment_id: int,
+) -> JobAdderCandidateAttachmentDownloadProofResponse | JSONResponse:
+    """
+    Download one JobAdder candidate attachment transiently and return proof
+    metadata for cross-source comparison work.
+
+    Notes
+    -----
+    - This route is intentionally narrow.
+    - It exists so we can compare a JobAdder candidate CV against another
+      source such as Dropbox without exposing the raw file bytes through the
+      API response.
+    - The SHA-256 hash lets us answer a concrete question:
+
+        "Is the Dropbox CV byte-identical to the JobAdder candidate attachment?"
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/candidates/17071060/attachments/21562882/download-proof
+
+    And a successful response looks like:
+
+        {
+            "candidate_id": 17071060,
+            "attachment_id": 21562882,
+            "file_name": "sanjeev sadha.docx",
+            "byte_count": 18931,
+            "sha256": "...",
+        }
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    download_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: download_jobadder_candidate_attachment(
+            api_url=api_url,
+            access_token=access_token,
+            candidate_id=candidate_id,
+            attachment_id=attachment_id,
+        ),
+        provider_failure_message="JobAdder candidate attachment download failed.",
+    )
+
+    if isinstance(download_result, JSONResponse):
+        return download_result
+
+    downloaded_attachment, api_url, jobadder_instance = download_result
+    content_bytes = downloaded_attachment["content_bytes"]
+
+    # Keep the proof route deliberately small and deterministic:
+    # - report the provider metadata we need for comparison
+    # - compute a stable content hash
+    # - never return the raw file bytes over the API
+    sha256_digest = hashlib.sha256(content_bytes).hexdigest()
+
+    return JobAdderCandidateAttachmentDownloadProofResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        candidate_id=candidate_id,
+        attachment_id=attachment_id,
+        file_name=downloaded_attachment.get("file_name"),
+        content_type=downloaded_attachment.get("content_type"),
+        content_length=downloaded_attachment.get("content_length"),
+        byte_count=len(content_bytes),
+        sha256=sha256_digest,
+    )
+
+
+@router.get(
     "/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview",
     response_model=JobAdderApplicationAttachmentsResponse,
     responses={
@@ -1050,6 +1245,17 @@ def get_jobadder_application_attachments_route(
     JobAdderApplicationAttachmentsResponse | JSONResponse
         Application attachments response when the stored connection exists and
         the JobAdder API call succeeds.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/applications/12204918/attachments-preview
+
+    Notes
+    -----
+    We added this route specifically to test whether advert-response CV files
+    live on the application record itself or only on the candidate record.
     """
     stored_connection = _prepare_jobadder_connection_for_api_read(
         jobadder_account=jobadder_account
@@ -1146,6 +1352,19 @@ def get_jobadder_applications_preview_route(
     JobAdderApplicationsPreviewResponse | JSONResponse
         First-page application preview when the stored connection exists and
         the JobAdder API call succeeds.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/applications-preview?active_only=true
+
+    Notes
+    -----
+    This route is currently the most useful advert-response discovery surface.
+    In the live account, it proved more informative than `jobads-preview`
+    because applications were present even when the top-level job-ad preview
+    returned zero rows.
     """
     if active_only and rejected_only:
         return build_error_response(
@@ -1196,6 +1415,89 @@ def get_jobadder_applications_preview_route(
         total_count=preview["total_count"],
         links=preview["links"],
         applications=preview["items"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/jobs/{job_id}",
+    response_model=JobAdderJobDetailResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder job read failed.",
+        },
+    },
+)
+def get_jobadder_job_detail_route(
+    jobadder_account: int,
+    job_id: int,
+) -> JobAdderJobDetailResponse | JSONResponse:
+    """
+    Return one full JobAdder job/opportunity record.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    job_id : int
+        JobAdder job identifier requested by the route.
+
+    Returns
+    -------
+    JobAdderJobDetailResponse | JSONResponse
+        Full JobAdder job detail when the stored connection exists and the
+        provider read succeeds.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/jobs/936462
+
+    Notes
+    -----
+    This route exists to compare the structured JobAdder opportunity record
+    against Dropbox job-spec folders and job-spec PDFs that share the same
+    `tw...` vacancy code.
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    detail_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_job_detail(
+            api_url=api_url,
+            access_token=access_token,
+            job_id=job_id,
+        ),
+        provider_failure_message="JobAdder job read failed.",
+    )
+
+    if isinstance(detail_result, JSONResponse):
+        return detail_result
+
+    job_detail, api_url, jobadder_instance = detail_result
+
+    return JobAdderJobDetailResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        job_id=job_id,
+        job=job_detail["job"],
     )
 
 

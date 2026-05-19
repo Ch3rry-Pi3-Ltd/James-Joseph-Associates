@@ -994,6 +994,103 @@ def fetch_jobadder_jobads_preview(
     }
 
 
+def fetch_jobadder_job_detail(
+    *,
+    api_url: str,
+    access_token: str,
+    job_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch one full JobAdder job/opportunity record.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+        Example shapes:
+
+            https://api.jobadder.com
+            https://eu2api.jobadder.com/v2
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    job_id : int
+        JobAdder job identifier to fetch.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `job`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or job ID is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    - This is the structured opportunity-side counterpart to the application
+      and candidate helpers.
+    - It exists so we can compare the JobAdder opportunity record directly
+      against Dropbox job-spec folders and PDFs for the same `tw...` code.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_job_detail(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            job_id=936462,
+        )
+
+    returns a wrapper around one JobAdder `/jobs/{jobId}` response.
+    """
+    if job_id < 1:
+        raise ValueError("JobAdder job_id must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/jobs/{job_id}",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder job read failed.",
+    )
+
+    if not isinstance(response_payload, dict):
+        raise JobAdderApiError(
+            "JobAdder job read response did not decode into an object.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    return {
+        "job": response_payload,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
 def fetch_jobadder_applications_preview(
     *,
     api_url: str,
@@ -2334,6 +2431,7 @@ __all__ = [
     "fetch_jobadder_applications_preview",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_jobad_applications_preview",
+    "fetch_jobadder_job_detail",
     "fetch_jobadder_jobads_preview",
     "fetch_jobadder_candidates_page",
     "fetch_jobadder_candidate_detail",

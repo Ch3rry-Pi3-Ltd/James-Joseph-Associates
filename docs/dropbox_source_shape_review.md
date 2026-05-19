@@ -521,3 +521,307 @@ We now have a coherent picture:
   layers
 - the best first Dropbox ingestion slice is likely a small vacancy-linked CVR
   folder, not the largest archive area
+
+## 12. Cross-Source Check: `tw398`
+
+We inspected one live JobAdder application cohort for:
+
+- `jobTitle = tw398 - KDB Developer`
+- `job.jobId = 936462`
+- workflow stage: `"INBOX"= New-CV's - [So CVR them!]`
+
+### A. JobAdder application layer
+
+Confirmed:
+
+- active applications exist for `tw398`
+- sample application IDs:
+  - `12204918`
+  - `12201902`
+  - `12201901`
+  - `12201900`
+  - `12201899`
+- sample candidate IDs:
+  - `17071060`
+  - `17068569`
+  - `17068570`
+  - `17068571`
+  - `17068572`
+
+Important finding:
+
+- the application records exist
+- the `tw...` coding exists on the application/job
+- but the sample application attachment lists were empty
+
+### B. JobAdder candidate attachment layer
+
+For the same `tw398` candidates, each sampled candidate record had one resume
+attachment on the **candidate**, not on the **application**.
+
+Examples:
+
+- candidate `17071060`
+  - `sanjeev sadha.docx`
+- candidate `17068569`
+  - `Zafar_Lead_Finance.docx`
+- candidate `17068570`
+  - `tw239&tw275_Vega+Murden+-+CV.pdf`
+- candidate `17068571`
+  - `tw239&tw275_Pk_CV_. (1).docx`
+- candidate `17068572`
+  - `tw239&tw275_Nav+CV+DLT.pdf`
+
+### C. Dropbox layer
+
+Searching Dropbox for `tw398` showed three distinct shapes:
+
+1. Job-spec folder:
+   - `/new dropbox/# DLV/LIVE JOBS - [Job Specs]/tw398 - B2C2 - KDB Developer x2`
+   - contains the job spec PDF, not candidate CVs
+
+2. Archive email copies:
+   - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/`
+   - contains multiple `tw398` application `.eml` files
+
+3. CV document copies:
+   - the JobAdder candidate attachment filenames also exist in Dropbox
+   - sample locations:
+     - `/#################----CV's- IN-JAD-JobAdder/sanjeev sadha.docx`
+     - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Zafar_Lead_Finance.docx`
+     - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/tw239&tw275_Vega+Murden+-+CV.pdf`
+     - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/tw239&tw275_Pk_CV_. (1).docx`
+     - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/tw239&tw275_Nav+CV+DLT.pdf`
+
+### D. Current interpretation
+
+For advert-response workflows like `tw398`, the structure currently looks like:
+
+- JobAdder **application** = vacancy/application context
+- JobAdder **candidate attachment** = current resume attached to the candidate
+- Dropbox **job-spec folder** = vacancy specification context
+- Dropbox **archive folders** = email/source-document history and duplicate CV copies
+
+That suggests the likely source-of-truth model is:
+
+- use JobAdder applications for vacancy/application context
+- use JobAdder candidate attachments as the first structured CV attachment source
+- use Dropbox as a supporting archive/source-history layer, not the primary application attachment layer
+
+## 13. Parsed `.eml` Proof: `tw398`
+
+To move beyond filename guesses, we parsed one real advert-response `.eml`
+file from Dropbox:
+
+- `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/shan.lingeswaran@hotmail.co.uk - Totaljobs - Suitable application for KDB Developer tw398.eml`
+
+Parsed result:
+
+- Subject:
+  - `shan.lingeswaran@hotmail.co.uk - Totaljobs - Suitable application for KDB Developer tw398`
+- Date:
+  - `Tue, 28 Apr 2026 09:27:12 +0000`
+- From:
+  - `Totaljobs.com <totaljobs@totaljobsmail.com>`
+- To:
+  - `tom.owens@jamesjosephassociates.co.uk`
+- Detected vacancy code:
+  - `tw398`
+- Attachment count:
+  - `1`
+- Attachment name:
+  - `Shivadharshan (Shan) Lingeswaran (0168c899-bf00-4fc7-8259-bfac0312bdb7 - Totaljobs).pdf`
+
+Important interpretation:
+
+- the `.eml` file is a real advert-response email archive, not just a renamed
+  CV file
+- it preserves sender/channel provenance:
+  - source job board (`Totaljobs`)
+  - delivery target (`tom.owens@...`)
+  - received timestamp
+- it also preserves a candidate-specific attachment filename
+- that means Dropbox `.eml` files are valuable as provenance/history even when
+  JobAdder already holds the structured candidate/application record
+
+Current working model after the `.eml` proof:
+
+- JobAdder application:
+  - structured vacancy/application context
+- JobAdder candidate attachment:
+  - structured CV/document source
+- Dropbox `.eml`:
+  - source-email provenance and attachment-history layer
+- Dropbox duplicate CV files:
+  - archive/mirror layer that may or may not differ from JobAdder
+
+## 14. First Byte-Level CV Comparison Proof
+
+To test whether Dropbox CV copies are merely mirrors of JobAdder candidate
+attachments or materially different files, we compared one real pair:
+
+- JobAdder candidate:
+  - `17071060`
+- JobAdder attachment:
+  - `21562882`
+- JobAdder file name:
+  - `sanjeev sadha.docx`
+- Dropbox path:
+  - `/#################----CV's- IN-JAD-JobAdder/sanjeev sadha.docx`
+
+Comparison result:
+
+- file name match:
+  - `true`
+- byte count match:
+  - `true`
+- SHA-256 hash match:
+  - `true`
+
+Shared SHA-256:
+
+- `8c105d129f4b338b5efaee68df859eeb73ad38b584d5178073953c50c9669a9a`
+
+Interpretation:
+
+- for this sample, the Dropbox CV copy is byte-identical to the JobAdder
+  candidate attachment
+- that materially strengthens the current working assumption that at least some
+  Dropbox CV files are archive/mirror copies of the structured JobAdder
+  candidate attachment source rather than independent versions
+- this does not prove every Dropbox CV file is always identical, but it is the
+  first direct file-level confirmation in that direction
+
+## 15. Second Byte-Level CV Comparison Proof: `ACHTUNG! in RFL!`
+
+To test whether the duplication-heavy archive area behaves differently from the
+`IN-JAD-JobAdder` mirror, we compared a second real pair:
+
+- JobAdder candidate:
+  - `17068569`
+- JobAdder attachment:
+  - `21558363`
+- JobAdder file name:
+  - `Zafar_Lead_Finance.docx`
+- Dropbox path:
+  - `/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Zafar_Lead_Finance.docx`
+
+Comparison result:
+
+- file name match:
+  - `true`
+- byte count match:
+  - `true`
+- SHA-256 hash match:
+  - `true`
+
+Shared SHA-256:
+
+- `5e86b914695a3496cb506d4b6f333853a97f9c3ec1f587cff8aa2e7b8cc7bb0c`
+
+Interpretation:
+
+- the `ACHTUNG! in RFL!` copy is also byte-identical to the JobAdder
+  candidate attachment for this sample
+- the duplication-heavy archive area therefore looks less like an independent
+  alternative CV source and more like a document-history mirror, at least for
+  the tested files
+- after two direct hash matches across two different Dropbox areas, the
+  default working assumption should now be:
+  - JobAdder candidate attachment = structured source of truth
+  - Dropbox CV copies = archive/mirror copies unless a later comparison proves
+    otherwise
+
+## 16. Live JobAdder Job Detail for `tw398`
+
+We then fetched the live JobAdder job record for:
+
+- `jobId = 936462`
+
+Key live fields:
+
+- `jobTitle = tw398 - KDB Developer`
+- `company.name = B2C2`
+- `status.name = Open`
+- `workType.name = Permanent`
+- `salary.rateLow = 125000`
+- `salary.rateHigh = 125000`
+- `salary.currency = GBP`
+- `owner.email = tom.owens@jamesjosephassociates.co.uk`
+- `statistics.applications.total = 88`
+
+Most importantly, the JobAdder job record includes a full HTML
+`jobDescription` whose content materially overlaps the Dropbox job-spec PDF:
+
+- Dropbox PDF:
+  `B2C2 - Snr. KDB Developer - London - 2026.pdf`
+- JobAdder job:
+  `tw398 - KDB Developer`
+
+Interpretation:
+
+- `tw398` is now confirmed as a real vacancy/job anchor across:
+  - JobAdder job/opportunity
+  - JobAdder applications
+  - Dropbox job-spec folders
+  - Dropbox advert-response `.eml` files
+  - Dropbox duplicate CV files
+- the Dropbox job-spec PDF is not isolated context; it aligns with a real live
+  JobAdder opportunity record
+- that means job specs should likely be treated as first-class retrieval and
+  matching inputs, not just reference documents sitting in Dropbox
+
+## 17. First Live Job + Job-Spec Persistence Proof
+
+We then implemented and ran the first narrow persistence slice for the same
+`tw398` job/job-spec pair.
+
+Operator script:
+
+- `scripts/persist_tw398_job_spec.py`
+
+Live persisted result:
+
+- canonical `jobs` row created/updated
+- canonical `documents` row created/updated with:
+  - `document_type = job_spec`
+- provenance-bearing `source_records` created/updated for:
+  - JobAdder job
+  - Dropbox job-spec document
+- `source_record_links` created/updated so the source records point at the
+  canonical company/job/document rows
+- `document_links` created/updated with:
+  - `relationship_type = job_spec`
+
+The confirmed live canonical IDs for the first run were:
+
+- `company_id = 624e92fb-2b08-4820-844d-cc0e866e7f31`
+- `job_id = dba716b6-710c-427c-a866-50cc5425854f`
+- `document_id = 1ea4341e-8421-4ee8-8dd1-e8bf889bd077`
+
+The direct DB sanity check confirmed:
+
+- job title:
+  - `tw398 - KDB Developer`
+- job source:
+  - `jobadder`
+- linked company ID present on the job row
+- document type:
+  - `job_spec`
+- document title:
+  - `B2C2 - Snr. KDB Developer - London - 2026.pdf`
+- document source URI:
+  - `/new dropbox/# DLV/LIVE JOBS - [Job Specs]/tw398 - B2C2 - KDB Developer x2/B2C2 - Snr. KDB Developer - London - 2026.pdf`
+- `document_links` contains:
+  - `relationship_type = job_spec`
+  - `job_id = dba716b6-710c-427c-a866-50cc5425854f`
+
+Interpretation:
+
+- the project now has a real, not theoretical, persistence path for:
+  - JobAdder opportunity context
+  - Dropbox job-spec documents
+- the job-spec PDF is now persistable as a first-class canonical document
+  linked to the canonical job
+- the next retrieval/matching work can use persisted job-spec text instead of
+  relying on ad hoc local parsing
