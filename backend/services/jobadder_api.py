@@ -582,6 +582,107 @@ def fetch_jobadder_application_attachments(
     }
 
 
+def fetch_jobadder_application_detail(
+    *,
+    api_url: str,
+    access_token: str,
+    application_id: int,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch one full JobAdder application record.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    application_id : int
+        JobAdder application identifier to fetch.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized dictionary containing:
+
+        - `application`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, or application ID is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    This is the detail-level companion to the top-level applications preview.
+
+    The preview route is useful for discovery, but the persistence path needs a
+    stable one-record payload for a known upstream application ID. That is why
+    this helper exists instead of forcing persistence code to scrape the first
+    page of the preview collection and hope the target application is still
+    there.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_application_detail(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            application_id=12204918,
+        )
+
+    returns one wrapper around the decoded application object.
+    """
+    if application_id < 1:
+        raise ValueError("JobAdder application_id must be at least 1.")
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/applications/{application_id}",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    # Treat application detail the same way as candidate/job detail:
+    # - build one deterministic endpoint
+    # - perform one authenticated read
+    # - require one decoded object back
+    #
+    # Keeping these detail helpers structurally similar makes the routes and
+    # persistence services much easier to reason about later.
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder application read failed.",
+    )
+
+    if not isinstance(response_payload, dict):
+        raise JobAdderApiError(
+            "JobAdder application read response did not include an application object.",
+            endpoint_url=endpoint_url,
+            response_body={"decoded_json": response_payload},
+        )
+
+    return {
+        "application": response_payload,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
 def download_jobadder_candidate_attachment(
     *,
     api_url: str,
@@ -2427,6 +2528,7 @@ __all__ = [
     "JobAdderApiError",
     "build_jobadder_api_headers",
     "download_jobadder_candidate_attachment",
+    "fetch_jobadder_application_detail",
     "fetch_jobadder_application_attachments",
     "fetch_jobadder_applications_preview",
     "fetch_jobadder_candidate_attachments",

@@ -690,6 +690,79 @@ class JobAdderApplicationsPreviewResponse(BaseModel):
     )
 
 
+class JobAdderApplicationDetailResponse(BaseModel):
+    """
+    Response returned when the backend fetches one full JobAdder application.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    application_id : int
+        JobAdder application identifier requested by the route.
+
+    application : dict[str, Any]
+        Full application object returned by JobAdder.
+
+    Notes
+    -----
+    This response exists because application previews are useful for discovery
+    but not sufficient for stable persistence.
+
+    The persistence path needs a detail-level payload for one known application
+    ID so the backend can link:
+
+    - the application
+    - the canonical candidate
+    - the canonical job
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "application_id": 12204918,
+            "application": {...}
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    application_id: int = Field(
+        ge=1,
+        description="JobAdder application identifier requested by the route.",
+    )
+
+    application: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Full application object returned by JobAdder.",
+    )
+
+
 class JobAdderApplicationAttachmentsResponse(BaseModel):
     """
     Response returned when the backend fetches application attachments from
@@ -1765,6 +1838,7 @@ class OutlookMessageAttachmentsResponse(BaseModel):
 
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
+    "JobAdderApplicationDetailResponse",
     "JobAdderApplicationAttachmentsResponse",
     "JobAdderApplicationsPreviewResponse",
     "JobAdderCandidateAttachmentDownloadProofResponse",

@@ -6,6 +6,7 @@ These tests verify the real FastAPI route wiring for:
     GET /api/v1/integrations/jobadder/authorize
     GET /api/v1/integrations/jobadder/callback
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments/{attachment_id}/download-proof
@@ -57,6 +58,9 @@ JOBADDER_AUTHORIZE_PATH = "/api/v1/integrations/jobadder/authorize"
 JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
 JOBADDER_APPLICATIONS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview"
+)
+JOBADDER_APPLICATION_DETAIL_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}"
 )
 JOBADDER_APPLICATION_ATTACHMENTS_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview"
@@ -540,6 +544,76 @@ def test_jobadder_applications_preview_rejects_mutually_exclusive_filters() -> N
     assert "cannot request both active_only and rejected_only" in payload["error"][
         "message"
     ]
+
+
+def test_jobadder_application_detail_returns_full_application_successfully() -> None:
+    """
+    Verify that the application-detail route returns one full application
+    payload from the JobAdder API helper.
+
+    In plain language:
+
+    - pretend the stored JobAdder connection exists
+    - pretend the provider helper returned one full application object
+    - confirm the route returns that object in the expected typed response
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_detail = {
+        "application": {
+            "applicationId": 12204918,
+            "jobTitle": "tw398 - KDB Developer",
+            "source": "Database",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/applications/12204918",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_application_detail",
+            return_value=fake_detail,
+        ) as mock_fetch_detail:
+            response = client.get(
+                JOBADDER_APPLICATION_DETAIL_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    application_id=12204918,
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["application_id"] == 12204918
+    assert payload["application"] == {
+        "applicationId": 12204918,
+        "jobTitle": "tw398 - KDB Developer",
+        "source": "Database",
+    }
+
+    mock_fetch_detail.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        application_id=12204918,
+    )
 
 
 def test_jobadder_application_attachments_returns_attachment_list_successfully() -> None:

@@ -13,7 +13,7 @@ These tests verify the FastAPI route wiring for:
 
 from collections.abc import Iterator
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi import status
@@ -21,7 +21,7 @@ from fastapi.testclient import TestClient
 
 from backend.main import create_app
 from backend.services.outlook_api import OutlookApiError
-from backend.services.outlook_oauth import OutlookOAuthExchangeError
+from backend.services.outlook_oauth import OutlookOAuthExchangeError, OutlookTokenSet
 from backend.settings import get_settings
 
 OUTLOOK_AUTHORIZE_PATH = "/api/v1/integrations/outlook/authorize"
@@ -98,7 +98,17 @@ def test_outlook_callback_exchanges_and_saves_connection_successfully(
 
     client = TestClient(create_app())
 
-    fake_token_set = MagicMock()
+    fake_token_set = OutlookTokenSet(
+        access_token="microsoft-access-token",
+        token_type="Bearer",
+        expires_in=3600,
+        refresh_token="microsoft-refresh-token",
+        scope="offline_access User.Read Mail.Read Mail.Read.Shared",
+        microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        tenant_id="ffffffff-1111-2222-3333-444444444444",
+        user_principal_name="tom@example.com",
+        raw_payload={"access_token": "microsoft-access-token"},
+    )
     fake_saved_connection = {
         "id": "11111111-1111-1111-1111-111111111111",
         "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
@@ -125,6 +135,79 @@ def test_outlook_callback_exchanges_and_saves_connection_successfully(
     assert payload["user_principal_name"] == "tom@example.com"
     mock_exchange.assert_called_once_with(code="test-outlook-code")
     mock_save.assert_called_once_with(fake_token_set)
+
+
+def test_outlook_callback_resolves_current_user_when_token_payload_lacks_oid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the callback falls back to Graph `/me` when Microsoft does not
+    include a usable user identifier in the token response itself.
+    """
+
+    monkeypatch.setenv("MICROSOFT_CLIENT_ID", "microsoft-client-id")
+    monkeypatch.setenv("MICROSOFT_CLIENT_SECRET", "microsoft-client-secret")
+    monkeypatch.setenv(
+        "MICROSOFT_REDIRECT_URI",
+        "http://127.0.0.1:8000/api/v1/integrations/outlook/callback",
+    )
+
+    client = TestClient(create_app())
+
+    token_without_oid = OutlookTokenSet(
+        access_token="microsoft-access-token",
+        token_type="Bearer",
+        expires_in=3600,
+        refresh_token="microsoft-refresh-token",
+        scope="offline_access User.Read Mail.Read Mail.Read.Shared",
+        microsoft_user_id=None,
+        tenant_id="ffffffff-1111-2222-3333-444444444444",
+        user_principal_name=None,
+        raw_payload={"access_token": "microsoft-access-token"},
+    )
+    fake_saved_connection = {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "tenant_id": "ffffffff-1111-2222-3333-444444444444",
+        "user_principal_name": "tom@example.com",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.exchange_outlook_authorization_code",
+        return_value=token_without_oid,
+    ) as mock_exchange:
+        with patch(
+            "backend.api.v1.integrations.fetch_outlook_current_user",
+            return_value={
+                "user": {
+                    "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    "userPrincipalName": "tom@example.com",
+                    "mail": "tom@example.com",
+                },
+                "raw_payload": {},
+                "endpoint_url": "https://graph.microsoft.com/v1.0/me",
+            },
+        ) as mock_fetch_current_user:
+            with patch(
+                "backend.api.v1.integrations.save_outlook_oauth_connection",
+                return_value=fake_saved_connection,
+            ) as mock_save:
+                response = client.get(
+                    f"{OUTLOOK_CALLBACK_PATH}?code=test-outlook-code&state=connect-dev"
+                )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    assert payload["status"] == "connected"
+    assert payload["microsoft_user_id"] == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    assert payload["user_principal_name"] == "tom@example.com"
+    mock_exchange.assert_called_once_with(code="test-outlook-code")
+    mock_fetch_current_user.assert_called_once_with(
+        access_token="microsoft-access-token"
+    )
+    saved_token_set = mock_save.call_args.args[0]
+    assert saved_token_set.microsoft_user_id == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    assert saved_token_set.user_principal_name == "tom@example.com"
 
 
 def test_outlook_callback_returns_bad_gateway_when_token_exchange_fails(

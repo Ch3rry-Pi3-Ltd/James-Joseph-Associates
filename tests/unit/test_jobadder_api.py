@@ -46,6 +46,7 @@ from backend.services.jobadder_api import (
     JobAdderApiError,
     build_jobadder_api_headers,
     download_jobadder_candidate_attachment,
+    fetch_jobadder_application_detail,
     fetch_jobadder_application_attachments,
     fetch_jobadder_applications_preview,
     fetch_jobadder_candidate_attachments,
@@ -434,6 +435,54 @@ def test_fetch_jobadder_application_attachments_returns_attachment_list(
         captured_request["url"]
         == "https://api.jobadder.com/v2/applications/12204918/attachments"
     )
+
+
+def test_fetch_jobadder_application_detail_returns_application_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the application-detail helper returns one full application
+    object.
+
+    In plain language:
+
+    - pretend JobAdder returned one application payload
+    - confirm the helper called the expected detail endpoint
+    - confirm the helper returned that application in a small predictable
+      wrapper
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "applicationId": 12204918,
+                "jobTitle": "tw398 - KDB Developer",
+                "source": "Database",
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    detail = fetch_jobadder_application_detail(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        application_id=12204918,
+    )
+
+    assert detail["application"] == {
+        "applicationId": 12204918,
+        "jobTitle": "tw398 - KDB Developer",
+        "source": "Database",
+    }
+    assert detail["endpoint_url"] == "https://api.jobadder.com/v2/applications/12204918"
+    assert captured_request["url"] == "https://api.jobadder.com/v2/applications/12204918"
 
 
 def test_fetch_jobadder_candidate_attachments_returns_attachment_list(

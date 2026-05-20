@@ -37,6 +37,7 @@ Dropbox, and Outlook:
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications-preview`
+- `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/applications/{application_id}/attachments-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview`
 - `GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}`
@@ -67,6 +68,7 @@ In plain language:
 """
 
 import hashlib
+from dataclasses import replace
 from typing import Any
 
 from fastapi import APIRouter, Query, status
@@ -90,6 +92,7 @@ from backend.schemas.integrations import (
     DropboxCurrentAccountResponse,
     DropboxFolderPreviewResponse,
     DropboxOAuthConnectionSavedResponse,
+    JobAdderApplicationDetailResponse,
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateAttachmentDownloadProofResponse,
     JobAdderCandidateDetailResponse,
@@ -145,6 +148,7 @@ from backend.services.outlook_oauth import (
 )
 from backend.services.jobadder_api import (
     JobAdderApiError,
+    fetch_jobadder_application_detail,
     download_jobadder_candidate_attachment,
     fetch_jobadder_candidate_detail,
     fetch_jobadder_candidate_attachments,
@@ -1204,6 +1208,98 @@ def get_jobadder_candidate_attachment_download_proof_route(
         content_length=downloaded_attachment.get("content_length"),
         byte_count=len(content_bytes),
         sha256=sha256_digest,
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/applications/{application_id}",
+    response_model=JobAdderApplicationDetailResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder application detail read failed.",
+        },
+    },
+)
+def get_jobadder_application_detail_route(
+    jobadder_account: int,
+    application_id: int,
+) -> JobAdderApplicationDetailResponse | JSONResponse:
+    """
+    Return one full JobAdder application record.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    application_id : int
+        JobAdder application identifier requested by the route.
+
+    Returns
+    -------
+    JobAdderApplicationDetailResponse | JSONResponse
+        Full application response when the stored connection exists and the
+        JobAdder API call succeeds.
+
+    Notes
+    -----
+    This route exists for the first real applications persistence slice.
+
+    The applications preview route is useful for discovery, but the persistence
+    path needs a deterministic one-application read so it can safely persist
+    the same upstream application even after the preview page ordering changes.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/applications/12204918
+
+    and returns:
+
+    - the JobAdder account context
+    - the API URL used
+    - the requested application ID
+    - the full application object
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    detail_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_application_detail(
+            api_url=api_url,
+            access_token=access_token,
+            application_id=application_id,
+        ),
+        provider_failure_message="JobAdder application detail read failed.",
+    )
+
+    if isinstance(detail_result, JSONResponse):
+        return detail_result
+
+    application_detail, api_url, jobadder_instance = detail_result
+
+    return JobAdderApplicationDetailResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        application_id=application_id,
+        application=application_detail["application"],
     )
 
 
@@ -3022,7 +3118,7 @@ def _refresh_outlook_stored_connection(
 
     try:
         return save_outlook_oauth_connection(refreshed_token_set)
-    except (RuntimeError, ValueError) as exc:
+    except Exception as exc:
         return build_error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             code="internal_error",
@@ -3246,6 +3342,80 @@ def _perform_outlook_read_with_refresh_retry(
         )
 
 
+def _ensure_outlook_token_set_has_user_identity(
+    *,
+    token_set: OutlookTokenSet,
+) -> OutlookTokenSet:
+    """
+    Ensure one Outlook token set carries a usable Microsoft user identifier.
+
+    Notes
+    -----
+    Microsoft does not always return the identity hints we want in the token
+    response itself. In particular, the delegated token exchange can succeed
+    while omitting the `oid` claim we use as the natural key for persisted
+    Outlook connections.
+
+    In that case, the safest recovery path is:
+
+    1. keep the access token we just received
+    2. call Graph `/me`
+    3. use the returned user `id` and `userPrincipalName` to enrich the
+       token set before persistence
+
+    Example
+    -------
+    A callback flow can do:
+
+        token_set = exchange_outlook_authorization_code(code="...")
+        token_set = _ensure_outlook_token_set_has_user_identity(
+            token_set=token_set
+        )
+
+    and then persist the enriched token set normally.
+    """
+
+    if (
+        isinstance(token_set.microsoft_user_id, str)
+        and token_set.microsoft_user_id.strip() != ""
+    ):
+        return token_set
+
+    current_user_result = fetch_outlook_current_user(
+        access_token=token_set.access_token
+    )
+    current_user = current_user_result.get("user", {})
+
+    microsoft_user_id = current_user.get("id")
+    user_principal_name = (
+        current_user.get("userPrincipalName")
+        or current_user.get("mail")
+        or token_set.user_principal_name
+    )
+
+    if (
+        not isinstance(microsoft_user_id, str)
+        or microsoft_user_id.strip() == ""
+    ):
+        raise RuntimeError(
+            "Outlook token set did not include a usable Microsoft user identifier."
+        )
+
+    merged_raw_payload = dict(token_set.raw_payload)
+    merged_raw_payload.setdefault("resolved_current_user", current_user)
+
+    return replace(
+        token_set,
+        microsoft_user_id=microsoft_user_id.strip(),
+        user_principal_name=(
+            user_principal_name.strip()
+            if isinstance(user_principal_name, str)
+            and user_principal_name.strip() != ""
+            else None
+        ),
+        raw_payload=merged_raw_payload,
+    )
+
 @router.get(
     "/outlook/authorize",
     response_model=OutlookAuthorizationUrlResponse,
@@ -3408,8 +3578,46 @@ def complete_outlook_oauth_callback_route(
         )
 
     try:
+        token_set = _ensure_outlook_token_set_has_user_identity(
+            token_set=token_set
+        )
+    except OutlookApiError as exc:
+        details: list[dict[str, Any]] = []
+
+        if exc.status_code is not None:
+            details.append({"provider_status_code": exc.status_code})
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message=(
+                "Outlook token exchange succeeded, but the connected "
+                "Microsoft user could not be resolved."
+            ),
+            details=details,
+        )
+    except RuntimeError as exc:
+        details: list[dict[str, Any]] = [{"reason": str(exc)}]
+        if state:
+            details.append({"state": state})
+
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message=(
+                "Outlook token exchange succeeded, but the connected "
+                "Microsoft user could not be resolved."
+            ),
+            details=details,
+        )
+
+    try:
         saved_connection = save_outlook_oauth_connection(token_set)
-    except (RuntimeError, ValueError) as exc:
+    except Exception as exc:
         details: list[dict[str, Any]] = [{"reason": str(exc)}]
         if state:
             details.append({"state": state})

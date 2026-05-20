@@ -825,3 +825,67 @@ Interpretation:
   linked to the canonical job
 - the next retrieval/matching work can use persisted job-spec text instead of
   relying on ad hoc local parsing
+
+## 18. First Live Application Persistence Proof
+
+We then implemented and ran the first narrow JobAdder application persistence
+slice for the same `tw398` vacancy context.
+
+Source-side inputs used:
+
+- JobAdder application:
+  - `applicationId = 12204918`
+- JobAdder candidate:
+  - `candidateId = 17071060`
+- previously persisted canonical job:
+  - `job_id = dba716b6-710c-427c-a866-50cc5425854f`
+
+The persistence slice now does the following:
+
+- fetches one full JobAdder application-detail payload
+- fetches the matching full JobAdder candidate-detail payload
+- upserts/refreshes the canonical person and candidate rows from that
+  candidate snapshot
+- resolves the canonical job through the existing persisted JobAdder job
+  source record
+- upserts one canonical `applications` row
+- writes provenance-bearing `source_records` for:
+  - the JobAdder candidate snapshot
+  - the JobAdder application snapshot
+- writes `source_record_links` back to the canonical entities
+
+Live canonical IDs created/verified:
+
+- `person_id = 42a4191b-70a7-4115-9955-ba48a20d6820`
+- `candidate_id = 81fc7271-8d7b-4011-bf7f-fe96033e7b39`
+- `current_company_id = 3041034f-69cd-433d-b30d-d06232d908fd`
+- `application_id = 34e77fcf-97bb-49b2-b0dd-0c6b8feace5c`
+- `job_id = dba716b6-710c-427c-a866-50cc5425854f`
+
+The direct DB sanity check confirmed:
+
+- application status:
+  - `"INBOX"= New-CV's - [So CVR them!]`
+- source:
+  - `Database`
+- current employer:
+  - `Freelancing, UpWork`
+- candidate full name:
+  - `Sanjeev Sarda`
+- linked job title:
+  - `tw398 - KDB Developer`
+
+Interpretation:
+
+- the canonical `applications` layer is no longer theoretical
+- the `tw398` vacancy context now exists canonically across:
+  - job
+  - application
+  - candidate
+  - job-spec document
+  - Dropbox `.eml` provenance/archive findings
+- the remaining design work is no longer about whether these sources can be
+  persisted together
+- it is about how far to take provenance persistence next:
+  - `.eml` source records
+  - matching/retrieval over the persisted job-spec text

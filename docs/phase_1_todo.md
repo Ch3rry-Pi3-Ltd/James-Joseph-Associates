@@ -25,6 +25,12 @@ These items have now moved to the top of the practical working order because
 they were reinforced by recent live JobAdder extraction work and by the
 client's latest feedback.
 
+Checkpoint note:
+
+- [x] Record the current cross-source state in
+  `docs/source_integration_checkpoint_2026-05-20.md` so the current working
+  model and proof points are not trapped in chat history.
+
 - [ ] Add a robust Supabase persistence verification mechanism for accepted
   JobAdder CV ingests:
   - [x] Verify the canonical person, candidate, company, document, and
@@ -194,6 +200,21 @@ client's latest feedback.
         - [ ] Dropbox `.eml` = provenance/history layer
         - [ ] Dropbox CV file copies = archive/mirror layer unless a later
           hash comparison disproves that assumption
+      - [x] Implement the first narrow JobAdder application persistence slice:
+        - [x] add JobAdder application-detail helper/route
+        - [x] persist one real `tw398` application into canonical
+          `applications`
+        - [x] persist/refresh the linked canonical person/candidate rows from
+          the JobAdder candidate snapshot when needed
+        - [x] verify the canonical application row links to the already
+          persisted canonical `tw398` job
+        - [x] verify provenance-bearing source records and links landed in
+          Supabase
+      - [ ] Next follow-up after the first application persistence proof:
+        - [ ] persist one Dropbox `.eml` provenance record and link it to the
+          relevant job/application/candidate where the identity is clean enough
+        - [ ] chunk/embed the persisted `tw398` job-spec document so matching
+          can use stored spec text instead of ad hoc parsing
 
 </details>
 
