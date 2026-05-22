@@ -1463,6 +1463,134 @@ def fetch_jobadder_jobad_applications_preview(
     }
 
 
+def fetch_jobadder_job_applications_preview(
+    *,
+    api_url: str,
+    access_token: str,
+    job_id: int,
+    item_limit: int = 10,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch a first-page preview of applications for one JobAdder job.
+
+    Parameters
+    ----------
+    api_url : str
+        API base URL returned by JobAdder in the OAuth token response.
+
+    access_token : str
+        Stored bearer token used for authenticated JobAdder API requests.
+
+    job_id : int
+        JobAdder job identifier whose applications should be fetched.
+
+    item_limit : int
+        Maximum number of application items to return from the first page of
+        the JobAdder response.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small normalised dictionary containing:
+
+        - `items`
+        - `item_count`
+        - `total_count`
+        - `links`
+        - `endpoint_url`
+        - `raw_payload`
+
+    Raises
+    ------
+    ValueError
+        If the API URL, access token, job ID, or item limit is invalid.
+
+    JobAdderApiError
+        If JobAdder rejects the request, returns an unusable response, or
+        cannot be reached safely.
+
+    Notes
+    -----
+    This helper is the job-centric counterpart to the top-level applications
+    preview and the job-ad applications preview.
+
+    It exists because vacancy-aware reconciliation work needs a bounded view
+    of the applications attached to one specific JobAdder opportunity without
+    scraping the broader account-level applications collection first.
+
+    Example
+    -------
+    Calling:
+
+        fetch_jobadder_job_applications_preview(
+            api_url="https://eu2api.jobadder.com/v2/",
+            access_token="...",
+            job_id=891841,
+            item_limit=25,
+        )
+
+    returns a small wrapper around JobAdder's `/jobs/{jobId}/applications`
+    response.
+    """
+    if job_id < 1:
+        raise ValueError("JobAdder job_id must be at least 1.")
+
+    if item_limit < 1:
+        raise ValueError(
+            "JobAdder job applications preview item_limit must be at least 1."
+        )
+
+    endpoint_url = _build_jobadder_api_endpoint(
+        api_url=api_url,
+        resource_path=f"/jobs/{job_id}/applications",
+    )
+    headers = build_jobadder_api_headers(access_token=access_token)
+
+    response_payload = _request_jobadder_json(
+        endpoint_url=endpoint_url,
+        headers=headers,
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="JobAdder job applications read failed.",
+    )
+
+    raw_items = response_payload.get("items")
+
+    if not isinstance(raw_items, list):
+        raise JobAdderApiError(
+            "JobAdder job applications response did not include an items list.",
+            status_code=200,
+            endpoint_url=endpoint_url,
+            response_body=response_payload,
+        )
+
+    raw_links = response_payload.get("links")
+    links = raw_links if isinstance(raw_links, dict) else {}
+
+    raw_total_count = response_payload.get("totalCount")
+    total_count: int | None = None
+
+    if raw_total_count is not None:
+        try:
+            total_count = int(raw_total_count)
+        except (TypeError, ValueError):
+            total_count = None
+
+    items = raw_items[:item_limit]
+
+    return {
+        "items": items,
+        "item_count": len(items),
+        "total_count": total_count,
+        "links": links,
+        "endpoint_url": endpoint_url,
+        "raw_payload": response_payload,
+    }
+
+
 def fetch_jobadder_candidates_page(
     *,
     api_url: str,
@@ -2533,6 +2661,7 @@ __all__ = [
     "fetch_jobadder_applications_preview",
     "fetch_jobadder_candidate_attachments",
     "fetch_jobadder_jobad_applications_preview",
+    "fetch_jobadder_job_applications_preview",
     "fetch_jobadder_job_detail",
     "fetch_jobadder_jobads_preview",
     "fetch_jobadder_candidates_page",

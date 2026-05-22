@@ -11,6 +11,7 @@ These tests verify the real FastAPI route wiring for:
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/attachments/{attachment_id}/download-proof
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}
+    GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads/{ad_id}/applications-preview
     GET /api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates-preview
@@ -73,6 +74,9 @@ JOBADDER_CANDIDATE_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE = (
 )
 JOBADDER_JOB_DETAIL_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}"
+)
+JOBADDER_JOB_APPLICATIONS_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobs/{job_id}/applications-preview"
 )
 JOBADDER_JOBADS_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/jobads-preview"
@@ -878,6 +882,81 @@ def test_jobadder_job_detail_returns_full_job_successfully() -> None:
         api_url="https://api.jobadder.com",
         access_token="jobadder-access-token",
         job_id=936462,
+    )
+
+
+def test_jobadder_job_applications_preview_returns_first_page_successfully() -> None:
+    """
+    Verify that the job-applications preview route returns a bounded
+    applications list for one known JobAdder opportunity.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "jobadder_account": 2236,
+        "jobadder_instance": "eu2",
+        "api_url": "https://api.jobadder.com",
+        "access_token": "jobadder-access-token",
+        "refresh_token": "jobadder-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    fake_preview = {
+        "items": [
+            {"applicationId": 4101, "candidate": {"candidateId": 5101}},
+            {"applicationId": 4102, "candidate": {"candidateId": 5102}},
+        ],
+        "item_count": 2,
+        "total_count": 28,
+        "links": {
+            "first": "https://api.jobadder.com/v2/jobs/891841/applications?page=1",
+        },
+        "endpoint_url": "https://api.jobadder.com/v2/jobs/891841/applications",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_jobadder_oauth_connection",
+        return_value=fake_connection,
+    ) as mock_get_connection:
+        with patch(
+            "backend.api.v1.integrations.fetch_jobadder_job_applications_preview",
+            return_value=fake_preview,
+        ) as mock_fetch_preview:
+            response = client.get(
+                JOBADDER_JOB_APPLICATIONS_PREVIEW_PATH_TEMPLATE.format(
+                    jobadder_account=2236,
+                    job_id=891841,
+                )
+                + "?item_limit=25"
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["jobadder_account"] == 2236
+    assert payload["jobadder_instance"] == "eu2"
+    assert payload["api_url"] == "https://api.jobadder.com"
+    assert payload["job_id"] == 891841
+    assert payload["item_count"] == 2
+    assert payload["total_count"] == 28
+    assert payload["links"] == {
+        "first": "https://api.jobadder.com/v2/jobs/891841/applications?page=1",
+    }
+    assert payload["applications"] == [
+        {"applicationId": 4101, "candidate": {"candidateId": 5101}},
+        {"applicationId": 4102, "candidate": {"candidateId": 5102}},
+    ]
+
+    mock_get_connection.assert_called_once_with(2236)
+    mock_fetch_preview.assert_called_once_with(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        job_id=891841,
+        item_limit=25,
     )
 
 

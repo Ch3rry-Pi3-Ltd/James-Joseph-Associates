@@ -119,9 +119,69 @@ Checkpoint note:
         - [x] mail folders
         - [x] folder messages
         - [x] message attachments
-    - [ ] Confirm Microsoft app registration ownership and live app credentials.
-    - [ ] Confirm whether the first mailbox read should target Tom directly or a delegated/shared mailbox path.
-    - [ ] Inspect a first mailbox folder sample and record attachment/source-shape findings.
+    - [x] Confirm Microsoft app registration ownership and live app credentials.
+    - [x] Confirm whether the first mailbox read should target Tom directly or a delegated/shared mailbox path.
+      - [x] first live proof used Tom's own mailbox successfully
+      - [ ] delegated/shared mailbox path still to be tested separately if needed
+    - [x] Inspect a first mailbox folder sample and record attachment/source-shape findings.
+      - [x] root Inbox proved too large for naive first-page preview (`504` from Graph on the broad Inbox read)
+      - [x] first narrow Outlook advert-response path identified:
+        - [x] `Inbox`
+        - [x] `# ADV-CVR`
+        - [x] `### DOMINIQUE FOLDER`
+        - [x] `tw394`
+        - [x] `tw396`
+        - [x] `tw397`
+        - [x] `tw398`
+        - [x] `tw399`
+      - [x] `# ADV-CVR` root folder already contains mixed advert-response traffic:
+        - [x] CV-Library application emails
+        - [x] Totaljobs "Suitable application" emails
+        - [x] messages with attachments visible through Graph
+      - [x] `tw394` Outlook folder is a clean first candidate for narrow ingestion:
+        - [x] vacancy code visible in message subjects
+        - [x] sender email visible
+        - [x] received timestamp visible
+        - [x] `hasAttachments = true` on sampled messages
+      - [x] one real Outlook attachment-list proof succeeded for a Totaljobs advert-response message
+      - [x] add a narrow Outlook attachment download/read helper for the first real mailbox-ingestion slice
+      - [x] prove one real Outlook attachment can feed the resume extraction pipeline end to end:
+        - [x] source folder `# ADV-CVR > ### DOMINIQUE FOLDER > tw394`
+        - [x] sample message subject:
+          `sulaimanalikhan710@gmail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394`
+        - [x] sample file:
+          `SULAIMAN MOHAMMED (... - Totaljobs).pdf`
+        - [x] extractor = `pypdf`
+        - [x] extracted character count = `6185`
+      - [x] move from proof-only reads into the first narrow Outlook ingestion path:
+        - [x] add child-folder Graph helper so the mailbox path can be resolved by folder name instead of a hard-coded folder ID
+        - [x] add narrow Outlook resume persistence helpers:
+          - [x] Outlook message provenance `source_record`
+          - [x] Outlook attachment provenance `source_record`
+          - [x] canonical `documents` row with `document_type = resume`
+          - [x] `source_record_links`
+          - [x] optional job link by `tw...` code when a canonical job already exists
+        - [x] add the operator script:
+          - [x] `scripts/persist_outlook_tw394_folder.py`
+        - [x] run the first live `tw394` ingestion proof:
+          - [x] resolved mailbox path:
+            `Inbox > # ADV-CVR > ### DOMINIQUE FOLDER > tw394`
+          - [x] scanned first `10` messages
+          - [x] ingested first supported attachment successfully
+          - [x] canonical `document_id = 5cc458b8-e02e-4418-962c-fabaf5faeb66`
+          - [x] initial `resolved_job_id = null` was expected before the canonical
+            `tw394` job existed
+        - [x] persist the canonical `tw394` job/spec side:
+          - [x] JobAdder job `891841`
+          - [x] canonical `job_id = 8279afc7-6525-4fc7-bb3a-e6e8ffb82b35`
+          - [x] Dropbox job-spec PDF:
+            `/NEW Dropbox/# DLV/LIVE JOBS - [Job Specs]/tw394 - GSAcapital - Technical Support/GSA Capital - INFRA-Technical Support -2026.pdf`
+          - [x] canonical job-spec `document_id = 8222d726-ee80-4c38-951f-02d5dc7dae34`
+        - [x] rerun the Outlook `tw394` ingest after persisting the canonical job:
+          - [x] same Outlook resume `document_id` reused:
+            `5cc458b8-e02e-4418-962c-fabaf5faeb66`
+          - [x] `resolved_job_id = 8279afc7-6525-4fc7-bb3a-e6e8ffb82b35`
+          - [x] advert-response job linking by `tw...` is now proven live for `tw394`
   - [ ] LinkedHelper / LinkedIn-derived refresh data.
   - [ ] Recruiterflow JSON.
   - [ ] Pipedrive hiring-manager data.
@@ -213,6 +273,19 @@ Checkpoint note:
       - [ ] Next follow-up after the first application persistence proof:
         - [ ] persist one Dropbox `.eml` provenance record and link it to the
           relevant job/application/candidate where the identity is clean enough
+        - [ ] decide the next Outlook follow-up after the first fully linked
+          `tw394` persistence proof:
+          - [x] run the first conservative candidate/job reconciliation check
+            for the persisted Outlook `tw394` resume
+          - [x] first result:
+            - [x] canonical job link is strong and should be kept
+            - [x] no exact candidate-attachment hash match was found across the
+              current `28` JobAdder applications for job `891841`
+            - [x] the first Outlook advert-response sample remains
+              candidate-unresolved for now
+          - [ ] candidate/person auto-linking only when identity is stronger
+            than vacancy code + subject/file naming alone
+          - [ ] or the next bounded folder in the same persistence pattern
         - [ ] chunk/embed the persisted `tw398` job-spec document so matching
           can use stored spec text instead of ad hoc parsing
 

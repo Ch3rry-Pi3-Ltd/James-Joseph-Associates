@@ -9,6 +9,7 @@ These tests verify the FastAPI route wiring for:
     GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders
     GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages
     GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments
+    GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof
 """
 
 from collections.abc import Iterator
@@ -37,6 +38,9 @@ OUTLOOK_MESSAGES_PATH_TEMPLATE = (
 )
 OUTLOOK_ATTACHMENTS_PATH_TEMPLATE = (
     "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments"
+)
+OUTLOOK_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE = (
+    "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof"
 )
 
 
@@ -431,6 +435,62 @@ def test_outlook_attachments_returns_preview_successfully() -> None:
     )
 
 
+def test_outlook_attachment_download_proof_returns_hash_successfully() -> None:
+    """Verify that the narrow proof route returns hash metadata, not raw bytes."""
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "access_token": "microsoft-access-token",
+        "refresh_token": "microsoft-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+    fake_download = {
+        "mailbox": None,
+        "message_id": "msg-1",
+        "attachment_id": "att-1",
+        "file_name": "cv.pdf",
+        "content_type": "application/pdf",
+        "content_bytes": b"fake-pdf-bytes",
+        "attachment_metadata": {"name": "cv.pdf"},
+        "endpoint_url": "https://graph.microsoft.com/v1.0/me/messages/msg-1/attachments/att-1",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_outlook_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.download_outlook_message_file_attachment",
+            return_value=fake_download,
+        ) as mock_download:
+            response = client.get(
+                OUTLOOK_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE.format(
+                    microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    message_id="msg-1",
+                    attachment_id="att-1",
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    assert payload["message_id"] == "msg-1"
+    assert payload["attachment_id"] == "att-1"
+    assert payload["file_name"] == "cv.pdf"
+    assert payload["byte_count"] == len(b"fake-pdf-bytes")
+    assert payload["sha256"] == (
+        "50af8d443ccf8b2777b72a9169cd0665ef4be5335b8f53543556fa0d320b135b"
+    )
+    mock_download.assert_called_once_with(
+        access_token="microsoft-access-token",
+        message_id="msg-1",
+        attachment_id="att-1",
+        mailbox=None,
+    )
+
+
 def test_outlook_messages_returns_bad_gateway_for_provider_failure() -> None:
     """Verify that a Graph read failure becomes a clear API error."""
 
@@ -466,3 +526,41 @@ def test_outlook_messages_returns_bad_gateway_for_provider_failure() -> None:
     assert response.status_code == status.HTTP_502_BAD_GATEWAY
     payload = response.json()
     assert payload["error"]["message"] == "Outlook message-list read failed."
+
+
+def test_outlook_attachment_download_proof_returns_bad_gateway_for_provider_failure() -> None:
+    """Verify that attachment-download provider failures become clear API errors."""
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "access_token": "microsoft-access-token",
+        "refresh_token": "microsoft-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_outlook_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.download_outlook_message_file_attachment",
+            side_effect=OutlookApiError(
+                "Outlook attachment download failed.",
+                status_code=403,
+                endpoint_url="https://graph.microsoft.com/v1.0/me/messages/msg-1/attachments/att-1",
+            ),
+        ):
+            response = client.get(
+                OUTLOOK_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE.format(
+                    microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    message_id="msg-1",
+                    attachment_id="att-1",
+                )
+            )
+
+    assert response.status_code == status.HTTP_502_BAD_GATEWAY
+    payload = response.json()
+    assert payload["error"]["message"] == "Outlook attachment download failed."

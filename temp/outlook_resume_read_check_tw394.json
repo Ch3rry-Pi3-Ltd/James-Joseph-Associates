@@ -1,0 +1,20 @@
+{
+  "microsoft_user_id": "b4dd6a5f-8e27-4745-9369-e117121382ed",
+  "mailbox": null,
+  "checked_item_count": 1,
+  "all_passed": true,
+  "results": [
+    {
+      "status": "ok",
+      "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfv1vQyAAA=",
+      "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfv1vQyAAABEgAQAGWkHMiI7ixOvmfILATNIU0=",
+      "mailbox": null,
+      "file_name": "SULAIMAN MOHAMMED (412c3f29-e0be-4888-981a-4ae29d524ae2 - Totaljobs).pdf",
+      "content_type": "application/pdf",
+      "byte_count": 54656,
+      "extractor": "pypdf",
+      "page_count": 1,
+      "character_count": 6185
+    }
+  ]
+}

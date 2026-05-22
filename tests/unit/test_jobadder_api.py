@@ -51,6 +51,7 @@ from backend.services.jobadder_api import (
     fetch_jobadder_applications_preview,
     fetch_jobadder_candidate_attachments,
     fetch_jobadder_candidate_detail,
+    fetch_jobadder_job_applications_preview,
     fetch_jobadder_job_detail,
     fetch_jobadder_jobad_applications_preview,
     fetch_jobadder_jobads_preview,
@@ -605,6 +606,73 @@ def test_fetch_jobadder_jobad_applications_preview_uses_active_endpoint(
     assert (
         captured_request["url"]
         == "https://eu2api.jobadder.com/v2/jobads/101/applications/active"
+    )
+
+
+def test_fetch_jobadder_job_applications_preview_returns_first_page_successfully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the job-applications helper returns a bounded first page for
+    one specific JobAdder job.
+
+    Example
+    -------
+    We simulate a successful `/jobs/{jobId}/applications` response and confirm
+    the helper:
+
+    - calls the expected endpoint
+    - trims locally to the requested preview size
+    - preserves provider pagination metadata
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_get(url, headers, timeout):
+        captured_request["url"] = url
+        captured_request["headers"] = headers
+        captured_request["timeout"] = timeout
+
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {"applicationId": 1101, "candidate": {"candidateId": 2201}},
+                    {"applicationId": 1102, "candidate": {"candidateId": 2202}},
+                    {"applicationId": 1103, "candidate": {"candidateId": 2203}},
+                ],
+                "totalCount": 3,
+                "links": {
+                    "first": "https://api.jobadder.com/v2/jobs/891841/applications?page=1",
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    preview = fetch_jobadder_job_applications_preview(
+        api_url="https://api.jobadder.com",
+        access_token="jobadder-access-token",
+        job_id=891841,
+        item_limit=2,
+    )
+
+    assert preview["item_count"] == 2
+    assert preview["total_count"] == 3
+    assert preview["links"] == {
+        "first": "https://api.jobadder.com/v2/jobs/891841/applications?page=1",
+    }
+    assert preview["items"] == [
+        {"applicationId": 1101, "candidate": {"candidateId": 2201}},
+        {"applicationId": 1102, "candidate": {"candidateId": 2202}},
+    ]
+    assert (
+        preview["endpoint_url"]
+        == "https://api.jobadder.com/v2/jobs/891841/applications"
+    )
+    assert (
+        captured_request["url"]
+        == "https://api.jobadder.com/v2/jobs/891841/applications"
     )
 
 

@@ -53,6 +53,7 @@ Dropbox, and Outlook:
 - `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders`
 - `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages`
 - `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments`
+- `GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof`
 
 In plain language:
 
@@ -103,12 +104,14 @@ from backend.schemas.integrations import (
     JobAdderApplicationsPreviewResponse,
     JobAdderApplicationAttachmentsResponse,
     JobAdderJobAdApplicationsPreviewResponse,
+    JobAdderJobApplicationsPreviewResponse,
     JobAdderJobDetailResponse,
     JobAdderJobAdsPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
     OutlookAuthorizationUrlResponse,
     OutlookCurrentUserResponse,
     OutlookMailFoldersResponse,
+    OutlookMessageAttachmentDownloadProofResponse,
     OutlookMessageAttachmentsResponse,
     OutlookMessagesResponse,
     OutlookOAuthConnectionSavedResponse,
@@ -131,6 +134,7 @@ from backend.services.dropbox_oauth import (
 )
 from backend.services.outlook_api import (
     OutlookApiError,
+    download_outlook_message_file_attachment,
     fetch_outlook_current_user,
     fetch_outlook_mail_folders,
     fetch_outlook_message_attachments,
@@ -158,6 +162,7 @@ from backend.services.jobadder_api import (
     fetch_jobadder_applications_preview,
     fetch_jobadder_application_attachments,
     fetch_jobadder_jobad_applications_preview,
+    fetch_jobadder_job_applications_preview,
     fetch_jobadder_job_detail,
     fetch_jobadder_jobads_preview,
 )
@@ -1594,6 +1599,109 @@ def get_jobadder_job_detail_route(
         api_url=api_url,
         job_id=job_id,
         job=job_detail["job"],
+    )
+
+
+@router.get(
+    "/jobadder/accounts/{jobadder_account}/jobs/{job_id}/applications-preview",
+    response_model=JobAdderJobApplicationsPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored JobAdder connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "JobAdder job applications read failed.",
+        },
+    },
+)
+def get_jobadder_job_applications_preview_route(
+    jobadder_account: int,
+    job_id: int,
+    item_limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+        description=(
+            "Maximum number of application items to return from the first page "
+            "of the JobAdder response."
+        ),
+    ),
+) -> JobAdderJobApplicationsPreviewResponse | JSONResponse:
+    """
+    Return a small first-page preview of applications for one JobAdder job.
+
+    Parameters
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    job_id : int
+        JobAdder job identifier whose applications should be fetched.
+
+    item_limit : int
+        Maximum number of application items to return from the first page of
+        the JobAdder response.
+
+    Returns
+    -------
+    JobAdderJobApplicationsPreviewResponse | JSONResponse
+        First-page application preview for the requested job when the stored
+        connection exists and the provider read succeeds.
+
+    Notes
+    -----
+    This route exists for vacancy-aware reconciliation work.
+
+    It lets the backend ask a narrower question than the top-level
+    applications preview:
+
+        "Show me the applications for this one known opportunity."
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/jobadder/accounts/2236/jobs/891841/applications-preview?item_limit=25
+    """
+    stored_connection = _prepare_jobadder_connection_for_api_read(
+        jobadder_account=jobadder_account
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    preview_result = _perform_jobadder_read_with_refresh_retry(
+        jobadder_account=jobadder_account,
+        stored_connection=stored_connection,
+        read_callable=lambda *, api_url, access_token: fetch_jobadder_job_applications_preview(
+            api_url=api_url,
+            access_token=access_token,
+            job_id=job_id,
+            item_limit=item_limit,
+        ),
+        provider_failure_message="JobAdder job applications read failed.",
+    )
+
+    if isinstance(preview_result, JSONResponse):
+        return preview_result
+
+    preview, api_url, jobadder_instance = preview_result
+
+    return JobAdderJobApplicationsPreviewResponse(
+        jobadder_account=jobadder_account,
+        jobadder_instance=jobadder_instance,
+        api_url=api_url,
+        job_id=job_id,
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        links=preview["links"],
+        applications=preview["items"],
     )
 
 
@@ -3809,6 +3917,89 @@ def get_outlook_messages_route(
         folder_id=folder_id,
         message_count=message_result["message_count"],
         messages=message_result["messages"],
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof",
+    response_model=OutlookMessageAttachmentDownloadProofResponse,
+)
+def get_outlook_message_attachment_download_proof_route(
+    microsoft_user_id: str,
+    message_id: str,
+    attachment_id: str,
+    mailbox: str | None = Query(
+        default=None,
+        description=(
+            "Optional delegated mailbox identifier such as a user principal "
+            "name or mailbox email."
+        ),
+    ),
+) -> OutlookMessageAttachmentDownloadProofResponse | JSONResponse:
+    """
+    Download one Outlook file attachment transiently and return proof metadata.
+
+    Notes
+    -----
+    - This route is intentionally narrow.
+    - It exists for attachment verification and cross-source comparison work,
+      not for public raw file delivery.
+    - The immediate practical use is to prove that advert-response mailbox
+      attachments can flow into the same extraction pipeline already used for
+      JobAdder and Dropbox CV files.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof
+
+    And a successful response looks like:
+
+        {
+            "message_id": "AAMkAGI2...",
+            "attachment_id": "AAMkAGI2...AAABEgAQ...",
+            "file_name": "Candidate CV.pdf",
+            "byte_count": 326601,
+            "sha256": "..."
+        }
+
+    The route deliberately returns proof metadata only. It does not stream the
+    raw attachment bytes back to the client.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    download_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: download_outlook_message_file_attachment(
+            access_token=access_token,
+            message_id=message_id,
+            attachment_id=attachment_id,
+            mailbox=mailbox,
+        ),
+        provider_failure_message="Outlook attachment download failed.",
+    )
+    if isinstance(download_result, JSONResponse):
+        return download_result
+
+    content_bytes = download_result["content_bytes"]
+    sha256_digest = hashlib.sha256(content_bytes).hexdigest()
+
+    return OutlookMessageAttachmentDownloadProofResponse(
+        microsoft_user_id=microsoft_user_id,
+        mailbox=mailbox,
+        message_id=message_id,
+        attachment_id=attachment_id,
+        file_name=download_result.get("file_name"),
+        content_type=download_result.get("content_type"),
+        byte_count=len(content_bytes),
+        sha256=sha256_digest,
     )
 
 

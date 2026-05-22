@@ -10,6 +10,7 @@ It gives the rest of the repository a stable way to talk about:
 - listing mail folders from the signed-in or delegated mailbox
 - listing messages from one mail folder
 - listing attachments on one message
+- downloading one file attachment transiently for later extraction work
 
 Example
 -------
@@ -21,6 +22,11 @@ Typical usage in the rest of the backend looks like:
         access_token="...",
         folder_id="inbox",
         mailbox="recruitment@example.com",
+    )
+    downloaded_attachment = download_outlook_message_file_attachment(
+        access_token="...",
+        message_id="AAMkAGI2...",
+        attachment_id="AAMkAGI2...AAABEgAQ...",
     )
 
 In plain language:
@@ -37,6 +43,7 @@ In plain language:
 
 from typing import Any
 from urllib.parse import urlencode
+import base64
 
 import httpx
 
@@ -157,6 +164,78 @@ def fetch_outlook_mail_folders(
     }
 
 
+def fetch_outlook_child_mail_folders(
+    *,
+    access_token: str,
+    parent_folder_id: str,
+    mailbox: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """
+    Fetch a first-page preview of child folders under one Outlook folder.
+
+    Parameters
+    ----------
+    parent_folder_id : str
+        Parent mail folder identifier whose direct child folders should be
+        listed.
+
+    mailbox : str | None
+        Optional mailbox identifier to read instead of the signed-in user's
+        own mailbox. This supports shared or delegated mailbox reads when the
+        delegated scopes have been approved.
+
+    Example
+    -------
+    A call such as:
+
+        fetch_outlook_child_mail_folders(
+            access_token="...",
+            parent_folder_id="AAMkAGI2...",
+            mailbox="recruitment@example.com",
+            limit=100,
+        )
+
+    reads the next folder level through Graph.
+
+    In practice, this is the helper used when a human-readable path such as
+    `Inbox > # ADV-CVR > ### DOMINIQUE FOLDER > tw394` needs to be resolved
+    one level at a time.
+    """
+
+    if (
+        not isinstance(parent_folder_id, str)
+        or parent_folder_id.strip() == ""
+    ):
+        raise OutlookApiError("Outlook parent_folder_id cannot be empty.")
+
+    # Keep the first path-resolution slice intentionally to one page. The goal
+    # here is operational folder discovery, not full recursive mailbox sync.
+    query = urlencode({"$top": limit})
+    endpoint_url = (
+        f"{_mailbox_base_path(mailbox=mailbox)}/mailFolders/"
+        f"{parent_folder_id}/childFolders?{query}"
+    )
+    payload = _get_from_graph(
+        endpoint_url=endpoint_url,
+        access_token=access_token,
+        provider_failure_message="Outlook child-folder read failed.",
+    )
+
+    folders = payload.get("value")
+    if not isinstance(folders, list):
+        folders = []
+
+    return {
+        "mailbox": mailbox,
+        "parent_folder_id": parent_folder_id,
+        "folder_count": len(folders),
+        "folders": folders,
+        "raw_payload": payload,
+        "endpoint_url": endpoint_url,
+    }
+
+
 def fetch_outlook_messages(
     *,
     access_token: str,
@@ -268,6 +347,154 @@ def fetch_outlook_message_attachments(
         "attachment_count": len(attachments),
         "attachments": attachments,
         "raw_payload": payload,
+        "endpoint_url": endpoint_url,
+    }
+
+
+def download_outlook_message_file_attachment(
+    *,
+    access_token: str,
+    message_id: str,
+    attachment_id: str,
+    mailbox: str | None = None,
+) -> dict[str, Any]:
+    """
+    Download one Outlook file attachment transiently into memory.
+
+    Parameters
+    ----------
+    access_token : str
+        Delegated Microsoft Graph access token to use for the read.
+
+    message_id : str
+        Outlook message identifier that owns the attachment.
+
+    attachment_id : str
+        Outlook attachment identifier to fetch.
+
+    mailbox : str | None
+        Optional mailbox identifier to read instead of the signed-in user's
+        own mailbox. This supports shared or delegated mailbox reads when the
+        delegated scopes have been approved.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized transient file download containing:
+
+        - `mailbox`
+        - `message_id`
+        - `attachment_id`
+        - `file_name`
+        - `content_type`
+        - `content_bytes`
+        - `attachment_metadata`
+        - `endpoint_url`
+
+    Raises
+    ------
+    OutlookApiError
+        If Graph rejects the request, returns malformed attachment data, or
+        the attachment is not a file attachment.
+
+    Notes
+    -----
+    - This helper is intentionally narrow.
+    - It only supports `#microsoft.graph.fileAttachment`.
+    - That is the right first slice for CV ingestion because we care about
+      real attached files, not item attachments or cloud references yet.
+
+    Example
+    -------
+    A call such as:
+
+        download_outlook_message_file_attachment(
+            access_token="...",
+            message_id="AAMkAGI2...",
+            attachment_id="AAMkAGI2...AAABEgAQ...",
+            mailbox=None,
+        )
+
+    returns the raw file bytes plus the small amount of metadata needed for
+    later text extraction and provenance handling.
+
+    For advert-response CV ingestion, this is the step that turns:
+
+    - one Graph message ID
+    - one Graph attachment ID
+
+    into the transient file payload consumed by the existing resume-text
+    extraction path.
+    """
+
+    if not isinstance(message_id, str) or message_id.strip() == "":
+        raise OutlookApiError("Outlook message_id cannot be empty.")
+
+    if not isinstance(attachment_id, str) or attachment_id.strip() == "":
+        raise OutlookApiError("Outlook attachment_id cannot be empty.")
+
+    # Fetch the attachment metadata object first because Graph already gives us
+    # the attachment name, media type, and base64 payload for file
+    # attachments.
+    #
+    # Keeping the first implementation on that route avoids introducing a
+    # second `$value` transport path before we know it is needed.
+    endpoint_url = (
+        f"{_mailbox_base_path(mailbox=mailbox)}/messages/{message_id}"
+        f"/attachments/{attachment_id}"
+    )
+    payload = _get_from_graph(
+        endpoint_url=endpoint_url,
+        access_token=access_token,
+        provider_failure_message="Outlook attachment download failed.",
+    )
+
+    attachment_type = payload.get("@odata.type")
+    if attachment_type != "#microsoft.graph.fileAttachment":
+        raise OutlookApiError(
+            "Outlook attachment download currently supports only file attachments.",
+            endpoint_url=endpoint_url,
+            response_body=payload,
+        )
+
+    raw_content_bytes = payload.get("contentBytes")
+    if not isinstance(raw_content_bytes, str) or raw_content_bytes.strip() == "":
+        raise OutlookApiError(
+            "Outlook file attachment payload did not include usable content bytes.",
+            endpoint_url=endpoint_url,
+            response_body=payload,
+        )
+
+    try:
+        content_bytes = base64.b64decode(raw_content_bytes, validate=True)
+    except (ValueError, TypeError) as exc:
+        raise OutlookApiError(
+            "Outlook file attachment payload contained invalid base64 content.",
+            endpoint_url=endpoint_url,
+            response_body=payload,
+        ) from exc
+
+    # Keep the file-name normalization explicit here instead of silently
+    # passing through blank provider values.
+    #
+    # Downstream extraction and provenance code can work without a file name,
+    # but an empty-string name is more misleading than a deliberate `None`.
+    raw_name = payload.get("name")
+    file_name = (
+        raw_name
+        if isinstance(raw_name, str) and raw_name.strip() != ""
+        else None
+    )
+    content_type = payload.get("contentType")
+
+    return {
+        "mailbox": mailbox,
+        "message_id": message_id,
+        "attachment_id": attachment_id,
+        "file_name": file_name,
+        "content_type": content_type,
+        "content_bytes": content_bytes,
+        "attachment_metadata": payload,
         "endpoint_url": endpoint_url,
     }
 
@@ -398,6 +625,8 @@ __all__ = [
     "GRAPH_BASE_URL",
     "GRAPH_ME_URL",
     "OutlookApiError",
+    "download_outlook_message_file_attachment",
+    "fetch_outlook_child_mail_folders",
     "fetch_outlook_current_user",
     "fetch_outlook_mail_folders",
     "fetch_outlook_message_attachments",

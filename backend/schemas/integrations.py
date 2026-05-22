@@ -690,6 +690,101 @@ class JobAdderApplicationsPreviewResponse(BaseModel):
     )
 
 
+class JobAdderJobApplicationsPreviewResponse(BaseModel):
+    """
+    Response returned when the backend previews applications for one JobAdder
+    job/opportunity.
+
+    Attributes
+    ----------
+    jobadder_account : int
+        JobAdder account identifier used to locate the stored OAuth connection.
+
+    jobadder_instance : str | None
+        Optional JobAdder instance value stored alongside the connection.
+
+    api_url : str
+        JobAdder API base URL used for the authenticated read.
+
+    job_id : int
+        JobAdder job identifier whose applications were requested.
+
+    item_count : int
+        Number of application items returned in this preview response.
+
+    total_count : int | None
+        Provider-reported total application count when JobAdder includes it.
+
+    links : dict[str, Any]
+        Provider pagination or navigation links when present.
+
+    applications : list[dict[str, Any]]
+        Small first-page preview of application items returned by JobAdder.
+
+    Notes
+    -----
+    This response is useful when a reconciliation workflow already knows the
+    canonical job and wants to inspect only the applications attached to that
+    opportunity.
+
+    Example
+    -------
+    A typical response looks like:
+
+        {
+            "jobadder_account": 2236,
+            "jobadder_instance": "eu2",
+            "api_url": "https://eu2api.jobadder.com/v2/",
+            "job_id": 891841,
+            "item_count": 10,
+            "total_count": 28,
+            "links": {...},
+            "applications": [...],
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    jobadder_account: int = Field(
+        description="JobAdder account identifier used for the authenticated read.",
+    )
+
+    jobadder_instance: str | None = Field(
+        default=None,
+        description="Optional JobAdder instance value stored with the connection.",
+    )
+
+    api_url: str = Field(
+        min_length=1,
+        description="JobAdder API base URL used for the authenticated read.",
+    )
+
+    job_id: int = Field(
+        ge=1,
+        description="JobAdder job identifier whose applications were requested.",
+    )
+
+    item_count: int = Field(
+        ge=0,
+        description="Number of application items returned in this preview response.",
+    )
+
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total application count when available.",
+    )
+
+    links: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider pagination or navigation links when present.",
+    )
+
+    applications: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small first-page preview of application items from JobAdder.",
+    )
+
+
 class JobAdderApplicationDetailResponse(BaseModel):
     """
     Response returned when the backend fetches one full JobAdder application.
@@ -1836,11 +1931,106 @@ class OutlookMessageAttachmentsResponse(BaseModel):
     )
 
 
+class OutlookMessageAttachmentDownloadProofResponse(BaseModel):
+    """
+    Response returned when the backend downloads one Outlook file attachment
+    transiently and returns only proof metadata.
+
+    Attributes
+    ----------
+    microsoft_user_id : str
+        Microsoft user identifier used to locate the stored connection.
+
+    mailbox : str | None
+        Optional delegated mailbox identifier used for the read.
+
+    message_id : str
+        Message identifier that owns the attachment.
+
+    attachment_id : str
+        Attachment identifier that was downloaded transiently.
+
+    file_name : str | None
+        Attachment file name returned by Microsoft Graph.
+
+    content_type : str | None
+        Attachment media type returned by Microsoft Graph.
+
+    byte_count : int
+        Actual byte length of the decoded attachment payload.
+
+    sha256 : str
+        SHA-256 digest of the decoded attachment bytes.
+
+    Notes
+    -----
+    - This is intentionally a proof route, not a raw file-download route.
+    - It exists so we can answer practical questions such as:
+
+        "Can Outlook advert-response attachments feed the existing CV
+        extraction pipeline?"
+
+    - Returning hash/size metadata keeps the route useful for comparison work
+      without turning it into a public binary-download endpoint.
+
+    Example
+    -------
+    A response looks like:
+
+        {
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "mailbox": null,
+            "message_id": "AAMkAGI2...",
+            "attachment_id": "AAMkAGI2...AAABEgAQ...",
+            "file_name": "Candidate CV.pdf",
+            "content_type": "application/pdf",
+            "byte_count": 326601,
+            "sha256": "1006f53e15a0fc116312e38fba6249ec4add00e231d94dcafb8b69fd9a308715"
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        min_length=1,
+        description="Microsoft user identifier used to locate the stored connection.",
+    )
+    mailbox: str | None = Field(
+        default=None,
+        description="Optional delegated mailbox identifier used for the read.",
+    )
+    message_id: str = Field(
+        min_length=1,
+        description="Message identifier that owns the attachment.",
+    )
+    attachment_id: str = Field(
+        min_length=1,
+        description="Attachment identifier that was downloaded transiently.",
+    )
+    file_name: str | None = Field(
+        default=None,
+        description="Attachment file name returned by Microsoft Graph.",
+    )
+    content_type: str | None = Field(
+        default=None,
+        description="Attachment media type returned by Microsoft Graph.",
+    )
+    byte_count: int = Field(
+        ge=0,
+        description="Actual byte length of the decoded attachment payload.",
+    )
+    sha256: str = Field(
+        min_length=1,
+        description="SHA-256 digest of the decoded attachment bytes.",
+    )
+
+
 __all__ = [
     "JobAdderAuthorizationUrlResponse",
     "JobAdderApplicationDetailResponse",
     "JobAdderApplicationAttachmentsResponse",
     "JobAdderApplicationsPreviewResponse",
+    "JobAdderJobApplicationsPreviewResponse",
     "JobAdderCandidateAttachmentDownloadProofResponse",
     "JobAdderCandidateAttachmentsResponse",
     "JobAdderCandidateDetailResponse",
@@ -1857,6 +2047,7 @@ __all__ = [
     "DropboxOAuthConnectionSavedResponse",
     "OutlookAuthorizationUrlResponse",
     "OutlookCurrentUserResponse",
+    "OutlookMessageAttachmentDownloadProofResponse",
     "OutlookMailFoldersResponse",
     "OutlookMessageAttachmentsResponse",
     "OutlookMessagesResponse",
