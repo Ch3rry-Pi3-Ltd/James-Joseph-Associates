@@ -630,6 +630,14 @@ payloads.
 - [ ] Identify stable source IDs.
 - [ ] Identify sensitive fields.
 - [ ] Decide the first real source-record type.
+- [x] Add a first internal review surface for canonical Supabase data:
+  - [x] backend overview route: `/api/v1/review/overview`
+  - [x] frontend review page: `/review`
+- [ ] Re-prioritise import order around static exports now that Tom is
+  cancelling JobAdder and Dropbox live usage:
+  - [ ] Recruiterflow official backup first
+  - [ ] JobAdder full export/zip next
+  - [ ] broad Dropbox archive folders after that
 
 Recommended first systems to inspect:
 
@@ -644,13 +652,17 @@ Recommended first systems to inspect:
 
 Current note:
 
-- JobAdder is still the leading first source system.
-- The application registration and callback plumbing are now in place.
-- Dropbox OAuth scaffolding is now in place in the backend.
-- The next Dropbox blocker is no longer auth design. It is:
-  - final app registration/credentials
-  - first live authorization by Tom
-  - first narrow folder inspection against real Dropbox paths such as ADV-CVR
+- JobAdder and Dropbox live integration work was still useful because it let us
+  map the schema, prove `tw...` vacancy linking, and verify file/provenance
+  behaviour against real data.
+- Tom is now cancelling JobAdder and Dropbox, so the practical next import mode
+  should shift toward:
+  - Recruiterflow official backup
+  - JobAdder full export/zip
+  - broad Dropbox archive folders where still useful
+- The first internal Supabase review surface is now live:
+  - API: `/api/v1/review/overview`
+  - UI: `/review`
 
 </details>
 

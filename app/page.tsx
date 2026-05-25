@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /**
  * Home dashboard shell for the James Joseph Associates intelligence app.
  *
@@ -237,12 +239,20 @@ export default function Home() {
             - This points to the FastAPI health endpoint we already built.
             - It keeps the first UI connected to a genuine backend capability.
           */}
-          <a
-            href="/api/v1/health"
-            className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-          >
-            Check API health
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="/api/v1/health"
+              className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+            >
+              Check API health
+            </a>
+            <Link
+              href="/review"
+              className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+            >
+              Review database
+            </Link>
+          </div>
         </header>
 
         {/* 
