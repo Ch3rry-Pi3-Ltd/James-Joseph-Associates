@@ -1,0 +1,112 @@
+{
+  "persisted_at": "2026-05-26T22:00:56.443281+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1.100.json",
+  "selected_primary_file_count": 15,
+  "extracted_count": 15,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "results_preview": [
+    {
+      "persisted_at": "2026-05-26T22:00:49.412783+00:00",
+      "source_candidate_id": "4847",
+      "source_file_record_id": "4847:5679",
+      "candidate_id": "1c6d5201-6022-4f69-85f3-9f929d6cd6e9",
+      "document_id": "f4b41732-6ccb-4ebd-8b4c-54609cdcfcb5",
+      "candidate_file_content_source_record_id": "b0aa7f6d-44ee-41b9-a002-d359a7cb8afa",
+      "sync_status": "extracted",
+      "character_count": 6149
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:49.936116+00:00",
+      "source_candidate_id": "4846",
+      "source_file_record_id": "4846:5676",
+      "candidate_id": "d6576c45-95b3-40b7-b9ef-b4e1e26d5797",
+      "document_id": "a44d3732-745d-4041-8e2a-734aa3794a26",
+      "candidate_file_content_source_record_id": "0d0547b0-2f20-4d48-b180-69f396693e32",
+      "sync_status": "extracted",
+      "character_count": 7904
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:50.271965+00:00",
+      "source_candidate_id": "4845",
+      "source_file_record_id": "4845:5675",
+      "candidate_id": "e498cabb-a93b-4fd1-9592-318f66731ff0",
+      "document_id": "9d65bb77-76dc-478b-816a-32c86507bbef",
+      "candidate_file_content_source_record_id": "9a7def53-6f85-40b3-9295-90d2aa274306",
+      "sync_status": "extracted",
+      "character_count": 2002
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:50.595949+00:00",
+      "source_candidate_id": "4844",
+      "source_file_record_id": "4844:5674",
+      "candidate_id": "94062095-15bd-4aa5-9b8d-c296a8af13aa",
+      "document_id": "2c28c39e-04e3-4124-8566-f9ab9505ce19",
+      "candidate_file_content_source_record_id": "8150bade-2721-4425-99b4-1199730116b6",
+      "sync_status": "extracted",
+      "character_count": 6594
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:51.094745+00:00",
+      "source_candidate_id": "4817",
+      "source_file_record_id": "4817:5644",
+      "candidate_id": "8c416cab-3705-49f3-861d-8bc10a023a2f",
+      "document_id": "3fab2698-4988-4818-84db-1d6a080ac225",
+      "candidate_file_content_source_record_id": "50e0e5be-78e8-46a8-aa50-666454725e2a",
+      "sync_status": "extracted",
+      "character_count": 8291
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:51.583983+00:00",
+      "source_candidate_id": "4816",
+      "source_file_record_id": "4816:5643",
+      "candidate_id": "0685d1d4-561c-435b-b93c-9af796c1bfee",
+      "document_id": "8e91ed42-88f6-41b9-881c-4bd83b5f6d59",
+      "candidate_file_content_source_record_id": "40026cdd-2aac-4d51-96d0-3307dbd180c0",
+      "sync_status": "extracted",
+      "character_count": 8263
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:51.969224+00:00",
+      "source_candidate_id": "4815",
+      "source_file_record_id": "4815:5642",
+      "candidate_id": "1c64a7ef-d597-4f15-986c-28b9cd4c7325",
+      "document_id": "a3548618-804e-439b-824b-9413e34d1fd1",
+      "candidate_file_content_source_record_id": "e62273aa-326c-42a7-af68-c442f4efda06",
+      "sync_status": "extracted",
+      "character_count": 2275
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:52.292300+00:00",
+      "source_candidate_id": "4787",
+      "source_file_record_id": "4787:5589",
+      "candidate_id": "6ce92320-0006-4632-a6c1-e67af140ece7",
+      "document_id": "452ba02e-36c0-4452-9c0b-8ae3a2687d1e",
+      "candidate_file_content_source_record_id": "6350e852-5279-4b53-b68f-b7367b5a5634",
+      "sync_status": "extracted",
+      "character_count": 12748
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:52.854431+00:00",
+      "source_candidate_id": "4785",
+      "source_file_record_id": "4785:5585",
+      "candidate_id": "7b9e1965-6574-4bd0-9382-407375e554c9",
+      "document_id": "36044d03-09c8-4367-babf-a84da35b3fc9",
+      "candidate_file_content_source_record_id": "2b117fc9-41ee-42c0-90f5-c24553e2b930",
+      "sync_status": "extracted",
+      "character_count": 5821
+    },
+    {
+      "persisted_at": "2026-05-26T22:00:53.241965+00:00",
+      "source_candidate_id": "4764",
+      "source_file_record_id": "4764:5551",
+      "candidate_id": "f3181167-6042-465d-ae97-eeede3f4fc3d",
+      "document_id": "2c4a42a4-5078-4e66-9188-17bc2ec830a7",
+      "candidate_file_content_source_record_id": "ccc860b7-88b3-4f3d-a844-14cbc0e1789d",
+      "sync_status": "extracted",
+      "character_count": 5424
+    }
+  ]
+}

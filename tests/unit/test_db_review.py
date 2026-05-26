@@ -13,14 +13,24 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
     """
 
     mock_cursor = MagicMock()
-    mock_cursor.fetchone.return_value = {
-        "people": 4,
-        "candidates": 3,
-        "jobs": 2,
-        "applications": 5,
-        "documents": 6,
-        "source_records": 7,
-    }
+    mock_cursor.fetchone.side_effect = [
+        {
+            "people": 4,
+            "candidates": 3,
+            "jobs": 2,
+            "applications": 5,
+            "documents": 6,
+            "source_records": 7,
+        },
+        {
+            "total": 106,
+            "reference_only": 81,
+            "byte_backed": 25,
+            "extracted_successfully": 22,
+            "unsupported": 2,
+            "failed": 1,
+        },
+    ]
     mock_cursor.fetchall.side_effect = [
         [
             {
@@ -50,6 +60,18 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
             {
                 "source_record_uuid": "src-1",
                 "source_system": "outlook",
+            }
+        ],
+        [
+            {
+                "document_type": "candidate_attachment",
+                "document_count": 12,
+            }
+        ],
+        [
+            {
+                "source_system": "recruiterflow",
+                "source_record_count": 422,
             }
         ],
     ]
@@ -103,6 +125,26 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
                 "source_system": "outlook",
             }
         ],
+        "document_type_counts": [
+            {
+                "document_type": "candidate_attachment",
+                "document_count": 12,
+            }
+        ],
+        "source_system_counts": [
+            {
+                "source_system": "recruiterflow",
+                "source_record_count": 422,
+            }
+        ],
+        "candidate_attachment_health": {
+            "total": 106,
+            "reference_only": 81,
+            "byte_backed": 25,
+            "extracted_successfully": 22,
+            "unsupported": 2,
+            "failed": 1,
+        },
     }
 
 
@@ -112,8 +154,18 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
     """
 
     mock_cursor = MagicMock()
-    mock_cursor.fetchone.return_value = {"people": 0}
-    mock_cursor.fetchall.side_effect = [[], [], [], [], []]
+    mock_cursor.fetchall.side_effect = [[], [], [], [], [], [], []]
+    mock_cursor.fetchone.side_effect = [
+        {"people": 0},
+        {
+            "total": 0,
+            "reference_only": 0,
+            "byte_backed": 0,
+            "extracted_successfully": 0,
+            "unsupported": 0,
+            "failed": 0,
+        },
+    ]
 
     mock_connection = MagicMock()
     mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
@@ -127,9 +179,11 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
 
     execute_calls = mock_cursor.execute.call_args_list
 
-    assert len(execute_calls) == 6
+    assert len(execute_calls) == 9
     assert execute_calls[1].args[1] == {"limit": 7}
     assert execute_calls[2].args[1] == {"limit": 7}
     assert execute_calls[3].args[1] == {"limit": 7}
     assert execute_calls[4].args[1] == {"limit": 7}
     assert execute_calls[5].args[1] == {"limit": 7}
+    assert execute_calls[6].args[1] == {"limit": 7}
+    assert execute_calls[7].args[1] == {"limit": 7}

@@ -28,14 +28,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import mimetypes
 import re
 from decimal import Decimal
 from typing import Any
 
 from backend.db.recruiterflow_persistence import (
+    persist_recruiterflow_candidate_file_reference as persist_recruiterflow_candidate_file_reference_snapshot,
+    persist_recruiterflow_candidate_file_content as persist_recruiterflow_candidate_file_content_snapshot,
     persist_recruiterflow_candidate_snapshot,
+    persist_recruiterflow_job_file_reference as persist_recruiterflow_job_file_reference_snapshot,
     persist_recruiterflow_job_snapshot,
 )
+from backend.services.resume_text import ResumeTextExtractionError
 
 
 def persist_recruiterflow_job(
@@ -225,6 +230,58 @@ def persist_recruiterflow_candidate(
     return persist_recruiterflow_candidate_snapshot(persistence_payload)
 
 
+def persist_recruiterflow_candidate_file_reference(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    candidate_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one Recruiterflow candidate file as a canonical document reference.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the candidate record.
+
+    member_name : str
+        ZIP member name that contained the candidate JSON chunk.
+
+    candidate_payload : dict[str, Any]
+        Candidate object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `candidate.files`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Persistence summary returned by the lower-level DB helper.
+
+    Example
+    -------
+    A caller can persist one nested candidate file reference directly:
+
+        summary = persist_recruiterflow_candidate_file_reference(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="candidate/1.100.json",
+            candidate_payload=candidate_record,
+            file_payload=candidate_record["files"][0],
+        )
+    """
+
+    persistence_payload = build_recruiterflow_candidate_file_reference_payload(
+        export_source_uri=export_source_uri,
+        member_name=member_name,
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+    )
+    return persist_recruiterflow_candidate_file_reference_snapshot(
+        persistence_payload
+    )
+
+
 def build_recruiterflow_candidate_persistence_payload(
     *,
     export_source_uri: str,
@@ -338,6 +395,444 @@ def build_recruiterflow_candidate_persistence_payload(
         "import_run_id": _build_import_run_id(
             prefix="recruiterflow_candidate",
             source_record_id=str(source_candidate_id),
+            member_name=member_name,
+        ),
+    }
+
+
+def build_recruiterflow_candidate_file_reference_payload(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    candidate_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build the narrow persistence payload for one Recruiterflow candidate file.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the candidate record.
+
+    member_name : str
+        ZIP member name that contained the candidate JSON chunk.
+
+    candidate_payload : dict[str, Any]
+        Candidate object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `candidate.files`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized payload ready for the direct SQL persistence helper.
+
+    Example
+    -------
+    The returned payload contains provenance slices such as:
+
+        payload["candidate_file_source_payload"]
+        payload["source_file_record_id"]
+    """
+
+    source_candidate_id = _coerce_positive_int(
+        candidate_payload.get("id"),
+        field_name="candidate.id",
+    )
+    source_file_key = _build_recruiterflow_file_source_key(
+        file_payload=file_payload,
+        field_name="candidate.files",
+    )
+    document_title = _require_nonempty_string(
+        _pick_first_present_string(file_payload, "filename", "name"),
+        field_name="candidate.files.filename",
+    )
+    source_uri = _clean_optional_string(
+        _pick_first_present_string(file_payload, "link", "url")
+    )
+    upload_time = _pick_first_present_string(file_payload, "upload_time", "created_at")
+    content_hash = _clean_optional_string(
+        _pick_first_present_string(file_payload, "content_hash", "checksum")
+    )
+    mime_type = _guess_mime_type(document_title)
+
+    candidate_file_source_payload = {
+        "export_source_uri": export_source_uri,
+        "member_name": member_name,
+        "source_candidate_id": source_candidate_id,
+        "source_file_id": source_file_key,
+        "candidate_name": _clean_optional_string(candidate_payload.get("name")),
+        "candidate_file_payload": file_payload,
+    }
+
+    return {
+        "source_candidate_id": source_candidate_id,
+        "source_file_record_id": f"{source_candidate_id}:{source_file_key}",
+        "document_title": document_title,
+        "source_uri": source_uri,
+        "mime_type": mime_type,
+        "content_hash": content_hash,
+        "uploaded_at": upload_time,
+        "candidate_file_source_payload": candidate_file_source_payload,
+        "candidate_file_source_payload_hash": _hash_json_ready_payload(
+            candidate_file_source_payload
+        ),
+        "import_run_id": _build_import_run_id(
+            prefix="recruiterflow_candidate_file_reference",
+            source_record_id=f"{source_candidate_id}:{source_file_key}",
+            member_name=member_name,
+        ),
+    }
+
+
+def persist_recruiterflow_job_file_reference(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    job_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one Recruiterflow job file as a canonical document reference.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the job record.
+
+    member_name : str
+        ZIP member name that contained the job JSON chunk.
+
+    job_payload : dict[str, Any]
+        Job object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `job.files`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Persistence summary returned by the lower-level DB helper.
+    """
+
+    persistence_payload = build_recruiterflow_job_file_reference_payload(
+        export_source_uri=export_source_uri,
+        member_name=member_name,
+        job_payload=job_payload,
+        file_payload=file_payload,
+    )
+    return persist_recruiterflow_job_file_reference_snapshot(persistence_payload)
+
+
+def persist_recruiterflow_candidate_file_content(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    candidate_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+    downloaded_file: dict[str, Any] | None,
+    extraction_result: dict[str, Any] | None = None,
+    extraction_error: ResumeTextExtractionError | None = None,
+    download_error_message: str | None = None,
+) -> dict[str, Any]:
+    """
+    Persist one Recruiterflow candidate file download/extraction attempt.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the candidate record.
+
+    member_name : str
+        ZIP member name that contained the candidate JSON chunk.
+
+    candidate_payload : dict[str, Any]
+        Candidate object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `candidate.files`.
+
+    downloaded_file : dict[str, Any] | None
+        Download result for the file reference, or `None` when the byte
+        download failed before persistence.
+
+    extraction_result : dict[str, Any] | None
+        Successful resume text extraction result, when available.
+
+    extraction_error : ResumeTextExtractionError | None
+        Structured extraction failure, when parsing failed after a successful
+        download.
+
+    download_error_message : str | None
+        Plain-text download failure message, when the file bytes could not be
+        fetched at all.
+
+    Returns
+    -------
+    dict[str, Any]
+        Persistence summary returned by the lower-level DB helper.
+    """
+
+    persistence_payload = build_recruiterflow_candidate_file_content_persistence_payload(
+        export_source_uri=export_source_uri,
+        member_name=member_name,
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+        downloaded_file=downloaded_file,
+        extraction_result=extraction_result,
+        extraction_error=extraction_error,
+        download_error_message=download_error_message,
+    )
+    return persist_recruiterflow_candidate_file_content_snapshot(persistence_payload)
+
+
+def build_recruiterflow_job_file_reference_payload(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    job_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build the narrow persistence payload for one Recruiterflow job file.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the job record.
+
+    member_name : str
+        ZIP member name that contained the job JSON chunk.
+
+    job_payload : dict[str, Any]
+        Job object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `job.files`.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized payload ready for the direct SQL persistence helper.
+    """
+
+    source_job_id = _coerce_positive_int(job_payload.get("id"), field_name="job.id")
+    source_file_key = _build_recruiterflow_file_source_key(
+        file_payload=file_payload,
+        field_name="job.files",
+    )
+    job_title = _require_nonempty_string(
+        _pick_first_present_string(job_payload, "name", "title"),
+        field_name="job.name",
+    )
+    document_title = _require_nonempty_string(
+        _pick_first_present_string(file_payload, "filename", "name"),
+        field_name="job.files.filename",
+    )
+    source_uri = _clean_optional_string(
+        _pick_first_present_string(file_payload, "link", "url")
+    )
+    content_hash = _clean_optional_string(
+        _pick_first_present_string(file_payload, "content_hash", "checksum")
+    )
+    mime_type = _guess_mime_type(document_title)
+
+    job_file_source_payload = {
+        "export_source_uri": export_source_uri,
+        "member_name": member_name,
+        "source_job_id": source_job_id,
+        "source_file_id": source_file_key,
+        "job_title": job_title,
+        "job_file_payload": file_payload,
+    }
+
+    return {
+        "source_job_id": source_job_id,
+        "source_file_record_id": f"{source_job_id}:{source_file_key}",
+        "job_title": job_title,
+        "document_title": document_title,
+        "source_uri": source_uri,
+        "mime_type": mime_type,
+        "content_hash": content_hash,
+        "job_file_source_payload": job_file_source_payload,
+        "job_file_source_payload_hash": _hash_json_ready_payload(
+            job_file_source_payload
+        ),
+        "import_run_id": _build_import_run_id(
+            prefix="recruiterflow_job_file_reference",
+            source_record_id=f"{source_job_id}:{source_file_key}",
+            member_name=member_name,
+        ),
+    }
+
+
+def build_recruiterflow_candidate_file_content_persistence_payload(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    candidate_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+    downloaded_file: dict[str, Any] | None,
+    extraction_result: dict[str, Any] | None = None,
+    extraction_error: ResumeTextExtractionError | None = None,
+    download_error_message: str | None = None,
+) -> dict[str, Any]:
+    """
+    Build the narrow persistence payload for one candidate-file content attempt.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the ZIP export that contained the candidate record.
+
+    member_name : str
+        ZIP member name that contained the candidate JSON chunk.
+
+    candidate_payload : dict[str, Any]
+        Candidate object that owns the nested file reference.
+
+    file_payload : dict[str, Any]
+        Nested Recruiterflow file object from `candidate.files`.
+
+    downloaded_file : dict[str, Any] | None
+        Download result for the file reference, or `None` when the byte
+        download failed.
+
+    extraction_result : dict[str, Any] | None
+        Successful extraction result, when available.
+
+    extraction_error : ResumeTextExtractionError | None
+        Structured extraction failure, when parsing failed after a successful
+        download.
+
+    download_error_message : str | None
+        Plain-text download failure message, when the file bytes could not be
+        fetched at all.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized payload ready for the direct SQL persistence helper.
+
+    Example
+    -------
+    A successful PDF extraction returns a payload with:
+
+        - `sync_status = "extracted"`
+        - `content_hash = "..."`,
+        - `extracted_text = "..."`
+
+    while an unsupported `.doc` result returns:
+
+        - `sync_status = "unsupported"`
+        - `content_hash = "..."`,
+        - `extracted_text = None`
+    """
+
+    source_candidate_id = _coerce_positive_int(
+        candidate_payload.get("id"),
+        field_name="candidate.id",
+    )
+    source_file_key = _build_recruiterflow_file_source_key(
+        file_payload=file_payload,
+        field_name="candidate.files",
+    )
+    document_title = _require_nonempty_string(
+        _pick_first_present_string(file_payload, "filename", "name"),
+        field_name="candidate.files.filename",
+    )
+    source_uri = _clean_optional_string(
+        _pick_first_present_string(file_payload, "link", "url")
+    )
+    byte_count = None
+    content_hash = None
+    mime_type = _guess_mime_type(document_title)
+    extracted_text = None
+    character_count = None
+    extractor_name = None
+    page_count = None
+
+    if downloaded_file is not None:
+        raw_content_bytes = downloaded_file.get("content_bytes")
+        if isinstance(raw_content_bytes, bytes):
+            byte_count = len(raw_content_bytes)
+            content_hash = hashlib.sha256(raw_content_bytes).hexdigest()
+
+        downloaded_content_type = _clean_optional_string(
+            downloaded_file.get("content_type")
+        )
+        if downloaded_content_type is not None:
+            mime_type = downloaded_content_type
+
+    error_message = download_error_message
+    error_stage = None
+
+    if extraction_result is not None:
+        extracted_text = _clean_optional_string(extraction_result.get("text"))
+        character_count = extraction_result.get("character_count")
+        extractor_name = _clean_optional_string(extraction_result.get("extractor"))
+        page_count = extraction_result.get("page_count")
+        sync_status = "extracted"
+    elif extraction_error is not None:
+        error_message = str(extraction_error)
+        error_stage = extraction_error.stage
+        sync_status = (
+            "unsupported"
+            if extraction_error.stage == "input_validation"
+            and "not supported" in extraction_error.message.lower()
+            else "failed"
+        )
+    elif download_error_message is not None:
+        sync_status = "failed"
+    else:
+        raise RuntimeError(
+            "A Recruiterflow candidate file-content payload requires either a "
+            "successful extraction result or a download/extraction failure."
+        )
+
+    candidate_file_content_source_payload = {
+        "export_source_uri": export_source_uri,
+        "member_name": member_name,
+        "source_candidate_id": source_candidate_id,
+        "source_file_id": source_file_key,
+        "candidate_name": _clean_optional_string(candidate_payload.get("name")),
+        "candidate_file_payload": file_payload,
+        "download_summary": {
+            "source_uri": source_uri,
+            "mime_type": mime_type,
+            "byte_count": byte_count,
+            "content_hash": content_hash,
+        },
+        "extraction_summary": {
+            "sync_status": sync_status,
+            "extractor": extractor_name,
+            "character_count": character_count,
+            "page_count": page_count,
+            "error_stage": error_stage,
+            "error_message": error_message,
+        },
+    }
+
+    return {
+        "source_candidate_id": source_candidate_id,
+        "source_file_record_id": f"{source_candidate_id}:{source_file_key}",
+        "document_title": document_title,
+        "source_uri": source_uri,
+        "mime_type": mime_type,
+        "content_hash": content_hash,
+        "extracted_text": extracted_text,
+        "character_count": character_count,
+        "sync_status": sync_status,
+        "error_message": error_message,
+        "candidate_file_content_source_payload": candidate_file_content_source_payload,
+        "candidate_file_content_source_payload_hash": _hash_json_ready_payload(
+            candidate_file_content_source_payload
+        ),
+        "import_run_id": _build_import_run_id(
+            prefix="recruiterflow_candidate_file_content",
+            source_record_id=f"{source_candidate_id}:{source_file_key}",
             member_name=member_name,
         ),
     }
@@ -604,6 +1099,75 @@ def _extract_latest_file_upload_time(files_payload: Any) -> str | None:
     return max(upload_times) if upload_times else None
 
 
+def _guess_mime_type(file_name: str) -> str | None:
+    """
+    Return the best-effort MIME type inferred from one file name.
+
+    Example
+    -------
+    Passing:
+
+        "Candidate CV.pdf"
+
+    returns:
+
+        "application/pdf"
+    """
+
+    guessed_type, _ = mimetypes.guess_type(file_name)
+    return _clean_optional_string(guessed_type)
+
+
+def _build_recruiterflow_file_source_key(
+    *,
+    file_payload: dict[str, Any],
+    field_name: str,
+) -> str:
+    """
+    Return one stable upstream key for a Recruiterflow file payload.
+
+    Notes
+    -----
+    Recruiterflow is not fully consistent here. Candidate files often expose
+    `id`, while some job files expose `file_id` instead. We accept both and
+    fall back to a deterministic hash of the filename/link pair when neither
+    numeric identifier is present.
+
+    Example
+    -------
+    A payload with:
+
+        {"id": 5679, "filename": "Candidate CV.pdf"}
+
+    returns:
+
+        "5679"
+    """
+
+    for key_name in ("id", "file_id"):
+        raw_value = file_payload.get(key_name)
+        if raw_value is None:
+            continue
+        return str(_coerce_positive_int(raw_value, field_name=f"{field_name}.{key_name}"))
+
+    file_name = _clean_optional_string(
+        _pick_first_present_string(file_payload, "filename", "name")
+    )
+    source_uri = _clean_optional_string(
+        _pick_first_present_string(file_payload, "link", "url")
+    )
+    if file_name is None and source_uri is None:
+        raise RuntimeError(
+            f"{field_name} must expose an id, file_id, filename, or link."
+        )
+
+    fallback_payload = {
+        "filename": file_name,
+        "source_uri": source_uri,
+    }
+    return _hash_json_ready_payload(fallback_payload)[:24]
+
+
 def _pick_first_string_value(value: Any) -> str | None:
     """
     Return the first non-empty string from a string-or-list-of-strings payload.
@@ -866,8 +1430,14 @@ def _build_import_run_id(
 
 
 __all__ = [
+    "build_recruiterflow_candidate_file_content_persistence_payload",
+    "build_recruiterflow_candidate_file_reference_payload",
     "build_recruiterflow_candidate_persistence_payload",
+    "build_recruiterflow_job_file_reference_payload",
     "build_recruiterflow_job_persistence_payload",
+    "persist_recruiterflow_candidate_file_content",
+    "persist_recruiterflow_candidate_file_reference",
     "persist_recruiterflow_candidate",
+    "persist_recruiterflow_job_file_reference",
     "persist_recruiterflow_job",
 ]

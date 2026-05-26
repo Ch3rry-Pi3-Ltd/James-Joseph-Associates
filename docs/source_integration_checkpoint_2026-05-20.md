@@ -216,14 +216,33 @@ The likely rule is:
    - `job/1.134.json` persisted successfully
    - `candidate/1.100.json` persisted successfully
    - `169` candidate-job applications resolved against the imported jobs
-3. Shift broader import planning toward static export sources now that Tom is
+3. Recruiterflow attachment-reference import is now live for the same bounded
+   chunk:
+   - `106` candidate file references persisted
+   - `7` job file references persisted
+   - file bytes were intentionally not downloaded yet
+   - the purpose of this slice is to surface the Recruiterflow document layer
+     in the canonical schema before bulk byte ingestion
+4. Recruiterflow bounded file-content import is now live for the first primary
+   candidate-file batch:
+   - source chunk: `candidate/1.100.json`
+   - selected primary candidate files: `15`
+   - extracted successfully: `15`
+   - unsupported: `0`
+   - failed: `0`
+   - the static importer now prefers embedded ZIP members under:
+     - `candidate/files/{candidate_id}/...`
+   - the signed S3-style file URLs inside the JSON proved to be stale by the
+     time of import and should be treated as fallback provenance only, not the
+     primary byte source for the official backup
+4. Shift broader import planning toward static export sources now that Tom is
    cancelling JobAdder and long-term Dropbox usage:
    - Recruiterflow official backup first
    - JobAdder full export/zip next
    - broad Dropbox archive folders after that
-4. Persist one Dropbox `.eml` provenance record and link it where identity is
+5. Persist one Dropbox `.eml` provenance record and link it where identity is
    clean enough.
-5. Decide the next Outlook step after the first fully linked `tw394`
+6. Decide the next Outlook step after the first fully linked `tw394`
    persistence proof:
    - [x] reconcile the first Outlook advert-response document conservatively
      against the current JobAdder applications for the same job
@@ -231,8 +250,8 @@ The likely rule is:
    - reconcile later Outlook advert-response documents to canonical
      candidates/jobs only when the identity is strong enough, or
    - persist the next bounded vacancy folder in the same pattern
-6. Chunk/embed the persisted `tw398` job-spec document.
-7. Formalise duplicate/latest-file policy in the canonical data model and
+7. Chunk/embed the persisted `tw398` job-spec document.
+8. Formalise duplicate/latest-file policy in the canonical data model and
    ingestion rules.
-8. Keep Microsoft Graph as the primary mailbox source; use Dropbox as archive
+9. Keep Microsoft Graph as the primary mailbox source; use Dropbox as archive
    / provenance where it fits, not as the first landing zone for Outlook.

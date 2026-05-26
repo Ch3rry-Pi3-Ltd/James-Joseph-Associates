@@ -19,6 +19,9 @@ def test_build_review_overview_delegates_to_db_helper() -> None:
         "recent_applications": [],
         "recent_documents": [],
         "recent_source_records": [],
+        "document_type_counts": [],
+        "source_system_counts": [],
+        "candidate_attachment_health": {},
     }
 
     with patch(

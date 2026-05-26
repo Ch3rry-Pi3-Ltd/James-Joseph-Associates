@@ -747,6 +747,21 @@ Current note:
   - `169` recruiterflow candidate-job applications were resolved
   - the next import step should widen entity coverage carefully rather than
     reinventing the first canonical write path.
+- The first bounded Recruiterflow attachment-reference slice is now live:
+  - `candidate/files` from `candidate/1.100.json` persisted `106` canonical
+    document references
+  - `job/files` from `job/1.134.json` persisted `7` canonical document
+    references
+  - file bytes are still deferred; this slice exists to surface the document
+    layer and provenance cleanly before bulk byte ingestion
+- The first bounded Recruiterflow candidate-file content slice is now live:
+  - `15` primary candidate attachments from `candidate/1.100.json` were
+    downloaded and extracted successfully
+  - the importer now reads embedded export members under:
+    - `candidate/files/{candidate_id}/...`
+  - the signed JSON file URLs proved stale/expired and should be treated as
+    provenance/fallback metadata, not as the primary byte source for the
+    official backup
 
 </details>
 

@@ -16,11 +16,18 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from backend.services.recruiterflow_import import (
+    build_recruiterflow_candidate_file_content_persistence_payload,
+    build_recruiterflow_candidate_file_reference_payload,
     build_recruiterflow_candidate_persistence_payload,
+    build_recruiterflow_job_file_reference_payload,
     build_recruiterflow_job_persistence_payload,
+    persist_recruiterflow_candidate_file_content,
+    persist_recruiterflow_candidate_file_reference,
     persist_recruiterflow_candidate,
+    persist_recruiterflow_job_file_reference,
     persist_recruiterflow_job,
 )
+from backend.services.resume_text import ResumeTextExtractionError
 
 
 def _build_sample_job_payload() -> dict[str, object]:
@@ -140,6 +147,134 @@ def test_build_recruiterflow_candidate_persistence_payload_keeps_job_links() -> 
     assert payload["job_links"][0]["source_payload_hash"]
 
 
+def test_build_recruiterflow_candidate_file_reference_payload_keeps_metadata() -> None:
+    """
+    Verify that the candidate-file payload keeps the important reference metadata.
+    """
+
+    candidate_payload = _build_sample_candidate_payload()
+    file_payload = candidate_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    payload = build_recruiterflow_candidate_file_reference_payload(
+        export_source_uri="/exports/Recruiterflow.zip",
+        member_name="candidate/1.100.json",
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+    )
+
+    assert payload["source_candidate_id"] == 4847
+    assert payload["source_file_record_id"] == "4847:5679"
+    assert payload["document_title"] == "Bernardita Gutierrez CV EN 03-2026.pdf"
+    assert payload["mime_type"] == "application/pdf"
+    assert payload["candidate_file_source_payload"]["member_name"] == "candidate/1.100.json"
+    assert payload["candidate_file_source_payload_hash"]
+
+
+def test_build_recruiterflow_job_file_reference_payload_keeps_metadata() -> None:
+    """
+    Verify that the job-file payload keeps the important reference metadata.
+    """
+
+    job_payload = {
+        **_build_sample_job_payload(),
+        "files": [
+            {
+                "file_id": 9001,
+                "filename": "Job brief.pdf",
+                "link": "https://example.com/job-brief.pdf",
+            }
+        ],
+    }
+    file_payload = job_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    payload = build_recruiterflow_job_file_reference_payload(
+        export_source_uri="/exports/Recruiterflow.zip",
+        member_name="job/1.134.json",
+        job_payload=job_payload,
+        file_payload=file_payload,
+    )
+
+    assert payload["source_job_id"] == 102
+    assert payload["source_file_record_id"] == "102:9001"
+    assert payload["document_title"] == "Job brief.pdf"
+    assert payload["source_uri"] == "https://example.com/job-brief.pdf"
+    assert payload["mime_type"] == "application/pdf"
+    assert payload["job_file_source_payload_hash"]
+
+
+def test_build_recruiterflow_candidate_file_content_payload_marks_successful_extraction() -> None:
+    """
+    Verify that a successful candidate-file extraction becomes an extracted payload.
+    """
+
+    candidate_payload = _build_sample_candidate_payload()
+    file_payload = candidate_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    payload = build_recruiterflow_candidate_file_content_persistence_payload(
+        export_source_uri="/exports/Recruiterflow.zip",
+        member_name="candidate/1.100.json",
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+        downloaded_file={
+            "content_type": "application/pdf",
+            "content_bytes": b"resume-bytes",
+        },
+        extraction_result={
+            "text": "Bernardita Gutierrez CV",
+            "character_count": 24,
+            "extractor": "pypdf",
+            "page_count": 1,
+        },
+    )
+
+    assert payload["source_file_record_id"] == "4847:5679"
+    assert payload["sync_status"] == "extracted"
+    assert payload["mime_type"] == "application/pdf"
+    assert payload["extracted_text"] == "Bernardita Gutierrez CV"
+    assert payload["content_hash"]
+    assert payload["candidate_file_content_source_payload_hash"]
+
+
+def test_build_recruiterflow_candidate_file_content_payload_marks_unsupported() -> None:
+    """
+    Verify that an unsupported candidate file becomes an unsupported payload.
+    """
+
+    candidate_payload = _build_sample_candidate_payload()
+    file_payload = {
+        "id": 5680,
+        "filename": "Legacy CV.doc",
+        "link": "https://example.com/legacy-cv.doc",
+        "is_primary": True,
+    }
+
+    payload = build_recruiterflow_candidate_file_content_persistence_payload(
+        export_source_uri="/exports/Recruiterflow.zip",
+        member_name="candidate/1.100.json",
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+        downloaded_file={
+            "content_type": "application/msword",
+            "content_bytes": b"legacy-doc-bytes",
+        },
+        extraction_error=ResumeTextExtractionError(
+            "The resume file format is not supported for text extraction.",
+            stage="input_validation",
+        ),
+    )
+
+    assert payload["source_file_record_id"] == "4847:5680"
+    assert payload["sync_status"] == "unsupported"
+    assert payload["extracted_text"] is None
+    assert payload["content_hash"]
+    assert payload["error_message"] == (
+        "The resume file format is not supported for text extraction."
+    )
+
+
 def test_persist_recruiterflow_job_delegates_to_db_helper() -> None:
     """
     Verify that the Recruiterflow job service delegates the prepared payload to the DB helper.
@@ -175,4 +310,95 @@ def test_persist_recruiterflow_candidate_delegates_to_db_helper() -> None:
         )
 
     assert summary == {"candidate_id": "candidate-uuid"}
+    mock_persist.assert_called_once()
+
+
+def test_persist_recruiterflow_candidate_file_reference_delegates_to_db_helper() -> None:
+    """
+    Verify that the candidate-file service delegates the prepared payload to the DB helper.
+    """
+
+    candidate_payload = _build_sample_candidate_payload()
+    file_payload = candidate_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    with patch(
+        "backend.services.recruiterflow_import.persist_recruiterflow_candidate_file_reference_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {"document_id": "document-uuid"}
+        summary = persist_recruiterflow_candidate_file_reference(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="candidate/1.100.json",
+            candidate_payload=candidate_payload,
+            file_payload=file_payload,
+        )
+
+    assert summary == {"document_id": "document-uuid"}
+    mock_persist.assert_called_once()
+
+
+def test_persist_recruiterflow_job_file_reference_delegates_to_db_helper() -> None:
+    """
+    Verify that the job-file service delegates the prepared payload to the DB helper.
+    """
+
+    job_payload = {
+        **_build_sample_job_payload(),
+        "files": [
+            {
+                "file_id": 9001,
+                "filename": "Job brief.pdf",
+                "link": "https://example.com/job-brief.pdf",
+            }
+        ],
+    }
+    file_payload = job_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    with patch(
+        "backend.services.recruiterflow_import.persist_recruiterflow_job_file_reference_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {"document_id": "document-uuid"}
+        summary = persist_recruiterflow_job_file_reference(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="job/1.134.json",
+            job_payload=job_payload,
+            file_payload=file_payload,
+        )
+
+    assert summary == {"document_id": "document-uuid"}
+    mock_persist.assert_called_once()
+
+
+def test_persist_recruiterflow_candidate_file_content_delegates_to_db_helper() -> None:
+    """
+    Verify that the candidate-file content service delegates the prepared payload to the DB helper.
+    """
+
+    candidate_payload = _build_sample_candidate_payload()
+    file_payload = candidate_payload["files"][0]
+    assert isinstance(file_payload, dict)
+
+    with patch(
+        "backend.services.recruiterflow_import.persist_recruiterflow_candidate_file_content_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {"document_id": "document-uuid"}
+        summary = persist_recruiterflow_candidate_file_content(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="candidate/1.100.json",
+            candidate_payload=candidate_payload,
+            file_payload=file_payload,
+            downloaded_file={
+                "content_type": "application/pdf",
+                "content_bytes": b"resume-bytes",
+            },
+            extraction_result={
+                "text": "Bernardita Gutierrez CV",
+                "character_count": 24,
+                "extractor": "pypdf",
+                "page_count": 1,
+            },
+        )
+
+    assert summary == {"document_id": "document-uuid"}
     mock_persist.assert_called_once()

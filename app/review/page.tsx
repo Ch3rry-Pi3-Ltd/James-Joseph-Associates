@@ -17,6 +17,9 @@ type ReviewOverview = {
   recent_applications: Array<Record<string, unknown>>;
   recent_documents: Array<Record<string, unknown>>;
   recent_source_records: Array<Record<string, unknown>>;
+  document_type_counts: Array<Record<string, unknown>>;
+  source_system_counts: Array<Record<string, unknown>>;
+  candidate_attachment_health: Record<string, unknown>;
 };
 
 function formatValue(value: unknown): string {
@@ -141,13 +144,15 @@ function renderRows(rows: Array<Record<string, unknown>>) {
     - it keeps the first review surface useful while the import model is still
       moving
   */
-  if (rows.length === 0) {
+  const nonEmptyRows = rows.filter((row) => Object.keys(row).length > 0);
+
+  if (nonEmptyRows.length === 0) {
     return <p className="text-sm leading-6 text-zinc-600">No rows yet.</p>;
   }
 
   return (
     <div className="grid gap-3">
-      {rows.map((row, index) => (
+      {nonEmptyRows.map((row, index) => (
         <div
           key={`${index}-${Object.values(row).join("-")}`}
           className="rounded-md border border-zinc-200 bg-zinc-50 p-4"
@@ -188,12 +193,15 @@ export default async function ReviewPage() {
    * -------
    * Visiting `/review` should show:
    *
-   * - headline canonical counts
-   * - recent candidates
-   * - recent jobs
-   * - recent applications
-   * - recent documents
-   * - recent source provenance rows
+ * - headline canonical counts
+ * - recent candidates
+ * - recent jobs
+ * - recent applications
+ * - recent documents
+ * - recent source provenance rows
+ * - grouped document-type counts
+ * - grouped source-system counts
+ * - candidate-attachment ingest health
    *
    * In plain language:
    *
@@ -312,19 +320,59 @@ export default async function ReviewPage() {
             </p>
             <div className="mt-5">{renderRows(overview.recent_documents)}</div>
           </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Document types
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Grouped counts for the document layer now landing in the
+              canonical schema.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.document_type_counts)}
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Candidate attachment health
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              A bounded view of Recruiterflow candidate attachments moving from
+              reference-only rows into byte-backed and text-extracted documents.
+            </p>
+            <div className="mt-5">
+              {renderRows([overview.candidate_attachment_health])}
+            </div>
+          </article>
         </section>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-6">
-          <h2 className="text-2xl font-semibold text-zinc-950">
-            Recent source records
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-600">
-            Provenance rows from Outlook, Dropbox, JobAdder, and future static
-            imports.
-          </p>
-          <div className="mt-5">
-            {renderRows(overview.recent_source_records)}
-          </div>
+        <section className="grid gap-6 xl:grid-cols-2">
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Source systems
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Grouped counts for the provenance rows behind each import source.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.source_system_counts)}
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Recent source records
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Provenance rows from Outlook, Dropbox, JobAdder, and future static
+              imports.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.recent_source_records)}
+            </div>
+          </article>
         </section>
       </section>
     </main>

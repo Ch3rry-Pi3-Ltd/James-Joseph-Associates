@@ -56,6 +56,9 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         - `recent_applications`
         - `recent_documents`
         - `recent_source_records`
+        - `document_type_counts`
+        - `source_system_counts`
+        - `candidate_attachment_health`
 
     Notes
     -----
@@ -90,7 +93,17 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
             "recent_jobs": [...],
             "recent_applications": [...],
             "recent_documents": [...],
-            "recent_source_records": [...]
+            "recent_source_records": [...],
+            "document_type_counts": [...],
+            "source_system_counts": [...],
+            "candidate_attachment_health": {
+                "total": 106,
+                "reference_only": 81,
+                "byte_backed": 25,
+                "extracted_successfully": 22,
+                "unsupported": 2,
+                "failed": 1
+            }
         }
     """
 
@@ -186,6 +199,66 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         LIMIT %(limit)s
     """
 
+    document_type_counts_query = """
+        SELECT
+            document_type,
+            COUNT(*)::int AS document_count
+        FROM documents
+        GROUP BY document_type
+        ORDER BY document_count DESC, document_type ASC
+        LIMIT %(limit)s
+    """
+
+    source_system_counts_query = """
+        SELECT
+            source_system,
+            COUNT(*)::int AS source_record_count
+        FROM source_records
+        GROUP BY source_system
+        ORDER BY source_record_count DESC, source_system ASC
+        LIMIT %(limit)s
+    """
+
+    candidate_attachment_health_query = """
+        with candidate_docs as (
+            select
+                count(*)::int as total,
+                count(*) filter (
+                    where content_hash is null
+                )::int as reference_only,
+                count(*) filter (
+                    where content_hash is not null
+                )::int as byte_backed,
+                count(*) filter (
+                    where extracted_text is not null
+                      and btrim(extracted_text) <> ''
+                )::int as extracted_successfully
+            from documents
+            where document_type = 'candidate_attachment'
+        ),
+        content_statuses as (
+            select
+                count(*) filter (
+                    where sync_status = 'unsupported'
+                )::int as unsupported,
+                count(*) filter (
+                    where sync_status = 'failed'
+                )::int as failed
+            from source_records
+            where source_system = 'recruiterflow'
+              and source_record_type = 'recruiterflow_candidate_file_content'
+        )
+        select
+            coalesce(candidate_docs.total, 0) as total,
+            coalesce(candidate_docs.reference_only, 0) as reference_only,
+            coalesce(candidate_docs.byte_backed, 0) as byte_backed,
+            coalesce(candidate_docs.extracted_successfully, 0) as extracted_successfully,
+            coalesce(content_statuses.unsupported, 0) as unsupported,
+            coalesce(content_statuses.failed, 0) as failed
+        from candidate_docs
+        cross join content_statuses
+    """
+
     with postgres_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(counts_query)
@@ -209,6 +282,15 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
             cursor.execute(recent_source_records_query, {"limit": limit})
             recent_source_records = [dict(row) for row in cursor.fetchall()]
 
+            cursor.execute(document_type_counts_query, {"limit": limit})
+            document_type_counts = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(source_system_counts_query, {"limit": limit})
+            source_system_counts = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(candidate_attachment_health_query)
+            candidate_attachment_health_row = cursor.fetchone()
+
     # Convert the rows into plain Python dictionaries before leaving the DB
     # layer so the service, route, and UI all consume one predictable shape.
     return {
@@ -218,6 +300,13 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         "recent_applications": recent_applications,
         "recent_documents": recent_documents,
         "recent_source_records": recent_source_records,
+        "document_type_counts": document_type_counts,
+        "source_system_counts": source_system_counts,
+        "candidate_attachment_health": (
+            dict(candidate_attachment_health_row)
+            if candidate_attachment_health_row is not None
+            else {}
+        ),
     }
 
 

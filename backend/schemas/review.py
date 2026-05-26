@@ -42,7 +42,10 @@ class ReviewOverviewResponse(BaseModel):
             "recent_jobs": [],
             "recent_applications": [],
             "recent_documents": [],
-            "recent_source_records": []
+            "recent_source_records": [],
+            "document_type_counts": [],
+            "source_system_counts": [],
+            "candidate_attachment_health": {}
         }
 
     In plain language:
@@ -78,6 +81,21 @@ class ReviewOverviewResponse(BaseModel):
     recent_source_records: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Most recent source provenance records.",
+    )
+    document_type_counts: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Grouped counts of canonical documents by document_type.",
+    )
+    source_system_counts: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Grouped counts of source provenance rows by source_system.",
+    )
+    candidate_attachment_health: dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "Compact health counts for Recruiterflow candidate attachment "
+            "references versus downloaded/extracted file content."
+        ),
     )
 
 
