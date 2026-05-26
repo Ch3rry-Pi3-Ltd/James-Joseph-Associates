@@ -69,6 +69,9 @@ In plain language:
 """
 
 import hashlib
+import json
+from io import BytesIO
+from zipfile import BadZipFile, ZipFile
 from dataclasses import replace
 from typing import Any
 
@@ -93,6 +96,8 @@ from backend.schemas.integrations import (
     DropboxCurrentAccountResponse,
     DropboxFolderPreviewResponse,
     DropboxOAuthConnectionSavedResponse,
+    DropboxZipJsonMemberPreviewResponse,
+    DropboxZipMembersPreviewResponse,
     JobAdderApplicationDetailResponse,
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateAttachmentDownloadProofResponse,
@@ -118,6 +123,7 @@ from backend.schemas.integrations import (
 )
 from backend.services.dropbox_api import (
     DropboxApiError,
+    download_dropbox_file,
     fetch_dropbox_current_account,
     fetch_dropbox_list_folder,
 )
@@ -2709,6 +2715,16 @@ def _perform_dropbox_read_with_refresh_retry(
                 if retry_exc.endpoint_url is not None:
                     details.append({"endpoint_url": retry_exc.endpoint_url})
 
+                if retry_exc.response_body is not None:
+                    details.append(
+                        {"provider_response_body": retry_exc.response_body}
+                    )
+
+                if retry_exc.request_payload is not None:
+                    details.append(
+                        {"provider_request_payload": retry_exc.request_payload}
+                    )
+
                 return build_error_response(
                     status_code=status.HTTP_502_BAD_GATEWAY,
                     code="internal_error",
@@ -2723,6 +2739,12 @@ def _perform_dropbox_read_with_refresh_retry(
 
         if exc.endpoint_url is not None:
             details.append({"endpoint_url": exc.endpoint_url})
+
+        if exc.response_body is not None:
+            details.append({"provider_response_body": exc.response_body})
+
+        if exc.request_payload is not None:
+            details.append({"provider_request_payload": exc.request_payload})
 
         return build_error_response(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -3043,11 +3065,12 @@ def get_dropbox_current_account_route(
 )
 def get_dropbox_folder_preview_route(
     dropbox_account_id: str,
-    path: str = Query(
+    folder_path: str = Query(
         default="",
         description=(
             "Dropbox folder path to inspect. Use the empty string to list the "
-            "root folder."
+            "root folder. This parameter is deliberately named `folder_path` "
+            "instead of `path` to avoid deployed-runtime collisions."
         ),
     ),
     recursive: bool = Query(
@@ -3071,12 +3094,16 @@ def get_dropbox_folder_preview_route(
     - It is designed for early Dropbox source-shape inspection, where the
       immediate question is "what is in this folder?" rather than "ingest the
       entire tree right now".
+    - The public query parameter is named `folder_path` rather than `path`.
+      Some deployed runtimes treat `path` as reserved request-path plumbing,
+      which can otherwise leak the API route path into the Dropbox request
+      payload.
 
     Example
     -------
     A request looks like:
 
-        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/files/list-folder?path=
+        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/files/list-folder?folder_path=
     """
     # As with the current-account route, start from the shared
     # connection-preparation path so the folder read inherits the same:
@@ -3095,7 +3122,7 @@ def get_dropbox_folder_preview_route(
         stored_connection=stored_connection,
         read_callable=lambda *, access_token: fetch_dropbox_list_folder(
             access_token=access_token,
-            path=path,
+            path=folder_path,
             recursive=recursive,
             limit=limit,
         ),
@@ -3112,6 +3139,343 @@ def get_dropbox_folder_preview_route(
         has_more=folder_result["has_more"],
         cursor=folder_result["cursor"],
         entries=folder_result["entries"],
+    )
+
+
+@router.get(
+    "/dropbox/accounts/{dropbox_account_id}/files/zip-members-preview",
+    response_model=DropboxZipMembersPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox ZIP inspection failed.",
+        },
+    },
+)
+def get_dropbox_zip_members_preview_route(
+    dropbox_account_id: str,
+    file_path: str = Query(
+        ...,
+        min_length=1,
+        description="Full Dropbox path of the ZIP file to inspect.",
+    ),
+    member_prefix: str | None = Query(
+        default=None,
+        description=(
+            "Optional ZIP member prefix filter such as `candidate/` or `job/`."
+        ),
+    ),
+    limit: int = Query(
+        default=100,
+        ge=1,
+        le=500,
+        description="Maximum number of ZIP members to return in the preview.",
+    ),
+) -> DropboxZipMembersPreviewResponse | JSONResponse:
+    """
+    Return a bounded structural preview of a Dropbox ZIP file.
+
+    Parameters
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used to locate the stored OAuth connection.
+
+    file_path : str
+        Full Dropbox path of the ZIP archive to inspect.
+
+    member_prefix : str | None
+        Optional ZIP member prefix filter used to narrow the preview.
+
+    limit : int
+        Maximum number of ZIP members to expose in the preview response.
+
+    Returns
+    -------
+    DropboxZipMembersPreviewResponse | JSONResponse
+        ZIP structure preview on success, otherwise a ready-to-return API
+        error response.
+
+    Notes
+    -----
+    - This route downloads the ZIP transiently, inspects its member list, and
+      returns structural metadata only.
+    - It exists to inspect static export shape safely before building the
+      importer itself.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/files/zip-members-preview?file_path=/exports/Recruiterflow.zip&member_prefix=candidate/
+    """
+    stored_connection = _prepare_dropbox_connection_for_api_read(
+        dropbox_account_id=dropbox_account_id
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    download_result = _perform_dropbox_read_with_refresh_retry(
+        dropbox_account_id=dropbox_account_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: download_dropbox_file(
+            access_token=access_token,
+            path=file_path,
+        ),
+        provider_failure_message="Dropbox ZIP inspection failed.",
+    )
+
+    if isinstance(download_result, JSONResponse):
+        return download_result
+
+    content_bytes = download_result["content_bytes"]
+
+    try:
+        with ZipFile(BytesIO(content_bytes)) as archive:
+            members = archive.infolist()
+            if member_prefix:
+                members = [
+                    member
+                    for member in members
+                    if member.filename.startswith(member_prefix)
+                ]
+            preview_entries = [
+                {
+                    "name": member.filename,
+                    "is_dir": member.is_dir(),
+                    "file_size": member.file_size,
+                    "compress_size": member.compress_size,
+                }
+                for member in members[:limit]
+            ]
+            # Top-level names give us the first import clue quickly: whether the
+            # archive is mostly flat CSV exports, nested attachment folders, or
+            # a mixed backup structure that needs staged handling.
+            top_level_entries = sorted(
+                {
+                    member.filename.split("/", 1)[0]
+                    for member in members
+                    if member.filename.strip() != ""
+                }
+            )
+    except BadZipFile:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message="Dropbox ZIP inspection failed.",
+            details=[
+                {"dropbox_account_id": dropbox_account_id},
+                {"file_path": file_path},
+                {"reason": "The downloaded Dropbox file is not a valid ZIP archive."},
+            ],
+        )
+
+    return DropboxZipMembersPreviewResponse(
+        dropbox_account_id=dropbox_account_id,
+        file_path=file_path,
+        file_name=download_result["file_name"],
+        byte_count=len(content_bytes),
+        entry_count=len(members),
+        top_level_entries=top_level_entries,
+        preview_entries=preview_entries,
+    )
+
+
+@router.get(
+    "/dropbox/accounts/{dropbox_account_id}/files/zip-json-member-preview",
+    response_model=DropboxZipJsonMemberPreviewResponse,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox OAuth connection was not found.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Stored Dropbox connection is missing required fields.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Dropbox ZIP JSON preview failed.",
+        },
+    },
+)
+def get_dropbox_zip_json_member_preview_route(
+    dropbox_account_id: str,
+    file_path: str = Query(
+        ...,
+        min_length=1,
+        description="Full Dropbox path of the ZIP file to inspect.",
+    ),
+    member_name: str = Query(
+        ...,
+        min_length=1,
+        description="ZIP member path to parse as JSON.",
+    ),
+    preview_limit: int = Query(
+        default=3,
+        ge=1,
+        le=20,
+        description="Maximum number of top-level items or keys to include in the preview.",
+    ),
+) -> DropboxZipJsonMemberPreviewResponse | JSONResponse:
+    """
+    Return a bounded JSON preview for one member inside a Dropbox ZIP file.
+
+    Parameters
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used to locate the stored OAuth connection.
+
+    file_path : str
+        Full Dropbox path of the ZIP archive to inspect.
+
+    member_name : str
+        ZIP member path to parse as JSON.
+
+    preview_limit : int
+        Maximum number of items or keys to expose in the preview payload.
+
+    Returns
+    -------
+    DropboxZipJsonMemberPreviewResponse | JSONResponse
+        JSON member preview on success, otherwise a ready-to-return API error
+        response.
+
+    Notes
+    -----
+    - This route is intentionally bounded. It exists for importer design and
+      schema mapping rather than full export delivery.
+    - It is especially useful for Recruiterflow-style chunked exports such as
+      `candidate/1.100.json` and `job/1.100.json`.
+
+    Example
+    -------
+    A request looks like:
+
+        GET /api/v1/integrations/dropbox/accounts/dbid:AAExample/files/zip-json-member-preview?file_path=/exports/Recruiterflow.zip&member_name=candidate/1.100.json
+    """
+    stored_connection = _prepare_dropbox_connection_for_api_read(
+        dropbox_account_id=dropbox_account_id
+    )
+
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    download_result = _perform_dropbox_read_with_refresh_retry(
+        dropbox_account_id=dropbox_account_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: download_dropbox_file(
+            access_token=access_token,
+            path=file_path,
+        ),
+        provider_failure_message="Dropbox ZIP JSON preview failed.",
+    )
+
+    if isinstance(download_result, JSONResponse):
+        return download_result
+
+    try:
+        with ZipFile(BytesIO(download_result["content_bytes"])) as archive:
+            try:
+                member_bytes = archive.read(member_name)
+            except KeyError:
+                return build_error_response(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    code="internal_error",
+                    message="Dropbox ZIP JSON preview failed.",
+                    details=[
+                        {"dropbox_account_id": dropbox_account_id},
+                        {"file_path": file_path},
+                        {"member_name": member_name},
+                        {"reason": "The requested ZIP member was not found."},
+                    ],
+                )
+    except BadZipFile:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message="Dropbox ZIP JSON preview failed.",
+            details=[
+                {"dropbox_account_id": dropbox_account_id},
+                {"file_path": file_path},
+                {"reason": "The downloaded Dropbox file is not a valid ZIP archive."},
+            ],
+        )
+
+    try:
+        decoded_text = member_bytes.decode("utf-8")
+        parsed_payload = json.loads(decoded_text)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="internal_error",
+            message="Dropbox ZIP JSON preview failed.",
+            details=[
+                {"dropbox_account_id": dropbox_account_id},
+                {"file_path": file_path},
+                {"member_name": member_name},
+                {"reason": "The requested ZIP member is not valid UTF-8 JSON."},
+            ],
+        )
+
+    if isinstance(parsed_payload, dict):
+        keys = list(parsed_payload.keys())
+        preview_payload = {
+            key: parsed_payload[key]
+            for key in keys[:preview_limit]
+        }
+        return DropboxZipJsonMemberPreviewResponse(
+            dropbox_account_id=dropbox_account_id,
+            file_path=file_path,
+            member_name=member_name,
+            top_level_type="dict",
+            entry_count=None,
+            key_count=len(keys),
+            keys_preview=keys[: min(50, len(keys))],
+            sample_item_keys=[],
+            preview_payload=preview_payload,
+        )
+
+    if isinstance(parsed_payload, list):
+        preview_payload = parsed_payload[:preview_limit]
+        sample_item_keys: list[str] = []
+
+        if preview_payload and isinstance(preview_payload[0], dict):
+            # The first object item usually gives the fastest schema read for
+            # chunked export files, while keeping the response small enough for
+            # operator review and route-based inspection.
+            sample_item_keys = list(preview_payload[0].keys())[:50]
+
+        return DropboxZipJsonMemberPreviewResponse(
+            dropbox_account_id=dropbox_account_id,
+            file_path=file_path,
+            member_name=member_name,
+            top_level_type="list",
+            entry_count=len(parsed_payload),
+            key_count=None,
+            keys_preview=[],
+            sample_item_keys=sample_item_keys,
+            preview_payload=preview_payload,
+        )
+
+    return build_error_response(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        code="internal_error",
+        message="Dropbox ZIP JSON preview failed.",
+        details=[
+            {"dropbox_account_id": dropbox_account_id},
+            {"file_path": file_path},
+            {"member_name": member_name},
+            {"reason": "The requested ZIP member did not contain a JSON object or list."},
+        ],
     )
 
 

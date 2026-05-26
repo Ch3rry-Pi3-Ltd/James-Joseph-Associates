@@ -741,6 +741,12 @@ Current note:
 - The immediate next evaluation gap is now broader than extraction quality
   alone. We also need a robust post-write Supabase verification mechanism so
   accepted JobAdder CV ingests can be checked safely before any bulk push.
+- The first bounded Recruiterflow static import slice is now live:
+  - `job/1.134.json` persisted `134` jobs
+  - `candidate/1.100.json` persisted `100` candidates
+  - `169` recruiterflow candidate-job applications were resolved
+  - the next import step should widen entity coverage carefully rather than
+    reinventing the first canonical write path.
 
 </details>
 

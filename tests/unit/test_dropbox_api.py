@@ -99,7 +99,7 @@ def test_fetch_dropbox_list_folder_still_sends_json_payload() -> None:
     The helper should continue to send:
 
     - the `path`
-    - the recursion flags
+    - the recursion flag
     - the `limit`
 
     in a JSON payload for `files/list_folder`.
@@ -134,9 +134,6 @@ def test_fetch_dropbox_list_folder_still_sends_json_payload() -> None:
     assert request_kwargs["json"] == {
         "path": "",
         "recursive": False,
-        "include_deleted": False,
-        "include_has_explicit_shared_members": False,
-        "include_mounted_folders": True,
         "limit": 25,
     }
 

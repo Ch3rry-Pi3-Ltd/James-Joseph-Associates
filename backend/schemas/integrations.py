@@ -1564,6 +1564,192 @@ class DropboxFolderPreviewResponse(BaseModel):
     )
 
 
+class DropboxZipMembersPreviewResponse(BaseModel):
+    """
+    Response returned when the backend inspects the structure of a Dropbox ZIP.
+
+    Attributes
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used for the authenticated read.
+
+    file_path : str
+        Full Dropbox path of the ZIP file that was inspected.
+
+    file_name : str
+        ZIP filename reported by Dropbox.
+
+    byte_count : int
+        Total byte size of the downloaded ZIP payload.
+
+    entry_count : int
+        Total number of ZIP members discovered in the archive.
+
+    top_level_entries : list[str]
+        Unique top-level folders or files at the archive root.
+
+    preview_entries : list[dict[str, Any]]
+        Bounded preview of ZIP members, including filenames and basic size
+        metadata.
+
+    Notes
+    -----
+    - This response is intentionally structural. It does not expose raw ZIP
+      bytes.
+    - It exists to answer questions such as "what kinds of files are in this
+      export?" before building a batch importer.
+
+    Example
+    -------
+    A response might look like:
+
+        {
+            "dropbox_account_id": "dbid:AAExample",
+            "file_path": "/exports/Recruiterflow.zip",
+            "file_name": "Recruiterflow.zip",
+            "byte_count": 607918622,
+            "entry_count": 42,
+            "top_level_entries": ["candidates.csv", "attachments"],
+            "preview_entries": [
+                {"name": "candidates.csv", "is_dir": false, "file_size": 1234}
+            ]
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    dropbox_account_id: str = Field(
+        min_length=1,
+        description="Dropbox account identifier used for the authenticated read.",
+    )
+    file_path: str = Field(
+        min_length=1,
+        description="Full Dropbox path of the ZIP file that was inspected.",
+    )
+    file_name: str = Field(
+        min_length=1,
+        description="ZIP filename reported by Dropbox.",
+    )
+    byte_count: int = Field(
+        ge=0,
+        description="Total byte size of the downloaded ZIP payload.",
+    )
+    entry_count: int = Field(
+        ge=0,
+        description="Total number of ZIP members discovered in the archive.",
+    )
+    top_level_entries: list[str] = Field(
+        default_factory=list,
+        description="Unique top-level folders or files at the archive root.",
+    )
+    preview_entries: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Bounded preview of ZIP members and their basic metadata.",
+    )
+
+
+class DropboxZipJsonMemberPreviewResponse(BaseModel):
+    """
+    Response returned when the backend previews one JSON member inside a
+    Dropbox ZIP.
+
+    Attributes
+    ----------
+    dropbox_account_id : str
+        Dropbox account identifier used for the authenticated read.
+
+    file_path : str
+        Full Dropbox path of the ZIP file that was inspected.
+
+    member_name : str
+        ZIP member path that was parsed as JSON.
+
+    top_level_type : Literal["dict", "list"]
+        JSON container type found at the member root.
+
+    entry_count : int | None
+        Number of top-level entries when the JSON root is a list.
+
+    key_count : int | None
+        Number of top-level keys when the JSON root is an object.
+
+    keys_preview : list[str]
+        Bounded preview of root keys when the JSON root is an object.
+
+    sample_item_keys : list[str]
+        Bounded preview of keys from the first object item when the JSON root
+        is a list of objects.
+
+    preview_payload : Any
+        Bounded payload preview used for schema mapping.
+
+    Notes
+    -----
+    - This response is intentionally bounded. It is meant for importer design,
+      not full data extraction.
+    - Large JSON members are trimmed to a small preview so the operator can
+      inspect shape without moving whole payloads around the UI.
+
+    Example
+    -------
+    A response might look like:
+
+        {
+            "dropbox_account_id": "dbid:AAExample",
+            "file_path": "/exports/Recruiterflow.zip",
+            "member_name": "candidate/1.100.json",
+            "top_level_type": "list",
+            "entry_count": 100,
+            "key_count": null,
+            "keys_preview": [],
+            "sample_item_keys": ["id", "name", "email"],
+            "preview_payload": [{"id": 1, "name": "Ada Lovelace"}]
+        }
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    dropbox_account_id: str = Field(
+        min_length=1,
+        description="Dropbox account identifier used for the authenticated read.",
+    )
+    file_path: str = Field(
+        min_length=1,
+        description="Full Dropbox path of the ZIP file that was inspected.",
+    )
+    member_name: str = Field(
+        min_length=1,
+        description="ZIP member path that was parsed as JSON.",
+    )
+    top_level_type: Literal["dict", "list"] = Field(
+        description="JSON container type found at the member root.",
+    )
+    entry_count: int | None = Field(
+        default=None,
+        ge=0,
+        description="Number of top-level entries when the JSON root is a list.",
+    )
+    key_count: int | None = Field(
+        default=None,
+        ge=0,
+        description="Number of top-level keys when the JSON root is an object.",
+    )
+    keys_preview: list[str] = Field(
+        default_factory=list,
+        description="Bounded preview of root keys when the JSON root is an object.",
+    )
+    sample_item_keys: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Bounded preview of keys from the first object item when the JSON "
+            "root is a list of objects."
+        ),
+    )
+    preview_payload: Any = Field(
+        description="Bounded payload preview used for schema mapping.",
+    )
+
+
 class OutlookAuthorizationUrlResponse(BaseModel):
     """
     Response returned when the backend builds an Outlook approval URL.

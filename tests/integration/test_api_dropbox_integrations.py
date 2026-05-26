@@ -7,6 +7,7 @@ These tests verify the FastAPI route wiring for:
     GET /api/v1/integrations/dropbox/callback
     GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/current-account
     GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/list-folder
+    GET /api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/zip-members-preview
 
 The important question is:
 
@@ -16,7 +17,9 @@ The important question is:
 
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from unittest.mock import MagicMock, patch
+from zipfile import ZipFile
 
 import pytest
 from fastapi import status
@@ -38,6 +41,12 @@ DROPBOX_CURRENT_ACCOUNT_PATH_TEMPLATE = (
 )
 DROPBOX_LIST_FOLDER_PATH_TEMPLATE = (
     "/api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/list-folder"
+)
+DROPBOX_ZIP_MEMBERS_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/zip-members-preview"
+)
+DROPBOX_ZIP_JSON_MEMBER_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/dropbox/accounts/{dropbox_account_id}/files/zip-json-member-preview"
 )
 
 
@@ -357,6 +366,69 @@ def test_dropbox_list_folder_returns_preview_successfully() -> None:
     )
 
 
+def test_dropbox_list_folder_forwards_public_folder_path_query() -> None:
+    """
+    Verify that the public `folder_path` query parameter is forwarded unchanged
+    to the Dropbox folder-read helper.
+
+    Example
+    -------
+    A request such as:
+
+        GET .../files/list-folder?folder_path=/ADV-CVR
+
+    should pass `/ADV-CVR` into the provider helper rather than the backend API
+    route path.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "dropbox_account_id": "dbid:AAExample",
+        "access_token": "dropbox-access-token",
+        "refresh_token": "dropbox-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 14400,
+    }
+
+    fake_folder_result = {
+        "path": "/ADV-CVR",
+        "entry_count": 1,
+        "entries": [
+            {".tag": "folder", "name": "tw394", "path_display": "/ADV-CVR/tw394"}
+        ],
+        "cursor": "fake-cursor",
+        "has_more": False,
+        "endpoint_url": "https://api.dropboxapi.com/2/files/list_folder",
+        "raw_payload": {},
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_dropbox_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_dropbox_list_folder",
+            return_value=fake_folder_result,
+        ) as mock_fetch_folder:
+            response = client.get(
+                DROPBOX_LIST_FOLDER_PATH_TEMPLATE.format(
+                    dropbox_account_id="dbid:AAExample"
+                ),
+                params={"folder_path": "/ADV-CVR"},
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["path"] == "/ADV-CVR"
+
+    mock_fetch_folder.assert_called_once_with(
+        access_token="dropbox-access-token",
+        path="/ADV-CVR",
+        recursive=False,
+        limit=25,
+    )
+
+
 def test_dropbox_list_folder_returns_bad_gateway_when_provider_read_fails() -> None:
     """
     Verify that a provider-side failure during folder listing is surfaced
@@ -402,6 +474,272 @@ def test_dropbox_list_folder_returns_bad_gateway_when_provider_read_fails() -> N
 
     assert payload["error"]["code"] == "internal_error"
     assert payload["error"]["message"] == "Dropbox folder listing failed."
+
+
+def test_dropbox_list_folder_error_includes_provider_request_and_response_details() -> None:
+    """
+    Verify that a Dropbox folder-list failure returns the provider request and
+    response payload details when they are available.
+
+    Example
+    -------
+    This keeps the live review route diagnostic enough to fix real Dropbox
+    request-shape failures without needing blind guesswork.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "dropbox_account_id": "dbid:AAExample",
+        "access_token": "dropbox-access-token",
+        "refresh_token": "dropbox-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 14400,
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_dropbox_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_dropbox_list_folder",
+            side_effect=DropboxApiError(
+                "Dropbox folder listing failed.",
+                status_code=400,
+                endpoint_url="https://api.dropboxapi.com/2/files/list_folder",
+                response_body={"error_summary": "path/not_found/..."},
+                request_payload={"path": "", "recursive": False, "limit": 25},
+            ),
+        ):
+            response = client.get(
+                DROPBOX_LIST_FOLDER_PATH_TEMPLATE.format(
+                    dropbox_account_id="dbid:AAExample"
+                )
+            )
+
+    assert response.status_code == status.HTTP_502_BAD_GATEWAY
+
+    payload = response.json()
+    details = payload["error"]["details"]
+
+    assert {"provider_response_body": {"error_summary": "path/not_found/..."}} in details
+    assert {
+        "provider_request_payload": {"path": "", "recursive": False, "limit": 25}
+    } in details
+
+
+def test_dropbox_zip_members_preview_returns_structural_summary() -> None:
+    """
+    Verify that the ZIP-preview route returns archive structure without
+    exposing raw bytes.
+
+    Example
+    -------
+    A Recruiterflow-style backup ZIP may contain flat CSV files plus nested
+    attachment folders. The route should surface those top-level names and a
+    bounded preview of members.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "dropbox_account_id": "dbid:AAExample",
+        "access_token": "dropbox-access-token",
+        "refresh_token": "dropbox-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 14400,
+    }
+
+    archive_buffer = BytesIO()
+    with ZipFile(archive_buffer, mode="w") as archive:
+        archive.writestr("candidates.csv", "id,name\n1,Ada Lovelace\n")
+        archive.writestr("attachments/resume.pdf", b"%PDF-1.7 fake pdf bytes")
+
+    fake_download_result = {
+        "path": "/exports/Recruiterflow.zip",
+        "file_name": "Recruiterflow.zip",
+        "content_type": "application/zip",
+        "content_bytes": archive_buffer.getvalue(),
+        "file_metadata": {"name": "Recruiterflow.zip"},
+        "endpoint_url": "https://content.dropboxapi.com/2/files/download",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_dropbox_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.download_dropbox_file",
+            return_value=fake_download_result,
+        ) as mock_download:
+            response = client.get(
+                DROPBOX_ZIP_MEMBERS_PREVIEW_PATH_TEMPLATE.format(
+                    dropbox_account_id="dbid:AAExample"
+                ),
+                params={"file_path": "/exports/Recruiterflow.zip", "limit": 10},
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["dropbox_account_id"] == "dbid:AAExample"
+    assert payload["file_path"] == "/exports/Recruiterflow.zip"
+    assert payload["file_name"] == "Recruiterflow.zip"
+    assert payload["entry_count"] == 2
+    assert payload["top_level_entries"] == ["attachments", "candidates.csv"]
+    assert payload["preview_entries"][0]["name"] == "candidates.csv"
+    assert payload["preview_entries"][1]["name"] == "attachments/resume.pdf"
+
+    mock_download.assert_called_once_with(
+        access_token="dropbox-access-token",
+        path="/exports/Recruiterflow.zip",
+    )
+
+
+def test_dropbox_zip_members_preview_filters_by_member_prefix() -> None:
+    """
+    Verify that the ZIP-preview route can narrow the member list by prefix.
+
+    Example
+    -------
+    Filtering to `job/` should let us inspect the first job chunk names without
+    paging through thousands of candidate attachment paths first.
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "dropbox_account_id": "dbid:AAExample",
+        "access_token": "dropbox-access-token",
+        "refresh_token": "dropbox-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 14400,
+    }
+
+    archive_buffer = BytesIO()
+    with ZipFile(archive_buffer, mode="w") as archive:
+        archive.writestr("candidate/1.100.json", '[{"id": 1}]')
+        archive.writestr("job/1.100.json", '[{"id": 10}]')
+        archive.writestr("job/101.200.json", '[{"id": 11}]')
+
+    fake_download_result = {
+        "path": "/exports/Recruiterflow.zip",
+        "file_name": "Recruiterflow.zip",
+        "content_type": "application/zip",
+        "content_bytes": archive_buffer.getvalue(),
+        "file_metadata": {"name": "Recruiterflow.zip"},
+        "endpoint_url": "https://content.dropboxapi.com/2/files/download",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_dropbox_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.download_dropbox_file",
+            return_value=fake_download_result,
+        ):
+            response = client.get(
+                DROPBOX_ZIP_MEMBERS_PREVIEW_PATH_TEMPLATE.format(
+                    dropbox_account_id="dbid:AAExample"
+                ),
+                params={
+                    "file_path": "/exports/Recruiterflow.zip",
+                    "member_prefix": "job/",
+                    "limit": 10,
+                },
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["entry_count"] == 2
+    assert payload["top_level_entries"] == ["job"]
+    assert payload["preview_entries"][0]["name"] == "job/1.100.json"
+    assert payload["preview_entries"][1]["name"] == "job/101.200.json"
+
+
+def test_dropbox_zip_json_member_preview_returns_bounded_payload() -> None:
+    """
+    Verify that the JSON-member preview route exposes a bounded schema-mapping
+    preview for one ZIP member.
+
+    Example
+    -------
+    A candidate chunk such as `candidate/1.100.json` should return:
+
+    - the member path
+    - list size
+    - keys from the first object item
+    - a small payload preview
+    """
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "dropbox_account_id": "dbid:AAExample",
+        "access_token": "dropbox-access-token",
+        "refresh_token": "dropbox-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 14400,
+    }
+
+    archive_buffer = BytesIO()
+    with ZipFile(archive_buffer, mode="w") as archive:
+        archive.writestr(
+            "candidate/1.100.json",
+            (
+                '[{"id": 1, "name": "Ada Lovelace", "email": "ada@example.com"}, '
+                '{"id": 2, "name": "Grace Hopper", "email": "grace@example.com"}]'
+            ),
+        )
+
+    fake_download_result = {
+        "path": "/exports/Recruiterflow.zip",
+        "file_name": "Recruiterflow.zip",
+        "content_type": "application/zip",
+        "content_bytes": archive_buffer.getvalue(),
+        "file_metadata": {"name": "Recruiterflow.zip"},
+        "endpoint_url": "https://content.dropboxapi.com/2/files/download",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_dropbox_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.download_dropbox_file",
+            return_value=fake_download_result,
+        ) as mock_download:
+            response = client.get(
+                DROPBOX_ZIP_JSON_MEMBER_PREVIEW_PATH_TEMPLATE.format(
+                    dropbox_account_id="dbid:AAExample"
+                ),
+                params={
+                    "file_path": "/exports/Recruiterflow.zip",
+                    "member_name": "candidate/1.100.json",
+                    "preview_limit": 1,
+                },
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    payload = response.json()
+
+    assert payload["member_name"] == "candidate/1.100.json"
+    assert payload["top_level_type"] == "list"
+    assert payload["entry_count"] == 2
+    assert payload["sample_item_keys"] == ["id", "name", "email"]
+    assert payload["preview_payload"] == [
+        {"id": 1, "name": "Ada Lovelace", "email": "ada@example.com"}
+    ]
+
+    mock_download.assert_called_once_with(
+        access_token="dropbox-access-token",
+        path="/exports/Recruiterflow.zip",
+    )
 
 
 def test_dropbox_current_account_refresh_preserves_account_id_and_scope() -> None:

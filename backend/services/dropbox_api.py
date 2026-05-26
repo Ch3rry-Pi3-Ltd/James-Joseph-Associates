@@ -246,6 +246,14 @@ def fetch_dropbox_list_folder(
     - This is intentionally a first-page preview helper, not yet a complete
       full-cursor traversal engine.
     - That keeps the first Dropbox source-review slice small and predictable.
+    - The request body is intentionally conservative:
+
+        - `path`
+        - `recursive`
+        - `limit`
+
+      because the wider optional flags are not necessary for the first review
+      surface and can make provider-side request debugging noisier.
 
     Example
     -------
@@ -261,20 +269,17 @@ def fetch_dropbox_list_folder(
     """
     # Keep the first Dropbox folder read deliberately narrow.
     #
-    # This route is for source-shape inspection, not full ingestion yet, so:
+    # This helper is for source-shape inspection, not full traversal yet, so:
     # - one page is enough to prove access
     # - one page is enough to inspect naming and folder semantics
-    # - we avoid prematurely building cursor-traversal logic before the actual
-    #   source layout has been reviewed
+    # - we keep the provider payload minimal so any Dropbox rejection is easier
+    #   to reason about
     payload = _post_to_dropbox_api(
         endpoint_url=DROPBOX_LIST_FOLDER_URL,
         access_token=access_token,
         json_payload={
             "path": path,
             "recursive": recursive,
-            "include_deleted": False,
-            "include_has_explicit_shared_members": False,
-            "include_mounted_folders": True,
             "limit": limit,
         },
         timeout_seconds=timeout_seconds,

@@ -212,14 +212,18 @@ The likely rule is:
    canonical database:
    - API: `/api/v1/review/overview`
    - UI: `/review`
-2. Shift import planning toward static export sources now that Tom is
+2. Recruiterflow static import is now live for the first bounded chunk:
+   - `job/1.134.json` persisted successfully
+   - `candidate/1.100.json` persisted successfully
+   - `169` candidate-job applications resolved against the imported jobs
+3. Shift broader import planning toward static export sources now that Tom is
    cancelling JobAdder and long-term Dropbox usage:
    - Recruiterflow official backup first
    - JobAdder full export/zip next
    - broad Dropbox archive folders after that
-3. Persist one Dropbox `.eml` provenance record and link it where identity is
+4. Persist one Dropbox `.eml` provenance record and link it where identity is
    clean enough.
-4. Decide the next Outlook step after the first fully linked `tw394`
+5. Decide the next Outlook step after the first fully linked `tw394`
    persistence proof:
    - [x] reconcile the first Outlook advert-response document conservatively
      against the current JobAdder applications for the same job
@@ -227,8 +231,8 @@ The likely rule is:
    - reconcile later Outlook advert-response documents to canonical
      candidates/jobs only when the identity is strong enough, or
    - persist the next bounded vacancy folder in the same pattern
-5. Chunk/embed the persisted `tw398` job-spec document.
-6. Formalise duplicate/latest-file policy in the canonical data model and
+6. Chunk/embed the persisted `tw398` job-spec document.
+7. Formalise duplicate/latest-file policy in the canonical data model and
    ingestion rules.
-7. Keep Microsoft Graph as the primary mailbox source; use Dropbox as archive
+8. Keep Microsoft Graph as the primary mailbox source; use Dropbox as archive
    / provenance where it fits, not as the first landing zone for Outlook.
