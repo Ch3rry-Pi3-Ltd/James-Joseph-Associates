@@ -123,7 +123,7 @@ The main interaction chain in this module is:
    input, builds the prompts, invokes the model, validates the output, and
    returns the final structured result.
 
-4. `build_resume_extraction_input_from_jobadder_bundle(...)`
+4. `build_resume_extraction_input_from_resume_bundle(...)`
    Reduces the larger upstream bundle into the smaller, bounded extraction
    input that the model actually needs.
 
@@ -886,7 +886,7 @@ def extract_structured_candidate_profile_from_resume_bundle(
         }
     """
 
-    extraction_input = build_resume_extraction_input_from_jobadder_bundle(
+    extraction_input = build_resume_extraction_input_from_resume_bundle(
         resume_text_bundle=resume_text_bundle,
     )
     prompt_bundle = build_resume_extraction_prompt(
@@ -1031,7 +1031,7 @@ def extract_structured_candidate_profile_from_resume_bundle(
     }
 
 
-def build_resume_extraction_input_from_jobadder_bundle(
+def build_resume_extraction_input_from_resume_bundle(
     *,
     resume_text_bundle: dict[str, Any],
     max_resume_characters: int = DEFAULT_MAX_RESUME_PROMPT_CHARACTERS,
@@ -1040,12 +1040,12 @@ def build_resume_extraction_input_from_jobadder_bundle(
     max_total_note_characters: int | None = DEFAULT_MAX_TOTAL_NOTE_CHARACTERS,
 ) -> dict[str, Any]:
     """
-    Build one prompt-ready extraction input from a prepared JobAdder text bundle.
+    Build one prompt-ready extraction input from a prepared resume-text bundle.
 
     Parameters
     ----------
     resume_text_bundle : dict[str, Any]
-        Bundle returned by the upstream JobAdder ingest flow.
+        Bundle returned by an upstream resume-text ingest flow.
 
     max_resume_characters : int
         Maximum number of resume characters to include.
@@ -1128,6 +1128,7 @@ def build_resume_extraction_input_from_jobadder_bundle(
     """
 
     candidate = resume_text_bundle.get("candidate")
+    explicit_candidate_context = resume_text_bundle.get("candidate_context")
     extracted_resume_text = resume_text_bundle.get("extracted_resume_text")
     notes_payload = resume_text_bundle.get("notes", {})
     latest_resume = resume_text_bundle.get("latest_resume")
@@ -1195,11 +1196,16 @@ def build_resume_extraction_input_from_jobadder_bundle(
         prompt_ready_notes=prompt_ready_notes,
     )
 
+    if isinstance(explicit_candidate_context, dict):
+        candidate_context = explicit_candidate_context
+    else:
+        candidate_context = _build_candidate_context_snapshot(candidate)
+
     return {
         "source_system": resume_text_bundle.get("source_system", "jobadder"),
         "source_candidate_id": resume_text_bundle.get("source_candidate_id"),
         "jobadder_account": resume_text_bundle.get("jobadder_account"),
-        "candidate_context": _build_candidate_context_snapshot(candidate),
+        "candidate_context": candidate_context,
         "latest_resume": _build_resume_context_snapshot(
             latest_resume=latest_resume,
             downloaded_resume=downloaded_resume,
@@ -1293,7 +1299,7 @@ def build_resume_extraction_prompt(
 You are a careful recruitment data-extraction assistant.
 
 Your job is to read:
-- structured candidate metadata from JobAdder
+- structured candidate metadata from the upstream source system
 - cleaned resume text
 - cleaned recruiter/candidate note text
 
@@ -2401,7 +2407,7 @@ __all__ = [
     "ResumeExtractionError",
     "ResumeStructuredExtraction",
     "build_default_openai_resume_extraction_chat_model",
-    "build_resume_extraction_input_from_jobadder_bundle",
+    "build_resume_extraction_input_from_resume_bundle",
     "build_resume_extraction_prompt",
     "extract_jobadder_candidate_resume_profile",
     "extract_structured_candidate_profile_from_resume_bundle",

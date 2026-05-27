@@ -56,8 +56,6 @@ SourceRecordType = Literal[
     "recruiterflow_job",
     "recruiterflow_candidate",
     "recruiterflow_candidate_job_link",
-    "recruiterflow_candidate_file_reference",
-    "recruiterflow_candidate_file_content",
     "recruiterflow_job_file_reference",
 ]
 
@@ -334,101 +332,6 @@ def persist_recruiterflow_candidate_snapshot(
     )
 
 
-def persist_recruiterflow_candidate_file_reference(
-    persistence_payload: dict[str, Any],
-) -> dict[str, Any]:
-    """
-    Persist one Recruiterflow candidate file as a canonical document reference.
-
-    Parameters
-    ----------
-    persistence_payload : dict[str, Any]
-        Normalized payload prepared by the Recruiterflow service layer.
-
-    Returns
-    -------
-    dict[str, Any]
-        Small persistence summary containing the resolved candidate, document,
-        and provenance IDs written by the transaction.
-
-    Example
-    -------
-    Persisting a prepared payload returns a summary such as:
-
-        {
-            "candidate_id": "...",
-            "document_id": "...",
-            "candidate_file_source_record_id": "...",
-        }
-    """
-
-    persisted_at = datetime.now(timezone.utc)
-    source_candidate_id = str(persistence_payload["source_candidate_id"])
-    source_file_record_id = str(persistence_payload["source_file_record_id"])
-
-    with postgres_connection() as connection:
-        with connection.cursor() as cursor:
-            candidate_id = _resolve_recruiterflow_candidate_id(
-                cursor,
-                source_candidate_id=source_candidate_id,
-            )
-
-            candidate_file_source_record = _upsert_source_record(
-                cursor,
-                source_system="recruiterflow",
-                source_record_type="recruiterflow_candidate_file_reference",
-                source_record_id=source_file_record_id,
-                source_payload=persistence_payload["candidate_file_source_payload"],
-                source_payload_hash=persistence_payload[
-                    "candidate_file_source_payload_hash"
-                ],
-                import_run_id=persistence_payload.get("import_run_id"),
-                processed_at=persisted_at,
-                sync_status="accepted",
-            )
-
-            document_id = _upsert_reference_document(
-                cursor,
-                source_record_id=candidate_file_source_record["id"],
-                document_type="candidate_attachment",
-                document_title=persistence_payload.get("document_title"),
-                mime_type=persistence_payload.get("mime_type"),
-                source_uri=persistence_payload.get("source_uri"),
-                content_hash=persistence_payload.get("content_hash"),
-            )
-
-            _ensure_source_record_link(
-                cursor,
-                source_record_id=candidate_file_source_record["id"],
-                candidate_id=candidate_id,
-            )
-            _ensure_source_record_link(
-                cursor,
-                source_record_id=candidate_file_source_record["id"],
-                document_id=document_id,
-            )
-            _ensure_document_link(
-                cursor,
-                document_id=document_id,
-                candidate_id=candidate_id,
-                relationship_type="candidate_file_reference",
-                source_record_id=candidate_file_source_record["id"],
-            )
-
-        connection.commit()
-
-    return _make_json_safe_summary(
-        {
-            "persisted_at": persisted_at.isoformat(),
-            "source_candidate_id": source_candidate_id,
-            "source_file_record_id": source_file_record_id,
-            "candidate_id": candidate_id,
-            "document_id": document_id,
-            "candidate_file_source_record_id": candidate_file_source_record["id"],
-        }
-    )
-
-
 def persist_recruiterflow_job_file_reference(
     persistence_payload: dict[str, Any],
 ) -> dict[str, Any]:
@@ -519,120 +422,6 @@ def persist_recruiterflow_job_file_reference(
             "job_id": job_id,
             "document_id": document_id,
             "job_file_source_record_id": job_file_source_record["id"],
-        }
-    )
-
-
-def persist_recruiterflow_candidate_file_content(
-    persistence_payload: dict[str, Any],
-) -> dict[str, Any]:
-    """
-    Persist one Recruiterflow candidate file download/extraction attempt.
-
-    Parameters
-    ----------
-    persistence_payload : dict[str, Any]
-        Normalized payload prepared by the Recruiterflow service layer.
-
-    Returns
-    -------
-    dict[str, Any]
-        Small persistence summary containing the resolved candidate, document,
-        content-source record, and extraction status values.
-
-    Example
-    -------
-    Persisting a prepared payload returns a summary such as:
-
-        {
-            "candidate_id": "...",
-            "document_id": "...",
-            "sync_status": "extracted",
-            "character_count": 6185,
-        }
-    """
-
-    persisted_at = datetime.now(timezone.utc)
-    source_candidate_id = str(persistence_payload["source_candidate_id"])
-    source_file_record_id = str(persistence_payload["source_file_record_id"])
-
-    with postgres_connection() as connection:
-        with connection.cursor() as cursor:
-            candidate_id = _resolve_recruiterflow_candidate_id(
-                cursor,
-                source_candidate_id=source_candidate_id,
-            )
-            reference_source_record_id = _resolve_source_record_uuid(
-                cursor,
-                source_system="recruiterflow",
-                source_record_type="recruiterflow_candidate_file_reference",
-                source_record_id=source_file_record_id,
-            )
-            document_id = _find_linked_entity_id(
-                cursor,
-                source_record_id=reference_source_record_id,
-                entity_column="document_id",
-            )
-
-            content_source_record = _upsert_source_record(
-                cursor,
-                source_system="recruiterflow",
-                source_record_type="recruiterflow_candidate_file_content",
-                source_record_id=source_file_record_id,
-                source_payload=persistence_payload["candidate_file_content_source_payload"],
-                source_payload_hash=persistence_payload[
-                    "candidate_file_content_source_payload_hash"
-                ],
-                import_run_id=persistence_payload.get("import_run_id"),
-                processed_at=persisted_at,
-                sync_status=persistence_payload["sync_status"],
-                error_message=persistence_payload.get("error_message"),
-            )
-
-            if document_id is None:
-                document_id = _upsert_reference_document(
-                    cursor,
-                    source_record_id=reference_source_record_id,
-                    document_type="candidate_attachment",
-                    document_title=persistence_payload.get("document_title"),
-                    mime_type=persistence_payload.get("mime_type"),
-                    source_uri=persistence_payload.get("source_uri"),
-                    content_hash=persistence_payload.get("content_hash"),
-                )
-
-            _update_document_content(
-                cursor,
-                document_id=document_id,
-                document_title=persistence_payload.get("document_title"),
-                mime_type=persistence_payload.get("mime_type"),
-                source_uri=persistence_payload.get("source_uri"),
-                content_hash=persistence_payload.get("content_hash"),
-                extracted_text=persistence_payload.get("extracted_text"),
-            )
-
-            _ensure_source_record_link(
-                cursor,
-                source_record_id=content_source_record["id"],
-                candidate_id=candidate_id,
-            )
-            _ensure_source_record_link(
-                cursor,
-                source_record_id=content_source_record["id"],
-                document_id=document_id,
-            )
-
-        connection.commit()
-
-    return _make_json_safe_summary(
-        {
-            "persisted_at": persisted_at.isoformat(),
-            "source_candidate_id": source_candidate_id,
-            "source_file_record_id": source_file_record_id,
-            "candidate_id": candidate_id,
-            "document_id": document_id,
-            "candidate_file_content_source_record_id": content_source_record["id"],
-            "sync_status": persistence_payload["sync_status"],
-            "character_count": persistence_payload.get("character_count"),
         }
     )
 
@@ -768,45 +557,6 @@ def _resolve_recruiterflow_job_id(
     )
 
 
-def _resolve_recruiterflow_candidate_id(
-    cursor: Cursor[Any],
-    *,
-    source_candidate_id: str,
-) -> str:
-    """
-    Resolve the canonical candidate row for one upstream Recruiterflow candidate ID.
-
-    Example
-    -------
-    For a Recruiterflow candidate file reference such as `candidate_id=4847`,
-    this helper resolves the canonical candidate through the persisted
-    `recruiterflow_candidate` source record.
-    """
-
-    cursor.execute(
-        """
-        select srl.candidate_id
-        from source_records sr
-        join source_record_links srl
-          on srl.source_record_id = sr.id
-        where sr.source_system = 'recruiterflow'
-          and sr.source_record_type = 'recruiterflow_candidate'
-          and sr.source_record_id = %(source_candidate_id)s
-          and srl.candidate_id is not null
-        limit 1
-        """,
-        {"source_candidate_id": source_candidate_id},
-    )
-    row = cursor.fetchone()
-    if row is not None:
-        return row["candidate_id"]
-
-    raise RuntimeError(
-        "Canonical candidate row was not found for Recruiterflow candidate "
-        f"{source_candidate_id}."
-    )
-
-
 def _resolve_source_record_uuid(
     cursor: Cursor[Any],
     *,
@@ -821,7 +571,7 @@ def _resolve_source_record_uuid(
     -------
     A call with:
 
-        source_record_type="recruiterflow_candidate_file_reference"
+        source_record_type="recruiterflow_job_file_reference"
 
     returns the canonical source-record UUID for that upstream reference row.
     """
@@ -871,9 +621,9 @@ def _upsert_reference_document(
 
     Example
     -------
-    A candidate file with filename `Alice CV.pdf` and link `https://...` can
-    become one `candidate_attachment` document row without downloading the
-    actual PDF bytes yet.
+    A job file with filename `B2C2 brief.pdf` and link `https://...` can
+    become one lightweight canonical document row without downloading the
+    actual file bytes yet.
     """
 
     existing_document_id = _find_linked_entity_id(
@@ -971,63 +721,6 @@ def _upsert_reference_document(
         },
     )
     return existing_document_id
-
-
-def _update_document_content(
-    cursor: Cursor[Any],
-    *,
-    document_id: str,
-    document_title: str | None,
-    mime_type: str | None,
-    source_uri: str | None,
-    content_hash: str | None,
-    extracted_text: str | None,
-) -> None:
-    """
-    Update one existing canonical document row with downloaded-file data.
-
-    Notes
-    -----
-    This helper keeps updates conservative:
-
-    - title/source metadata are only filled when newer values exist
-    - content hashes can be added once bytes are downloaded
-    - extracted text is only replaced when a non-empty string is available
-
-    Example
-    -------
-    A reference-only `candidate_attachment` row can be upgraded later with:
-
-        - `content_hash`
-        - `mime_type`
-        - `extracted_text`
-    """
-
-    cursor.execute(
-        """
-        update documents
-        set
-            title = coalesce(%(title)s, title),
-            source_uri = coalesce(%(source_uri)s, source_uri),
-            mime_type = coalesce(%(mime_type)s, mime_type),
-            content_hash = coalesce(%(content_hash)s, content_hash),
-            extracted_text = case
-                when %(extracted_text)s::text is not null
-                 and btrim(%(extracted_text)s::text) <> ''
-                then %(extracted_text)s::text
-                else extracted_text
-            end
-        where id = %(document_id)s
-        """,
-        {
-            "document_id": document_id,
-            "title": document_title,
-            "source_uri": source_uri,
-            "mime_type": mime_type,
-            "content_hash": content_hash,
-            "extracted_text": extracted_text,
-        },
-    )
 
 
 def _find_linked_entity_id(
@@ -1291,7 +984,6 @@ def _pick_single_document_target(
 
 
 __all__ = [
-    "persist_recruiterflow_candidate_file_reference",
     "persist_recruiterflow_candidate_snapshot",
     "persist_recruiterflow_job_file_reference",
     "persist_recruiterflow_job_snapshot",

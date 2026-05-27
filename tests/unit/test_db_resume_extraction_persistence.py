@@ -20,11 +20,11 @@ from uuid import uuid4
 
 from backend.db.resume_extraction_persistence import (
     persist_jobadder_candidate_profile_snapshot,
-    persist_jobadder_resume_extraction_snapshot,
+    persist_resume_extraction_snapshot,
 )
 
 
-def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary() -> None:
+def test_persist_resume_extraction_snapshot_commits_and_returns_summary() -> None:
     """
     Verify that the persistence helper commits and returns the key summary data.
 
@@ -53,6 +53,7 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
     """
 
     persistence_payload = {
+        "source_system": "jobadder",
         "source_candidate_id": 16496678,
         "latest_resume": {},
         "candidate_source_payload": {"candidate_context": {"first_name": "Roger"}},
@@ -118,7 +119,7 @@ def test_persist_jobadder_resume_extraction_snapshot_commits_and_returns_summary
         )
         mock_refresh_note_interactions.return_value = ["interaction-1"]
 
-        summary = persist_jobadder_resume_extraction_snapshot(persistence_payload)
+        summary = persist_resume_extraction_snapshot(persistence_payload)
 
     assert summary["person_id"] == str(person_uuid)
     assert summary["candidate_id"] == str(candidate_uuid)

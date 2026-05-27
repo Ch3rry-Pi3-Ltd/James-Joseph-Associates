@@ -1,5 +1,5 @@
 """
-Service helpers for persisting JobAdder candidate-ingestion results.
+Service helpers for persisting accepted resume-extraction results.
 
 This module sits above the raw SQL helper in
 `backend.db.resume_extraction_persistence` and below the operator-facing
@@ -32,7 +32,7 @@ Current policy
 --------------
 The current persistence policy is intentionally staged:
 
-- only accepted JobAdder extraction results are persisted
+- only accepted extraction results are persisted
 - "accepted" currently means `quality_assessment.status == "pass"`
 - review/rerun/failure results stay as local batch artefacts for now
 - no-resume JobAdder candidates may be persisted separately through a profile-
@@ -51,7 +51,7 @@ from typing import Any
 
 from backend.db.resume_extraction_persistence import (
     persist_jobadder_candidate_profile_snapshot,
-    persist_jobadder_resume_extraction_snapshot,
+    persist_resume_extraction_snapshot,
 )
 
 
@@ -59,7 +59,7 @@ def persist_accepted_resume_extraction_result(
     result: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Persist one accepted JobAdder extraction result into the canonical schema.
+    Persist one accepted resume extraction result into the canonical schema.
 
     Parameters
     ----------
@@ -82,7 +82,7 @@ def persist_accepted_resume_extraction_result(
     This helper deliberately validates three things before any SQL write is
     attempted:
 
-    - the source system is JobAdder
+    - the source system is one of the accepted resume-ingestion sources
     - the quality gate accepted the result with `status == "pass"`
     - the payload still contains the extraction/source fields needed to build a
       provenance-bearing persistence snapshot
@@ -101,7 +101,7 @@ def persist_accepted_resume_extraction_result(
 
     _validate_result_is_persistable(result)
     persistence_payload = build_resume_extraction_persistence_payload(result)
-    return persist_jobadder_resume_extraction_snapshot(persistence_payload)
+    return persist_resume_extraction_snapshot(persistence_payload)
 
 
 def persist_jobadder_candidate_profile_without_resume(
@@ -307,8 +307,10 @@ def build_resume_extraction_persistence_payload(
         "resume_content_hash": _hash_text(
             extraction_input.get("cleaned_resume_text") or ""
         ),
-        "resume_source_uri": _build_jobadder_resume_source_uri(
+        "resume_source_uri": _build_resume_source_uri(
+            source_system=result["source_system"],
             jobadder_account=result.get("jobadder_account"),
+            export_source_uri=result.get("export_source_uri"),
             source_candidate_id=result["source_candidate_id"],
             attachment_id=latest_resume.get("attachment_id"),
         ),
@@ -489,9 +491,9 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
     extraction into canonical state.
     """
 
-    if result.get("source_system") != "jobadder":
+    if result.get("source_system") not in {"jobadder", "recruiterflow"}:
         raise RuntimeError(
-            "Only JobAdder extraction results are currently supported for persistence."
+            "Only JobAdder and Recruiterflow extraction results are currently supported for persistence."
         )
 
     quality_assessment = result.get("quality_assessment")
@@ -597,7 +599,8 @@ def _build_import_run_id(*, result: dict[str, Any]) -> str:
 
     candidate_id = result["source_candidate_id"]
     timestamp = datetime.now(timezone.utc).isoformat()
-    return f"jobadder_resume_extraction:{candidate_id}:{timestamp}"
+    source_system = result["source_system"]
+    return f"{source_system}_resume_extraction:{candidate_id}:{timestamp}"
 
 
 def _build_profile_only_import_run_id(*, ingest_payload: dict[str, Any]) -> str:
@@ -616,24 +619,27 @@ def _build_profile_only_import_run_id(*, ingest_payload: dict[str, Any]) -> str:
     return f"jobadder_candidate_profile_only:{candidate_id}:{timestamp}"
 
 
-def _build_jobadder_resume_source_uri(
+def _build_resume_source_uri(
     *,
+    source_system: str,
     jobadder_account: int | None,
+    export_source_uri: str | None,
     source_candidate_id: int | str,
     attachment_id: int | str | None,
 ) -> str | None:
     """
-    Build a stable backend-local URI for the selected JobAdder resume source.
+    Build a stable backend-local URI for the selected resume source.
 
     Notes
     -----
-    This is intentionally an internal-style URI rather than a direct vendor URL.
-    It gives the canonical `documents` row a meaningful source reference even
-    though the backend is not storing a browser-openable attachment link yet.
+    This is intentionally an internal-style URI rather than a direct vendor
+    URL. It gives the canonical `documents` row a meaningful source reference
+    even though the backend is not storing a browser-openable attachment link
+    yet.
 
     Example
     -------
-    A call with:
+    A JobAdder call with:
 
         jobadder_account=2236
         source_candidate_id=16496678
@@ -642,15 +648,39 @@ def _build_jobadder_resume_source_uri(
     returns:
 
         "jobadder://accounts/2236/candidates/16496678/attachments/12345"
+
+    while a Recruiterflow call with:
+
+        source_system="recruiterflow"
+        export_source_uri="/exports/Recruiterflow.zip"
+        source_candidate_id=4847
+        attachment_id=5679
+
+    returns:
+
+        "recruiterflow:///exports/Recruiterflow.zip/candidates/4847/files/5679"
     """
 
-    if jobadder_account is None or attachment_id is None:
+    if attachment_id is None:
         return None
 
-    return (
-        f"jobadder://accounts/{jobadder_account}/candidates/"
-        f"{source_candidate_id}/attachments/{attachment_id}"
-    )
+    if source_system == "jobadder":
+        if jobadder_account is None:
+            return None
+        return (
+            f"jobadder://accounts/{jobadder_account}/candidates/"
+            f"{source_candidate_id}/attachments/{attachment_id}"
+        )
+
+    if source_system == "recruiterflow":
+        if not isinstance(export_source_uri, str) or export_source_uri.strip() == "":
+            return None
+        return (
+            f"recruiterflow://{export_source_uri}/candidates/"
+            f"{source_candidate_id}/files/{attachment_id}"
+        )
+
+    return None
 
 
 def _select_latest_note_timestamp(

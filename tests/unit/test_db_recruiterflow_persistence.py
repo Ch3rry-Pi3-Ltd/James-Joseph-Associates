@@ -17,8 +17,6 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from backend.db.recruiterflow_persistence import (
-    persist_recruiterflow_candidate_file_content,
-    persist_recruiterflow_candidate_file_reference,
     persist_recruiterflow_candidate_snapshot,
     persist_recruiterflow_job_file_reference,
     persist_recruiterflow_job_snapshot,
@@ -171,55 +169,6 @@ def test_persist_recruiterflow_candidate_snapshot_commits_and_returns_summary() 
     mock_connection.commit.assert_called_once()
 
 
-def test_persist_recruiterflow_candidate_file_reference_commits_and_returns_summary() -> None:
-    """
-    Verify that the candidate-file persistence helper commits and returns key summary data.
-    """
-
-    persistence_payload = {
-        "source_candidate_id": 4847,
-        "source_file_record_id": "4847:5679",
-        "document_title": "Bernardita Gutierrez CV EN 03-2026.pdf",
-        "source_uri": "https://example.com/candidate-cv.pdf",
-        "mime_type": "application/pdf",
-        "content_hash": None,
-        "candidate_file_source_payload": {"candidate_file_payload": {"id": 5679}},
-        "candidate_file_source_payload_hash": "candidate-file-source-hash",
-        "import_run_id": "recruiterflow_candidate_file_reference:4847:5679:candidate/1.100.json",
-    }
-
-    mock_cursor = MagicMock()
-    candidate_uuid = uuid4()
-    candidate_file_source_record_uuid = uuid4()
-    document_uuid = uuid4()
-
-    mock_cursor.fetchone.side_effect = [
-        {"candidate_id": candidate_uuid},
-        {"id": candidate_file_source_record_uuid},
-        None,
-        None,
-        {"id": document_uuid},
-        None,
-        None,
-        None,
-    ]
-
-    mock_connection = MagicMock()
-    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
-
-    with patch("backend.db.recruiterflow_persistence.postgres_connection") as mock_conn:
-        mock_conn.return_value.__enter__.return_value = mock_connection
-        summary = persist_recruiterflow_candidate_file_reference(persistence_payload)
-
-    assert summary["candidate_id"] == str(candidate_uuid)
-    assert summary["document_id"] == str(document_uuid)
-    assert (
-        summary["candidate_file_source_record_id"]
-        == str(candidate_file_source_record_uuid)
-    )
-    mock_connection.commit.assert_called_once()
-
-
 def test_persist_recruiterflow_job_file_reference_commits_and_returns_summary() -> None:
     """
     Verify that the job-file persistence helper commits and returns key summary data.
@@ -266,57 +215,3 @@ def test_persist_recruiterflow_job_file_reference_commits_and_returns_summary() 
     assert summary["job_file_source_record_id"] == str(job_file_source_record_uuid)
     mock_connection.commit.assert_called_once()
 
-
-def test_persist_recruiterflow_candidate_file_content_commits_and_returns_summary() -> None:
-    """
-    Verify that the candidate-file content persistence helper commits and returns key summary data.
-    """
-
-    persistence_payload = {
-        "source_candidate_id": 4847,
-        "source_file_record_id": "4847:5679",
-        "document_title": "Bernardita Gutierrez CV EN 03-2026.pdf",
-        "source_uri": "https://example.com/candidate-cv.pdf",
-        "mime_type": "application/pdf",
-        "content_hash": "hash-123",
-        "extracted_text": "Bernardita Gutierrez CV",
-        "character_count": 24,
-        "sync_status": "extracted",
-        "error_message": None,
-        "candidate_file_content_source_payload": {
-            "candidate_file_payload": {"id": 5679}
-        },
-        "candidate_file_content_source_payload_hash": "candidate-file-content-hash",
-        "import_run_id": "recruiterflow_candidate_file_content:4847:5679:candidate/1.100.json",
-    }
-
-    mock_cursor = MagicMock()
-    candidate_uuid = uuid4()
-    reference_source_record_uuid = uuid4()
-    content_source_record_uuid = uuid4()
-    document_uuid = uuid4()
-
-    mock_cursor.fetchone.side_effect = [
-        {"candidate_id": candidate_uuid},
-        {"id": reference_source_record_uuid},
-        {"document_id": document_uuid},
-        {"id": content_source_record_uuid},
-        None,
-        None,
-    ]
-
-    mock_connection = MagicMock()
-    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
-
-    with patch("backend.db.recruiterflow_persistence.postgres_connection") as mock_conn:
-        mock_conn.return_value.__enter__.return_value = mock_connection
-        summary = persist_recruiterflow_candidate_file_content(persistence_payload)
-
-    assert summary["candidate_id"] == str(candidate_uuid)
-    assert summary["document_id"] == str(document_uuid)
-    assert summary["sync_status"] == "extracted"
-    assert (
-        summary["candidate_file_content_source_record_id"]
-        == str(content_source_record_uuid)
-    )
-    mock_connection.commit.assert_called_once()

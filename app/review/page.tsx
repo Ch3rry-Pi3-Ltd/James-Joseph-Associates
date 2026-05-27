@@ -19,7 +19,6 @@ type ReviewOverview = {
   recent_source_records: Array<Record<string, unknown>>;
   document_type_counts: Array<Record<string, unknown>>;
   source_system_counts: Array<Record<string, unknown>>;
-  candidate_attachment_health: Record<string, unknown>;
 };
 
 function formatValue(value: unknown): string {
@@ -201,7 +200,6 @@ export default async function ReviewPage() {
  * - recent source provenance rows
  * - grouped document-type counts
  * - grouped source-system counts
- * - candidate-attachment ingest health
    *
    * In plain language:
    *
@@ -334,18 +332,6 @@ export default async function ReviewPage() {
             </div>
           </article>
 
-          <article className="rounded-lg border border-zinc-200 bg-white p-6">
-            <h2 className="text-2xl font-semibold text-zinc-950">
-              Candidate attachment health
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              A bounded view of Recruiterflow candidate attachments moving from
-              reference-only rows into byte-backed and text-extracted documents.
-            </p>
-            <div className="mt-5">
-              {renderRows([overview.candidate_attachment_health])}
-            </div>
-          </article>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">

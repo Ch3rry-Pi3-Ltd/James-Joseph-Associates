@@ -223,18 +223,36 @@ The likely rule is:
    - file bytes were intentionally not downloaded yet
    - the purpose of this slice is to surface the Recruiterflow document layer
      in the canonical schema before bulk byte ingestion
-4. Recruiterflow bounded file-content import is now live for the first primary
-   candidate-file batch:
+4. Recruiterflow bounded file-content import is now live for the full first
+   candidate chunk:
    - source chunk: `candidate/1.100.json`
-   - selected primary candidate files: `15`
-   - extracted successfully: `15`
-   - unsupported: `0`
-   - failed: `0`
+   - primary candidate-file proof completed first:
+     - selected primary candidate files: `15`
+     - extracted successfully: `15`
+     - unsupported: `0`
+     - failed: `0`
+   - the full first-chunk candidate-file run is now also complete:
+     - selected candidate files: `106`
+     - extracted successfully: `106`
+     - unsupported: `0`
+     - failed: `0`
    - the static importer now prefers embedded ZIP members under:
      - `candidate/files/{candidate_id}/...`
    - the signed S3-style file URLs inside the JSON proved to be stale by the
      time of import and should be treated as fallback provenance only, not the
      primary byte source for the official backup
+5. The next Recruiterflow candidate chunk is now also live end to end:
+   - source chunk: `candidate/101.200.json`
+   - persisted candidates: `100`
+   - persisted candidate file references: `101`
+   - persisted candidate file-content rows: `101`
+   - extracted successfully: `100`
+   - unsupported: `1`
+   - failed: `0`
+   - the single unsupported file is a legacy `.doc`:
+     - `26122024 CV MV Insurance 85.doc`
+     - error:
+       `The resume file format is not supported for text extraction.`
 4. Shift broader import planning toward static export sources now that Tom is
    cancelling JobAdder and long-term Dropbox usage:
    - Recruiterflow official backup first

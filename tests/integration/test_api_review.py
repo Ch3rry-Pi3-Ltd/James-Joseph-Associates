@@ -39,14 +39,6 @@ def test_review_overview_route_returns_compact_payload() -> None:
         "recent_source_records": [{"source_record_uuid": "src-1"}],
         "document_type_counts": [{"document_type": "candidate_attachment"}],
         "source_system_counts": [{"source_system": "recruiterflow"}],
-        "candidate_attachment_health": {
-            "total": 106,
-            "reference_only": 81,
-            "byte_backed": 25,
-            "extracted_successfully": 22,
-            "unsupported": 2,
-            "failed": 1,
-        },
     }
 
     with patch(

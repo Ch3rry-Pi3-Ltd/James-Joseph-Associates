@@ -261,7 +261,7 @@ def test_persist_accepted_resume_extraction_result_delegates_to_db_helper() -> N
     result = _build_sample_result()
 
     with patch(
-        "backend.services.resume_extraction_persistence.persist_jobadder_resume_extraction_snapshot"
+        "backend.services.resume_extraction_persistence.persist_resume_extraction_snapshot"
     ) as mock_persist:
         mock_persist.return_value = {
             "candidate_id": "candidate-uuid",

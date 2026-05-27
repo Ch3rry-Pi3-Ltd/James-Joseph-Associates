@@ -1,5 +1,5 @@
 """
-Database helpers for persisting narrow JobAdder candidate-ingestion results.
+Database helpers for persisting accepted resume-extraction results.
 
 This module contains the first narrow write path for turning a successful
 resume-extraction result into canonical Supabase/Postgres records.
@@ -16,7 +16,7 @@ It gives the rest of the repository a stable way to talk about:
 Why this module exists
 ----------------------
 The extraction pipeline is now strong enough to produce repeatable accepted
-results against real JobAdder candidates.
+results against real upstream candidate sources.
 
 That changes the next question:
 
@@ -51,10 +51,10 @@ Example
 Typical service usage looks like:
 
     from backend.db.resume_extraction_persistence import (
-        persist_jobadder_resume_extraction_snapshot,
+        persist_resume_extraction_snapshot,
     )
 
-    summary = persist_jobadder_resume_extraction_snapshot(
+    summary = persist_resume_extraction_snapshot(
         persistence_payload,
     )
 
@@ -78,14 +78,17 @@ SourceRecordType = Literal[
     "jobadder_candidate_profile_only",
     "jobadder_resume_attachment",
     "jobadder_resume_extraction",
+    "recruiterflow_candidate",
+    "recruiterflow_resume_attachment",
+    "recruiterflow_resume_extraction",
 ]
 
 
-def persist_jobadder_resume_extraction_snapshot(
+def persist_resume_extraction_snapshot(
     persistence_payload: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Persist one accepted JobAdder resume-extraction result.
+    Persist one accepted resume-extraction result.
 
     Parameters
     ----------
@@ -138,6 +141,7 @@ def persist_jobadder_resume_extraction_snapshot(
         }
     """
 
+    source_system = str(persistence_payload["source_system"])
     source_candidate_id = str(persistence_payload["source_candidate_id"])
     latest_resume = persistence_payload.get("latest_resume", {})
     latest_resume_attachment_id = latest_resume.get("attachment_id")
@@ -148,6 +152,16 @@ def persist_jobadder_resume_extraction_snapshot(
     )
     extraction_source_record_key = (
         f"{source_candidate_id}:{latest_resume_attachment_key or 'no-resume'}"
+    )
+
+    candidate_source_record_type = _get_candidate_source_record_type(
+        source_system=source_system
+    )
+    resume_source_record_type = _get_resume_source_record_type(
+        source_system=source_system
+    )
+    extraction_source_record_type = _get_extraction_source_record_type(
+        source_system=source_system
     )
 
     persisted_at = datetime.now(timezone.utc)
@@ -164,8 +178,8 @@ def persist_jobadder_resume_extraction_snapshot(
             # - the accepted structured extraction derived from them
             candidate_source_record = _upsert_source_record(
                 cursor,
-                source_system="jobadder",
-                source_record_type="jobadder_candidate_snapshot",
+                source_system=source_system,
+                source_record_type=candidate_source_record_type,
                 source_record_id=source_candidate_id,
                 source_payload=persistence_payload["candidate_source_payload"],
                 source_payload_hash=persistence_payload[
@@ -180,8 +194,8 @@ def persist_jobadder_resume_extraction_snapshot(
             if latest_resume_attachment_key is not None:
                 resume_source_record = _upsert_source_record(
                     cursor,
-                    source_system="jobadder",
-                    source_record_type="jobadder_resume_attachment",
+                    source_system=source_system,
+                    source_record_type=resume_source_record_type,
                     source_record_id=latest_resume_attachment_key,
                     source_payload=persistence_payload["resume_source_payload"],
                     source_payload_hash=persistence_payload[
@@ -194,8 +208,8 @@ def persist_jobadder_resume_extraction_snapshot(
 
             extraction_source_record = _upsert_source_record(
                 cursor,
-                source_system="jobadder",
-                source_record_type="jobadder_resume_extraction",
+                source_system=source_system,
+                source_record_type=extraction_source_record_type,
                 source_record_id=extraction_source_record_key,
                 source_payload=persistence_payload["extraction_source_payload"],
                 source_payload_hash=persistence_payload[
@@ -342,14 +356,17 @@ def persist_jobadder_resume_extraction_snapshot(
                 extracted_skills=persistence_payload.get("skills", []),
                 extracted_tools=persistence_payload.get("tools_and_platforms", []),
             )
-            note_interaction_ids = _refresh_candidate_note_interactions(
-                cursor,
-                candidate_id=candidate_id,
-                person_id=person_id,
-                cleaned_candidate_notes=persistence_payload.get(
-                    "cleaned_candidate_notes", []
-                ),
-            )
+            if source_system == "jobadder":
+                note_interaction_ids = _refresh_candidate_note_interactions(
+                    cursor,
+                    candidate_id=candidate_id,
+                    person_id=person_id,
+                    cleaned_candidate_notes=persistence_payload.get(
+                        "cleaned_candidate_notes", []
+                    ),
+                )
+            else:
+                note_interaction_ids = []
 
         connection.commit()
 
@@ -636,6 +653,47 @@ def _upsert_source_record(
     if row is None:
         raise RuntimeError("Failed to persist source_record row.")
     return dict(row)
+
+
+def _get_candidate_source_record_type(*, source_system: str) -> SourceRecordType:
+    """
+    Return the candidate snapshot source-record type for one source system.
+
+    Examples
+    --------
+    `jobadder` returns `jobadder_candidate_snapshot`, while `recruiterflow`
+    returns `recruiterflow_candidate`.
+    """
+
+    if source_system == "jobadder":
+        return "jobadder_candidate_snapshot"
+    if source_system == "recruiterflow":
+        return "recruiterflow_candidate"
+    raise RuntimeError(f"Unsupported source system for candidate persistence: {source_system}")
+
+
+def _get_resume_source_record_type(*, source_system: str) -> SourceRecordType:
+    """
+    Return the resume-attachment source-record type for one source system.
+    """
+
+    if source_system == "jobadder":
+        return "jobadder_resume_attachment"
+    if source_system == "recruiterflow":
+        return "recruiterflow_resume_attachment"
+    raise RuntimeError(f"Unsupported source system for resume persistence: {source_system}")
+
+
+def _get_extraction_source_record_type(*, source_system: str) -> SourceRecordType:
+    """
+    Return the accepted extraction source-record type for one source system.
+    """
+
+    if source_system == "jobadder":
+        return "jobadder_resume_extraction"
+    if source_system == "recruiterflow":
+        return "recruiterflow_resume_extraction"
+    raise RuntimeError(f"Unsupported source system for extraction persistence: {source_system}")
 
 
 def _upsert_company_by_name(
@@ -1992,5 +2050,5 @@ def _clean_optional_string(value: Any) -> str | None:
 
 __all__ = [
     "persist_jobadder_candidate_profile_snapshot",
-    "persist_jobadder_resume_extraction_snapshot",
+    "persist_resume_extraction_snapshot",
 ]

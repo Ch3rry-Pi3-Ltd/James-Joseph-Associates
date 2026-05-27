@@ -762,6 +762,22 @@ Current note:
   - the signed JSON file URLs proved stale/expired and should be treated as
     provenance/fallback metadata, not as the primary byte source for the
     official backup
+- The first full Recruiterflow candidate-file content chunk is now live:
+  - all `106` candidate attachments from `candidate/1.100.json` were
+    downloaded and extracted successfully
+  - live review health now shows:
+    - `candidate_attachment.total = 106`
+    - `reference_only = 0`
+    - `byte_backed = 106`
+    - `extracted_successfully = 106`
+- The next Recruiterflow candidate chunk is now live end to end:
+  - `candidate/101.200.json`
+  - `100` candidates persisted
+  - `101` candidate file references persisted
+  - `101` candidate file-content rows persisted
+  - `100` extracted successfully
+  - `1` unsupported legacy `.doc`
+  - `0` failed
 
 </details>
 

@@ -78,7 +78,7 @@ from backend.services.resume_extraction import (
     ResumeExtractionError,
     ResumeStructuredExtraction,
     _normalise_resume_structured_extraction,
-    build_resume_extraction_input_from_jobadder_bundle,
+    build_resume_extraction_input_from_resume_bundle,
     build_resume_extraction_prompt,
     extract_jobadder_candidate_resume_profile,
     extract_structured_candidate_profile_from_resume_bundle,
@@ -258,7 +258,7 @@ def _build_test_model_profile() -> ModelProfile:
     )
 
 
-def test_build_resume_extraction_input_from_jobadder_bundle_returns_bounded_prompt_input() -> None:
+def test_build_resume_extraction_input_from_resume_bundle_returns_bounded_prompt_input() -> None:
     """
     Verify that the input builder converts the larger upstream resume bundle
     into a smaller prompt-ready extraction input.
@@ -293,7 +293,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_returns_bounded_prom
 
     bundle = _build_fake_resume_text_bundle()
 
-    result = build_resume_extraction_input_from_jobadder_bundle(
+    result = build_resume_extraction_input_from_resume_bundle(
         resume_text_bundle=bundle,
         max_resume_characters=500,
         max_note_count=3,
@@ -368,7 +368,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_returns_bounded_prom
     }
 
 
-def test_build_resume_extraction_input_from_jobadder_bundle_applies_resume_and_note_budgets() -> None:
+def test_build_resume_extraction_input_from_resume_bundle_applies_resume_and_note_budgets() -> None:
     """
     Verify that the prompt-input builder budgets both oversized resume text and
     oversized note payloads.
@@ -427,7 +427,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_applies_resume_and_n
         },
     ]
 
-    result = build_resume_extraction_input_from_jobadder_bundle(
+    result = build_resume_extraction_input_from_resume_bundle(
         resume_text_bundle=bundle,
         max_resume_characters=40,
         max_note_count=3,
@@ -454,7 +454,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_applies_resume_and_n
     }
 
 
-def test_build_resume_extraction_input_from_jobadder_bundle_keeps_full_cleaned_notes_by_default() -> None:
+def test_build_resume_extraction_input_from_resume_bundle_keeps_full_cleaned_notes_by_default() -> None:
     """
     Verify that cleaned candidate notes are preserved in full by default.
 
@@ -498,7 +498,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_keeps_full_cleaned_n
         },
     ]
 
-    result = build_resume_extraction_input_from_jobadder_bundle(
+    result = build_resume_extraction_input_from_resume_bundle(
         resume_text_bundle=bundle,
     )
 
@@ -510,7 +510,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_keeps_full_cleaned_n
     assert result["prompt_input_metrics"]["notes_were_truncated"] is False
 
 
-def test_build_resume_extraction_input_from_jobadder_bundle_raises_when_resume_text_is_missing() -> None:
+def test_build_resume_extraction_input_from_resume_bundle_raises_when_resume_text_is_missing() -> None:
     """
     Verify that the input builder fails clearly when the prepared upstream bundle
     does not contain usable resume text.
@@ -548,7 +548,7 @@ def test_build_resume_extraction_input_from_jobadder_bundle_raises_when_resume_t
     bundle["extracted_resume_text"] = None
 
     with pytest.raises(ResumeExtractionError) as exc_info:
-        build_resume_extraction_input_from_jobadder_bundle(
+        build_resume_extraction_input_from_resume_bundle(
             resume_text_bundle=bundle,
         )
 
@@ -590,7 +590,7 @@ def test_build_resume_extraction_prompt_returns_system_and_user_prompt() -> None
     """
 
     bundle = _build_fake_resume_text_bundle()
-    extraction_input = build_resume_extraction_input_from_jobadder_bundle(
+    extraction_input = build_resume_extraction_input_from_resume_bundle(
         resume_text_bundle=bundle,
     )
 
