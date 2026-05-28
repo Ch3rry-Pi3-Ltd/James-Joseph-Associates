@@ -96,7 +96,7 @@ Run with an explicit model override:
     uv run python scripts/run_resume_extraction.py ^
         --jobadder-account 2236 ^
         --candidate-id 16496678 ^
-        --model-name gpt-5.4-mini ^
+        --model-name gpt-4.1-mini ^
         --max-output-tokens 1600
 
 Run against OpenRouter with a Nemotron-style extraction model:
@@ -177,7 +177,7 @@ DEFAULT_OPENROUTER_RESUME_EXTRACTION_MODEL_NAME = (
     "nvidia/nemotron-3-nano-30b-a3b:nitro"
 )
 DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME = "gpt-4.1-mini"
-DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-5.4-mini"
+DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-4.1-mini"
 DEFAULT_QUALITY_LOG_JSONL_PATH = Path("temp/resume_extraction_quality_log.jsonl")
 SUPPORTED_EXTRACTION_PROVIDERS = (
     ModelProvider.OPENAI,
@@ -386,7 +386,7 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
     If the caller runs:
 
         --provider openai
-        --model-name gpt-5.4-mini
+        --model-name gpt-4.1-mini
         --temperature 0.0
         --max-output-tokens 1600
 
@@ -394,7 +394,7 @@ def build_runtime_model_profile(args: argparse.Namespace) -> ModelProfile:
 
         ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4-mini",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.EXTRACTION,
             temperature=0.0,
             max_output_tokens=1600,
@@ -1185,7 +1185,7 @@ def run_live_resume_extraction_with_model_profile(
 
     and again with:
 
-        model_profile=ModelProfile(model_name="gpt-5.4-mini", ...)
+        model_profile=ModelProfile(model_name="gpt-4.1-mini", ...)
     """
 
     validate_live_run_preconditions(provider=model_profile.provider)

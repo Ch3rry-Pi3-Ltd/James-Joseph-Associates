@@ -88,7 +88,7 @@ A service module can call:
 
     profile = ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.EXTRACTION,
         temperature=0.0,
         max_output_tokens=2200,
@@ -259,7 +259,7 @@ def build_langchain_chat_model(
         chat_model = build_langchain_chat_model(
             profile=ModelProfile(
                 provider=ModelProvider.OPENAI,
-                model_name="gpt-5.4",
+                model_name="gpt-4.1-mini",
                 purpose=ModelPurpose.EXTRACTION,
                 temperature=0.0,
                 max_output_tokens=2200,
@@ -378,7 +378,7 @@ def build_openai_chat_model(
 
         profile = ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4-mini",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.UTILITY,
             temperature=0.0,
             max_output_tokens=500,
@@ -700,7 +700,7 @@ def _validate_model_profile_for_provider_client(profile: ModelProfile) -> None:
         _validate_model_profile_for_provider_client(
             ModelProfile(
                 provider=ModelProvider.OPENAI,
-                model_name="gpt-5.4",
+                model_name="gpt-4.1-mini",
                 purpose=ModelPurpose.EXTRACTION,
                 temperature=0.0,
                 max_output_tokens=2200,
@@ -794,7 +794,7 @@ def _is_non_empty_string(value: Any) -> bool:
     -------
     These values are usable:
 
-        _is_non_empty_string("gpt-5.4")
+        _is_non_empty_string("gpt-4.1-mini")
         _is_non_empty_string(" sk-test ")
 
     These are not:

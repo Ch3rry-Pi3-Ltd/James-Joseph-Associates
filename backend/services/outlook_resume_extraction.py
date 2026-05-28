@@ -28,7 +28,7 @@ from backend.services.resume_extraction import (
 )
 
 DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME = "gpt-4.1-mini"
-DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-5.4-mini"
+DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-4.1-mini"
 
 
 def build_outlook_resume_text_bundle(
@@ -188,8 +188,8 @@ def extract_outlook_candidate_resume_profile_with_quality_gate(
     first_pass_model_name : str, default="gpt-4.1-mini"
         Cheaper first-pass model name.
 
-    fallback_model_name : str, default="gpt-5.4-mini"
-        Stronger fallback model name used only when the first pass asks for a rerun.
+    fallback_model_name : str, default="gpt-4.1-mini"
+        Fallback model name used only when the first pass asks for a rerun.
 
     Returns
     -------

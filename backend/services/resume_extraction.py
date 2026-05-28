@@ -705,7 +705,7 @@ def build_default_openai_resume_extraction_chat_model(
     Or override the model name explicitly:
 
         chat_model = build_default_openai_resume_extraction_chat_model(
-            model_name="gpt-5.4-mini",
+            model_name="gpt-4.1-mini",
             temperature=0.0,
             max_output_tokens=1600,
         )
@@ -2384,7 +2384,7 @@ def _serialise_model_profile(profile: ModelProfile) -> dict[str, Any]:
 
         {
             "provider": "openai",
-            "model_name": "gpt-5.4",
+            "model_name": "gpt-4.1-mini",
             "purpose": "extraction",
             "temperature": 0.0,
             "max_output_tokens": 2200,

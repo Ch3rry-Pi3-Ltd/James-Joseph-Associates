@@ -54,7 +54,7 @@ A typical test in this module proves that a valid OpenAI model profile such as:
 
     ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4-mini",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.UTILITY,
         temperature=0.0,
         max_output_tokens=500,
@@ -87,7 +87,7 @@ from backend.llm.providers import (
 
 def _build_openai_test_profile(
     *,
-    model_name: str = "gpt-5.4-mini",
+    model_name: str = "gpt-4.1-mini",
     temperature: float = 0.0,
     max_output_tokens: int = 500,
 ) -> ModelProfile:
@@ -211,7 +211,7 @@ def test_build_openai_chat_model_returns_chatopenai_for_valid_profile() -> None:
 
         ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4-mini",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.UTILITY,
             temperature=0.0,
             max_output_tokens=500,
@@ -391,7 +391,7 @@ def test_build_openai_chat_model_uses_settings_fallbacks_when_arguments_are_omit
 
     assert isinstance(result, FakeChatOpenAI)
     assert captured_kwargs == {
-        "model": "gpt-5.4-mini",
+        "model": "gpt-4.1-mini",
         "temperature": 0.0,
         "max_tokens": 500,
         "timeout": 33.0,
@@ -459,7 +459,7 @@ def test_build_openai_chat_model_prefers_explicit_arguments_over_settings(
 
     assert isinstance(result, FakeChatOpenAI)
     assert captured_kwargs == {
-        "model": "gpt-5.4-mini",
+        "model": "gpt-4.1-mini",
         "temperature": 0.0,
         "max_tokens": 500,
         "timeout": 12.5,
@@ -823,7 +823,7 @@ def test_build_langchain_chat_model_raises_when_temperature_is_negative() -> Non
     assert error.stage == "profile_validation"
     assert error.details == [
         {"provider": ModelProvider.OPENAI},
-        {"model_name": "gpt-5.4-mini"},
+        {"model_name": "gpt-4.1-mini"},
         {"temperature": -0.1},
     ]
 
@@ -865,7 +865,7 @@ def test_build_langchain_chat_model_raises_when_max_output_tokens_is_not_positiv
     assert error.stage == "profile_validation"
     assert error.details == [
         {"provider": ModelProvider.OPENAI},
-        {"model_name": "gpt-5.4-mini"},
+        {"model_name": "gpt-4.1-mini"},
         {"max_output_tokens": 0},
     ]
 
@@ -914,7 +914,7 @@ def test_build_openai_chat_model_raises_when_timeout_is_not_positive() -> None:
     assert error.stage == "provider_configuration"
     assert error.details == [
         {"provider": ModelProvider.OPENAI},
-        {"model_name": "gpt-5.4-mini"},
+        {"model_name": "gpt-4.1-mini"},
         {"timeout_seconds": 0.0},
     ]
 
@@ -962,7 +962,7 @@ def test_build_openai_chat_model_raises_when_explicit_api_key_is_blank() -> None
     assert error.stage == "provider_configuration"
     assert error.details == [
         {"provider": ModelProvider.OPENAI},
-        {"model_name": "gpt-5.4-mini"},
+        {"model_name": "gpt-4.1-mini"},
     ]
 
 
@@ -1069,7 +1069,7 @@ def test_is_non_empty_string_returns_true_only_for_usable_strings() -> None:
     -------
     These values should be accepted:
 
-        "gpt-5.4"
+        "gpt-4.1-mini"
         " sk-test-value "
 
     These should be rejected:
@@ -1085,7 +1085,7 @@ def test_is_non_empty_string_returns_true_only_for_usable_strings() -> None:
     - confirm only real non-empty strings return `True`
     """
 
-    assert providers._is_non_empty_string("gpt-5.4") is True
+    assert providers._is_non_empty_string("gpt-4.1-mini") is True
     assert providers._is_non_empty_string(" sk-test-value ") is True
 
     assert providers._is_non_empty_string("") is False

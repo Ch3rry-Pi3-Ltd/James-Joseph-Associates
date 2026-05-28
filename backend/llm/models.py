@@ -199,7 +199,7 @@ class ModelProfile:
 
         Example:
 
-            "gpt-5.4"
+            "gpt-4.1-mini"
 
         This module does not validate whether the model currently exists. That
         should happen later in the provider-specific code or documentation checks.
@@ -236,7 +236,7 @@ class ModelProfile:
 
         profile = ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.REASONING,
             temperature=0.2,
             max_output_tokens=1200,
@@ -262,7 +262,7 @@ class ModelProfile:
 #   - It gives tests and future graph code a stable default to import.
 DEFAULT_UTILITY_MODEL_PROFILE = ModelProfile(
     provider=ModelProvider.OPENAI,
-    model_name="gpt-5.4-mini",
+    model_name="gpt-4.1-mini",
     purpose=ModelPurpose.UTILITY,
     temperature=0.0,
     max_output_tokens=500,
@@ -274,7 +274,7 @@ DEFAULT_UTILITY_MODEL_PROFILE = ModelProfile(
 #     agreed.
 DEFAULT_REASONING_MODEL_PROFILE = ModelProfile(
     provider=ModelProvider.OPENAI,
-    model_name="gpt-5.4",
+    model_name="gpt-4.1-mini",
     purpose=ModelPurpose.REASONING,
     temperature=0.2,
     max_output_tokens=1200,
@@ -310,7 +310,7 @@ def is_deterministic_profile(profile: ModelProfile) -> bool:
 
         ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4-mini",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.UTILITY,
             temperature=0.0,
             max_output_tokens=500,
@@ -320,7 +320,7 @@ def is_deterministic_profile(profile: ModelProfile) -> bool:
 
         ModelProfile(
             provider=ModelProvider.OPENAI,
-            model_name="gpt-5.4",
+            model_name="gpt-4.1-mini",
             purpose=ModelPurpose.REASONING,
             temperature=0.2,
             max_output_tokens=1200,

@@ -119,7 +119,7 @@ def _build_sample_result(*, quality_status: str = "pass") -> dict[str, object]:
         "quality_gate": {
             "enabled": True,
             "first_pass_model_name": "gpt-4.1-mini",
-            "fallback_model_name": "gpt-5.4-mini",
+            "fallback_model_name": "gpt-4.1-mini",
             "fallback_invoked": False,
             "final_model_name": "gpt-4.1-mini",
         },

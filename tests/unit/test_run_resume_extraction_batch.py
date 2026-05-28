@@ -538,7 +538,7 @@ def test_build_batch_manifest_record_keeps_quality_metadata() -> None:
             },
             "quality_gate": {
                 "fallback_invoked": True,
-                "final_model_name": "gpt-5.4-mini",
+                "final_model_name": "gpt-4.1-mini",
             },
         },
     )
@@ -550,4 +550,4 @@ def test_build_batch_manifest_record_keeps_quality_metadata() -> None:
     assert record["quality_score"] == 88
     assert record["quality_status"] == "pass"
     assert record["fallback_invoked"] is True
-    assert record["final_model_name"] == "gpt-5.4-mini"
+    assert record["final_model_name"] == "gpt-4.1-mini"

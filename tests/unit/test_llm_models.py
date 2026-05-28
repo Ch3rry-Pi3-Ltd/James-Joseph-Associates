@@ -144,7 +144,7 @@ def test_default_utility_model_profile_is_configured_for_lightweight_work() -> N
     The default utility profile should use:
 
         provider: openai
-        model_name: gpt-5.4-mini
+        model_name: gpt-4.1-mini
         purpose: utility
         temperature: 0.0
         max_output_tokens: 500
@@ -156,7 +156,7 @@ def test_default_utility_model_profile_is_configured_for_lightweight_work() -> N
 
     assert DEFAULT_UTILITY_MODEL_PROFILE == ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4-mini",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.UTILITY,
         temperature=0.0,
         max_output_tokens=500,
@@ -178,7 +178,7 @@ def test_default_reasoning_model_profile_is_configured_for_reasoning_work() -> N
     The default reasoning profile should use:
 
         provider: openai
-        model_name: gpt-5.4
+        model_name: gpt-4.1-mini
         purpose: reasoning
         temperature: 0.2
         max_output_tokens: 1200
@@ -190,7 +190,7 @@ def test_default_reasoning_model_profile_is_configured_for_reasoning_work() -> N
 
     assert DEFAULT_REASONING_MODEL_PROFILE == ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.REASONING,
         temperature=0.2,
         max_output_tokens=1200,
@@ -214,7 +214,7 @@ def test_is_deterministic_profile_returns_true_for_temperature_zero() -> None:
 
     profile = ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4-mini",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.UTILITY,
         temperature=0.0,
         max_output_tokens=500,
@@ -240,7 +240,7 @@ def test_is_deterministic_profile_returns_false_for_non_zero_temperature() -> No
 
     profile = ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.REASONING,
         temperature=0.2,
         max_output_tokens=1200,
@@ -309,7 +309,7 @@ def test_model_profile_is_immutable() -> None:
 
     profile = ModelProfile(
         provider=ModelProvider.OPENAI,
-        model_name="gpt-5.4-mini",
+        model_name="gpt-4.1-mini",
         purpose=ModelPurpose.UTILITY,
         temperature=0.0,
         max_output_tokens=500,

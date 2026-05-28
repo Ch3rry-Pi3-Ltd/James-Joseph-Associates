@@ -172,7 +172,7 @@ def test_extract_outlook_candidate_resume_profile_with_quality_gate_uses_fallbac
                 "quality_assessment": {"status": "rerun", "quality_score": 61},
             },
             {
-                "model_profile": {"model_name": "gpt-5.4-mini"},
+                "model_profile": {"model_name": "gpt-4.1-mini"},
                 "quality_assessment": {"status": "pass", "quality_score": 88},
             },
         ]
@@ -195,6 +195,6 @@ def test_extract_outlook_candidate_resume_profile_with_quality_gate_uses_fallbac
     built_model_names = [
         call.kwargs["profile"].model_name for call in mock_builder.call_args_list
     ]
-    assert built_model_names == ["gpt-4.1-mini", "gpt-5.4-mini"]
+    assert built_model_names == ["gpt-4.1-mini", "gpt-4.1-mini"]
     assert result["quality_gate"]["fallback_invoked"] is True
-    assert result["quality_gate"]["final_model_name"] == "gpt-5.4-mini"
+    assert result["quality_gate"]["final_model_name"] == "gpt-4.1-mini"
