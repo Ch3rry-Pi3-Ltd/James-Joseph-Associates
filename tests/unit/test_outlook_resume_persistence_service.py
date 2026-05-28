@@ -126,6 +126,11 @@ def test_build_outlook_resume_persistence_payload_keeps_key_provenance() -> None
         message=_build_sample_message(),
         attachment_download=_build_sample_attachment_download(),
         extracted_resume_text=_build_sample_extracted_resume_text(),
+        quality_assessment={
+            "status": "review",
+            "quality_score": 70,
+            "reasons": ["thin_cv"],
+        },
     )
 
     assert payload["source_system"] == "outlook_resume"
@@ -138,6 +143,8 @@ def test_build_outlook_resume_persistence_payload_keeps_key_provenance() -> None
         "AAMkAGI2-attachment"
     )
     assert payload["resume_title"].endswith(".pdf")
+    assert payload["quality_status"] == "review"
+    assert payload["quality_score"] == 70
     assert payload["resume_source_uri"] == (
         "outlook://users/b4dd6a5f-8e27-4745-9369-e117121382ed/mailboxes/me/"
         "messages/AAMkAGI2-message/attachments/AAMkAGI2-attachment"
@@ -181,6 +188,7 @@ def test_persist_outlook_message_attachment_resume_delegates_to_db_helper() -> N
             message=_build_sample_message(),
             attachment_download=_build_sample_attachment_download(),
             extracted_resume_text=_build_sample_extracted_resume_text(),
+            quality_assessment={"status": "review", "quality_score": 70},
         )
 
     assert summary == {

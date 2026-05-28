@@ -70,7 +70,8 @@ def get_review_overview_route(
             "recent_jobs": [...],
             "recent_applications": [...],
             "recent_documents": [...],
-            "recent_source_records": [...]
+            "recent_source_records": [...],
+            "recent_reconciliation_decisions": [...]
         }
 
     In plain language:

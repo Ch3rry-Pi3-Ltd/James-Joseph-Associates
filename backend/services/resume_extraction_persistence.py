@@ -491,9 +491,9 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
     extraction into canonical state.
     """
 
-    if result.get("source_system") not in {"jobadder", "recruiterflow"}:
+    if result.get("source_system") not in {"jobadder", "recruiterflow", "outlook"}:
         raise RuntimeError(
-            "Only JobAdder and Recruiterflow extraction results are currently supported for persistence."
+            "Only JobAdder, Recruiterflow, and Outlook extraction results are currently supported for persistence."
         )
 
     quality_assessment = result.get("quality_assessment")
@@ -679,6 +679,9 @@ def _build_resume_source_uri(
             f"recruiterflow://{export_source_uri}/candidates/"
             f"{source_candidate_id}/files/{attachment_id}"
         )
+
+    if source_system == "outlook":
+        return None
 
     return None
 

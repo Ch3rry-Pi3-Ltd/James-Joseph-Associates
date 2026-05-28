@@ -1,0 +1,192 @@
+{
+  "resolved_folder": {
+    "folder_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AAA=",
+    "folder": {
+      "id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AAA=",
+      "displayName": "tw394",
+      "parentFolderId": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAe-oW3UAAA=",
+      "childFolderCount": 0,
+      "unreadItemCount": 171,
+      "totalItemCount": 171,
+      "sizeInBytes": 56157280,
+      "isHidden": false
+    },
+    "resolved_path": [
+      "Inbox",
+      "# ADV-CVR",
+      "### DOMINIQUE FOLDER",
+      "tw394"
+    ],
+    "resolved_folders": [
+      {
+        "id": "AQMkADBmM2ZjNmZjLTk0ZGQALTRiOGYtYjYwMi0yOTQ1Y2Q0MWM1YmUALgAAA70zfGFwdRNJvKESNdhYxY4BAKPT4_af625AgGuhfrOxhmQAAAIBDAAAAA==",
+        "displayName": "Inbox",
+        "parentFolderId": "AQMkADBmM2ZjNmZjLTk0ZGQALTRiOGYtYjYwMi0yOTQ1Y2Q0MWM1YmUALgAAA70zfGFwdRNJvKESNdhYxY4BAKPT4_af625AgGuhfrOxhmQAAAIBCAAAAA==",
+        "childFolderCount": 10,
+        "unreadItemCount": 100507,
+        "totalItemCount": 140216,
+        "sizeInBytes": 26615255322,
+        "isHidden": false
+      },
+      {
+        "id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAALYBDDsAAA=",
+        "displayName": "# ADV-CVR",
+        "parentFolderId": "AQMkADBmM2ZjNmZjLTk0ZGQALTRiOGYtYjYwMi0yOTQ1Y2Q0MWM1YmUALgAAA70zfGFwdRNJvKESNdhYxY4BAKPT4_af625AgGuhfrOxhmQAAAIBDAAAAA==",
+        "childFolderCount": 5,
+        "unreadItemCount": 452,
+        "totalItemCount": 600,
+        "sizeInBytes": 150718531,
+        "isHidden": false
+      },
+      {
+        "id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAe-oW3UAAA=",
+        "displayName": "### DOMINIQUE FOLDER",
+        "parentFolderId": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAALYBDDsAAA=",
+        "childFolderCount": 6,
+        "unreadItemCount": 0,
+        "totalItemCount": 5,
+        "sizeInBytes": 668196,
+        "isHidden": false
+      },
+      {
+        "id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AAA=",
+        "displayName": "tw394",
+        "parentFolderId": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAe-oW3UAAA=",
+        "childFolderCount": 0,
+        "unreadItemCount": 171,
+        "totalItemCount": 171,
+        "sizeInBytes": 56157280,
+        "isHidden": false
+      }
+    ]
+  },
+  "ingest_report": {
+    "microsoft_user_id": "b4dd6a5f-8e27-4745-9369-e117121382ed",
+    "mailbox": null,
+    "folder_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQAuAAAAAAC9M3xhcHUTSbyhEjXYWMWOAQCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AAA=",
+    "folder_path": [
+      "Inbox",
+      "# ADV-CVR",
+      "### DOMINIQUE FOLDER",
+      "tw394"
+    ],
+    "message_limit": 10,
+    "attachment_limit": 6,
+    "message_count_scanned": 10,
+    "ingested_count": 6,
+    "skipped_count": 0,
+    "failed_count": 0,
+    "ingested_items": [
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfv1vQyAAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfv1vQyAAABEgAQAGWkHMiI7ixOvmfILATNIU0=",
+        "message_subject": "sulaimanalikhan710@gmail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "SULAIMAN MOHAMMED (412c3f29-e0be-4888-981a-4ae29d524ae2 - Totaljobs).pdf",
+        "content_type": "application/pdf",
+        "byte_count": 54656,
+        "extractor": "pypdf",
+        "character_count": 6185,
+        "quality_status": "pass",
+        "quality_score": 92,
+        "tw_code": "tw394",
+        "document_id": "5cc458b8-e02e-4418-962c-fabaf5faeb66",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/SULAIMAN MOHAMMED (412c3f29-e0be-4888-981a-4ae29d524ae2 - Totaljobs).pdf",
+        "message_source_record_id": "09e8e71b-03d5-4d9b-83c4-e037502264a3",
+        "attachment_source_record_id": "06b3c407-6171-42d7-a3c5-cdc88f48570d"
+      },
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfkNmvjAAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfkNmvjAAABEgAQABsjfdhnkPlBnzB-QxJjk10=",
+        "message_subject": "thomasmitchell.1384@gmail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "Thomas Mitchell (647a7ca7-f04d-43a0-a6d2-8b9aa1e9f3c8 - Totaljobs).docx",
+        "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "byte_count": 10782,
+        "extractor": "docx_xml",
+        "character_count": 3587,
+        "quality_status": "review",
+        "quality_score": 70,
+        "tw_code": "tw394",
+        "document_id": "08f857b7-2643-4e4d-9789-ac82dbc1bfbd",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/Thomas Mitchell (647a7ca7-f04d-43a0-a6d2-8b9aa1e9f3c8 - Totaljobs).docx",
+        "message_source_record_id": "7a911d0a-ae0c-4830-9bbf-f11690c8b237",
+        "attachment_source_record_id": "4e580dd2-d26a-41c4-a521-bd7cdc07042b"
+      },
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAff91T2AAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAff91T2AAABEgAQAC0G31Hn-C9JjttS9vXBTV4=",
+        "message_subject": "jameswmilo@gmail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "James Flynn (e68df599-2cd1-468b-a14c-319afeb7e02d - Totaljobs).pdf",
+        "content_type": "application/pdf",
+        "byte_count": 52899,
+        "extractor": "pypdf",
+        "character_count": 1679,
+        "quality_status": "pass",
+        "quality_score": 100,
+        "tw_code": "tw394",
+        "document_id": "1d283598-e092-4f9e-b9e0-519a160a2b0f",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/James Flynn (e68df599-2cd1-468b-a14c-319afeb7e02d - Totaljobs).pdf",
+        "message_source_record_id": "04849248-7416-4b2b-8731-0cbcab95c19c",
+        "attachment_source_record_id": "ae52ea2b-bb68-4460-bc9d-a3d7a7094c8b"
+      },
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfeo1wrAAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfeo1wrAAABEgAQALKRive-I1lLpbXNY_L6sWw=",
+        "message_subject": "americasummer@outlook.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "America Summer (190f4faf-7f5b-4547-ba3f-6e3d0579d7e8 - Totaljobs).pdf",
+        "content_type": "application/pdf",
+        "byte_count": 39780,
+        "extractor": "pypdf",
+        "character_count": 2723,
+        "quality_status": "review",
+        "quality_score": 70,
+        "tw_code": "tw394",
+        "document_id": "29707c7f-be38-44bf-8338-fd1702e7bf2e",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/America Summer (190f4faf-7f5b-4547-ba3f-6e3d0579d7e8 - Totaljobs).pdf",
+        "message_source_record_id": "80810011-bdbd-4967-9eaf-8f9fc33d6f07",
+        "attachment_source_record_id": "9d8cbf60-cc19-449d-ae32-09ee3c0cce41"
+      },
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfZ-rHqAAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfZ-rHqAAABEgAQAD996aDpqeZBv8yI0RK6SGM=",
+        "message_subject": "manesh.gosai@gmail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "Manesh Gosai (b0bff21f-af65-4be8-960a-c9c0dd31d836 - Totaljobs).pdf",
+        "content_type": "application/pdf",
+        "byte_count": 120974,
+        "extractor": "pypdf",
+        "character_count": 6522,
+        "quality_status": "review",
+        "quality_score": 70,
+        "tw_code": "tw394",
+        "document_id": "04fd7009-6d36-496a-a3db-7fef13bbcb75",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/Manesh Gosai (b0bff21f-af65-4be8-960a-c9c0dd31d836 - Totaljobs).pdf",
+        "message_source_record_id": "9c1e939e-ed51-46ea-8c3f-a73b07df9b63",
+        "attachment_source_record_id": "accbfd0f-9d68-481a-9a1a-3e8407968a9f"
+      },
+      {
+        "message_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfZ-rHpAAA=",
+        "attachment_id": "AAMkADBmM2ZjNmZjLTk0ZGQtNGI4Zi1iNjAyLTI5NDVjZDQxYzViZQBGAAAAAAC9M3xhcHUTSbyhEjXYWMWOBwCj0_Pmn_tuQIBroX6zsYZkAAfPRw74AACj0_Pmn_tuQIBroX6zsYZkAAfZ-rHpAAABEgAQADd7_IfaKEFAkmogH661sww=",
+        "message_subject": "781wahid@googlemail.com - Totaljobs - Suitable application for Junior Desktop Engineer - Hedge Fund tw394",
+        "file_name": "wahid haque (c8edc310-2552-4025-b26c-35c461afec70 - Totaljobs).docx",
+        "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "byte_count": 29216,
+        "extractor": "docx_xml",
+        "character_count": 2533,
+        "quality_status": "pass",
+        "quality_score": 100,
+        "tw_code": "tw394",
+        "document_id": "6e443858-cd42-4fc1-aaf5-0654c1dba17c",
+        "resolved_job_id": "8279afc7-6525-4fc7-bb3a-e6e8ffb82b35",
+        "dropbox_export_path": "/+++ Outlook Email CV Export/wahid haque (c8edc310-2552-4025-b26c-35c461afec70 - Totaljobs).docx",
+        "message_source_record_id": "8e130d86-f906-4506-9f6a-2b96605f779e",
+        "attachment_source_record_id": "2bacae3c-fa89-4785-b6df-5f8870fa232f"
+      }
+    ],
+    "skipped_items": [],
+    "failed_items": []
+  }
+}

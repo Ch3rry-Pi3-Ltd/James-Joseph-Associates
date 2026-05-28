@@ -206,6 +206,24 @@ def persist_resume_extraction_snapshot(
                     sync_status="accepted",
                 )
 
+            existing_document_id = _find_existing_resume_document_id(
+                cursor,
+                source_record_id=(
+                    resume_source_record["id"] if resume_source_record is not None else None
+                ),
+                content_hash=persistence_payload.get("resume_content_hash"),
+            )
+            preferred_person_id = _find_document_linked_entity_id(
+                cursor,
+                document_id=existing_document_id,
+                entity_column="person_id",
+            )
+            preferred_candidate_id = _find_document_linked_entity_id(
+                cursor,
+                document_id=existing_document_id,
+                entity_column="candidate_id",
+            )
+
             extraction_source_record = _upsert_source_record(
                 cursor,
                 source_system=source_system,
@@ -228,7 +246,7 @@ def persist_resume_extraction_snapshot(
             # Link-or-create the canonical entities after the source records
             # exist so later link tables can tie both provenance and canonical
             # rows back to the same accepted extraction event.
-            person_id = _upsert_person(
+            person_id, person_reconciliation = _upsert_person_with_reconciliation(
                 cursor,
                 source_record_id=candidate_source_record["id"],
                 full_name=persistence_payload["full_name"],
@@ -240,9 +258,10 @@ def persist_resume_extraction_snapshot(
                 location=persistence_payload.get("location"),
                 headline=persistence_payload.get("headline"),
                 summary=persistence_payload.get("summary"),
+                preferred_person_id=preferred_person_id,
             )
 
-            candidate_id = _upsert_candidate(
+            candidate_id, candidate_reconciliation = _upsert_candidate_with_reconciliation(
                 cursor,
                 source_record_id=candidate_source_record["id"],
                 person_id=person_id,
@@ -252,6 +271,7 @@ def persist_resume_extraction_snapshot(
                 availability_status=persistence_payload.get("availability_status"),
                 last_contacted_at=persistence_payload.get("last_contacted_at"),
                 resume_updated_at=persistence_payload.get("resume_updated_at"),
+                preferred_candidate_id=preferred_candidate_id,
             )
 
             document_id: str | None = None
@@ -264,6 +284,7 @@ def persist_resume_extraction_snapshot(
                     source_uri=persistence_payload.get("resume_source_uri"),
                     content_hash=persistence_payload.get("resume_content_hash"),
                     extracted_text=persistence_payload.get("cleaned_resume_text"),
+                    existing_document_id=existing_document_id,
                 )
 
             # Keep one source-record link row per canonical target rather than
@@ -349,6 +370,16 @@ def persist_resume_extraction_snapshot(
                     else None,
                 )
 
+            reconciliation_decision = _upsert_reconciliation_decision(
+                cursor,
+                source_record_id=extraction_source_record["id"],
+                document_id=document_id,
+                person_id=person_id,
+                candidate_id=candidate_id,
+                person_reconciliation=person_reconciliation,
+                candidate_reconciliation=candidate_reconciliation,
+            )
+
             linked_skill_ids = _refresh_candidate_skills(
                 cursor,
                 candidate_id=candidate_id,
@@ -384,6 +415,8 @@ def persist_resume_extraction_snapshot(
             "extraction_source_record_id": extraction_source_record["id"],
             "candidate_skill_count": len(linked_skill_ids),
             "candidate_note_interaction_count": len(note_interaction_ids),
+            "reconciliation_decision_id": reconciliation_decision["id"],
+            "reconciliation_status": reconciliation_decision["decision_status"],
             "quality_status": persistence_payload.get("quality_status"),
         }
     )
@@ -478,7 +511,7 @@ def persist_jobadder_candidate_profile_snapshot(
             # accepted CV path so a later resume-backed write can converge on
             # the same rows instead of fragmenting the candidate into two
             # parallel identities.
-            person_id = _upsert_person(
+            person_id, person_reconciliation = _upsert_person_with_reconciliation(
                 cursor,
                 source_record_id=candidate_source_record["id"],
                 full_name=persistence_payload["full_name"],
@@ -492,7 +525,7 @@ def persist_jobadder_candidate_profile_snapshot(
                 summary=persistence_payload.get("summary"),
             )
 
-            candidate_id = _upsert_candidate(
+            candidate_id, candidate_reconciliation = _upsert_candidate_with_reconciliation(
                 cursor,
                 source_record_id=candidate_source_record["id"],
                 person_id=person_id,
@@ -538,6 +571,15 @@ def persist_jobadder_candidate_profile_snapshot(
                     "cleaned_candidate_notes", []
                 ),
             )
+            reconciliation_decision = _upsert_reconciliation_decision(
+                cursor,
+                source_record_id=profile_source_record["id"],
+                document_id=None,
+                person_id=person_id,
+                candidate_id=candidate_id,
+                person_reconciliation=person_reconciliation,
+                candidate_reconciliation=candidate_reconciliation,
+            )
 
         connection.commit()
 
@@ -558,6 +600,8 @@ def persist_jobadder_candidate_profile_snapshot(
             "extraction_source_record_id": profile_source_record["id"],
             "candidate_skill_count": 0,
             "candidate_note_interaction_count": len(note_interaction_ids),
+            "reconciliation_decision_id": reconciliation_decision["id"],
+            "reconciliation_status": reconciliation_decision["decision_status"],
             "quality_status": "profile_only",
             "profile_persistence_reason": persistence_payload.get(
                 "profile_persistence_reason"
@@ -767,7 +811,50 @@ def _upsert_person(
     location: str | None,
     headline: str | None,
     summary: str | None,
+    preferred_person_id: str | None = None,
 ) -> str:
+    """
+    Find or create the canonical person row for the candidate.
+
+    Notes
+    -----
+    This is the compatibility wrapper that returns only the canonical person ID.
+    The full reconciliation-aware helper also returns decision metadata for the
+    review queue.
+    """
+
+    person_id, _ = _upsert_person_with_reconciliation(
+        cursor,
+        source_record_id=source_record_id,
+        full_name=full_name,
+        first_name=first_name,
+        last_name=last_name,
+        primary_email=primary_email,
+        primary_phone=primary_phone,
+        linkedin_url=linkedin_url,
+        location=location,
+        headline=headline,
+        summary=summary,
+        preferred_person_id=preferred_person_id,
+    )
+    return person_id
+
+
+def _upsert_person_with_reconciliation(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str,
+    full_name: str,
+    first_name: str | None,
+    last_name: str | None,
+    primary_email: str | None,
+    primary_phone: str | None,
+    linkedin_url: str | None,
+    location: str | None,
+    headline: str | None,
+    summary: str | None,
+    preferred_person_id: str | None = None,
+) -> tuple[str, dict[str, Any]]:
     """
     Find or create the canonical person row for the candidate.
 
@@ -776,9 +863,11 @@ def _upsert_person(
     The lookup order is intentionally conservative:
 
     1. existing link from the candidate source record
-    2. existing LinkedIn URL match
-    3. existing primary-email match
-    4. otherwise create a new person row
+    2. person already linked to the same canonical resume document
+    3. existing LinkedIn URL match
+    4. existing primary-email match
+    5. existing primary-phone match
+    6. otherwise create a new person row
 
     This avoids inventing fuzzy matching rules inside the first write helper.
 
@@ -791,41 +880,17 @@ def _upsert_person(
 
     then an existing `people` row with that exact LinkedIn URL is reused.
     """
-
-    existing_person_id = _find_linked_entity_id(
+    resolution = _resolve_person_reconciliation(
         cursor,
         source_record_id=source_record_id,
-        entity_column="person_id",
+        preferred_person_id=preferred_person_id,
+        linkedin_url=linkedin_url,
+        primary_email=primary_email,
+        primary_phone=primary_phone,
     )
-    if existing_person_id is None and linkedin_url:
-        cursor.execute(
-            """
-            select id
-            from people
-            where linkedin_url = %(linkedin_url)s
-            limit 1
-            """,
-            {"linkedin_url": linkedin_url},
-        )
-        row = cursor.fetchone()
-        if row is not None:
-            existing_person_id = row["id"]
 
-    if existing_person_id is None and primary_email:
-        cursor.execute(
-            """
-            select id
-            from people
-            where primary_email = %(primary_email)s
-            limit 1
-            """,
-            {"primary_email": primary_email},
-        )
-        row = cursor.fetchone()
-        if row is not None:
-            existing_person_id = row["id"]
-
-    if existing_person_id is None:
+    resolved_person_id = resolution.get("matched_person_id")
+    if resolved_person_id is None:
         cursor.execute(
             """
             insert into people (
@@ -867,7 +932,9 @@ def _upsert_person(
         inserted_row = cursor.fetchone()
         if inserted_row is None:
             raise RuntimeError("Failed to create person row.")
-        return inserted_row["id"]
+        inserted_person_id = inserted_row["id"]
+        resolution["matched_person_id"] = inserted_person_id
+        return inserted_person_id, resolution
 
     cursor.execute(
         """
@@ -885,7 +952,7 @@ def _upsert_person(
         where id = %(person_id)s
         """,
         {
-            "person_id": existing_person_id,
+            "person_id": resolved_person_id,
             "full_name": full_name,
             "first_name": first_name,
             "last_name": last_name,
@@ -897,7 +964,7 @@ def _upsert_person(
             "summary": summary,
         },
     )
-    return existing_person_id
+    return resolved_person_id, resolution
 
 
 def _upsert_candidate(
@@ -911,7 +978,45 @@ def _upsert_candidate(
     availability_status: str | None,
     last_contacted_at: str | None,
     resume_updated_at: str | None,
+    preferred_candidate_id: str | None = None,
 ) -> str:
+    """
+    Find or create the canonical candidate row for the person.
+
+    Notes
+    -----
+    This compatibility wrapper preserves the older return type while the
+    reconciliation-aware helper now also returns decision metadata.
+    """
+
+    candidate_id, _ = _upsert_candidate_with_reconciliation(
+        cursor,
+        source_record_id=source_record_id,
+        person_id=person_id,
+        current_title=current_title,
+        current_company_id=current_company_id,
+        candidate_status=candidate_status,
+        availability_status=availability_status,
+        last_contacted_at=last_contacted_at,
+        resume_updated_at=resume_updated_at,
+        preferred_candidate_id=preferred_candidate_id,
+    )
+    return candidate_id
+
+
+def _upsert_candidate_with_reconciliation(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str,
+    person_id: str,
+    current_title: str | None,
+    current_company_id: str | None,
+    candidate_status: str | None,
+    availability_status: str | None,
+    last_contacted_at: str | None,
+    resume_updated_at: str | None,
+    preferred_candidate_id: str | None = None,
+) -> tuple[str, dict[str, Any]]:
     """
     Find or create the canonical candidate row for the person.
 
@@ -927,27 +1032,15 @@ def _upsert_candidate(
     already has a canonical candidate row, this helper updates that row rather
     than inserting a duplicate candidate.
     """
-
-    existing_candidate_id = _find_linked_entity_id(
+    resolution = _resolve_candidate_reconciliation(
         cursor,
         source_record_id=source_record_id,
-        entity_column="candidate_id",
+        person_id=person_id,
+        preferred_candidate_id=preferred_candidate_id,
     )
-    if existing_candidate_id is None:
-        cursor.execute(
-            """
-            select id
-            from candidates
-            where person_id = %(person_id)s
-            limit 1
-            """,
-            {"person_id": person_id},
-        )
-        row = cursor.fetchone()
-        if row is not None:
-            existing_candidate_id = row["id"]
 
-    if existing_candidate_id is None:
+    resolved_candidate_id = resolution.get("matched_candidate_id")
+    if resolved_candidate_id is None:
         cursor.execute(
             """
             insert into candidates (
@@ -983,7 +1076,9 @@ def _upsert_candidate(
         inserted_row = cursor.fetchone()
         if inserted_row is None:
             raise RuntimeError("Failed to create candidate row.")
-        return inserted_row["id"]
+        inserted_candidate_id = inserted_row["id"]
+        resolution["matched_candidate_id"] = inserted_candidate_id
+        return inserted_candidate_id, resolution
 
     cursor.execute(
         """
@@ -1010,7 +1105,7 @@ def _upsert_candidate(
         where id = %(candidate_id)s
         """,
         {
-            "candidate_id": existing_candidate_id,
+            "candidate_id": resolved_candidate_id,
             "current_title": current_title,
             "current_company_id": current_company_id,
             "candidate_status": candidate_status,
@@ -1019,7 +1114,243 @@ def _upsert_candidate(
             "resume_updated_at": resume_updated_at,
         },
     )
-    return existing_candidate_id
+    return resolved_candidate_id, resolution
+
+
+def _resolve_person_reconciliation(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str,
+    preferred_person_id: str | None,
+    linkedin_url: str | None,
+    primary_email: str | None,
+    primary_phone: str | None,
+) -> dict[str, Any]:
+    """
+    Resolve the strongest current person match for one incoming CV snapshot.
+
+    Notes
+    -----
+    The resolution order is intentionally strict:
+
+    1. existing source-record link
+    2. person already linked to the matched resume document
+    3. exact LinkedIn URL
+    4. exact email
+    5. exact phone
+    6. otherwise create a new canonical person
+
+    If any of the soft identity signals produce more than one match, the helper
+    records a `needs_review` decision instead of guessing.
+    """
+
+    linked_person_id = _find_linked_entity_id(
+        cursor,
+        source_record_id=source_record_id,
+        entity_column="person_id",
+    )
+    if linked_person_id is not None:
+        return {
+            "decision_status": "auto_matched",
+            "decision_reason": "source_record_link",
+            "confidence": 1.0,
+            "matched_person_id": linked_person_id,
+            "evidence_payload": {"matched_person_ids": [str(linked_person_id)]},
+        }
+
+    if preferred_person_id is not None:
+        return {
+            "decision_status": "auto_matched",
+            "decision_reason": "resume_document_link",
+            "confidence": 0.99,
+            "matched_person_id": preferred_person_id,
+            "evidence_payload": {
+                "matched_person_ids": [str(preferred_person_id)],
+            },
+        }
+
+    for column_name, signal_value, reason, confidence in (
+        ("linkedin_url", linkedin_url, "linkedin_exact_match", 0.98),
+        ("primary_email", primary_email, "email_exact_match", 0.95),
+        ("primary_phone", primary_phone, "phone_exact_match", 0.93),
+    ):
+        if not signal_value:
+            continue
+
+        matched_person_ids = _find_person_ids_by_field(
+            cursor,
+            field_name=column_name,
+            field_value=signal_value,
+        )
+        if len(matched_person_ids) == 1:
+            return {
+                "decision_status": "auto_matched",
+                "decision_reason": reason,
+                "confidence": confidence,
+                "matched_person_id": matched_person_ids[0],
+                "evidence_payload": {
+                    "matched_person_ids": [str(matched_person_ids[0])],
+                    "matched_field": column_name,
+                    "matched_value": signal_value,
+                },
+            }
+        if len(matched_person_ids) > 1:
+            return {
+                "decision_status": "needs_review",
+                "decision_reason": f"ambiguous_{column_name}_match",
+                "confidence": 0.55,
+                "matched_person_id": None,
+                "evidence_payload": {
+                    "matched_person_ids": [str(person_id) for person_id in matched_person_ids],
+                    "matched_field": column_name,
+                    "matched_value": signal_value,
+                },
+            }
+
+    return {
+        "decision_status": "created_new",
+        "decision_reason": "no_existing_person_match",
+        "confidence": 0.2,
+        "matched_person_id": None,
+        "evidence_payload": {},
+    }
+
+
+def _resolve_candidate_reconciliation(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str,
+    person_id: str,
+    preferred_candidate_id: str | None,
+) -> dict[str, Any]:
+    """
+    Resolve the strongest current candidate match for one canonical person.
+
+    Notes
+    -----
+    Candidate resolution is narrower than person resolution because the schema
+    already enforces one candidate row per person.
+
+    The main remaining ambiguity is when the resume-document path points at one
+    candidate row while the resolved person already points at another. That is
+    rare, but when it happens we record `needs_review` rather than silently
+    choosing one explanation and discarding the other.
+    """
+
+    linked_candidate_id = _find_linked_entity_id(
+        cursor,
+        source_record_id=source_record_id,
+        entity_column="candidate_id",
+    )
+    if linked_candidate_id is not None:
+        return {
+            "decision_status": "auto_matched",
+            "decision_reason": "source_record_link",
+            "confidence": 1.0,
+            "matched_candidate_id": linked_candidate_id,
+            "evidence_payload": {
+                "matched_candidate_ids": [str(linked_candidate_id)],
+            },
+        }
+
+    person_candidate_id = _find_candidate_id_by_person_id(cursor, person_id=person_id)
+    if (
+        preferred_candidate_id is not None
+        and person_candidate_id is not None
+        and preferred_candidate_id != person_candidate_id
+    ):
+        return {
+            "decision_status": "needs_review",
+            "decision_reason": "document_candidate_conflicts_with_person_candidate",
+            "confidence": 0.6,
+            "matched_candidate_id": person_candidate_id,
+            "evidence_payload": {
+                "matched_candidate_ids": [
+                    str(person_candidate_id),
+                    str(preferred_candidate_id),
+                ],
+            },
+        }
+
+    if preferred_candidate_id is not None:
+        return {
+            "decision_status": "auto_matched",
+            "decision_reason": "resume_document_link",
+            "confidence": 0.99,
+            "matched_candidate_id": preferred_candidate_id,
+            "evidence_payload": {
+                "matched_candidate_ids": [str(preferred_candidate_id)],
+            },
+        }
+
+    if person_candidate_id is not None:
+        return {
+            "decision_status": "auto_matched",
+            "decision_reason": "person_unique_candidate",
+            "confidence": 0.94,
+            "matched_candidate_id": person_candidate_id,
+            "evidence_payload": {
+                "matched_candidate_ids": [str(person_candidate_id)],
+            },
+        }
+
+    return {
+        "decision_status": "created_new",
+        "decision_reason": "no_existing_candidate_match",
+        "confidence": 0.2,
+        "matched_candidate_id": None,
+        "evidence_payload": {},
+    }
+
+
+def _find_person_ids_by_field(
+    cursor: Cursor[Any],
+    *,
+    field_name: Literal["linkedin_url", "primary_email", "primary_phone"],
+    field_value: str,
+) -> list[str]:
+    """
+    Return all canonical person IDs that exactly match one identity field.
+
+    Example
+    -------
+    If two people rows share the same imported email, both IDs are returned so
+    the caller can record a review-needed reconciliation decision.
+    """
+
+    cursor.execute(
+        f"""
+        select id
+        from people
+        where {field_name} = %(field_value)s
+        """,
+        {"field_value": field_value},
+    )
+    return [row["id"] for row in cursor.fetchall()]
+
+
+def _find_candidate_id_by_person_id(
+    cursor: Cursor[Any],
+    *,
+    person_id: str,
+) -> str | None:
+    """
+    Return the one canonical candidate row already attached to a person.
+    """
+
+    cursor.execute(
+        """
+        select id
+        from candidates
+        where person_id = %(person_id)s
+        limit 1
+        """,
+        {"person_id": person_id},
+    )
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return row["id"]
 
 
 def _upsert_resume_document(
@@ -1031,6 +1362,7 @@ def _upsert_resume_document(
     source_uri: str | None,
     content_hash: str | None,
     extracted_text: str | None,
+    existing_document_id: str | None = None,
 ) -> str:
     """
     Find or create the canonical resume document row.
@@ -1048,26 +1380,12 @@ def _upsert_resume_document(
     existing canonical resume document row instead of inserting a duplicate.
     """
 
-    existing_document_id = _find_linked_entity_id(
-        cursor,
-        source_record_id=source_record_id,
-        entity_column="document_id",
-    )
-
-    if existing_document_id is None and content_hash:
-        cursor.execute(
-            """
-            select id
-            from documents
-            where document_type = 'resume'
-              and content_hash = %(content_hash)s
-            limit 1
-            """,
-            {"content_hash": content_hash},
+    if existing_document_id is None:
+        existing_document_id = _find_existing_resume_document_id(
+            cursor,
+            source_record_id=source_record_id,
+            content_hash=content_hash,
         )
-        row = cursor.fetchone()
-        if row is not None:
-            existing_document_id = row["id"]
 
     if existing_document_id is None:
         cursor.execute(
@@ -1124,6 +1442,152 @@ def _upsert_resume_document(
         },
     )
     return existing_document_id
+
+
+def _upsert_reconciliation_decision(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str,
+    document_id: str | None,
+    person_id: str,
+    candidate_id: str,
+    person_reconciliation: dict[str, Any],
+    candidate_reconciliation: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Insert or update the current reconciliation decision for one source record.
+
+    Notes
+    -----
+    Reconciliation is stored as data rather than hidden in importer control
+    flow. That gives operators one explicit row explaining whether we:
+
+    - auto-matched onto an existing canonical identity
+    - created a new canonical identity cleanly
+    - or need review because the identity evidence was ambiguous
+
+    Example
+    -------
+    A content-hash match from Recruiterflow onto an existing JobAdder candidate
+    produces an `auto_matched` decision, while two exact email hits produce a
+    `needs_review` decision with both candidate IDs recorded in the evidence.
+    """
+
+    combined_decision = _combine_reconciliation_decisions(
+        person_reconciliation=person_reconciliation,
+        candidate_reconciliation=candidate_reconciliation,
+    )
+
+    cursor.execute(
+        """
+        insert into reconciliation_decisions (
+            source_record_id,
+            document_id,
+            person_id,
+            candidate_id,
+            decision_status,
+            decision_reason,
+            confidence,
+            evidence_payload
+        )
+        values (
+            %(source_record_id)s,
+            %(document_id)s,
+            %(person_id)s,
+            %(candidate_id)s,
+            %(decision_status)s,
+            %(decision_reason)s,
+            %(confidence)s,
+            %(evidence_payload)s
+        )
+        on conflict (source_record_id)
+        do update set
+            document_id = excluded.document_id,
+            person_id = excluded.person_id,
+            candidate_id = excluded.candidate_id,
+            decision_status = excluded.decision_status,
+            decision_reason = excluded.decision_reason,
+            confidence = excluded.confidence,
+            evidence_payload = excluded.evidence_payload
+        returning id, decision_status
+        """,
+        {
+            "source_record_id": source_record_id,
+            "document_id": document_id,
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "decision_status": combined_decision["decision_status"],
+            "decision_reason": combined_decision["decision_reason"],
+            "confidence": combined_decision["confidence"],
+            "evidence_payload": Jsonb(combined_decision["evidence_payload"]),
+        },
+    )
+    row = cursor.fetchone()
+    if row is None:
+        raise RuntimeError("Failed to persist reconciliation decision row.")
+    return dict(row)
+
+
+def _combine_reconciliation_decisions(
+    *,
+    person_reconciliation: dict[str, Any],
+    candidate_reconciliation: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Collapse person and candidate resolution outcomes into one decision row.
+
+    Notes
+    -----
+    The operator page needs one current decision per accepted source record.
+    This helper keeps that top-level status intentionally simple:
+
+    - `needs_review` wins if either entity layer is ambiguous
+    - `created_new` is used when no safe existing identity was available
+    - otherwise the result is `auto_matched`
+    """
+
+    person_status = str(person_reconciliation["decision_status"])
+    candidate_status = str(candidate_reconciliation["decision_status"])
+
+    if "needs_review" in {person_status, candidate_status}:
+        decision_status = "needs_review"
+        decision_reason = (
+            person_reconciliation["decision_reason"]
+            if person_status == "needs_review"
+            else candidate_reconciliation["decision_reason"]
+        )
+    elif "created_new" in {person_status, candidate_status}:
+        decision_status = "created_new"
+        if person_status == "created_new":
+            decision_reason = str(person_reconciliation["decision_reason"])
+        else:
+            decision_reason = str(candidate_reconciliation["decision_reason"])
+    else:
+        decision_status = "auto_matched"
+        decision_reason = (
+            f"{person_reconciliation['decision_reason']} + "
+            f"{candidate_reconciliation['decision_reason']}"
+        )
+
+    confidence_values = [
+        float(value)
+        for value in (
+            person_reconciliation.get("confidence"),
+            candidate_reconciliation.get("confidence"),
+        )
+        if value is not None
+    ]
+    confidence = min(confidence_values) if confidence_values else None
+
+    return {
+        "decision_status": decision_status,
+        "decision_reason": decision_reason,
+        "confidence": confidence,
+        "evidence_payload": {
+            "person_reconciliation": person_reconciliation,
+            "candidate_reconciliation": candidate_reconciliation,
+        },
+    }
 
 
 def _refresh_candidate_skills(
@@ -1686,6 +2150,97 @@ def _upsert_skill(
     if row is None:
         raise RuntimeError("Failed to persist skill row.")
     return row["id"]
+
+
+def _find_existing_resume_document_id(
+    cursor: Cursor[Any],
+    *,
+    source_record_id: str | None,
+    content_hash: str | None,
+) -> str | None:
+    """
+    Return the best existing canonical resume document match.
+
+    Notes
+    -----
+    The lookup order is intentionally conservative:
+
+    1. document already linked to the current source record
+    2. existing resume document with the same content hash
+
+    Example
+    -------
+    If the same CV arrives from Outlook after JobAdder already persisted it,
+    the content-hash lookup can reuse the existing canonical resume document.
+    """
+
+    if source_record_id is not None:
+        linked_document_id = _find_linked_entity_id(
+            cursor,
+            source_record_id=source_record_id,
+            entity_column="document_id",
+        )
+        if linked_document_id is not None:
+            return linked_document_id
+
+    if content_hash:
+        cursor.execute(
+            """
+            select id
+            from documents
+            where document_type = 'resume'
+              and content_hash = %(content_hash)s
+            limit 1
+            """,
+            {"content_hash": content_hash},
+        )
+        row = cursor.fetchone()
+        if row is not None:
+            return row["id"]
+
+    return None
+
+
+def _find_document_linked_entity_id(
+    cursor: Cursor[Any],
+    *,
+    document_id: str | None,
+    entity_column: Literal["person_id", "candidate_id"],
+) -> str | None:
+    """
+    Return one canonical person/candidate already linked to a resume document.
+
+    Notes
+    -----
+    This is the first narrow cross-source reconciliation rule:
+
+    - if the same resume content already maps to one canonical document
+    - and that document already belongs to one person/candidate
+    - reuse those canonical rows before inventing a new identity
+
+    Example
+    -------
+    A content-hash match from Recruiterflow to an existing JobAdder resume can
+    resolve straight back to the same canonical candidate.
+    """
+
+    if document_id is None:
+        return None
+
+    cursor.execute(
+        f"""
+        select {entity_column}
+        from document_links
+        where document_id = %(document_id)s
+          and {entity_column} is not null
+        limit 1
+        """,
+        {"document_id": document_id},
+    )
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return row[entity_column]
 
 
 def _find_linked_entity_id(

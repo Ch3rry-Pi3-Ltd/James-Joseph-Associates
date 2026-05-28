@@ -1,0 +1,51 @@
+{
+  "persisted_at": "2026-05-28T13:41:31.014108+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1.100.json",
+  "candidate_limit": 5,
+  "accepted_resume_limit": 1,
+  "candidate_count": 5,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "unsupported_count": 0,
+  "failed_count": 5,
+  "persisted_resume_preview": [],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 4847,
+      "file_name": "Bernardita Gutierrez CV EN 03-2026.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "TypeError",
+      "message": "Object of type UUID is not JSON serializable"
+    },
+    {
+      "source_candidate_id": 4846,
+      "file_name": "PROFESSIONAL RESUME - RASHMI.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "TypeError",
+      "message": "Object of type UUID is not JSON serializable"
+    },
+    {
+      "source_candidate_id": 4845,
+      "file_name": "CV_IT.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "TypeError",
+      "message": "Object of type UUID is not JSON serializable"
+    },
+    {
+      "source_candidate_id": 4844,
+      "file_name": "Justice Chiurunga. Finance.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "TypeError",
+      "message": "Object of type UUID is not JSON serializable"
+    },
+    {
+      "source_candidate_id": 4843,
+      "file_name": "RAJAN SINGH.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "TypeError",
+      "message": "Object of type UUID is not JSON serializable"
+    }
+  ]
+}

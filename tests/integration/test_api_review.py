@@ -37,8 +37,10 @@ def test_review_overview_route_returns_compact_payload() -> None:
         "recent_applications": [{"application_id": "app-1"}],
         "recent_documents": [{"document_id": "doc-1"}],
         "recent_source_records": [{"source_record_uuid": "src-1"}],
+        "recent_reconciliation_decisions": [{"reconciliation_decision_id": "rec-1"}],
         "document_type_counts": [{"document_type": "candidate_attachment"}],
         "source_system_counts": [{"source_system": "recruiterflow"}],
+        "reconciliation_status_counts": [{"decision_status": "needs_review"}],
     }
 
     with patch(

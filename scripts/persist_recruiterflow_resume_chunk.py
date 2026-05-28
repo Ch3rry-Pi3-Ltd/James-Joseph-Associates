@@ -4,7 +4,6 @@ Persist one Recruiterflow candidate chunk through the canonical resume path.
 This script replaces the earlier attachment-first Recruiterflow proof scripts.
 It keeps the important behavior aligned with JobAdder:
 
-- persist the canonical candidate snapshot first
 - extract resume text from the embedded ZIP CV file
 - run the same LLM-backed structured extraction layer
 - persist only accepted results into the canonical `resume` document model
@@ -20,13 +19,8 @@ from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
 
-from backend.llm.providers import build_langchain_chat_model
 from backend.services.recruiterflow_resume_extraction import (
-    extract_recruiterflow_candidate_resume_profile,
-)
-from backend.services.recruiterflow_import import persist_recruiterflow_candidate
-from backend.services.resume_extraction import (
-    DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
+    extract_recruiterflow_candidate_resume_profile_with_quality_gate,
 )
 from backend.services.resume_extraction_persistence import (
     persist_accepted_resume_extraction_result,
@@ -44,6 +38,8 @@ from scripts.persist_recruiterflow_initial_chunks import (
 
 DEFAULT_CANDIDATE_MEMBER_NAME = "candidate/1.100.json"
 SUPPORTED_RESUME_SUFFIXES = (".pdf", ".docx", ".doc", ".rtf", ".txt")
+DEFAULT_CANDIDATE_LIMIT = 10
+DEFAULT_ACCEPTED_RESUME_LIMIT = 10
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +54,18 @@ def parse_args() -> argparse.Namespace:
         "--candidate-member",
         default=DEFAULT_CANDIDATE_MEMBER_NAME,
         help="ZIP member name for the candidate JSON chunk to import.",
+    )
+    parser.add_argument(
+        "--candidate-limit",
+        type=int,
+        default=DEFAULT_CANDIDATE_LIMIT,
+        help="Maximum number of candidate rows to process from the chunk.",
+    )
+    parser.add_argument(
+        "--accepted-resume-limit",
+        type=int,
+        default=DEFAULT_ACCEPTED_RESUME_LIMIT,
+        help="Maximum number of accepted resume ingests to persist in one run.",
     )
     return parser.parse_args()
 
@@ -79,6 +87,8 @@ def main() -> None:
     args = parse_args()
     candidate_member_name = str(args.candidate_member)
     artifact_path = build_artifact_path(candidate_member_name)
+    candidate_limit = max(1, int(args.candidate_limit))
+    accepted_resume_limit = max(1, int(args.accepted_resume_limit))
 
     stored_connection = _load_dropbox_connection(DROPBOX_ACCOUNT_ID)
     access_token = stored_connection["access_token"]
@@ -92,10 +102,6 @@ def main() -> None:
     content_bytes = downloaded_zip["content_bytes"]
     assert isinstance(content_bytes, bytes)
 
-    chat_model = build_langchain_chat_model(
-        profile=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE
-    )
-
     with ZipFile(BytesIO(content_bytes)) as archive:
         raw_candidate_records = json.loads(
             archive.read(candidate_member_name).decode("utf-8")
@@ -106,21 +112,16 @@ def main() -> None:
                 "Recruiterflow candidate chunk did not contain a JSON list."
             )
 
-        persisted_candidates: list[dict[str, Any]] = []
         persisted_resumes: list[dict[str, Any]] = []
+        failed_items: list[dict[str, Any]] = []
         status_counts = {"accepted": 0, "non_pass": 0, "unsupported": 0, "failed": 0}
 
-        for candidate_item in raw_candidate_records:
+        for candidate_item in raw_candidate_records[:candidate_limit]:
             if not isinstance(candidate_item, dict):
                 continue
 
-            persisted_candidates.append(
-                persist_recruiterflow_candidate(
-                    export_source_uri=RECRUITERFLOW_ZIP_PATH,
-                    member_name=candidate_member_name,
-                    candidate_payload=candidate_item,
-                )
-            )
+            if status_counts["accepted"] >= accepted_resume_limit:
+                break
 
             selected_file_item = _select_preferred_resume_file(
                 candidate_item.get("files", [])
@@ -139,6 +140,15 @@ def main() -> None:
                 )
                 if embedded_member_name is None:
                     status_counts["failed"] += 1
+                    failed_items.append(
+                        {
+                            "source_candidate_id": source_candidate_id,
+                            "file_name": file_name,
+                            "stage": "embedded_member_lookup",
+                            "error_type": "EmbeddedMemberNotFound",
+                            "message": "Embedded candidate CV member was not found in the ZIP export.",
+                        }
+                    )
                     continue
 
                 embedded_bytes = archive.read(embedded_member_name)
@@ -155,14 +165,13 @@ def main() -> None:
                     file_name=file_name,
                     content_type=None,
                 )
-                result = extract_recruiterflow_candidate_resume_profile(
+                result = extract_recruiterflow_candidate_resume_profile_with_quality_gate(
                     export_source_uri=RECRUITERFLOW_ZIP_PATH,
                     member_name=candidate_member_name,
                     candidate_payload=candidate_item,
                     file_payload=file_item,
                     downloaded_file=downloaded_file,
                     extracted_resume_text=extracted_resume_text,
-                    chat_model=chat_model,
                 )
                 if result.get("quality_assessment", {}).get("status") == "pass":
                     persisted_summary = persist_accepted_resume_extraction_result(
@@ -170,25 +179,47 @@ def main() -> None:
                     )
                     persisted_resumes.append(persisted_summary)
                     status_counts["accepted"] += 1
+                    if status_counts["accepted"] >= accepted_resume_limit:
+                        break
                 else:
                     status_counts["non_pass"] += 1
-            except ResumeTextExtractionError:
+            except ResumeTextExtractionError as exc:
                 status_counts["unsupported"] += 1
-            except Exception:
+                failed_items.append(
+                    {
+                        "source_candidate_id": source_candidate_id,
+                        "file_name": file_name,
+                        "stage": "resume_text_extraction",
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    }
+                )
+            except Exception as exc:
                 status_counts["failed"] += 1
+                failed_items.append(
+                    {
+                        "source_candidate_id": source_candidate_id,
+                        "file_name": file_name,
+                        "stage": "structured_resume_extraction_or_persistence",
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    }
+                )
 
     summary = {
         "persisted_at": datetime.now(timezone.utc).isoformat(),
         "dropbox_account_id": DROPBOX_ACCOUNT_ID,
         "zip_path": RECRUITERFLOW_ZIP_PATH,
         "candidate_member_name": candidate_member_name,
-        "candidate_count": len(persisted_candidates),
+        "candidate_limit": candidate_limit,
+        "accepted_resume_limit": accepted_resume_limit,
+        "candidate_count": min(candidate_limit, len(raw_candidate_records)),
         "accepted_resume_count": status_counts["accepted"],
         "non_pass_count": status_counts["non_pass"],
         "unsupported_count": status_counts["unsupported"],
         "failed_count": status_counts["failed"],
-        "candidate_results_preview": persisted_candidates[:5],
         "persisted_resume_preview": persisted_resumes[:10],
+        "failed_items_preview": failed_items[:10],
     }
 
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
@@ -196,7 +227,7 @@ def main() -> None:
 
     print(f"artifact: {artifact_path}")
     print(f"candidate member: {summary['candidate_member_name']}")
-    print(f"persisted candidates: {summary['candidate_count']}")
+    print(f"candidate rows scanned: {summary['candidate_count']}")
     print(f"accepted resumes: {summary['accepted_resume_count']}")
     print(f"non-pass resumes: {summary['non_pass_count']}")
     print(f"unsupported files: {summary['unsupported_count']}")

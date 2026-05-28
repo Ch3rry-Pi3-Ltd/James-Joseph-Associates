@@ -118,6 +118,8 @@ def persist_outlook_resume_snapshot(
             # - which mailbox message did this advert response arrive in?
             # - which concrete file attachment became the canonical resume
             #   document row?
+            sync_status = persistence_payload.get("quality_status") or "accepted"
+
             message_source_record = _upsert_source_record(
                 cursor,
                 source_system="outlook",
@@ -127,7 +129,7 @@ def persist_outlook_resume_snapshot(
                 source_payload_hash=persistence_payload["message_source_payload_hash"],
                 import_run_id=persistence_payload.get("import_run_id"),
                 processed_at=persisted_at,
-                sync_status="accepted",
+                sync_status=sync_status,
             )
 
             attachment_source_record = _upsert_source_record(
@@ -141,7 +143,7 @@ def persist_outlook_resume_snapshot(
                 ],
                 import_run_id=persistence_payload.get("import_run_id"),
                 processed_at=persisted_at,
-                sync_status="accepted",
+                sync_status=sync_status,
             )
 
             resolved_job_id = _find_job_id_by_tw_code(
@@ -198,6 +200,8 @@ def persist_outlook_resume_snapshot(
         {
             "persisted_at": persisted_at.isoformat(),
             "tw_code": persistence_payload.get("tw_code"),
+            "quality_status": persistence_payload.get("quality_status"),
+            "quality_score": persistence_payload.get("quality_score"),
             "resolved_job_id": resolved_job_id,
             "document_id": document_id,
             "message_source_record_id": message_source_record["id"],

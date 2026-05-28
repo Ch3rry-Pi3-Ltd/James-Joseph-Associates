@@ -41,15 +41,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from backend.llm.models import ModelProfile, ModelProvider, ModelPurpose
+from backend.llm.providers import build_langchain_chat_model
 from backend.services.extraction_quality import (
     assess_source_cv_richness,
     score_resume_extraction,
 )
 from backend.services.resume_extraction import (
     DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE,
-    ModelProfile,
     extract_structured_candidate_profile_from_resume_bundle,
 )
+
+DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME = "gpt-4.1-mini"
+DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME = "gpt-5.4-mini"
 
 
 def build_recruiterflow_resume_text_bundle(
@@ -188,6 +192,129 @@ def extract_recruiterflow_candidate_resume_profile(
     return enriched_result
 
 
+def extract_recruiterflow_candidate_resume_profile_with_quality_gate(
+    *,
+    export_source_uri: str,
+    member_name: str,
+    candidate_payload: dict[str, Any],
+    file_payload: dict[str, Any],
+    downloaded_file: dict[str, Any],
+    extracted_resume_text: dict[str, Any],
+    pass_threshold: int = 80,
+    rerun_threshold: int = 65,
+    first_pass_model_name: str = DEFAULT_QUALITY_GATE_FIRST_PASS_MODEL_NAME,
+    fallback_model_name: str = DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME,
+) -> dict[str, Any]:
+    """
+    Run Recruiterflow CV extraction with the same cheaper first-pass/fallback model policy.
+
+    Parameters
+    ----------
+    export_source_uri : str
+        Stable identifier of the Recruiterflow ZIP export.
+
+    member_name : str
+        ZIP member name that contained the candidate JSON chunk.
+
+    candidate_payload : dict[str, Any]
+        Recruiterflow candidate record.
+
+    file_payload : dict[str, Any]
+        Recruiterflow nested candidate file record.
+
+    downloaded_file : dict[str, Any]
+        Downloaded file bundle containing the raw bytes and metadata.
+
+    extracted_resume_text : dict[str, Any]
+        Plain-text extraction result returned by
+        `extract_text_from_resume_bytes(...)`.
+
+    pass_threshold : int, default=80
+        Score at or above this threshold is considered a pass.
+
+    rerun_threshold : int, default=65
+        Score below this threshold triggers the stronger fallback model.
+
+    first_pass_model_name : str, default="gpt-4.1-mini"
+        Cheaper first-pass model name.
+
+    fallback_model_name : str, default="gpt-5.4-mini"
+        Stronger fallback model name used only when the first pass asks for a rerun.
+
+    Returns
+    -------
+    dict[str, Any]
+        Final extraction result enriched with the same quality-gate metadata
+        shape used by the JobAdder path.
+    """
+
+    if rerun_threshold > pass_threshold:
+        raise RuntimeError(
+            "rerun_threshold cannot be greater than pass_threshold."
+        )
+
+    first_pass_profile = ModelProfile(
+        provider=ModelProvider.OPENAI,
+        model_name=first_pass_model_name,
+        purpose=ModelPurpose.EXTRACTION,
+        temperature=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.temperature,
+        max_output_tokens=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.max_output_tokens,
+    )
+    first_pass_result = extract_recruiterflow_candidate_resume_profile(
+        export_source_uri=export_source_uri,
+        member_name=member_name,
+        candidate_payload=candidate_payload,
+        file_payload=file_payload,
+        downloaded_file=downloaded_file,
+        extracted_resume_text=extracted_resume_text,
+        chat_model=build_langchain_chat_model(profile=first_pass_profile),
+        model_profile=first_pass_profile,
+    )
+    first_pass_assessment = first_pass_result["quality_assessment"]
+    fallback_invoked = False
+    final_result = first_pass_result
+    final_assessment = first_pass_assessment
+
+    if first_pass_assessment.get("status") == "rerun":
+        fallback_invoked = True
+        fallback_profile = ModelProfile(
+            provider=ModelProvider.OPENAI,
+            model_name=fallback_model_name,
+            purpose=ModelPurpose.EXTRACTION,
+            temperature=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.temperature,
+            max_output_tokens=DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE.max_output_tokens,
+        )
+        fallback_result = extract_recruiterflow_candidate_resume_profile(
+            export_source_uri=export_source_uri,
+            member_name=member_name,
+            candidate_payload=candidate_payload,
+            file_payload=file_payload,
+            downloaded_file=downloaded_file,
+            extracted_resume_text=extracted_resume_text,
+            chat_model=build_langchain_chat_model(profile=fallback_profile),
+            model_profile=fallback_profile,
+        )
+        fallback_assessment = fallback_result["quality_assessment"]
+        if (
+            fallback_assessment.get("quality_score", 0)
+            >= first_pass_assessment.get("quality_score", 0)
+        ):
+            final_result = fallback_result
+            final_assessment = fallback_assessment
+
+    enriched_result = dict(final_result)
+    enriched_result["quality_gate"] = {
+        "enabled": True,
+        "first_pass_model_name": first_pass_model_name,
+        "fallback_model_name": fallback_model_name,
+        "fallback_invoked": fallback_invoked,
+        "final_model_name": final_result.get("model_profile", {}).get("model_name"),
+        "first_pass_quality_assessment": first_pass_assessment,
+        "final_quality_assessment": final_assessment,
+    }
+    return enriched_result
+
+
 def _extract_recruiterflow_file_id(*, file_payload: dict[str, Any]) -> int | None:
     """
     Return the best-effort upstream Recruiterflow file identifier.
@@ -267,4 +394,5 @@ def _build_candidate_location(raw_value: Any) -> str | None:
 __all__ = [
     "build_recruiterflow_resume_text_bundle",
     "extract_recruiterflow_candidate_resume_profile",
+    "extract_recruiterflow_candidate_resume_profile_with_quality_gate",
 ]

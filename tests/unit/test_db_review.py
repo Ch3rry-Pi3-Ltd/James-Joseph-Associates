@@ -56,6 +56,12 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
         ],
         [
             {
+                "reconciliation_decision_id": "rec-1",
+                "decision_status": "needs_review",
+            }
+        ],
+        [
+            {
                 "document_type": "candidate_attachment",
                 "document_count": 12,
             }
@@ -64,6 +70,12 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
             {
                 "source_system": "recruiterflow",
                 "source_record_count": 422,
+            }
+        ],
+        [
+            {
+                "decision_status": "needs_review",
+                "reconciliation_count": 3,
             }
         ],
     ]
@@ -117,6 +129,12 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
                 "source_system": "outlook",
             }
         ],
+        "recent_reconciliation_decisions": [
+            {
+                "reconciliation_decision_id": "rec-1",
+                "decision_status": "needs_review",
+            }
+        ],
         "document_type_counts": [
             {
                 "document_type": "candidate_attachment",
@@ -129,6 +147,12 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
                 "source_record_count": 422,
             }
         ],
+        "reconciliation_status_counts": [
+            {
+                "decision_status": "needs_review",
+                "reconciliation_count": 3,
+            }
+        ],
     }
 
 
@@ -138,7 +162,7 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
     """
 
     mock_cursor = MagicMock()
-    mock_cursor.fetchall.side_effect = [[], [], [], [], [], [], []]
+    mock_cursor.fetchall.side_effect = [[], [], [], [], [], [], [], [], []]
     mock_cursor.fetchone.side_effect = [{"people": 0}]
 
     mock_connection = MagicMock()
@@ -153,7 +177,7 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
 
     execute_calls = mock_cursor.execute.call_args_list
 
-    assert len(execute_calls) == 8
+    assert len(execute_calls) == 10
     assert execute_calls[1].args[1] == {"limit": 7}
     assert execute_calls[2].args[1] == {"limit": 7}
     assert execute_calls[3].args[1] == {"limit": 7}
@@ -161,3 +185,5 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
     assert execute_calls[5].args[1] == {"limit": 7}
     assert execute_calls[6].args[1] == {"limit": 7}
     assert execute_calls[7].args[1] == {"limit": 7}
+    assert execute_calls[8].args[1] == {"limit": 7}
+    assert execute_calls[9].args[1] == {"limit": 7}

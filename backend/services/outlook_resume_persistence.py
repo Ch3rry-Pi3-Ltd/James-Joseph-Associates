@@ -38,6 +38,8 @@ The first Outlook persistence path is intentionally conservative:
 - the file becomes a canonical `resume` document
 - the message and attachment remain provenance-bearing source records
 - a job link is only attempted when the `tw...` vacancy code is clear enough
+- non-pass CVs are still persisted, but their quality status and score stay
+  attached to the provenance so downstream flows can filter them out
 """
 
 from __future__ import annotations
@@ -60,6 +62,7 @@ def persist_outlook_message_attachment_resume(
     message: dict[str, Any],
     attachment_download: dict[str, Any],
     extracted_resume_text: dict[str, Any],
+    quality_assessment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Persist one Outlook advert-response message attachment into the canonical schema.
@@ -87,6 +90,12 @@ def persist_outlook_message_attachment_resume(
 
     extracted_resume_text : dict[str, Any]
         Resume text bundle returned by `extract_text_from_resume_bytes(...)`.
+
+    quality_assessment : dict[str, Any] | None, optional
+        Structured quality decision returned by the canonical LLM-backed resume
+        extraction path. When present, the persistence layer stores the
+        quality status and score alongside the Outlook provenance instead of
+        dropping non-pass CVs on the floor.
 
     Returns
     -------
@@ -121,6 +130,7 @@ def persist_outlook_message_attachment_resume(
         message=message,
         attachment_download=attachment_download,
         extracted_resume_text=extracted_resume_text,
+        quality_assessment=quality_assessment,
     )
     return persist_outlook_resume_snapshot(persistence_payload)
 
@@ -134,6 +144,7 @@ def build_outlook_resume_persistence_payload(
     message: dict[str, Any],
     attachment_download: dict[str, Any],
     extracted_resume_text: dict[str, Any],
+    quality_assessment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Build the narrow persistence payload for one Outlook message attachment.
@@ -161,6 +172,10 @@ def build_outlook_resume_persistence_payload(
 
     extracted_resume_text : dict[str, Any]
         Resume text bundle returned by `extract_text_from_resume_bytes(...)`.
+
+    quality_assessment : dict[str, Any] | None, optional
+        Structured quality decision returned by the canonical LLM-backed resume
+        extraction path.
 
     Returns
     -------
@@ -247,6 +262,10 @@ def build_outlook_resume_persistence_payload(
             file_name,
         ]
     )
+    quality_status = _clean_optional_string(
+        (quality_assessment or {}).get("status")
+    ) or "unscored"
+    quality_score = (quality_assessment or {}).get("quality_score")
 
     resume_source_uri = _build_outlook_attachment_source_uri(
         microsoft_user_id=microsoft_user_id,
@@ -273,6 +292,7 @@ def build_outlook_resume_persistence_payload(
             "fromEmail": sender_email,
         },
         "tw_code": tw_code,
+        "quality_assessment": quality_assessment,
     }
     attachment_source_payload = {
         "microsoft_user_id": microsoft_user_id,
@@ -291,6 +311,7 @@ def build_outlook_resume_persistence_payload(
         "page_count": extracted_resume_text.get("page_count"),
         "resume_content_hash": resume_content_hash,
         "tw_code": tw_code,
+        "quality_assessment": quality_assessment,
     }
 
     return {
@@ -302,6 +323,8 @@ def build_outlook_resume_persistence_payload(
             folder_path_text=folder_path_text,
         ),
         "tw_code": tw_code,
+        "quality_status": quality_status,
+        "quality_score": quality_score,
         "message_source_record_id": message_source_key,
         "attachment_source_record_id": attachment_source_key,
         "resume_title": file_name,

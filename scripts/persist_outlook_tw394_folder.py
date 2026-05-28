@@ -87,15 +87,24 @@ from backend.services.outlook_resume_persistence import (
     build_outlook_resume_persistence_payload,
     persist_outlook_message_attachment_resume,
 )
+from backend.services.outlook_resume_extraction import (
+    extract_outlook_candidate_resume_profile_with_quality_gate,
+)
 from backend.services.resume_text import (
     ResumeTextExtractionError,
     extract_text_from_resume_bytes,
 )
 from backend.services.text_cleaning import clean_resume_text
+from backend.services.dropbox_api import upload_dropbox_file
+from scripts.persist_recruiterflow_initial_chunks import (
+    DROPBOX_ACCOUNT_ID,
+    _load_dropbox_connection,
+)
 DEFAULT_MICROSOFT_USER_ID = "b4dd6a5f-8e27-4745-9369-e117121382ed"
 DEFAULT_FOLDER_PATH = ["Inbox", "# ADV-CVR", "### DOMINIQUE FOLDER", "tw394"]
 DEFAULT_MESSAGE_LIMIT = 10
 DEFAULT_ATTACHMENT_LIMIT = 10
+DEFAULT_DROPBOX_EXPORT_FOLDER = "/+++ Outlook Email CV Export"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -154,6 +163,16 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Optional JSON output path for the final ingestion report.",
+    )
+    parser.add_argument(
+        "--dropbox-account-id",
+        default=DROPBOX_ACCOUNT_ID,
+        help="Dropbox account ID used when exporting email CVs into Dropbox.",
+    )
+    parser.add_argument(
+        "--dropbox-export-folder",
+        default=DEFAULT_DROPBOX_EXPORT_FOLDER,
+        help="Optional Dropbox folder path to receive exported email CV files.",
     )
     return parser
 
@@ -366,6 +385,8 @@ def run_outlook_folder_ingest(
     folder_id: str,
     message_limit: int,
     attachment_limit: int,
+    dropbox_access_token: str | None = None,
+    dropbox_export_folder: str | None = None,
 ) -> dict[str, Any]:
     """
     Run the bounded Outlook folder-ingest slice for one resolved folder.
@@ -497,6 +518,14 @@ def run_outlook_folder_ingest(
                 extracted_resume_text["cleaned_text"] = clean_resume_text(
                     extracted_resume_text["text"]
                 )
+                extraction_result = extract_outlook_candidate_resume_profile_with_quality_gate(
+                    microsoft_user_id=microsoft_user_id,
+                    mailbox=mailbox,
+                    folder_path=folder_path,
+                    message=message,
+                    attachment_download=attachment_download,
+                    extracted_resume_text=extracted_resume_text,
+                )
                 # Build the payload once here so the operator report can expose
                 # the inferred `tw...` code even though the lower-level
                 # persistence helper only returns canonical IDs.
@@ -508,6 +537,7 @@ def run_outlook_folder_ingest(
                     message=message,
                     attachment_download=attachment_download,
                     extracted_resume_text=extracted_resume_text,
+                    quality_assessment=extraction_result.get("quality_assessment"),
                 )
                 persistence_summary = persist_outlook_message_attachment_resume(
                     microsoft_user_id=microsoft_user_id,
@@ -517,7 +547,25 @@ def run_outlook_folder_ingest(
                     message=message,
                     attachment_download=attachment_download,
                     extracted_resume_text=extracted_resume_text,
+                    quality_assessment=extraction_result.get("quality_assessment"),
                 )
+                dropbox_export_result = None
+                if (
+                    isinstance(dropbox_access_token, str)
+                    and dropbox_access_token.strip() != ""
+                    and isinstance(dropbox_export_folder, str)
+                    and dropbox_export_folder.strip() != ""
+                ):
+                    dropbox_export_result = upload_dropbox_file(
+                        access_token=dropbox_access_token,
+                        path=(
+                            f"{dropbox_export_folder.rstrip('/')}/"
+                            f"{attachment_download.get('file_name')}"
+                        ),
+                        content_bytes=attachment_download["content_bytes"],
+                        timeout_seconds=120.0,
+                        autorename=True,
+                    )
             except ResumeTextExtractionError as exc:
                 skipped_items.append(
                     {
@@ -556,9 +604,16 @@ def run_outlook_folder_ingest(
                     "byte_count": len(attachment_download["content_bytes"]),
                     "extractor": extracted_resume_text.get("extractor"),
                     "character_count": extracted_resume_text.get("character_count"),
+                    "quality_status": extraction_result.get("quality_assessment", {}).get("status"),
+                    "quality_score": extraction_result.get("quality_assessment", {}).get("quality_score"),
                     "tw_code": persistence_payload.get("tw_code"),
                     "document_id": persistence_summary.get("document_id"),
                     "resolved_job_id": persistence_summary.get("resolved_job_id"),
+                    "dropbox_export_path": (
+                        dropbox_export_result.get("path")
+                        if isinstance(dropbox_export_result, dict)
+                        else None
+                    ),
                     "message_source_record_id": persistence_summary.get(
                         "message_source_record_id"
                     ),
@@ -662,9 +717,12 @@ def main() -> int:
     stored_connection = load_ready_outlook_connection(
         microsoft_user_id=args.microsoft_user_id,
     )
+    dropbox_connection = _load_dropbox_connection(args.dropbox_account_id)
 
     access_token = stored_connection["access_token"]
     assert isinstance(access_token, str)
+    dropbox_access_token = dropbox_connection["access_token"]
+    assert isinstance(dropbox_access_token, str)
 
     resolved_folder = resolve_outlook_folder_path(
         access_token=access_token,
@@ -680,6 +738,8 @@ def main() -> int:
         folder_id=resolved_folder["folder_id"],
         message_limit=args.message_limit,
         attachment_limit=args.attachment_limit,
+        dropbox_access_token=dropbox_access_token,
+        dropbox_export_folder=args.dropbox_export_folder,
     )
 
     final_report = {

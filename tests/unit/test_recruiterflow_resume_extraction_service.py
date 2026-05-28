@@ -7,6 +7,7 @@ from unittest.mock import patch
 from backend.services.recruiterflow_resume_extraction import (
     build_recruiterflow_resume_text_bundle,
     extract_recruiterflow_candidate_resume_profile,
+    extract_recruiterflow_candidate_resume_profile_with_quality_gate,
 )
 
 
@@ -120,3 +121,93 @@ def test_extract_recruiterflow_candidate_resume_profile_adds_quality_layers() ->
     assert result["quality_assessment"]["status"] == "pass"
     assert "richness_band" in result["cv_source_assessment"]
     assert result["quality_gate"]["enabled"] is False
+
+
+def test_extract_recruiterflow_candidate_resume_profile_with_quality_gate_starts_on_cheap_model() -> None:
+    """
+    Verify that the quality-gated Recruiterflow path starts on `gpt-4.1-mini`.
+    """
+
+    with patch(
+        "backend.services.recruiterflow_resume_extraction.build_langchain_chat_model"
+    ) as mock_builder, patch(
+        "backend.services.recruiterflow_resume_extraction.extract_recruiterflow_candidate_resume_profile"
+    ) as mock_extract:
+        mock_builder.return_value = object()
+        mock_extract.return_value = {
+            "model_profile": {"model_name": "gpt-4.1-mini"},
+            "quality_assessment": {"status": "pass", "quality_score": 91},
+        }
+
+        result = extract_recruiterflow_candidate_resume_profile_with_quality_gate(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="candidate/1.100.json",
+            candidate_payload=_build_candidate_payload(),
+            file_payload=_build_file_payload(),
+            downloaded_file={
+                "file_name": "Bernardita Gutierrez CV EN 03-2026.pdf",
+                "content_type": "application/pdf",
+                "content_bytes": b"pdf-bytes",
+            },
+            extracted_resume_text={
+                "text": "Bernardita Gutierrez CV",
+                "cleaned_text": "Bernardita Gutierrez CV",
+                "character_count": 24,
+                "page_count": 1,
+                "extractor": "pypdf",
+            },
+        )
+
+    built_profile = mock_builder.call_args.kwargs["profile"]
+    assert built_profile.model_name == "gpt-4.1-mini"
+    assert result["quality_gate"]["enabled"] is True
+    assert result["quality_gate"]["fallback_invoked"] is False
+
+
+def test_extract_recruiterflow_candidate_resume_profile_with_quality_gate_uses_fallback_for_rerun() -> None:
+    """
+    Verify that the fallback model is used only when the first pass requests a rerun.
+    """
+
+    with patch(
+        "backend.services.recruiterflow_resume_extraction.build_langchain_chat_model"
+    ) as mock_builder, patch(
+        "backend.services.recruiterflow_resume_extraction.extract_recruiterflow_candidate_resume_profile"
+    ) as mock_extract:
+        mock_builder.side_effect = [object(), object()]
+        mock_extract.side_effect = [
+            {
+                "model_profile": {"model_name": "gpt-4.1-mini"},
+                "quality_assessment": {"status": "rerun", "quality_score": 61},
+            },
+            {
+                "model_profile": {"model_name": "gpt-5.4-mini"},
+                "quality_assessment": {"status": "pass", "quality_score": 88},
+            },
+        ]
+
+        result = extract_recruiterflow_candidate_resume_profile_with_quality_gate(
+            export_source_uri="/exports/Recruiterflow.zip",
+            member_name="candidate/1.100.json",
+            candidate_payload=_build_candidate_payload(),
+            file_payload=_build_file_payload(),
+            downloaded_file={
+                "file_name": "Bernardita Gutierrez CV EN 03-2026.pdf",
+                "content_type": "application/pdf",
+                "content_bytes": b"pdf-bytes",
+            },
+            extracted_resume_text={
+                "text": "Bernardita Gutierrez CV",
+                "cleaned_text": "Bernardita Gutierrez CV",
+                "character_count": 24,
+                "page_count": 1,
+                "extractor": "pypdf",
+            },
+        )
+
+    built_model_names = [
+        call.kwargs["profile"].model_name for call in mock_builder.call_args_list
+    ]
+    assert built_model_names == ["gpt-4.1-mini", "gpt-5.4-mini"]
+    assert result["quality_gate"]["fallback_invoked"] is True
+    assert result["quality_gate"]["final_model_name"] == "gpt-5.4-mini"

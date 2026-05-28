@@ -26,13 +26,17 @@ import httpx
 import pytest
 
 from backend.services.dropbox_api import (
+    DROPBOX_CREATE_FOLDER_URL,
     DROPBOX_DOWNLOAD_FILE_URL,
     DROPBOX_GET_CURRENT_ACCOUNT_URL,
     DROPBOX_LIST_FOLDER_URL,
+    DROPBOX_UPLOAD_FILE_URL,
     DropboxApiError,
+    ensure_dropbox_folder,
     download_dropbox_file,
     fetch_dropbox_current_account,
     fetch_dropbox_list_folder,
+    upload_dropbox_file,
 )
 
 
@@ -274,3 +278,69 @@ def test_download_dropbox_file_raises_when_metadata_header_is_invalid() -> None:
     assert error.endpoint_url == DROPBOX_DOWNLOAD_FILE_URL
     assert error.request_payload == {"path": "/tw394 = to CVR/Broken.docx"}
     assert error.response_body == {"raw_dropbox_api_result": "not-json"}
+
+
+def test_ensure_dropbox_folder_treats_existing_folder_conflict_as_success() -> None:
+    """
+    Verify that an existing Dropbox folder does not fail the helper.
+    """
+
+    def fake_post(url, **kwargs):
+        return httpx.Response(
+            409,
+            json={"error_summary": "path/conflict/folder/.."},
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = ensure_dropbox_folder(
+            access_token="test-token",
+            path="/Exports/Email CVs",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert result["created"] is False
+    assert result["path"] == "/Exports/Email CVs"
+    assert result["endpoint_url"] == DROPBOX_CREATE_FOLDER_URL
+
+
+def test_upload_dropbox_file_sends_content_api_request() -> None:
+    """
+    Verify that the upload helper sends Dropbox content bytes with API-Arg metadata.
+    """
+
+    captured_calls: list[tuple[str, dict[str, object]]] = []
+
+    def fake_post(url, **kwargs):
+        captured_calls.append((url, kwargs))
+        if url == DROPBOX_CREATE_FOLDER_URL:
+            return httpx.Response(200, json={"metadata": {"path_display": "/Exports"}})
+        return httpx.Response(
+            200,
+            json={"name": "resume.pdf", "path_display": "/Exports/resume.pdf"},
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = upload_dropbox_file(
+            access_token="test-token",
+            path="/Exports/resume.pdf",
+            content_bytes=b"%PDF-test%",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert result["path"] == "/Exports/resume.pdf"
+    assert result["endpoint_url"] == DROPBOX_UPLOAD_FILE_URL
+    assert len(captured_calls) == 2
+
+    upload_url, upload_kwargs = captured_calls[1]
+    assert upload_url == DROPBOX_UPLOAD_FILE_URL
+    headers = upload_kwargs["headers"]
+    assert isinstance(headers, dict)
+    assert headers["Authorization"] == "Bearer test-token"
+    assert headers["Content-Type"] == "application/octet-stream"
+    assert upload_kwargs["content"] == b"%PDF-test%"

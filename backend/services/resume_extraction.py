@@ -183,7 +183,7 @@ from backend.services.jobadder_ingest import (
 # without forcing every downstream caller to know LangChain details.
 DEFAULT_RESUME_EXTRACTION_MODEL_PROFILE = ModelProfile(
     provider=ModelProvider.OPENAI,
-    model_name="gpt-5.4",
+    model_name="gpt-4.1-mini",
     purpose=ModelPurpose.EXTRACTION,
     temperature=0.0,
     max_output_tokens=2200,

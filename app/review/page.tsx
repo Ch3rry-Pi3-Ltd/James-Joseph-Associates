@@ -17,8 +17,10 @@ type ReviewOverview = {
   recent_applications: Array<Record<string, unknown>>;
   recent_documents: Array<Record<string, unknown>>;
   recent_source_records: Array<Record<string, unknown>>;
+  recent_reconciliation_decisions: Array<Record<string, unknown>>;
   document_type_counts: Array<Record<string, unknown>>;
   source_system_counts: Array<Record<string, unknown>>;
+  reconciliation_status_counts: Array<Record<string, unknown>>;
 };
 
 function formatValue(value: unknown): string {
@@ -200,6 +202,8 @@ export default async function ReviewPage() {
  * - recent source provenance rows
  * - grouped document-type counts
  * - grouped source-system counts
+ * - recent reconciliation decisions
+ * - grouped reconciliation-status counts
    *
    * In plain language:
    *
@@ -332,6 +336,18 @@ export default async function ReviewPage() {
             </div>
           </article>
 
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Reconciliation status
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Grouped counts for auto-matched, newly created, and unresolved
+              reconciliation decisions.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.reconciliation_status_counts)}
+            </div>
+          </article>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
@@ -357,6 +373,19 @@ export default async function ReviewPage() {
             </p>
             <div className="mt-5">
               {renderRows(overview.recent_source_records)}
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Reconciliation review
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Most recent reconciliation decisions, with unresolved matches
+              pinned first for operator review.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.recent_reconciliation_decisions)}
             </div>
           </article>
         </section>

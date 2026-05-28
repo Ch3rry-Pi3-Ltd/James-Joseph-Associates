@@ -60,6 +60,8 @@ def test_persist_outlook_resume_snapshot_commits_and_returns_summary() -> None:
             "outlook_resume:user:# ADV-CVR > ### DOMINIQUE FOLDER > tw394:"
             "2026-05-21T18:00:00+00:00"
         ),
+        "quality_status": "review",
+        "quality_score": 70,
     }
 
     mock_cursor = MagicMock()
@@ -86,6 +88,8 @@ def test_persist_outlook_resume_snapshot_commits_and_returns_summary() -> None:
         summary = persist_outlook_resume_snapshot(persistence_payload)
 
     assert summary["tw_code"] == "tw394"
+    assert summary["quality_status"] == "review"
+    assert summary["quality_score"] == 70
     assert summary["resolved_job_id"] is None
     assert summary["document_id"] == str(document_uuid)
     assert summary["message_source_record_id"] == str(message_source_record_uuid)

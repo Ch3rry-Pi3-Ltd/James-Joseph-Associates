@@ -1,20 +1,20 @@
 {
   "mode": "execute",
   "recruiterflow_cleanup_targets": {
-    "recruiterflow_source_records": 3355,
-    "documents_to_delete": 770,
-    "applications_to_delete": 988,
-    "jobs_to_delete": 134,
-    "candidates_to_delete": 699,
-    "people_to_delete": 699,
-    "companies_to_delete": 560
+    "recruiterflow_source_records": 179,
+    "documents_to_delete": 0,
+    "applications_to_delete": 0,
+    "jobs_to_delete": 0,
+    "candidates_to_delete": 100,
+    "people_to_delete": 100,
+    "companies_to_delete": 103
   },
   "remaining_counts": {
     "people": 5,
     "candidates": 5,
     "jobs": 2,
     "applications": 1,
-    "documents": 6,
-    "source_records": 19
+    "documents": 11,
+    "source_records": 29
   }
 }

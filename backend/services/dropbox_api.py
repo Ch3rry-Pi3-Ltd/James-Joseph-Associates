@@ -54,7 +54,9 @@ import httpx
 
 DROPBOX_GET_CURRENT_ACCOUNT_URL = "https://api.dropboxapi.com/2/users/get_current_account"
 DROPBOX_LIST_FOLDER_URL = "https://api.dropboxapi.com/2/files/list_folder"
+DROPBOX_CREATE_FOLDER_URL = "https://api.dropboxapi.com/2/files/create_folder_v2"
 DROPBOX_DOWNLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/download"
+DROPBOX_UPLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/upload"
 
 
 class DropboxApiError(RuntimeError):
@@ -398,6 +400,212 @@ def download_dropbox_file(
     }
 
 
+def ensure_dropbox_folder(
+    *,
+    access_token: str,
+    path: str,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Ensure one Dropbox folder exists and return its metadata when available.
+
+    Parameters
+    ----------
+    access_token : str
+        Dropbox OAuth access token to use for the write.
+
+    path : str
+        Full Dropbox folder path to create if missing.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Small result containing:
+
+        - `path`
+        - `created`
+        - `metadata`
+        - `endpoint_url`
+    """
+
+    cleaned_path = path.strip()
+    if cleaned_path == "":
+        return {
+            "path": "",
+            "created": False,
+            "metadata": None,
+            "endpoint_url": DROPBOX_CREATE_FOLDER_URL,
+        }
+
+    cleaned_access_token = access_token.strip()
+    if cleaned_access_token == "":
+        raise DropboxApiError(
+            "Dropbox API access token cannot be empty.",
+            endpoint_url=DROPBOX_CREATE_FOLDER_URL,
+            request_payload={"path": cleaned_path},
+        )
+
+    try:
+        response = httpx.post(
+            DROPBOX_CREATE_FOLDER_URL,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {cleaned_access_token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "path": cleaned_path,
+                "autorename": False,
+            },
+            timeout=timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise DropboxApiError(
+            "Could not reach the Dropbox API endpoint.",
+            endpoint_url=DROPBOX_CREATE_FOLDER_URL,
+            request_payload={"path": cleaned_path},
+        ) from exc
+
+    response_payload = _decode_dropbox_json_response(response)
+    if response.status_code == 409:
+        return {
+            "path": cleaned_path,
+            "created": False,
+            "metadata": response_payload.get("metadata"),
+            "endpoint_url": DROPBOX_CREATE_FOLDER_URL,
+        }
+
+    if response.status_code >= 400:
+        raise DropboxApiError(
+            "Dropbox folder creation failed.",
+            status_code=response.status_code,
+            endpoint_url=DROPBOX_CREATE_FOLDER_URL,
+            response_body=response_payload,
+            request_payload={"path": cleaned_path},
+        )
+
+    metadata = response_payload.get("metadata") if isinstance(response_payload, dict) else None
+    return {
+        "path": cleaned_path,
+        "created": True,
+        "metadata": metadata,
+        "endpoint_url": DROPBOX_CREATE_FOLDER_URL,
+    }
+
+
+def upload_dropbox_file(
+    *,
+    access_token: str,
+    path: str,
+    content_bytes: bytes,
+    timeout_seconds: float = 60.0,
+    autorename: bool = True,
+) -> dict[str, Any]:
+    """
+    Upload one file to Dropbox from in-memory bytes.
+
+    Parameters
+    ----------
+    access_token : str
+        Dropbox OAuth access token to use for the write.
+
+    path : str
+        Full Dropbox file path to write.
+
+    content_bytes : bytes
+        Raw file bytes to upload.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    autorename : bool
+        Whether Dropbox may rename the file to avoid a conflict.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized upload result containing:
+
+        - `path`
+        - `metadata`
+        - `endpoint_url`
+    """
+
+    cleaned_access_token = access_token.strip()
+    cleaned_path = path.strip()
+    if cleaned_access_token == "":
+        raise DropboxApiError(
+            "Dropbox API access token cannot be empty.",
+            endpoint_url=DROPBOX_UPLOAD_FILE_URL,
+            request_payload={"path": cleaned_path},
+        )
+    if cleaned_path == "":
+        raise DropboxApiError(
+            "Dropbox upload path cannot be empty.",
+            endpoint_url=DROPBOX_UPLOAD_FILE_URL,
+            request_payload={"path": cleaned_path},
+        )
+    if not isinstance(content_bytes, bytes):
+        raise DropboxApiError(
+            "Dropbox upload content must be bytes.",
+            endpoint_url=DROPBOX_UPLOAD_FILE_URL,
+            request_payload={"path": cleaned_path},
+        )
+
+    parent_path = str(PurePosixPath(cleaned_path).parent)
+    if parent_path not in (".", "/"):
+        ensure_dropbox_folder(
+            access_token=cleaned_access_token,
+            path=parent_path,
+            timeout_seconds=timeout_seconds,
+        )
+
+    request_payload = {
+        "path": cleaned_path,
+        "mode": "add",
+        "autorename": autorename,
+        "mute": True,
+        "strict_conflict": False,
+    }
+
+    try:
+        response = httpx.post(
+            DROPBOX_UPLOAD_FILE_URL,
+            headers={
+                "Authorization": f"Bearer {cleaned_access_token}",
+                "Content-Type": "application/octet-stream",
+                "Dropbox-API-Arg": json.dumps(request_payload),
+            },
+            content=content_bytes,
+            timeout=timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise DropboxApiError(
+            "Could not reach the Dropbox content API endpoint.",
+            endpoint_url=DROPBOX_UPLOAD_FILE_URL,
+            request_payload=request_payload,
+        ) from exc
+
+    response_payload = _decode_dropbox_json_response(response)
+    if response.status_code >= 400:
+        raise DropboxApiError(
+            "Dropbox file upload failed.",
+            status_code=response.status_code,
+            endpoint_url=DROPBOX_UPLOAD_FILE_URL,
+            response_body=response_payload,
+            request_payload=request_payload,
+        )
+
+    return {
+        "path": cleaned_path,
+        "metadata": response_payload,
+        "endpoint_url": DROPBOX_UPLOAD_FILE_URL,
+    }
+
+
 def _post_to_dropbox_api(
     *,
     endpoint_url: str,
@@ -714,11 +922,15 @@ def _decode_dropbox_api_result_header(
 
 
 __all__ = [
+    "DROPBOX_CREATE_FOLDER_URL",
     "DROPBOX_DOWNLOAD_FILE_URL",
     "DROPBOX_GET_CURRENT_ACCOUNT_URL",
     "DROPBOX_LIST_FOLDER_URL",
+    "DROPBOX_UPLOAD_FILE_URL",
     "DropboxApiError",
+    "ensure_dropbox_folder",
     "download_dropbox_file",
     "fetch_dropbox_current_account",
     "fetch_dropbox_list_folder",
+    "upload_dropbox_file",
 ]

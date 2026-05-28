@@ -12,6 +12,7 @@ It gives the rest of the repository a stable way to talk about:
 - recent applications
 - recent documents
 - recent source records
+- recent reconciliation decisions
 
 Keeping this logic in one DB helper matters because:
 
@@ -56,8 +57,10 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         - `recent_applications`
         - `recent_documents`
         - `recent_source_records`
+        - `recent_reconciliation_decisions`
         - `document_type_counts`
         - `source_system_counts`
+        - `reconciliation_status_counts`
 
     Notes
     -----
@@ -93,8 +96,10 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
             "recent_applications": [...],
             "recent_documents": [...],
             "recent_source_records": [...],
+            "recent_reconciliation_decisions": [...],
             "document_type_counts": [...],
-            "source_system_counts": [...]
+            "source_system_counts": [...],
+            "reconciliation_status_counts": [...]
         }
     """
 
@@ -190,6 +195,31 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         LIMIT %(limit)s
     """
 
+    recent_reconciliation_decisions_query = """
+        SELECT
+            rd.id AS reconciliation_decision_id,
+            rd.decision_status,
+            rd.decision_reason,
+            rd.confidence,
+            sr.source_system,
+            sr.source_record_type,
+            sr.source_record_id,
+            d.title AS document_title,
+            p.full_name,
+            rd.updated_at
+        FROM reconciliation_decisions rd
+        JOIN source_records sr
+            ON sr.id = rd.source_record_id
+        LEFT JOIN documents d
+            ON d.id = rd.document_id
+        LEFT JOIN people p
+            ON p.id = rd.person_id
+        ORDER BY
+            CASE WHEN rd.decision_status = 'needs_review' THEN 0 ELSE 1 END,
+            COALESCE(rd.updated_at, rd.created_at) DESC
+        LIMIT %(limit)s
+    """
+
     document_type_counts_query = """
         SELECT
             document_type,
@@ -207,6 +237,16 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         FROM source_records
         GROUP BY source_system
         ORDER BY source_record_count DESC, source_system ASC
+        LIMIT %(limit)s
+    """
+
+    reconciliation_status_counts_query = """
+        SELECT
+            decision_status,
+            COUNT(*)::int AS reconciliation_count
+        FROM reconciliation_decisions
+        GROUP BY decision_status
+        ORDER BY reconciliation_count DESC, decision_status ASC
         LIMIT %(limit)s
     """
 
@@ -233,11 +273,21 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
             cursor.execute(recent_source_records_query, {"limit": limit})
             recent_source_records = [dict(row) for row in cursor.fetchall()]
 
+            cursor.execute(recent_reconciliation_decisions_query, {"limit": limit})
+            recent_reconciliation_decisions = [
+                dict(row) for row in cursor.fetchall()
+            ]
+
             cursor.execute(document_type_counts_query, {"limit": limit})
             document_type_counts = [dict(row) for row in cursor.fetchall()]
 
             cursor.execute(source_system_counts_query, {"limit": limit})
             source_system_counts = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(reconciliation_status_counts_query, {"limit": limit})
+            reconciliation_status_counts = [
+                dict(row) for row in cursor.fetchall()
+            ]
 
     # Convert the rows into plain Python dictionaries before leaving the DB
     # layer so the service, route, and UI all consume one predictable shape.
@@ -248,8 +298,10 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         "recent_applications": recent_applications,
         "recent_documents": recent_documents,
         "recent_source_records": recent_source_records,
+        "recent_reconciliation_decisions": recent_reconciliation_decisions,
         "document_type_counts": document_type_counts,
         "source_system_counts": source_system_counts,
+        "reconciliation_status_counts": reconciliation_status_counts,
     }
 
 
