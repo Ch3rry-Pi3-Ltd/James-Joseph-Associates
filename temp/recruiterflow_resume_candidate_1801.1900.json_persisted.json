@@ -1,0 +1,225 @@
+{
+  "persisted_at": "2026-05-29T19:18:44.033066+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1801.1900.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "selected_resume_candidate_count": 20,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 19,
+  "new_resume_candidate_count": 1,
+  "persisted_resume_count": 1,
+  "accepted_resume_count": 1,
+  "non_pass_count": 0,
+  "skipped_count": 19,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-29T19:18:40.257596+00:00",
+      "person_id": "a03e77c3-29c7-4484-8ec8-1bc668af1824",
+      "candidate_id": "d88f2a89-3182-4b78-9932-f11c062f059d",
+      "current_company_id": "2a84cfea-3d41-4943-aec4-b6d70b37d395",
+      "document_id": "cf4c0103-6a91-4294-811f-2d96ff5f7707",
+      "candidate_source_record_id": "bde958ea-fe5d-43b0-b612-3a9221421b29",
+      "resume_source_record_id": "55f3a504-f634-48e1-8f40-6603b41fb7a2",
+      "extraction_source_record_id": "b296a274-59b6-4da6-bd47-3de49f62cf76",
+      "candidate_skill_count": 31,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "a350f23b-46be-4228-a24d-1333ba140b59",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "serge.tchangue@gmail.com"
+            ],
+            "resume_phones": [
+              "44 (0) 77 1657 6418"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 15,
+            "education_count": 3,
+            "evidence_notes_count": 5,
+            "skills_count": 14,
+            "tools_and_platforms_count": 17,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "serge.tchangue@gmail.com"
+            ],
+            "resume_phones": [
+              "44 (0) 77 1657 6418"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 15,
+            "education_count": 3,
+            "evidence_notes_count": 5,
+            "skills_count": 14,
+            "tools_and_platforms_count": 17,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3044,
+      "source_file_id": 3247,
+      "file_name": "ChrisDavis-cv72.docx",
+      "source_record_id": "3044:3247",
+      "document_id": "4a2e7e70-8ca4-4950-92e3-28ec271ac71e",
+      "document_title": "ChrisDavis-cv72.docx",
+      "quality_status": "pass",
+      "quality_score": 80
+    },
+    {
+      "source_candidate_id": 3043,
+      "source_file_id": 3246,
+      "file_name": "Profile.pdf",
+      "source_record_id": "3043:3246",
+      "document_id": "e10a0bbe-47e6-46b7-baa5-75cc79848782",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3042,
+      "source_file_id": 3245,
+      "file_name": "Davinder Sandhu (8e2e25aa-f709-4a4c-960d-48c978aa9442 - Totaljobs).docx",
+      "source_record_id": "3042:3245",
+      "document_id": "eed71772-af12-4273-bf58-069fa8bb344d",
+      "document_title": "Davinder Sandhu (8e2e25aa-f709-4a4c-960d-48c978aa9442 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3041,
+      "source_file_id": 3244,
+      "file_name": "Julia Ntuli MSc_ BSc (Hons).docx",
+      "source_record_id": "3041:3244",
+      "document_id": "189f7106-6af6-4bff-8a48-c132ceb2b7f5",
+      "document_title": "Julia Ntuli MSc_ BSc (Hons).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3040,
+      "source_file_id": 3301,
+      "file_name": "Oliver Bye CV (1).pdf",
+      "source_record_id": "3040:3301",
+      "document_id": "b376e67f-2b84-4bef-ba86-1b5d99e92a42",
+      "document_title": "Oliver Bye CV (1).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3039,
+      "source_file_id": 3405,
+      "file_name": "Securities Lending & Repo - #ID.24.docx",
+      "source_record_id": "3039:3405",
+      "document_id": "15aae60e-0cf2-4b42-85d9-e50ea0b8d522",
+      "document_title": "Securities Lending & Repo - #ID.24.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3038,
+      "source_file_id": 3240,
+      "file_name": "KOLAWOLE BAMIDURO (5fae409c-bd43-49d8-b130-8688930d9017 - Totaljobs) (002).docx",
+      "source_record_id": "3038:3240",
+      "document_id": "6e37ca1b-384a-4c3d-8fc0-f208316098c7",
+      "document_title": "KOLAWOLE BAMIDURO (5fae409c-bd43-49d8-b130-8688930d9017 - Totaljobs) (002).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3037,
+      "source_file_id": 3239,
+      "file_name": "Alexandra Ibegbulam CV.pdf",
+      "source_record_id": "3037:3239",
+      "document_id": "1a9533dd-4b17-490f-b353-404de8298c89",
+      "document_title": "Alexandra Ibegbulam CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3036,
+      "source_file_id": 3238,
+      "file_name": "Farhan Chaudry (3defa246-815d-4152-be1d-35a14b0a4f56 - Totaljobs).doc",
+      "source_record_id": "3036:3238",
+      "document_id": "8b281d65-421b-4a74-a0c7-6c73b4cae205",
+      "document_title": "Farhan Chaudry (3defa246-815d-4152-be1d-35a14b0a4f56 - Totaljobs).doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3035,
+      "source_file_id": 3216,
+      "file_name": "Preety_Chakravarty Regulatory PM.pdf",
+      "source_record_id": "3035:3216",
+      "document_id": "e847fc04-4ec5-45b7-8905-f5439904a086",
+      "document_title": "Preety_Chakravarty Regulatory PM.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": []
+}

@@ -1,0 +1,236 @@
+{
+  "persisted_at": "2026-05-29T13:26:03.288291+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1301.1400.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "persisted_resume_count": 1,
+  "accepted_resume_count": 1,
+  "non_pass_count": 0,
+  "skipped_count": 17,
+  "unsupported_count": 0,
+  "failed_count": 2,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-29T13:23:25.557400+00:00",
+      "person_id": "96d0cae2-6327-44c0-ba11-26008b6d1318",
+      "candidate_id": "c3e95bf7-e22b-4846-92e1-bf129b01f381",
+      "current_company_id": "008041ab-b6a3-4651-8e1d-fc874a9de49d",
+      "document_id": "7e40cea9-010a-4c3d-bedb-15c55992b0a3",
+      "candidate_source_record_id": "6e3a3cf7-1b24-44a2-a1c8-a7e2ceea2bbb",
+      "resume_source_record_id": "0a95ed60-edae-4d98-a5ff-83b0d83ad5af",
+      "extraction_source_record_id": "8c54b171-9369-4f38-9c66-e3df3cf32a9e",
+      "candidate_skill_count": 63,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "1a6b1dc8-34b0-496b-8849-7e1370f3a237",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "davejhatton@yahoo.co.uk"
+            ],
+            "resume_phones": [
+              "07957 575718"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 11,
+            "projects_count": 11,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 43,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "davejhatton@yahoo.co.uk"
+            ],
+            "resume_phones": [
+              "07957 575718"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 11,
+            "projects_count": 11,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 43,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3544,
+      "source_file_id": 3898,
+      "file_name": "Florin Minea (96636643 - Totaljobs).pdf",
+      "source_record_id": "3544:3898",
+      "document_id": "2848a918-0fbd-455b-8e45-86ee6dea2429",
+      "document_title": "Florin Minea (96636643 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3542,
+      "source_file_id": 3896,
+      "file_name": "Chaitanya Kiran Padamati (96510799 - Totaljobs).pdf",
+      "source_record_id": "3542:3896",
+      "document_id": "340b1fc3-01bd-4af9-8651-4a7c7d164996",
+      "document_title": "Chaitanya Kiran Padamati (96510799 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3541,
+      "source_file_id": 3895,
+      "file_name": "Aung Myo (96790911 - Totaljobs).pdf",
+      "source_record_id": "3541:3895",
+      "document_id": "5fef438f-af5d-46ea-9238-1b60c6df2d21",
+      "document_title": "Aung Myo (96790911 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3540,
+      "source_file_id": 3893,
+      "file_name": "Aaron Oliver_22431693_cv-library.pdf",
+      "source_record_id": "3540:3893",
+      "document_id": "650c9ecf-338c-4187-839f-4f0a669aa2c3",
+      "document_title": "Aaron Oliver_22431693_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3539,
+      "source_file_id": 3892,
+      "file_name": "Souvik Basu_24721944_cv-library.pdf",
+      "source_record_id": "3539:3892",
+      "document_id": "e8e23570-1bf7-4e88-8559-dfc602927384",
+      "document_title": "Souvik Basu_24721944_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3538,
+      "source_file_id": 3891,
+      "file_name": "Mohammad Nadeem_27056926_cv-library.docx",
+      "source_record_id": "3538:3891",
+      "document_id": "b2a20af2-3c6d-4b35-b6a6-056d95465b5a",
+      "document_title": "Mohammad Nadeem_27056926_cv-library.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3537,
+      "source_file_id": 3890,
+      "file_name": "Muhammad Zubair_27055640_cv-library.pdf",
+      "source_record_id": "3537:3890",
+      "document_id": "c72a0a9d-4bf1-42b1-b961-502da4d5fa69",
+      "document_title": "Muhammad Zubair_27055640_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3536,
+      "source_file_id": 3889,
+      "file_name": "Akash Payne_16918854_cv-library.pdf",
+      "source_record_id": "3536:3889",
+      "document_id": "3ebc9500-d350-4b0b-a700-95df44d0faec",
+      "document_title": "Akash Payne_16918854_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3535,
+      "source_file_id": 3888,
+      "file_name": "Muhammad Kashif Zahi Butt_20361837_cv-library.pdf",
+      "source_record_id": "3535:3888",
+      "document_id": "03edcca3-cceb-49b0-bc1b-baeaf78d429f",
+      "document_title": "Muhammad Kashif Zahi Butt_20361837_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3534,
+      "source_file_id": 3887,
+      "file_name": "Saurav Arora_26969938_cv-library.pdf",
+      "source_record_id": "3534:3887",
+      "document_id": "f4d414ab-7807-45f6-9b84-d47a8e074512",
+      "document_title": "Saurav Arora_26969938_cv-library.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 3528,
+      "file_name": "Yedu Madhumanchi (26383344 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 3525,
+      "file_name": "sharath thokala (7156983 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

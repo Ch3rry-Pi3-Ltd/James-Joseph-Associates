@@ -23,6 +23,7 @@ from backend.db.resume_extraction_persistence import (
     _find_document_linked_entity_id,
     _find_existing_resume_document_id,
     _resolve_person_reconciliation,
+    _upsert_reconciliation_decision,
     _upsert_person,
     persist_jobadder_candidate_profile_snapshot,
     persist_resume_extraction_snapshot,
@@ -278,6 +279,62 @@ def test_combine_reconciliation_decisions_prioritises_review_status() -> None:
     assert combined["decision_status"] == "needs_review"
     assert combined["decision_reason"] == "ambiguous_primary_email_match"
     assert combined["confidence"] == 0.2
+
+
+def test_upsert_reconciliation_decision_normalises_uuid_evidence_payload() -> None:
+    """
+    Verify that reconciliation evidence is JSON-safe before it reaches `Jsonb`.
+    """
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = {
+        "id": "decision-1",
+        "decision_status": "auto_matched",
+    }
+    matched_person_uuid = uuid4()
+    matched_candidate_uuid = uuid4()
+
+    result = _upsert_reconciliation_decision(
+        mock_cursor,
+        source_record_id="source-record-1",
+        document_id="document-1",
+        person_id="person-1",
+        candidate_id="candidate-1",
+        person_reconciliation={
+            "decision_status": "auto_matched",
+            "decision_reason": "email_exact_match",
+            "confidence": 0.95,
+            "matched_person_id": matched_person_uuid,
+            "evidence_payload": {
+                "matched_person_ids": [matched_person_uuid],
+            },
+        },
+        candidate_reconciliation={
+            "decision_status": "auto_matched",
+            "decision_reason": "person_unique_candidate",
+            "confidence": 0.94,
+            "matched_candidate_id": matched_candidate_uuid,
+            "evidence_payload": {
+                "matched_candidate_ids": [matched_candidate_uuid],
+            },
+        },
+    )
+
+    execute_payload = mock_cursor.execute.call_args.args[1]
+    evidence_payload = execute_payload["evidence_payload"].obj
+    assert evidence_payload["person_reconciliation"]["matched_person_id"] == str(
+        matched_person_uuid
+    )
+    assert evidence_payload["candidate_reconciliation"]["matched_candidate_id"] == str(
+        matched_candidate_uuid
+    )
+    assert evidence_payload["person_reconciliation"]["evidence_payload"] == {
+        "matched_person_ids": [str(matched_person_uuid)]
+    }
+    assert evidence_payload["candidate_reconciliation"]["evidence_payload"] == {
+        "matched_candidate_ids": [str(matched_candidate_uuid)]
+    }
+    assert result == {"id": "decision-1", "decision_status": "auto_matched"}
 
 
 def test_persist_jobadder_candidate_profile_snapshot_commits_and_returns_summary() -> None:

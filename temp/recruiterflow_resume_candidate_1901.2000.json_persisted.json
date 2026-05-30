@@ -1,0 +1,132 @@
+{
+  "persisted_at": "2026-05-29T19:44:15.435437+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1901.2000.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "selected_resume_candidate_count": 20,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 19,
+  "new_resume_candidate_count": 1,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 19,
+  "unsupported_count": 0,
+  "failed_count": 1,
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 2944,
+      "source_file_id": 3365,
+      "file_name": "Mohamed+Elshami-CTO.pdf",
+      "source_record_id": "2944:3365",
+      "document_id": "1c4763e6-8e9b-46b9-89d5-d1a8f8429268",
+      "document_title": "Mohamed+Elshami-CTO.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2943,
+      "source_file_id": 3101,
+      "file_name": "Miha+Smaka+CV-1-1.pdf",
+      "source_record_id": "2943:3101",
+      "document_id": "08e0ee6b-76d8-4e1e-b938-468b4c97412b",
+      "document_title": "Miha+Smaka+CV-1-1.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2942,
+      "source_file_id": 3354,
+      "file_name": "John+Duffy+CV.pdf",
+      "source_record_id": "2942:3354",
+      "document_id": "7936ebcf-834b-43f9-9a73-0b370ad5de85",
+      "document_title": "John+Duffy+CV.pdf",
+      "quality_status": "rerun",
+      "quality_score": 58
+    },
+    {
+      "source_candidate_id": 2941,
+      "source_file_id": 3099,
+      "file_name": "Jamie+Bohanna+-+April+2023+V2.docx",
+      "source_record_id": "2941:3099",
+      "document_id": "86d44526-f6d8-4fda-9a60-d81a4d279968",
+      "document_title": "Jamie+Bohanna+-+April+2023+V2.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2940,
+      "source_file_id": 3098,
+      "file_name": "Ionica+Durchi+-+CV+Aug+2022.pdf",
+      "source_record_id": "2940:3098",
+      "document_id": "056807f8-2022-4ddb-af34-e8ff94ace7d6",
+      "document_title": "Ionica+Durchi+-+CV+Aug+2022.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2939,
+      "source_file_id": 3097,
+      "file_name": "Igor+Manushin.docx",
+      "source_record_id": "2939:3097",
+      "document_id": "728cb0b2-0664-4262-be4e-4c8ee2fe3db4",
+      "document_title": "Igor+Manushin.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2937,
+      "source_file_id": 3095,
+      "file_name": "Haresh+Kainth+CV.pdf",
+      "source_record_id": "2937:3095",
+      "document_id": "00ee107c-4893-49c5-84b3-449cf34596d2",
+      "document_title": "Haresh+Kainth+CV.pdf",
+      "quality_status": "review",
+      "quality_score": 70
+    },
+    {
+      "source_candidate_id": 2936,
+      "source_file_id": 5522,
+      "file_name": "Elizabeth Richardson_CV.pdf",
+      "source_record_id": "2936:5522",
+      "document_id": "0dc0f967-9b89-4410-bd5a-f1a12bb314ed",
+      "document_title": "Elizabeth Richardson_CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2935,
+      "source_file_id": 3093,
+      "file_name": "Derya+Karli_Resume.pdf",
+      "source_record_id": "2935:3093",
+      "document_id": "b650d0eb-d5b7-49d8-89e9-0ea669d9b57c",
+      "document_title": "Derya+Karli_Resume.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2934,
+      "source_file_id": 3356,
+      "file_name": "Daniel+Crook+-+CV.pdf",
+      "source_record_id": "2934:3356",
+      "document_id": "3c8d9139-ba69-4857-9b89-0a44e7af8929",
+      "document_title": "Daniel+Crook+-+CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 2938,
+      "file_name": "Igor+Beljutins.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

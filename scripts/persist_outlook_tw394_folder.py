@@ -604,8 +604,12 @@ def run_outlook_folder_ingest(
                     "byte_count": len(attachment_download["content_bytes"]),
                     "extractor": extracted_resume_text.get("extractor"),
                     "character_count": extracted_resume_text.get("character_count"),
+                    "model_name": extraction_result.get("model_profile", {}).get(
+                        "model_name"
+                    ),
                     "quality_status": extraction_result.get("quality_assessment", {}).get("status"),
                     "quality_score": extraction_result.get("quality_assessment", {}).get("quality_score"),
+                    "quality_gate": extraction_result.get("quality_gate"),
                     "tw_code": persistence_payload.get("tw_code"),
                     "document_id": persistence_summary.get("document_id"),
                     "resolved_job_id": persistence_summary.get("resolved_job_id"),

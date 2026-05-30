@@ -1,5 +1,5 @@
 """
-Service helpers for persisting accepted resume-extraction results.
+Service helpers for persisting scored resume-extraction results.
 
 This module sits above the raw SQL helper in
 `backend.db.resume_extraction_persistence` and below the operator-facing
@@ -7,7 +7,7 @@ scripts.
 
 It gives the rest of the repository a stable way to talk about:
 
-- deciding whether an extraction result is safe to persist
+- deciding whether an extraction result is complete enough to persist
 - deciding whether a no-resume JobAdder candidate is still worth persisting as
   a profile-only contact
 - normalising one accepted result into a persistence payload
@@ -30,17 +30,18 @@ That decision belongs here.
 
 Current policy
 --------------
-The current persistence policy is intentionally staged:
+The current persistence policy is intentionally conservative but no longer
+drop-happy:
 
-- only accepted extraction results are persisted
-- "accepted" currently means `quality_assessment.status == "pass"`
-- review/rerun/failure results stay as local batch artefacts for now
+- extraction failures still do not persist
+- scored extraction results do persist
+- the persisted record keeps the quality status and score
+- callers can later filter for `pass` versus `review`/`rerun` in the UI
 - no-resume JobAdder candidates may be persisted separately through a profile-
   only path that keeps identity/contact data and source provenance without
   pretending that a CV extraction happened
 
-This keeps the first write path conservative while the wider ingestion design
-is still settling.
+This keeps every CV in the database while still making quality visible.
 """
 
 from __future__ import annotations
@@ -99,7 +100,48 @@ def persist_accepted_resume_extraction_result(
         print(persisted["candidate_id"])
     """
 
-    _validate_result_is_persistable(result)
+    _validate_result_is_persistable(result, allowed_quality_statuses={"pass"})
+    persistence_payload = build_resume_extraction_persistence_payload(result)
+    return persist_resume_extraction_snapshot(persistence_payload)
+
+
+def persist_scored_resume_extraction_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist one scored resume extraction result into the canonical schema.
+
+    Parameters
+    ----------
+    result : dict[str, Any]
+        Final extraction result payload returned by the live extraction flow.
+
+    Returns
+    -------
+    dict[str, Any]
+        Persistence summary returned by the lower-level database helper.
+
+    Raises
+    ------
+    RuntimeError
+        If the result is missing required fields or does not yet have a scored
+        quality assessment.
+
+    Notes
+    -----
+    This is the shared persistence rule for the clean backend database:
+
+    - extraction failures do not persist
+    - scored CVs do persist
+    - quality score and quality status stay attached to the persisted record
+    - callers can later decide whether `review` or `rerun` rows should drive
+      downstream automation
+    """
+
+    _validate_result_is_persistable(
+        result,
+        allowed_quality_statuses={"pass", "review", "rerun"},
+    )
     persistence_payload = build_resume_extraction_persistence_payload(result)
     return persist_resume_extraction_snapshot(persistence_payload)
 
@@ -215,13 +257,26 @@ def build_resume_extraction_persistence_payload(
     """
 
     extraction_input = result["extraction_input"]
-    candidate_context = extraction_input["candidate_context"]
-    latest_resume = extraction_input.get("latest_resume", {})
-    cleaned_candidate_notes = extraction_input.get("cleaned_candidate_notes", [])
-    prompt_input_metrics = extraction_input.get("prompt_input_metrics", {})
-    structured_extraction = result["structured_extraction"]
-    quality_assessment = result["quality_assessment"]
-    cv_source_assessment = result["cv_source_assessment"]
+    candidate_context = _sanitize_json_ready_value(
+        extraction_input["candidate_context"]
+    )
+    latest_resume = _sanitize_json_ready_value(
+        extraction_input.get("latest_resume", {})
+    )
+    cleaned_candidate_notes = _sanitize_json_ready_value(
+        extraction_input.get("cleaned_candidate_notes", [])
+    )
+    prompt_input_metrics = _sanitize_json_ready_value(
+        extraction_input.get("prompt_input_metrics", {})
+    )
+    structured_extraction = _sanitize_json_ready_value(result["structured_extraction"])
+    quality_assessment = _sanitize_json_ready_value(result["quality_assessment"])
+    cv_source_assessment = _sanitize_json_ready_value(
+        result["cv_source_assessment"]
+    )
+    cleaned_resume_text = _sanitize_text_preserve_structure(
+        extraction_input.get("cleaned_resume_text")
+    )
 
     first_name = _clean_optional_string(candidate_context.get("first_name"))
     last_name = _clean_optional_string(candidate_context.get("last_name"))
@@ -303,9 +358,9 @@ def build_resume_extraction_persistence_payload(
         "resume_updated_at": _clean_optional_string(latest_resume.get("created_at")),
         "cleaned_candidate_notes": cleaned_candidate_notes,
         "latest_resume": latest_resume,
-        "cleaned_resume_text": extraction_input.get("cleaned_resume_text"),
+        "cleaned_resume_text": cleaned_resume_text,
         "resume_content_hash": _hash_text(
-            extraction_input.get("cleaned_resume_text") or ""
+            cleaned_resume_text or ""
         ),
         "resume_source_uri": _build_resume_source_uri(
             source_system=result["source_system"],
@@ -368,12 +423,16 @@ def build_jobadder_candidate_profile_persistence_payload(
         payload["profile_source_payload"]["persistence_reason"]
     """
 
-    candidate_payload = ingest_payload["candidate"]
-    attachments_payload = ingest_payload.get("attachments", {})
-    notes_payload = ingest_payload.get("notes", {})
-    ingest_shell = ingest_payload.get("ingest_shell", {})
-    candidate_context = ingest_shell.get("core_identity", {})
-    cleaned_candidate_notes = notes_payload.get("cleaned_items", [])
+    candidate_payload = _sanitize_json_ready_value(ingest_payload["candidate"])
+    attachments_payload = _sanitize_json_ready_value(
+        ingest_payload.get("attachments", {})
+    )
+    notes_payload = _sanitize_json_ready_value(ingest_payload.get("notes", {}))
+    ingest_shell = _sanitize_json_ready_value(ingest_payload.get("ingest_shell", {}))
+    candidate_context = _sanitize_json_ready_value(ingest_shell.get("core_identity", {}))
+    cleaned_candidate_notes = _sanitize_json_ready_value(
+        notes_payload.get("cleaned_items", [])
+    )
 
     first_name = _clean_optional_string(
         candidate_context.get("first_name")
@@ -471,24 +530,30 @@ def build_jobadder_candidate_profile_persistence_payload(
     }
 
 
-def _validate_result_is_persistable(result: dict[str, Any]) -> None:
+def _validate_result_is_persistable(
+    result: dict[str, Any],
+    *,
+    allowed_quality_statuses: set[str],
+) -> None:
     """
     Validate that one extraction result is currently safe to persist.
 
     Notes
     -----
-    The current write path is intentionally conservative. It accepts only
-    quality-gated `pass` results so canonical tables are not fed by outputs the
-    deterministic scorer already considers uncertain.
+    The current write path requires a scored result, but the caller decides
+    which quality bands are acceptable for that specific workflow.
 
     Example
     -------
-    A result with:
+    A caller can pass:
 
-        quality_assessment={"status": "review"}
+        allowed_quality_statuses={"pass", "review", "rerun"}
 
-    raises immediately instead of allowing the caller to persist a doubtful
-    extraction into canonical state.
+    when the goal is to keep every scored CV, or:
+
+        allowed_quality_statuses={"pass"}
+
+    when the goal is to persist only high-confidence CVs.
     """
 
     if result.get("source_system") not in {"jobadder", "recruiterflow", "outlook"}:
@@ -500,13 +565,14 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
     if not isinstance(quality_assessment, dict):
         raise RuntimeError(
             "The extraction result is missing `quality_assessment`, so persistence "
-            "cannot determine whether the result was accepted."
+            "cannot determine whether the result was scored."
         )
 
-    if quality_assessment.get("status") != "pass":
+    quality_status = quality_assessment.get("status")
+    if quality_status not in allowed_quality_statuses:
         raise RuntimeError(
-            "Only extraction results with `quality_assessment.status == \"pass\"` "
-            "can be persisted at the moment."
+            "This persistence path does not accept the current "
+            f'`quality_assessment.status` value: {quality_status!r}.'
         )
 
     for required_top_level_key in (
@@ -533,6 +599,22 @@ def _validate_result_is_persistable(result: dict[str, Any]) -> None:
             raise RuntimeError(
                 f"`extraction_input` is missing `{required_input_key}`."
             )
+
+    latest_resume = extraction_input.get("latest_resume")
+    if not isinstance(latest_resume, dict):
+        raise RuntimeError("`extraction_input.latest_resume` must be a dictionary-like object.")
+
+    if latest_resume.get("attachment_id") in (None, ""):
+        raise RuntimeError(
+            "Resume extraction persistence requires a real selected resume artefact. "
+            "`extraction_input.latest_resume.attachment_id` is missing."
+        )
+
+    if _clean_optional_string(latest_resume.get("file_name")) is None:
+        raise RuntimeError(
+            "Resume extraction persistence requires a selected resume file name. "
+            "`extraction_input.latest_resume.file_name` is missing."
+        )
 
 
 def _validate_ingest_payload_is_profile_only_persistable(
@@ -817,10 +899,61 @@ def _clean_optional_string(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
 
-    cleaned_value = value.strip()
+    cleaned_value = value.replace("\x00", "").strip()
     if cleaned_value == "":
         return None
     return cleaned_value
+
+
+def _sanitize_text_preserve_structure(value: Any) -> str | None:
+    """
+    Return a NUL-safe string while preserving meaningful whitespace structure.
+
+    Example
+    -------
+    A resume body like:
+
+        "Line 1\\x00\\n\\nLine 2"
+
+    becomes:
+
+        "Line 1\\n\\nLine 2"
+    """
+
+    if not isinstance(value, str):
+        return None
+
+    sanitized_value = value.replace("\x00", "")
+    return sanitized_value if sanitized_value != "" else None
+
+
+def _sanitize_json_ready_value(value: Any) -> Any:
+    """
+    Recursively strip NUL bytes from JSON-ready payload values.
+
+    Notes
+    -----
+    Postgres text fields and JSONB string values both reject embedded NUL
+    bytes. Sanitising once at the shared persistence boundary keeps every
+    source path consistent.
+    """
+
+    if isinstance(value, str):
+        return value.replace("\x00", "")
+
+    if isinstance(value, list):
+        return [_sanitize_json_ready_value(item) for item in value]
+
+    if isinstance(value, tuple):
+        return [_sanitize_json_ready_value(item) for item in value]
+
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_json_ready_value(nested_value)
+            for key, nested_value in value.items()
+        }
+
+    return value
 
 
 def _hash_text(text: str) -> str:
@@ -858,4 +991,5 @@ __all__ = [
     "build_resume_extraction_persistence_payload",
     "persist_jobadder_candidate_profile_without_resume",
     "persist_accepted_resume_extraction_result",
+    "persist_scored_resume_extraction_result",
 ]

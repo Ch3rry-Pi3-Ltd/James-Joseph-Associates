@@ -1,0 +1,128 @@
+{
+  "persisted_at": "2026-05-29T09:37:41.168438+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1101.1200.json",
+  "candidate_limit": 100,
+  "persisted_resume_limit": 100,
+  "force_reprocess": false,
+  "candidate_count": 100,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 99,
+  "unsupported_count": 0,
+  "failed_count": 1,
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3744,
+      "source_file_id": 4130,
+      "file_name": "Yinka Aiyenuro (67950409 - Totaljobs).pdf",
+      "source_record_id": "3744:4130",
+      "document_id": "633f9f2c-ee5a-4c87-ab0d-1abce70eb695",
+      "document_title": "Yinka Aiyenuro (67950409 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3743,
+      "source_file_id": 4129,
+      "file_name": "Abhilash Girija (97255671 - Totaljobs).pdf",
+      "source_record_id": "3743:4129",
+      "document_id": "72d22f63-2a27-43a9-84f4-31138ebc85c8",
+      "document_title": "Abhilash Girija (97255671 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3742,
+      "source_file_id": 4128,
+      "file_name": "Ashley Hughes (80722182 - Totaljobs).docx",
+      "source_record_id": "3742:4128",
+      "document_id": "031cd69e-2243-4d4b-8e27-c42ad7f968de",
+      "document_title": "Ashley Hughes (80722182 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 96
+    },
+    {
+      "source_candidate_id": 3741,
+      "source_file_id": 4127,
+      "file_name": "Nimesh Mistry (13053497 - Totaljobs).pdf",
+      "source_record_id": "3741:4127",
+      "document_id": "2404e064-0ae2-47e2-8ae7-eee0dd5aefe5",
+      "document_title": "Nimesh Mistry (13053497 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3740,
+      "source_file_id": 4126,
+      "file_name": "davinder chana (84753474 - Totaljobs).pdf",
+      "source_record_id": "3740:4126",
+      "document_id": "733ff27b-9070-43d4-abea-6bcc3808f63d",
+      "document_title": "davinder chana (84753474 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3739,
+      "source_file_id": 4125,
+      "file_name": "Tia_Newman_CV.pdf",
+      "source_record_id": "3739:4125",
+      "document_id": "0a9c6296-d6c6-42e0-bf14-05ba3d86350b",
+      "document_title": "Tia_Newman_CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3738,
+      "source_file_id": 4124,
+      "file_name": "Cleo+Cassell+CV+2024+.docx",
+      "source_record_id": "3738:4124",
+      "document_id": "1417c295-93b1-4d53-bdcb-8c48e26d06a5",
+      "document_title": "Cleo+Cassell+CV+2024+.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3737,
+      "source_file_id": 4123,
+      "file_name": "nima4+cv+2.docx",
+      "source_record_id": "3737:4123",
+      "document_id": "5cce54a2-dcd7-4adf-8901-08d0d0e68b1e",
+      "document_title": "nima4+cv+2.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3736,
+      "source_file_id": 4122,
+      "file_name": "BijalVaducha_CV.docx",
+      "source_record_id": "3736:4122",
+      "document_id": "8580d787-d8e3-4fb8-9196-a876c5e8c134",
+      "document_title": "BijalVaducha_CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3735,
+      "source_file_id": 4121,
+      "file_name": "Izabela Michalak_13468865_cv-library.docx",
+      "source_record_id": "3735:4121",
+      "document_id": "0a5a6160-46e2-498a-8807-ef807413b4b8",
+      "document_title": "Izabela Michalak_13468865_cv-library.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 3683,
+      "file_name": "C+Remotti-Breton+12.23+HR+Transformation.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

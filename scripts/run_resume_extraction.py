@@ -49,7 +49,7 @@ It performs the following steps:
 4. construct the LangChain chat model through `backend.llm.providers`
 5. call `extract_jobadder_candidate_resume_profile(...)`
 6. print a concise human-readable summary
-7. optionally persist accepted output into Supabase/Postgres
+7. optionally persist scored output into Supabase/Postgres
 8. optionally write the full result to disk as JSON
 
 What this script does not do
@@ -83,13 +83,13 @@ Run an extraction and save the full JSON payload to disk:
         --candidate-id 16496678 ^
         --output-json temp\\resume_extraction_result.json
 
-Run an extraction, quality-gate it, and persist the accepted result:
+Run an extraction, quality-gate it, and persist the scored result:
 
     uv run python scripts/run_resume_extraction.py ^
         --jobadder-account 2236 ^
         --candidate-id 16496678 ^
         --enable-quality-gate ^
-        --persist-accepted-output
+        --persist-scored-output
 
 Run with an explicit model override:
 
@@ -168,7 +168,7 @@ from backend.services.resume_extraction import (
     extract_jobadder_candidate_resume_profile,
 )
 from backend.services.resume_extraction_persistence import (
-    persist_accepted_resume_extraction_result,
+    persist_scored_resume_extraction_result,
 )
 from backend.settings import get_settings
 
@@ -347,12 +347,14 @@ def build_argument_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--persist-scored-output",
         "--persist-accepted-output",
+        dest="persist_scored_output",
         action="store_true",
         help=(
-            "Persist accepted quality-gated output into the canonical "
-            "Supabase/Postgres schema. Only `pass` results are currently "
-            "eligible for persistence."
+            "Persist scored quality-gated output into the canonical "
+            "Supabase/Postgres schema. The persisted record keeps the "
+            "quality status and score."
         ),
     )
 
@@ -1009,7 +1011,7 @@ def persist_result_if_requested(
     result: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Persist one accepted result when the caller enabled persistence.
+    Persist one scored result when the caller enabled persistence.
 
     Parameters
     ----------
@@ -1030,13 +1032,13 @@ def persist_result_if_requested(
     serve two different operator workflows:
 
     - calibration and debugging with local JSON artefacts only
-    - accepted-output ingestion into the canonical database
+    - scored-output ingestion into the canonical database
 
     Example
     -------
     When the caller runs with:
 
-        --persist-accepted-output
+        --persist-scored-output
 
     the returned result contains:
 
@@ -1044,12 +1046,12 @@ def persist_result_if_requested(
     """
 
     enriched_result = dict(result)
-    enriched_result["persistence_requested"] = args.persist_accepted_output
+    enriched_result["persistence_requested"] = args.persist_scored_output
 
-    if not args.persist_accepted_output:
+    if not args.persist_scored_output:
         return enriched_result
 
-    persisted_summary = persist_accepted_resume_extraction_result(result)
+    persisted_summary = persist_scored_resume_extraction_result(result)
     enriched_result["persistence_result"] = persisted_summary
     return enriched_result
 

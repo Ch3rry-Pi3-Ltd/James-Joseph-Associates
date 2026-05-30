@@ -1,0 +1,128 @@
+{
+  "persisted_at": "2026-05-29T12:57:33.711986+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1201.1300.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 19,
+  "unsupported_count": 0,
+  "failed_count": 1,
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3644,
+      "source_file_id": 4007,
+      "file_name": "Jitunu+Sahoo+Resume.pdf",
+      "source_record_id": "3644:4007",
+      "document_id": "fda0cb7b-060b-4c90-9ae6-5ebcbcc7e720",
+      "document_title": "Jitunu+Sahoo+Resume.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3643,
+      "source_file_id": 4006,
+      "file_name": "SankarPadakula.docx",
+      "source_record_id": "3643:4006",
+      "document_id": "5ace675a-10b1-4f48-9b73-4a15b1793051",
+      "document_title": "SankarPadakula.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3642,
+      "source_file_id": 4005,
+      "file_name": "Saidarao+Lead+Full+Stack+Engineer (1).docx",
+      "source_record_id": "3642:4005",
+      "document_id": "b51b7c15-2f07-46e9-bfd9-5b4731d45448",
+      "document_title": "Saidarao+Lead+Full+Stack+Engineer (1).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3641,
+      "source_file_id": 4004,
+      "file_name": "Dhiren+Raval+CV+NF1.pdf",
+      "source_record_id": "3641:4004",
+      "document_id": "6b2c2921-2f70-4e09-b8b1-5eb9b061afb3",
+      "document_title": "Dhiren+Raval+CV+NF1.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3640,
+      "source_file_id": 4003,
+      "file_name": "Resume_Dev+-+Vikas+Shrivastava.pdf",
+      "source_record_id": "3640:4003",
+      "document_id": "fdc0edcd-a444-4ade-af0f-64be1581ea9f",
+      "document_title": "Resume_Dev+-+Vikas+Shrivastava.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3639,
+      "source_file_id": 4863,
+      "file_name": "Kasun_Perera_CV.pdf",
+      "source_record_id": "3639:4863",
+      "document_id": "1ad09920-3ecc-4518-b77e-2ab1adb7f389",
+      "document_title": "Kasun_Perera_CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3638,
+      "source_file_id": 3998,
+      "file_name": "Garry Munro (77361353 - Totaljobs).pdf",
+      "source_record_id": "3638:3998",
+      "document_id": "ad910586-1d7b-4438-8b78-b13b17d54347",
+      "document_title": "Garry Munro (77361353 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 3636,
+      "source_file_id": 3996,
+      "file_name": "ke sheng (21524691 - Totaljobs).pdf",
+      "source_record_id": "3636:3996",
+      "document_id": "3f80a030-702a-4fd5-9dd5-f362f9a6a7c2",
+      "document_title": "ke sheng (21524691 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3635,
+      "source_file_id": 3995,
+      "file_name": "Arungandhi Chinnasamy (96379679 - Totaljobs).pdf",
+      "source_record_id": "3635:3995",
+      "document_id": "db6f3b4f-8478-4d5e-844a-ef2a26bdc6a4",
+      "document_title": "Arungandhi Chinnasamy (96379679 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3634,
+      "source_file_id": 4143,
+      "file_name": "Vijaya-CV.doc",
+      "source_record_id": "3634:4143",
+      "document_id": "892c5e3a-321d-46c7-8bfa-83597320e0bb",
+      "document_title": "Vijaya-CV.doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 3637,
+      "file_name": "Jason Adu-Gyamfi (95313655 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

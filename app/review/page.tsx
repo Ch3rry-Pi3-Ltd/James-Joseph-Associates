@@ -18,8 +18,11 @@ type ReviewOverview = {
   recent_documents: Array<Record<string, unknown>>;
   recent_source_records: Array<Record<string, unknown>>;
   recent_reconciliation_decisions: Array<Record<string, unknown>>;
+  recent_scored_resumes: Array<Record<string, unknown>>;
   document_type_counts: Array<Record<string, unknown>>;
   source_system_counts: Array<Record<string, unknown>>;
+  quality_status_counts: Array<Record<string, unknown>>;
+  resume_model_counts: Array<Record<string, unknown>>;
   reconciliation_status_counts: Array<Record<string, unknown>>;
 };
 
@@ -199,11 +202,14 @@ export default async function ReviewPage() {
  * - recent jobs
  * - recent applications
  * - recent documents
- * - recent source provenance rows
- * - grouped document-type counts
- * - grouped source-system counts
- * - recent reconciliation decisions
- * - grouped reconciliation-status counts
+   * - recent source provenance rows
+   * - grouped document-type counts
+   * - recent scored resumes with quality/model metadata
+   * - grouped source-system counts
+   * - grouped quality-status counts
+   * - grouped model-name counts
+   * - recent reconciliation decisions
+   * - grouped reconciliation-status counts
    *
    * In plain language:
    *
@@ -365,6 +371,29 @@ export default async function ReviewPage() {
 
           <article className="rounded-lg border border-zinc-200 bg-white p-6">
             <h2 className="text-2xl font-semibold text-zinc-950">
+              Quality status
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Grouped counts for pass, review, and rerun resume outcomes.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.quality_status_counts)}
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Resume models
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Grouped counts for the final model used by persisted resume
+              extractions.
+            </p>
+            <div className="mt-5">{renderRows(overview.resume_model_counts)}</div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
               Recent source records
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-600">
@@ -373,6 +402,19 @@ export default async function ReviewPage() {
             </p>
             <div className="mt-5">
               {renderRows(overview.recent_source_records)}
+            </div>
+          </article>
+
+          <article className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-2xl font-semibold text-zinc-950">
+              Recent scored resumes
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              Recent canonical resume extractions with visible quality score,
+              quality status, and final model metadata.
+            </p>
+            <div className="mt-5">
+              {renderRows(overview.recent_scored_resumes)}
             </div>
           </article>
 

@@ -58,8 +58,11 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         - `recent_documents`
         - `recent_source_records`
         - `recent_reconciliation_decisions`
+        - `recent_scored_resumes`
         - `document_type_counts`
         - `source_system_counts`
+        - `quality_status_counts`
+        - `resume_model_counts`
         - `reconciliation_status_counts`
 
     Notes
@@ -97,8 +100,11 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
             "recent_documents": [...],
             "recent_source_records": [...],
             "recent_reconciliation_decisions": [...],
+            "recent_scored_resumes": [...],
             "document_type_counts": [...],
             "source_system_counts": [...],
+            "quality_status_counts": [...],
+            "resume_model_counts": [...],
             "reconciliation_status_counts": [...]
         }
     """
@@ -220,6 +226,67 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         LIMIT %(limit)s
     """
 
+    recent_scored_resumes_query = """
+        SELECT
+            sr.id AS source_record_uuid,
+            sr.source_system,
+            sr.source_record_id,
+            sr.sync_status,
+            sr.source_payload -> 'quality_assessment' ->> 'status' AS quality_status,
+            NULLIF(
+                sr.source_payload -> 'quality_assessment' ->> 'quality_score',
+                ''
+            )::int AS quality_score,
+            sr.source_payload -> 'model_profile' ->> 'model_name' AS model_name,
+            COALESCE(
+                sr.source_payload -> 'quality_gate' ->> 'final_model_name',
+                sr.source_payload -> 'model_profile' ->> 'model_name'
+            ) AS final_model_name,
+            COALESCE(
+                NULLIF(
+                    sr.source_payload -> 'quality_gate' ->> 'fallback_invoked',
+                    ''
+                )::boolean,
+                false
+            ) AS fallback_invoked,
+            (
+                SELECT p.full_name
+                FROM source_record_links srl
+                JOIN people p
+                    ON p.id = srl.person_id
+                WHERE srl.source_record_id = sr.id
+                  AND srl.person_id IS NOT NULL
+                LIMIT 1
+            ) AS full_name,
+            (
+                SELECT d.title
+                FROM source_record_links srl
+                JOIN documents d
+                    ON d.id = srl.document_id
+                WHERE srl.source_record_id = sr.id
+                  AND srl.document_id IS NOT NULL
+                LIMIT 1
+            ) AS document_title,
+            sr.processed_at,
+            sr.received_at,
+            sr.created_at
+        FROM source_records sr
+        WHERE sr.source_record_type IN (
+            'jobadder_resume_extraction',
+            'recruiterflow_resume_extraction'
+        )
+        ORDER BY
+            CASE
+                WHEN sr.source_payload -> 'quality_assessment' ->> 'status' = 'review'
+                    THEN 0
+                WHEN sr.source_payload -> 'quality_assessment' ->> 'status' = 'rerun'
+                    THEN 1
+                ELSE 2
+            END,
+            COALESCE(sr.processed_at, sr.received_at, sr.created_at) DESC
+        LIMIT %(limit)s
+    """
+
     document_type_counts_query = """
         SELECT
             document_type,
@@ -237,6 +304,42 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         FROM source_records
         GROUP BY source_system
         ORDER BY source_record_count DESC, source_system ASC
+        LIMIT %(limit)s
+    """
+
+    quality_status_counts_query = """
+        SELECT
+            sr.source_payload -> 'quality_assessment' ->> 'status' AS quality_status,
+            COUNT(*)::int AS quality_count
+        FROM source_records sr
+        WHERE sr.source_record_type IN (
+            'jobadder_resume_extraction',
+            'recruiterflow_resume_extraction'
+        )
+          AND sr.source_payload -> 'quality_assessment' ->> 'status' IS NOT NULL
+        GROUP BY quality_status
+        ORDER BY quality_count DESC, quality_status ASC
+        LIMIT %(limit)s
+    """
+
+    resume_model_counts_query = """
+        SELECT
+            COALESCE(
+                sr.source_payload -> 'quality_gate' ->> 'final_model_name',
+                sr.source_payload -> 'model_profile' ->> 'model_name'
+            ) AS model_name,
+            COUNT(*)::int AS model_count
+        FROM source_records sr
+        WHERE sr.source_record_type IN (
+            'jobadder_resume_extraction',
+            'recruiterflow_resume_extraction'
+        )
+          AND COALESCE(
+                sr.source_payload -> 'quality_gate' ->> 'final_model_name',
+                sr.source_payload -> 'model_profile' ->> 'model_name'
+              ) IS NOT NULL
+        GROUP BY model_name
+        ORDER BY model_count DESC, model_name ASC
         LIMIT %(limit)s
     """
 
@@ -278,11 +381,20 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
                 dict(row) for row in cursor.fetchall()
             ]
 
+            cursor.execute(recent_scored_resumes_query, {"limit": limit})
+            recent_scored_resumes = [dict(row) for row in cursor.fetchall()]
+
             cursor.execute(document_type_counts_query, {"limit": limit})
             document_type_counts = [dict(row) for row in cursor.fetchall()]
 
             cursor.execute(source_system_counts_query, {"limit": limit})
             source_system_counts = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(quality_status_counts_query, {"limit": limit})
+            quality_status_counts = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(resume_model_counts_query, {"limit": limit})
+            resume_model_counts = [dict(row) for row in cursor.fetchall()]
 
             cursor.execute(reconciliation_status_counts_query, {"limit": limit})
             reconciliation_status_counts = [
@@ -299,8 +411,11 @@ def get_review_overview(limit: int = 10) -> dict[str, Any]:
         "recent_documents": recent_documents,
         "recent_source_records": recent_source_records,
         "recent_reconciliation_decisions": recent_reconciliation_decisions,
+        "recent_scored_resumes": recent_scored_resumes,
         "document_type_counts": document_type_counts,
         "source_system_counts": source_system_counts,
+        "quality_status_counts": quality_status_counts,
+        "resume_model_counts": resume_model_counts,
         "reconciliation_status_counts": reconciliation_status_counts,
     }
 

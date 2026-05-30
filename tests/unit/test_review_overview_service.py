@@ -20,8 +20,11 @@ def test_build_review_overview_delegates_to_db_helper() -> None:
         "recent_documents": [],
         "recent_source_records": [],
         "recent_reconciliation_decisions": [],
+        "recent_scored_resumes": [],
         "document_type_counts": [],
         "source_system_counts": [],
+        "quality_status_counts": [],
+        "resume_model_counts": [],
         "reconciliation_status_counts": [],
     }
 

@@ -6,7 +6,7 @@ It keeps the important behavior aligned with JobAdder:
 
 - extract resume text from the embedded ZIP CV file
 - run the same LLM-backed structured extraction layer
-- persist only accepted results into the canonical `resume` document model
+- persist scored results into the canonical `resume` document model
 """
 
 from __future__ import annotations
@@ -19,11 +19,13 @@ from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
 
+from backend.db.connection import postgres_connection
 from backend.services.recruiterflow_resume_extraction import (
+    _extract_recruiterflow_file_id,
     extract_recruiterflow_candidate_resume_profile_with_quality_gate,
 )
 from backend.services.resume_extraction_persistence import (
-    persist_accepted_resume_extraction_result,
+    persist_scored_resume_extraction_result,
 )
 from backend.services.resume_text import (
     ResumeTextExtractionError,
@@ -39,7 +41,7 @@ from scripts.persist_recruiterflow_initial_chunks import (
 DEFAULT_CANDIDATE_MEMBER_NAME = "candidate/1.100.json"
 SUPPORTED_RESUME_SUFFIXES = (".pdf", ".docx", ".doc", ".rtf", ".txt")
 DEFAULT_CANDIDATE_LIMIT = 10
-DEFAULT_ACCEPTED_RESUME_LIMIT = 10
+DEFAULT_PERSISTED_RESUME_LIMIT = 10
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,10 +64,17 @@ def parse_args() -> argparse.Namespace:
         help="Maximum number of candidate rows to process from the chunk.",
     )
     parser.add_argument(
+        "--persisted-resume-limit",
         "--accepted-resume-limit",
+        dest="persisted_resume_limit",
         type=int,
-        default=DEFAULT_ACCEPTED_RESUME_LIMIT,
-        help="Maximum number of accepted resume ingests to persist in one run.",
+        default=DEFAULT_PERSISTED_RESUME_LIMIT,
+        help="Maximum number of scored resume ingests to persist in one run.",
+    )
+    parser.add_argument(
+        "--force-reprocess",
+        action="store_true",
+        help="Bypass the source-record skip check and reprocess already-ingested CVs.",
     )
     return parser.parse_args()
 
@@ -88,7 +97,8 @@ def main() -> None:
     candidate_member_name = str(args.candidate_member)
     artifact_path = build_artifact_path(candidate_member_name)
     candidate_limit = max(1, int(args.candidate_limit))
-    accepted_resume_limit = max(1, int(args.accepted_resume_limit))
+    persisted_resume_limit = max(1, int(args.persisted_resume_limit))
+    force_reprocess = bool(args.force_reprocess)
 
     stored_connection = _load_dropbox_connection(DROPBOX_ACCOUNT_ID)
     access_token = stored_connection["access_token"]
@@ -114,25 +124,61 @@ def main() -> None:
 
         persisted_resumes: list[dict[str, Any]] = []
         failed_items: list[dict[str, Any]] = []
-        status_counts = {"accepted": 0, "non_pass": 0, "unsupported": 0, "failed": 0}
+        skipped_items: list[dict[str, Any]] = []
+        status_counts = {
+            "accepted": 0,
+            "non_pass": 0,
+            "unsupported": 0,
+            "failed": 0,
+            "skipped": 0,
+            "no_resume_selected": 0,
+            "selected_resume_candidate": 0,
+        }
 
         for candidate_item in raw_candidate_records[:candidate_limit]:
             if not isinstance(candidate_item, dict):
                 continue
 
-            if status_counts["accepted"] >= accepted_resume_limit:
+            if (status_counts["accepted"] + status_counts["non_pass"]) >= persisted_resume_limit:
                 break
 
             selected_file_item = _select_preferred_resume_file(
                 candidate_item.get("files", [])
             )
             if selected_file_item is None:
+                status_counts["no_resume_selected"] += 1
                 continue
 
+            status_counts["selected_resume_candidate"] += 1
             file_item = selected_file_item
             try:
                 source_candidate_id = int(candidate_item["id"])
                 file_name = str(file_item["filename"])
+                source_file_id = _extract_recruiterflow_file_id(file_payload=file_item)
+                extraction_source_record_key = _build_recruiterflow_extraction_source_record_key(
+                    source_candidate_id=source_candidate_id,
+                    source_file_id=source_file_id,
+                )
+                if not force_reprocess:
+                    existing_skip_record = _find_existing_recruiterflow_resume_skip_record(
+                        extraction_source_record_id=extraction_source_record_key,
+                    )
+                    if existing_skip_record is not None:
+                        status_counts["skipped"] += 1
+                        skipped_items.append(
+                            {
+                                "source_candidate_id": source_candidate_id,
+                                "source_file_id": source_file_id,
+                                "file_name": file_name,
+                                "source_record_id": extraction_source_record_key,
+                                "document_id": existing_skip_record.get("document_id"),
+                                "document_title": existing_skip_record.get("document_title"),
+                                "quality_status": existing_skip_record.get("quality_status"),
+                                "quality_score": existing_skip_record.get("quality_score"),
+                            }
+                        )
+                        continue
+
                 embedded_member_name = _resolve_embedded_candidate_file_member(
                     archive=archive,
                     source_candidate_id=source_candidate_id,
@@ -173,16 +219,25 @@ def main() -> None:
                     downloaded_file=downloaded_file,
                     extracted_resume_text=extracted_resume_text,
                 )
+                persisted_summary = persist_scored_resume_extraction_result(result)
+                persisted_resumes.append(
+                    {
+                        **persisted_summary,
+                        "model_name": result.get("model_profile", {}).get(
+                            "model_name"
+                        ),
+                        "quality_score": result.get(
+                            "quality_assessment", {}
+                        ).get("quality_score"),
+                        "quality_gate": result.get("quality_gate"),
+                    }
+                )
                 if result.get("quality_assessment", {}).get("status") == "pass":
-                    persisted_summary = persist_accepted_resume_extraction_result(
-                        result
-                    )
-                    persisted_resumes.append(persisted_summary)
                     status_counts["accepted"] += 1
-                    if status_counts["accepted"] >= accepted_resume_limit:
-                        break
                 else:
                     status_counts["non_pass"] += 1
+                if (status_counts["accepted"] + status_counts["non_pass"]) >= persisted_resume_limit:
+                    break
             except ResumeTextExtractionError as exc:
                 status_counts["unsupported"] += 1
                 failed_items.append(
@@ -212,24 +267,55 @@ def main() -> None:
         "zip_path": RECRUITERFLOW_ZIP_PATH,
         "candidate_member_name": candidate_member_name,
         "candidate_limit": candidate_limit,
-        "accepted_resume_limit": accepted_resume_limit,
+        "persisted_resume_limit": persisted_resume_limit,
+        "force_reprocess": force_reprocess,
         "candidate_count": min(candidate_limit, len(raw_candidate_records)),
+        "selected_resume_candidate_count": status_counts["selected_resume_candidate"],
+        "no_resume_selected_count": status_counts["no_resume_selected"],
+        "already_processed_count": status_counts["skipped"],
+        "new_resume_candidate_count": (
+            status_counts["selected_resume_candidate"] - status_counts["skipped"]
+        ),
+        "persisted_resume_count": status_counts["accepted"] + status_counts["non_pass"],
         "accepted_resume_count": status_counts["accepted"],
         "non_pass_count": status_counts["non_pass"],
+        "skipped_count": status_counts["skipped"],
         "unsupported_count": status_counts["unsupported"],
         "failed_count": status_counts["failed"],
         "persisted_resume_preview": persisted_resumes[:10],
+        "skipped_items_preview": skipped_items[:10],
         "failed_items_preview": failed_items[:10],
     }
 
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    artifact_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    artifact_path.write_text(
+        json.dumps(summary, indent=2, default=str),
+        encoding="utf-8",
+    )
 
     print(f"artifact: {artifact_path}")
     print(f"candidate member: {summary['candidate_member_name']}")
     print(f"candidate rows scanned: {summary['candidate_count']}")
-    print(f"accepted resumes: {summary['accepted_resume_count']}")
+    print(
+        "resume-like candidates selected: "
+        f"{summary['selected_resume_candidate_count']}"
+    )
+    print(
+        "no resume selected: "
+        f"{summary['no_resume_selected_count']}"
+    )
+    print(
+        "already processed: "
+        f"{summary['already_processed_count']}"
+    )
+    print(
+        "new resume candidates: "
+        f"{summary['new_resume_candidate_count']}"
+    )
+    print(f"persisted resumes: {summary['persisted_resume_count']}")
+    print(f"pass resumes: {summary['accepted_resume_count']}")
     print(f"non-pass resumes: {summary['non_pass_count']}")
+    print(f"skipped resumes: {summary['skipped_count']}")
     print(f"unsupported files: {summary['unsupported_count']}")
     print(f"failed files: {summary['failed_count']}")
 
@@ -340,6 +426,105 @@ def _clean_string(value: Any) -> str | None:
 
     cleaned_value = value.strip()
     return cleaned_value or None
+
+
+def _build_recruiterflow_extraction_source_record_key(
+    *,
+    source_candidate_id: int,
+    source_file_id: int | None,
+) -> str:
+    """
+    Return the canonical Recruiterflow resume-extraction source-record key.
+
+    Parameters
+    ----------
+    source_candidate_id : int
+        Recruiterflow candidate identifier.
+
+    source_file_id : int | None
+        Recruiterflow file identifier selected as the CV artefact.
+
+    Returns
+    -------
+    str
+        Stable extraction source-record key such as `4847:5679`.
+
+    Raises
+    ------
+    RuntimeError
+        If the selected file payload does not expose a usable upstream file ID.
+    """
+
+    if source_file_id is None:
+        raise RuntimeError(
+            "Recruiterflow resume extraction requires an upstream file ID to build the source-record key."
+        )
+
+    return f"{source_candidate_id}:{source_file_id}"
+
+
+def _find_existing_recruiterflow_resume_skip_record(
+    *,
+    extraction_source_record_id: str,
+) -> dict[str, Any] | None:
+    """
+    Return one existing Recruiterflow resume-extraction row that is safe to skip.
+
+    Parameters
+    ----------
+    extraction_source_record_id : str
+        Stable source-record key for the Recruiterflow candidate/file pair.
+
+    Returns
+    -------
+    dict[str, Any] | None
+        Existing scored resume record metadata, or `None` when the CV has not
+        yet been persisted through the canonical path.
+
+    Notes
+    -----
+    This is a deliberately narrow DB-backed skip rule:
+
+    - same source-system candidate/file pair
+    - same canonical resume extraction source-record type
+    - only skip when a canonical resume document is already linked
+
+    That keeps the runner from paying for duplicate text extraction and LLM
+    work on unchanged static-export CVs.
+    """
+
+    query = """
+        SELECT
+            sr.id AS source_record_uuid,
+            sr.source_record_id,
+            sr.source_payload -> 'quality_assessment' ->> 'status' AS quality_status,
+            NULLIF(
+                sr.source_payload -> 'quality_assessment' ->> 'quality_score',
+                ''
+            )::int AS quality_score,
+            d.id AS document_id,
+            d.title AS document_title
+        FROM source_records sr
+        JOIN source_record_links srl
+            ON srl.source_record_id = sr.id
+        JOIN documents d
+            ON d.id = srl.document_id
+        WHERE sr.source_system = 'recruiterflow'
+          AND sr.source_record_type = 'recruiterflow_resume_extraction'
+          AND sr.source_record_id = %(source_record_id)s
+          AND d.document_type = 'resume'
+        LIMIT 1
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {"source_record_id": extraction_source_record_id},
+            )
+            row = cursor.fetchone()
+
+    return dict(row) if row is not None else None
 
 
 if __name__ == "__main__":

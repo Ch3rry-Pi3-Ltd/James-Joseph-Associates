@@ -1,0 +1,1081 @@
+{
+  "persisted_at": "2026-05-29T01:03:16.361516+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/701.800.json",
+  "candidate_limit": 100,
+  "persisted_resume_limit": 100,
+  "force_reprocess": false,
+  "candidate_count": 100,
+  "persisted_resume_count": 94,
+  "accepted_resume_count": 86,
+  "non_pass_count": 8,
+  "skipped_count": 0,
+  "unsupported_count": 0,
+  "failed_count": 6,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-29T00:08:53.686708+00:00",
+      "person_id": "2c1881e9-a912-4f79-b942-ed3ab3b0b2f1",
+      "candidate_id": "d3bd2f96-3490-4d49-bb93-ea275cab3b9f",
+      "current_company_id": "440a4914-4358-4ce7-9930-5f15e5a19a82",
+      "document_id": "ce2d9e88-0f68-4cea-99f9-c41e2ae16a87",
+      "candidate_source_record_id": "9a9525be-f68a-4315-a1f8-11394d8cc7d7",
+      "resume_source_record_id": "c134135b-2f93-47ed-931e-2f68886b462b",
+      "extraction_source_record_id": "4725fcd4-8db2-43e6-8f78-1403800e6dad",
+      "candidate_skill_count": 61,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "1aaac144-9f97-4843-b96e-3dde0c9ad1f0",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ashutoshchauhan13@gmail.com"
+            ],
+            "resume_phones": [
+              "+44-7414773870"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 7,
+            "skills_count": 15,
+            "tools_and_platforms_count": 46,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ashutoshchauhan13@gmail.com"
+            ],
+            "resume_phones": [
+              "+44-7414773870"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 7,
+            "skills_count": 15,
+            "tools_and_platforms_count": 46,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:12:11.422474+00:00",
+      "person_id": "ea4ed87d-b0ab-40ef-9380-33f057e76820",
+      "candidate_id": "0465613f-2728-471b-9033-543e2e1b4c15",
+      "current_company_id": null,
+      "document_id": "6d9fc4b9-dcca-4923-84ed-6e5890fc15ed",
+      "candidate_source_record_id": "0dd61ce7-3c7e-4eac-9649-c8c93bfcd296",
+      "resume_source_record_id": "bd7ee9ca-d7f9-469c-9eb0-705898fe83db",
+      "extraction_source_record_id": "2c9b38f2-7b2f-4789-a03c-065ca80c52f1",
+      "candidate_skill_count": 27,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "d41e57b9-9b73-4362-b9b5-4770f5472759",
+      "reconciliation_status": "created_new",
+      "quality_status": "rerun",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 0,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": true,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 0,
+          "status": "rerun",
+          "reasons": [
+            "missing_current_employer_and_title",
+            "phone_count_lower_than_resume_hint",
+            "project_details_empty"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 2,
+            "resume_emails": [
+              "syedirfaanx@gmail.com"
+            ],
+            "resume_phones": [
+              "+447598847141",
+              "47673.2019.9068096"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 8,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 16,
+            "certifications_count": 0,
+            "empty_project_detail_count": 8,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 0,
+          "status": "rerun",
+          "reasons": [
+            "missing_current_employer_and_title",
+            "phone_count_lower_than_resume_hint",
+            "project_details_empty"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 2,
+            "resume_emails": [
+              "syedirfaanx@gmail.com"
+            ],
+            "resume_phones": [
+              "+447598847141",
+              "47673.2019.9068096"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 8,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 15,
+            "certifications_count": 0,
+            "empty_project_detail_count": 8,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:12:24.819456+00:00",
+      "person_id": "fef4a501-d7c3-454b-9d55-327f898d1266",
+      "candidate_id": "4a787d20-01ff-4ffa-a0ac-d477ff9b4ed8",
+      "current_company_id": null,
+      "document_id": "f86c973b-176a-433c-bdc0-1d6b52606ac0",
+      "candidate_source_record_id": "9d8bb935-032a-4acc-9c5e-ba3dc1fac0a8",
+      "resume_source_record_id": "f8e4973a-f4f1-4521-a8aa-7226b964f9c4",
+      "extraction_source_record_id": "068f2f32-0c9c-4df9-ada5-c7a12044ac2b",
+      "candidate_skill_count": 18,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "add910e8-62fa-45a9-8af5-63c72461fe8d",
+      "reconciliation_status": "created_new",
+      "quality_status": "review",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 70,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 70,
+          "status": "review",
+          "reasons": [
+            "missing_current_employer_and_title"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gourav.rohra-kailash@bayes.city.ac.uk"
+            ],
+            "resume_phones": [
+              "44) 07393 066724"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 1,
+            "education_count": 2,
+            "evidence_notes_count": 4,
+            "skills_count": 13,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 70,
+          "status": "review",
+          "reasons": [
+            "missing_current_employer_and_title"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gourav.rohra-kailash@bayes.city.ac.uk"
+            ],
+            "resume_phones": [
+              "44) 07393 066724"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 1,
+            "education_count": 2,
+            "evidence_notes_count": 4,
+            "skills_count": 13,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:12:59.362401+00:00",
+      "person_id": "5f174c8b-0323-44da-99bf-2421c2466135",
+      "candidate_id": "f793eca7-f292-46a3-aaff-008e9adad668",
+      "current_company_id": "13ae8713-ba65-4aeb-a043-abb1751a3d19",
+      "document_id": "0feb4e4f-f23a-427e-a3cf-1bdc876d752a",
+      "candidate_source_record_id": "f0fc8e04-7db0-4e54-83f8-8c64d1846a47",
+      "resume_source_record_id": "7461e4f5-c48f-4349-ae23-4fdd26dbdbbd",
+      "extraction_source_record_id": "53a01cef-a9cb-4469-8edf-464a583ac43d",
+      "candidate_skill_count": 84,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "05de0471-77c5-4d52-82c8-5119c7dde111",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "vivasjuta@ieee.org"
+            ],
+            "resume_phones": [
+              "+447928743102"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 4,
+            "education_count": 5,
+            "evidence_notes_count": 5,
+            "skills_count": 24,
+            "tools_and_platforms_count": 60,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "vivasjuta@ieee.org"
+            ],
+            "resume_phones": [
+              "+447928743102"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 4,
+            "education_count": 5,
+            "evidence_notes_count": 5,
+            "skills_count": 24,
+            "tools_and_platforms_count": 60,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:13:18.876999+00:00",
+      "person_id": "64ac838e-56dd-4ee9-a0d4-42933c6515d6",
+      "candidate_id": "beae5a31-269b-4840-99ff-2bc51df4c01f",
+      "current_company_id": null,
+      "document_id": "764b3906-bb71-40ed-9120-092a37041a02",
+      "candidate_source_record_id": "f4b74239-7aea-47aa-ab39-725b9230b48a",
+      "resume_source_record_id": "19a70fbe-31b4-45fd-8670-a1d0317ad710",
+      "extraction_source_record_id": "afa2fbfa-a83a-47c4-83b1-47c5ed4a72d1",
+      "candidate_skill_count": 37,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "4bafecc5-de98-43d9-8559-cbcf3c27c038",
+      "reconciliation_status": "created_new",
+      "quality_status": "review",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 70,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 70,
+          "status": "review",
+          "reasons": [
+            "missing_current_employer_and_title"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "kert.laansalu20@imperial.ac.uk"
+            ],
+            "resume_phones": [
+              "+44 7864 873110"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 2,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 19,
+            "tools_and_platforms_count": 18,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 70,
+          "status": "review",
+          "reasons": [
+            "missing_current_employer_and_title"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "kert.laansalu20@imperial.ac.uk"
+            ],
+            "resume_phones": [
+              "+44 7864 873110"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 2,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 19,
+            "tools_and_platforms_count": 18,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:13:41.296024+00:00",
+      "person_id": "12884806-d29b-47fb-bbdb-0922c290fbcd",
+      "candidate_id": "1579089e-cc55-4c1c-9c91-cf42c82ea70d",
+      "current_company_id": "b9c2196d-a1b1-431b-bc90-595f660dec88",
+      "document_id": "2fe1a519-ab15-4854-9c2b-79e122898429",
+      "candidate_source_record_id": "7592520e-f48a-490a-8325-ef0fc46d1237",
+      "resume_source_record_id": "fc8adeee-c6b8-48da-a2d1-68b29178f2ab",
+      "extraction_source_record_id": "d90e4713-e96b-45f4-9211-a4d9e67b7510",
+      "candidate_skill_count": 23,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "9ebc0bfc-c532-4389-8264-ed814d1d4b5d",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "aziz.msbh96@gmail.com"
+            ],
+            "resume_phones": [
+              "+41 76 574 4896"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 5,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 9,
+            "tools_and_platforms_count": 14,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "aziz.msbh96@gmail.com"
+            ],
+            "resume_phones": [
+              "+41 76 574 4896"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 5,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 9,
+            "tools_and_platforms_count": 14,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:13:54.688474+00:00",
+      "person_id": "b3764546-f790-470e-a1e3-e37a86b20ecb",
+      "candidate_id": "c3c0d123-374c-4ca2-a7f6-1d81a7c57178",
+      "current_company_id": "dfc77ef7-014c-4dac-9a8a-ac7183ace607",
+      "document_id": "a0f4e96d-421e-492a-a532-c117a712946b",
+      "candidate_source_record_id": "0646cb8d-0795-4aed-a552-bed7fcbd1f52",
+      "resume_source_record_id": "213f316a-f3bc-493f-923f-237c8af06235",
+      "extraction_source_record_id": "415c2409-11f8-45e0-a8b4-8af0645528bf",
+      "candidate_skill_count": 24,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "f5bd50bf-c95b-4912-bb20-417476f443bd",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "veertalreja20@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 (0) 7553862905"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 16,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "veertalreja20@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 (0) 7553862905"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 16,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:15:03.810813+00:00",
+      "person_id": "2959ad4c-ff47-4219-a5ef-4d9c9f969d53",
+      "candidate_id": "797c91b7-cb39-4097-b49a-8fa3c86b9656",
+      "current_company_id": "0b258910-7a4d-4209-90a5-1537f9618f0a",
+      "document_id": "910be8c4-c70c-4434-8189-d2df1955790a",
+      "candidate_source_record_id": "5d1a4a46-1470-4fb3-965c-d63127f5dcfe",
+      "resume_source_record_id": "7d4be6bc-c074-4e15-a52a-ffbbff8ffc1b",
+      "extraction_source_record_id": "dcd26e6d-77ea-411c-bfbd-fb0e572dd363",
+      "candidate_skill_count": 40,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "96995127-dab5-4df7-b1aa-3dfa8e60c66d",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "adam@wearedigitalsaints.com"
+            ],
+            "resume_phones": [
+              "07787 412 649"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 9,
+            "projects_count": 7,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 20,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "adam@wearedigitalsaints.com"
+            ],
+            "resume_phones": [
+              "07787 412 649"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 9,
+            "projects_count": 7,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 20,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:15:29.208464+00:00",
+      "person_id": "b8157215-9949-4539-8d9e-e8b1e4f84c4e",
+      "candidate_id": "a86b9099-cf0b-4657-a9d3-8d8d6fcc22ae",
+      "current_company_id": "8da8387b-208f-4a36-9691-68fa3ec0d745",
+      "document_id": "a5565505-f573-4549-a529-5eb721e2976c",
+      "candidate_source_record_id": "f6f15c50-1192-4bed-b96c-e56ff64954a8",
+      "resume_source_record_id": "06f1a3cd-ca57-417a-8fbe-55fc7f5f472b",
+      "extraction_source_record_id": "4ec74f99-cfd6-453d-beec-de1db155d0dc",
+      "candidate_skill_count": 73,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "aa4c3175-7e1e-45a6-a3dd-bcd50691658d",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ptiley@gmail.com"
+            ],
+            "resume_phones": [
+              "0756 273 7406"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 4,
+            "projects_count": 4,
+            "education_count": 1,
+            "evidence_notes_count": 5,
+            "skills_count": 20,
+            "tools_and_platforms_count": 53,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ptiley@gmail.com"
+            ],
+            "resume_phones": [
+              "0756 273 7406"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 4,
+            "projects_count": 4,
+            "education_count": 1,
+            "evidence_notes_count": 5,
+            "skills_count": 20,
+            "tools_and_platforms_count": 53,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:15:45.254286+00:00",
+      "person_id": "7acf6367-0c5d-4847-9412-c17c80ff2b38",
+      "candidate_id": "e7c4bc87-f119-45cb-bc9e-1eab4469abec",
+      "current_company_id": "acbed8e2-da4f-41c8-b3c7-5232768a1ef3",
+      "document_id": "bfc0fd02-292c-431f-bd5b-17caa71928e5",
+      "candidate_source_record_id": "0067c5d6-dbb3-40c7-93d7-d0c0893d6bd5",
+      "resume_source_record_id": "39ee4436-ce85-4d7c-939d-4a391e57e9a0",
+      "extraction_source_record_id": "ee8b7736-231f-44ba-8c5c-35279cdba780",
+      "candidate_skill_count": 32,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "507dc6ec-d66f-4947-a729-7c57d6bbd2e9",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "hamza.amir1717@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7553026486"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 1,
+            "projects_count": 2,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 13,
+            "tools_and_platforms_count": 19,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "hamza.amir1717@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7553026486"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 1,
+            "projects_count": 2,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 13,
+            "tools_and_platforms_count": 19,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 4145,
+      "file_name": "AYO_CV_SW19122024.docx.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4105,
+      "file_name": "Terry+Paul+Jackson+C.V.+2024docx.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4089,
+      "file_name": "FredKasadhaCV-2.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4086,
+      "file_name": "VenkateshSundararaj-CV-May-24.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4084,
+      "file_name": "SATKURU KARTHIGEYAN_CV.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4079,
+      "file_name": "abrar_mudhir_cv.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

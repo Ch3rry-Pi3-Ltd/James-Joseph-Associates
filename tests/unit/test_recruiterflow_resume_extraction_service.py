@@ -59,7 +59,9 @@ def test_build_recruiterflow_resume_text_bundle_normalizes_generic_bundle_shape(
     assert bundle["source_system"] == "recruiterflow"
     assert bundle["source_candidate_id"] == 4847
     assert bundle["candidate_context"]["first_name"] == "Bernardita"
-    assert bundle["latest_resume"]["file_id"] == 5679
+    assert bundle["latest_resume"]["attachmentId"] == 5679
+    assert bundle["latest_resume"]["fileName"] == "Bernardita Gutierrez CV EN 03-2026.pdf"
+    assert bundle["latest_resume"]["createdAt"] == "2026-03-11T20:27:51+00:00"
     assert bundle["downloaded_resume"]["content_type"] == "application/pdf"
 
 

@@ -60,14 +60,14 @@ Run a batch from a file of candidate IDs:
         --jobadder-account 2236 ^
         --candidate-ids-file temp\\candidate_ids.txt
 
-Run a batch and persist accepted outputs into the canonical schema:
+Run a batch and persist scored outputs into the canonical schema:
 
     uv run python scripts/run_resume_extraction_batch.py ^
         --jobadder-account 2236 ^
         --candidate-id 16496678 ^
         --candidate-id 12345678 ^
         --enable-quality-gate ^
-        --persist-accepted-output
+        --persist-scored-output
 
 Run a batch and persist known no-resume candidates as profile-only records:
 
@@ -119,7 +119,7 @@ from backend.services.jobadder_ingest import (
 from backend.services.resume_extraction import ResumeExtractionError
 from backend.services.resume_extraction_persistence import (
     persist_jobadder_candidate_profile_without_resume,
-    persist_accepted_resume_extraction_result,
+    persist_scored_resume_extraction_result,
 )
 from scripts.run_resume_extraction import (
     DEFAULT_QUALITY_GATE_FALLBACK_MODEL_NAME,
@@ -278,10 +278,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Include prompt material in each saved result JSON.",
     )
     parser.add_argument(
+        "--persist-scored-output",
         "--persist-accepted-output",
+        dest="persist_scored_output",
         action="store_true",
         help=(
-            "Persist accepted quality-gated candidate outputs into the "
+            "Persist scored quality-gated candidate outputs into the "
             "canonical Supabase/Postgres schema."
         ),
     )
@@ -1589,16 +1591,16 @@ def main(argv: list[str] | None = None) -> int:
                 result = run_live_resume_extraction_with_optional_quality_gate(
                     candidate_args
                 )
-                if args.persist_accepted_output:
+                if args.persist_scored_output:
                     # Persist only after the quality-gated result exists.
                     #
                     # This keeps the DB write path downstream of the same
-                    # accepted-output policy that the single-run script uses,
+                    # scored-output policy that the single-run script uses,
                     # rather than letting the batch runner invent a second
                     # parallel notion of "good enough to persist".
                     result = dict(result)
                     result["persistence_result"] = (
-                        persist_accepted_resume_extraction_result(result)
+                        persist_scored_resume_extraction_result(result)
                     )
                 json_payload = build_json_ready_result(
                     result=result,

@@ -62,6 +62,14 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
         ],
         [
             {
+                "source_record_uuid": "src-2",
+                "quality_status": "review",
+                "quality_score": 70,
+                "final_model_name": "gpt-4.1-mini",
+            }
+        ],
+        [
+            {
                 "document_type": "candidate_attachment",
                 "document_count": 12,
             }
@@ -70,6 +78,18 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
             {
                 "source_system": "recruiterflow",
                 "source_record_count": 422,
+            }
+        ],
+        [
+            {
+                "quality_status": "pass",
+                "quality_count": 9,
+            }
+        ],
+        [
+            {
+                "model_name": "gpt-4.1-mini",
+                "model_count": 9,
             }
         ],
         [
@@ -135,6 +155,14 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
                 "decision_status": "needs_review",
             }
         ],
+        "recent_scored_resumes": [
+            {
+                "source_record_uuid": "src-2",
+                "quality_status": "review",
+                "quality_score": 70,
+                "final_model_name": "gpt-4.1-mini",
+            }
+        ],
         "document_type_counts": [
             {
                 "document_type": "candidate_attachment",
@@ -145,6 +173,18 @@ def test_get_review_overview_returns_counts_and_recent_rows() -> None:
             {
                 "source_system": "recruiterflow",
                 "source_record_count": 422,
+            }
+        ],
+        "quality_status_counts": [
+            {
+                "quality_status": "pass",
+                "quality_count": 9,
+            }
+        ],
+        "resume_model_counts": [
+            {
+                "model_name": "gpt-4.1-mini",
+                "model_count": 9,
             }
         ],
         "reconciliation_status_counts": [
@@ -162,7 +202,7 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
     """
 
     mock_cursor = MagicMock()
-    mock_cursor.fetchall.side_effect = [[], [], [], [], [], [], [], [], []]
+    mock_cursor.fetchall.side_effect = [[], [], [], [], [], [], [], [], [], [], [], []]
     mock_cursor.fetchone.side_effect = [{"people": 0}]
 
     mock_connection = MagicMock()
@@ -177,7 +217,7 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
 
     execute_calls = mock_cursor.execute.call_args_list
 
-    assert len(execute_calls) == 10
+    assert len(execute_calls) == 13
     assert execute_calls[1].args[1] == {"limit": 7}
     assert execute_calls[2].args[1] == {"limit": 7}
     assert execute_calls[3].args[1] == {"limit": 7}
@@ -187,3 +227,6 @@ def test_get_review_overview_passes_limit_to_recent_queries() -> None:
     assert execute_calls[7].args[1] == {"limit": 7}
     assert execute_calls[8].args[1] == {"limit": 7}
     assert execute_calls[9].args[1] == {"limit": 7}
+    assert execute_calls[10].args[1] == {"limit": 7}
+    assert execute_calls[11].args[1] == {"limit": 7}
+    assert execute_calls[12].args[1] == {"limit": 7}

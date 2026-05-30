@@ -1,0 +1,929 @@
+{
+  "persisted_at": "2026-05-28T20:06:59.263548+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/201.300.json",
+  "candidate_limit": 10,
+  "persisted_resume_limit": 10,
+  "candidate_count": 10,
+  "persisted_resume_count": 9,
+  "accepted_resume_count": 9,
+  "non_pass_count": 0,
+  "unsupported_count": 1,
+  "failed_count": 0,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-28T19:59:22.866994+00:00",
+      "person_id": "189c40db-3f11-4a3d-9233-2995e5182f26",
+      "candidate_id": "a8b1a577-ba2e-40cc-a4c6-894194af75de",
+      "current_company_id": "c925bec4-83b8-4772-935e-abf659917854",
+      "document_id": "82bed0e2-e016-4e41-96f6-922a2f0f1b73",
+      "candidate_source_record_id": "161089e7-ecca-474c-a814-0930744fed8a",
+      "resume_source_record_id": "6cdf3eb7-8484-489e-8e30-4441e774e740",
+      "extraction_source_record_id": "fc2dfd9c-183d-4ba9-b724-2175263392da",
+      "candidate_skill_count": 32,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "94970ff7-c50e-44f6-b4e2-bf2c028752c5",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "Vetri81082@gmail.com"
+            ],
+            "resume_phones": [
+              "07731512178"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 9,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 29,
+            "tools_and_platforms_count": 3,
+            "certifications_count": 10,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "Vetri81082@gmail.com"
+            ],
+            "resume_phones": [
+              "07731512178"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 9,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 29,
+            "tools_and_platforms_count": 3,
+            "certifications_count": 10,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T19:59:37.713612+00:00",
+      "person_id": "e07e969f-e8e8-4570-a0aa-158d0572b81a",
+      "candidate_id": "8c89c05a-e90d-4dac-90c5-8d3c7c6c80ad",
+      "current_company_id": "78388d00-da65-415e-90db-cfd1c841ba3e",
+      "document_id": "0f27e214-bee5-42c7-9455-874f6c0095c9",
+      "candidate_source_record_id": "2fd0ce25-9415-4cfc-aa8d-b9cc253611c2",
+      "resume_source_record_id": "bf0e1bd1-a250-42c9-96d3-1bebb204bae2",
+      "extraction_source_record_id": "aea59337-5af3-4dd1-b299-0774e89bbaab",
+      "candidate_skill_count": 23,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "2e56cfd2-1232-491b-a1cf-415fab8bf50c",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gkartikasingh@gmail.comLinkedIn"
+            ],
+            "resume_phones": [
+              "+07435 779145"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 11,
+            "certifications_count": 2,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gkartikasingh@gmail.comLinkedIn"
+            ],
+            "resume_phones": [
+              "+07435 779145"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 11,
+            "certifications_count": 2,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T19:59:53.883862+00:00",
+      "person_id": "e4ed561a-1caf-4b1a-ba96-67fed2b58876",
+      "candidate_id": "0989efb3-e04f-41b0-8731-98c0f752a3f8",
+      "current_company_id": "b8dff64c-0761-4d15-90d9-e1700f84de6d",
+      "document_id": "c2b0bf6e-10e8-43a6-9ee7-35f696aa6fef",
+      "candidate_source_record_id": "f72c978f-0a10-445f-b4db-4253ab7f0946",
+      "resume_source_record_id": "12a808ee-a0a4-4a40-9e6a-8a93f436be8d",
+      "extraction_source_record_id": "13859d8c-2c6e-4fc0-9c03-1ffd75c489e2",
+      "candidate_skill_count": 17,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "85382e13-5cdb-4d4e-8c49-f7b804342fde",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ogieandre@yahoo.com"
+            ],
+            "resume_phones": [
+              "07588766728"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 12,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 2,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "ogieandre@yahoo.com"
+            ],
+            "resume_phones": [
+              "07588766728"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 3,
+            "projects_count": 3,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 12,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 2,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:02:15.874997+00:00",
+      "person_id": "b7a2c1c1-3249-41e9-803f-0cb925c0b9bd",
+      "candidate_id": "9c4ac66c-0344-40a4-a227-005129b54972",
+      "current_company_id": "820859a2-f536-48fa-857e-7a876786dcdf",
+      "document_id": "4518a86a-2958-46d3-af8f-b714c040d133",
+      "candidate_source_record_id": "5d19675f-545e-4a6d-8269-0fdad73561a9",
+      "resume_source_record_id": "e4611318-e2bd-44fe-9f03-e5f07c2d554b",
+      "extraction_source_record_id": "9f236e39-994e-4b3e-9276-901a4bd17537",
+      "candidate_skill_count": 36,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "364a478c-d6e7-4ed0-8733-f0b1857d841e",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "pardeepchatwal@hotmail.com"
+            ],
+            "resume_phones": [
+              "07595 592644"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 8,
+            "projects_count": 8,
+            "education_count": 3,
+            "evidence_notes_count": 4,
+            "skills_count": 18,
+            "tools_and_platforms_count": 18,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "pardeepchatwal@hotmail.com"
+            ],
+            "resume_phones": [
+              "07595 592644"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 8,
+            "projects_count": 8,
+            "education_count": 3,
+            "evidence_notes_count": 4,
+            "skills_count": 18,
+            "tools_and_platforms_count": 18,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:02:49.988801+00:00",
+      "person_id": "13f38138-11dd-4013-81d2-795969057ada",
+      "candidate_id": "65684b55-c051-44f2-aa75-e06247a1cdab",
+      "current_company_id": "01af5431-2934-418e-b8ec-77351f8c5d61",
+      "document_id": "3840f505-d86f-410d-88f4-95f786c94541",
+      "candidate_source_record_id": "73ef787b-9d3d-4c0f-a4d0-95eb41eb8fae",
+      "resume_source_record_id": "2101a864-1bca-44f0-846b-76893632b16d",
+      "extraction_source_record_id": "c6da26a3-6b0e-4ffc-a152-9f5751fb178d",
+      "candidate_skill_count": 24,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "6c586d7b-7e83-4b26-9132-8803f135c450",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 96,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 96,
+          "status": "pass",
+          "reasons": [
+            "malformed_linkedin_url"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "adrian_symonds@hotmail.com"
+            ],
+            "resume_phones": [
+              "07736 367 801"
+            ],
+            "has_experience_section": false,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 6,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 4,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 96,
+          "status": "pass",
+          "reasons": [
+            "malformed_linkedin_url"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "adrian_symonds@hotmail.com"
+            ],
+            "resume_phones": [
+              "07736 367 801"
+            ],
+            "has_experience_section": false,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 6,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 4,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:03:58.842313+00:00",
+      "person_id": "a9871d3e-d816-4db9-add1-4b935dec00e6",
+      "candidate_id": "6b0748cc-bb02-444c-80be-79dd78c12f63",
+      "current_company_id": "17f6d481-9209-499b-9676-21fe92e19dee",
+      "document_id": "eab0bb1a-49b4-47a1-8771-166ecff2adf7",
+      "candidate_source_record_id": "9b849166-b1b2-46e8-897e-8db4e2a1938c",
+      "resume_source_record_id": "98c3bdb3-7944-4071-8961-85f5b269a53f",
+      "extraction_source_record_id": "f76741da-256b-451a-846c-8252403d54fd",
+      "candidate_skill_count": 39,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "c5c8b35f-257b-4a2d-889a-1e42b7a1a520",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sanjaygpatel@hotmail.com"
+            ],
+            "resume_phones": [
+              "077 333 666 05"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 10,
+            "projects_count": 10,
+            "education_count": 1,
+            "evidence_notes_count": 5,
+            "skills_count": 29,
+            "tools_and_platforms_count": 10,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sanjaygpatel@hotmail.com"
+            ],
+            "resume_phones": [
+              "077 333 666 05"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 10,
+            "projects_count": 10,
+            "education_count": 1,
+            "evidence_notes_count": 5,
+            "skills_count": 29,
+            "tools_and_platforms_count": 10,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:04:22.859773+00:00",
+      "person_id": "2d51b98a-8dc2-44cd-9724-4de8616c3173",
+      "candidate_id": "19c3cde4-5363-45d5-bed4-a95b68714b79",
+      "current_company_id": "cff38d17-ac49-4940-a1c5-beaa48212aa4",
+      "document_id": "7e770824-22d8-45fe-8b4b-d379474c67b8",
+      "candidate_source_record_id": "fb7d38cb-4710-4521-a54c-78e656edc9f6",
+      "resume_source_record_id": "a6f26775-5106-4b05-80fc-f8bd58a40cd4",
+      "extraction_source_record_id": "191f8398-e2d7-4f45-94f8-4d67c63d3d3c",
+      "candidate_skill_count": 24,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "d735d586-108a-46b4-91cc-f9f11e188044",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "richardayekumi@gmail.com"
+            ],
+            "resume_phones": [
+              "07947580470"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 4,
+            "projects_count": 3,
+            "education_count": 6,
+            "evidence_notes_count": 5,
+            "skills_count": 20,
+            "tools_and_platforms_count": 4,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "richardayekumi@gmail.com"
+            ],
+            "resume_phones": [
+              "07947580470"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 4,
+            "projects_count": 3,
+            "education_count": 6,
+            "evidence_notes_count": 5,
+            "skills_count": 20,
+            "tools_and_platforms_count": 4,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:05:24.263358+00:00",
+      "person_id": "4594105c-1b19-45cc-b93c-5e3f024db24e",
+      "candidate_id": "e71609d1-1b27-48a0-a6e8-d74171211d03",
+      "current_company_id": "de76e1a7-82d5-458a-8cbe-9ce2e3ae1084",
+      "document_id": "c6b225ff-71f9-4ab4-9d87-96f55f216aac",
+      "candidate_source_record_id": "f5d45133-1b58-43d6-9dfa-01d5ec205208",
+      "resume_source_record_id": "face216d-be66-4d8d-bbec-1748154a580c",
+      "extraction_source_record_id": "b1bef689-b74c-4f72-9f10-56f2a8619cf5",
+      "candidate_skill_count": 44,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "9f0bda24-bf18-46c4-972d-de62f4a2cc22",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "er.rahul.dwivedi@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7448753019"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 8,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 24,
+            "certifications_count": 14,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "er.rahul.dwivedi@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7448753019"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 8,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 20,
+            "tools_and_platforms_count": 24,
+            "certifications_count": 14,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-28T20:06:53.480231+00:00",
+      "person_id": "60c2e17e-8a8d-447f-82e3-dc7340624d13",
+      "candidate_id": "5d72a6d4-df98-40dd-90bc-7451fc99ff32",
+      "current_company_id": "4b06603d-d5db-4d47-a910-4d40d68fcdd6",
+      "document_id": "b2f4952d-c5fe-4780-9f82-b5dfe49409b1",
+      "candidate_source_record_id": "0501177d-2b6f-41b0-89d8-4cbe44401a40",
+      "resume_source_record_id": "e79396f7-1d20-4912-9f68-ca82e92c1053",
+      "extraction_source_record_id": "b3d6cac5-f6c9-491f-9b6d-91189ddb2218",
+      "candidate_skill_count": 101,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "de62d163-9871-4107-b104-552f5526f447",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "nikunjkhandelwaluk@gmail.com"
+            ],
+            "resume_phones": [
+              "07586556488"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 4,
+            "projects_count": 9,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 40,
+            "tools_and_platforms_count": 61,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "nikunjkhandelwaluk@gmail.com"
+            ],
+            "resume_phones": [
+              "07586556488"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 4,
+            "projects_count": 9,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 40,
+            "tools_and_platforms_count": 61,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 4646,
+      "file_name": "Stephen Edwards (93882173 - Totaljobs).doc",
+      "stage": "resume_text_extraction",
+      "error_type": "ResumeTextExtractionError",
+      "message": "The resume file format is not supported for text extraction."
+    }
+  ]
+}

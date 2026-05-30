@@ -1,0 +1,124 @@
+{
+  "persisted_at": "2026-05-29T16:51:18.169602+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1701.1800.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "selected_resume_candidate_count": 20,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 20,
+  "new_resume_candidate_count": 0,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 20,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3144,
+      "source_file_id": 4497,
+      "file_name": "CV+Richard+Melkonian+December+2023+-3.pdf",
+      "source_record_id": "3144:4497",
+      "document_id": "e06c7dc8-bb8b-457c-974c-47e00f2f32f3",
+      "document_title": "CV+Richard+Melkonian+December+2023+-3.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3143,
+      "source_file_id": 3404,
+      "file_name": "Jay Joseph CV.docx",
+      "source_record_id": "3143:3404",
+      "document_id": "0329d059-c634-40b2-bfc7-2cb85253b74e",
+      "document_title": "Jay Joseph CV.docx",
+      "quality_status": "review",
+      "quality_score": 72
+    },
+    {
+      "source_candidate_id": 3142,
+      "source_file_id": 3392,
+      "file_name": "CV_AlinaSharipova+(1).docx",
+      "source_record_id": "3142:3392",
+      "document_id": "94836617-fdba-40b4-b758-13fe86dfadf8",
+      "document_title": "CV_AlinaSharipova+(1).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3141,
+      "source_file_id": 3554,
+      "file_name": "Noreen_Asad_Resume_Updated.pdf",
+      "source_record_id": "3141:3554",
+      "document_id": "286c33fa-4abc-493a-9646-5190191b69d4",
+      "document_title": "Noreen_Asad_Resume_Updated.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3140,
+      "source_file_id": 3390,
+      "file_name": "CV_Dmitry_Khamitov.pdf",
+      "source_record_id": "3140:3390",
+      "document_id": "a175491f-ae27-4fa2-85bf-88534edd2604",
+      "document_title": "CV_Dmitry_Khamitov.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3139,
+      "source_file_id": 3389,
+      "file_name": "CV+Dave+Tozer+(2023).DOCX",
+      "source_record_id": "3139:3389",
+      "document_id": "6cb59067-66b3-48d5-a9c8-0923f5902a5a",
+      "document_title": "CV+Dave+Tozer+(2023).DOCX",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3138,
+      "source_file_id": 3388,
+      "file_name": "cv_will_brennan_c++_2023_10_02.pdf",
+      "source_record_id": "3138:3388",
+      "document_id": "3b0d9ffb-5425-4b40-a43b-b716a52e9190",
+      "document_title": "cv_will_brennan_c++_2023_10_02.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3137,
+      "source_file_id": 3387,
+      "file_name": "ArulVelusamy+2.0.pdf",
+      "source_record_id": "3137:3387",
+      "document_id": "9c43cbb7-17cf-4082-9919-9af18f5391c0",
+      "document_title": "ArulVelusamy+2.0.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3136,
+      "source_file_id": 3386,
+      "file_name": "CV+-+Keith+Eberlin.pdf",
+      "source_record_id": "3136:3386",
+      "document_id": "458f58b5-21c5-41f2-9142-2935c10a5ce6",
+      "document_title": "CV+-+Keith+Eberlin.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3135,
+      "source_file_id": 3483,
+      "file_name": "Andrew+Searle_2023.docx",
+      "source_record_id": "3135:3483",
+      "document_id": "d064e1cd-06eb-44cd-8eb8-6f183394b97f",
+      "document_title": "Andrew+Searle_2023.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": []
+}

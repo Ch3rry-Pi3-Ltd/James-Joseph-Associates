@@ -6,7 +6,7 @@ This module tests the business-side persistence rules in
 
 It gives the rest of the repository a stable way to check:
 
-- only accepted extraction results are considered persistable
+- scored extraction results are considered persistable
 - the persistence payload keeps the key provenance material we care about
 - the service delegates the final write to the lower-level DB helper
 
@@ -24,6 +24,7 @@ from backend.services.resume_extraction_persistence import (
     build_resume_extraction_persistence_payload,
     persist_jobadder_candidate_profile_without_resume,
     persist_accepted_resume_extraction_result,
+    persist_scored_resume_extraction_result,
 )
 
 
@@ -226,14 +227,42 @@ def test_build_resume_extraction_persistence_payload_keeps_key_provenance() -> N
     assert payload["extraction_source_payload"]["quality_assessment"]["status"] == "pass"
 
 
+def test_build_resume_extraction_persistence_payload_strips_nul_bytes() -> None:
+    """
+    Verify that NUL bytes are removed before the persistence payload reaches
+    Postgres-facing code.
+
+    Example
+    -------
+    A source text or extracted field containing embedded ``\\x00`` should be
+    sanitised once in the shared builder so every source path inherits the same
+    DB-safe behaviour.
+    """
+
+    result = _build_sample_result()
+    result["extraction_input"]["cleaned_resume_text"] = "Roger\x00 Campbell CV body\x00 text"
+    result["structured_extraction"]["professional_summary"] = "Builds\x00 backend systems."
+    result["extraction_input"]["cleaned_candidate_notes"][0]["cleaned_text"] = (
+        "Candidate is\x00 open to move."
+    )
+
+    payload = build_resume_extraction_persistence_payload(result)
+
+    assert payload["cleaned_resume_text"] == "Roger Campbell CV body text"
+    assert payload["summary"] == "Builds backend systems."
+    assert payload["candidate_source_payload"]["cleaned_candidate_notes"][0][
+        "cleaned_text"
+    ] == "Candidate is open to move."
+    assert "\x00" not in payload["resume_source_payload"]["resume_content_hash"]
+
+
 def test_persist_accepted_resume_extraction_result_rejects_non_pass_status() -> None:
     """
     Verify that non-pass results are blocked before any database write.
 
     Example
     -------
-    A `review` result should fail fast at the service boundary rather than
-    reaching the lower-level SQL helper.
+    A `review` result should still be blocked by the strict accepted-only helper.
     """
 
     result = _build_sample_result(quality_status="review")
@@ -241,7 +270,57 @@ def test_persist_accepted_resume_extraction_result_rejects_non_pass_status() -> 
     with pytest.raises(RuntimeError) as excinfo:
         persist_accepted_resume_extraction_result(result)
 
-    assert 'quality_assessment.status == "pass"' in str(excinfo.value)
+    assert "does not accept the current" in str(excinfo.value)
+
+
+def test_persist_scored_resume_extraction_result_allows_review_status() -> None:
+    """
+    Verify that review-grade results still persist through the scored path.
+
+    Example
+    -------
+    A `review` result should delegate to the DB helper so Tom can still see
+    the CV and its quality score in the UI.
+    """
+
+    result = _build_sample_result(quality_status="review")
+
+    with patch(
+        "backend.services.resume_extraction_persistence.persist_resume_extraction_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "quality_status": "review",
+        }
+
+        persisted_summary = persist_scored_resume_extraction_result(result)
+
+    assert persisted_summary == {
+        "candidate_id": "candidate-uuid",
+        "person_id": "person-uuid",
+        "quality_status": "review",
+    }
+    mock_persist.assert_called_once()
+
+
+def test_persist_scored_resume_extraction_result_rejects_missing_resume_artifact() -> None:
+    """
+    Verify that scored persistence refuses resume-like results without an artefact.
+
+    Notes
+    -----
+    Resume extraction rows should only exist when a real selected resume file
+    exists. Profile-only candidates belong on the separate no-resume path.
+    """
+
+    result = _build_sample_result(quality_status="review")
+    result["extraction_input"]["latest_resume"]["attachment_id"] = None
+
+    with pytest.raises(RuntimeError) as excinfo:
+        persist_scored_resume_extraction_result(result)
+
+    assert "real selected resume artefact" in str(excinfo.value)
 
 
 def test_persist_accepted_resume_extraction_result_delegates_to_db_helper() -> None:

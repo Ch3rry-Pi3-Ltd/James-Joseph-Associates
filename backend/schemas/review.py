@@ -44,8 +44,11 @@ class ReviewOverviewResponse(BaseModel):
             "recent_documents": [],
             "recent_source_records": [],
             "recent_reconciliation_decisions": [],
+            "recent_scored_resumes": [],
             "document_type_counts": [],
             "source_system_counts": [],
+            "quality_status_counts": [],
+            "resume_model_counts": [],
             "reconciliation_status_counts": []
         }
 
@@ -87,6 +90,10 @@ class ReviewOverviewResponse(BaseModel):
         default_factory=list,
         description="Most recent reconciliation decisions, especially unresolved ones.",
     )
+    recent_scored_resumes: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Most recent scored resume extraction rows with model and quality metadata.",
+    )
     document_type_counts: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Grouped counts of canonical documents by document_type.",
@@ -94,6 +101,14 @@ class ReviewOverviewResponse(BaseModel):
     source_system_counts: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Grouped counts of source provenance rows by source_system.",
+    )
+    quality_status_counts: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Grouped counts of scored resumes by quality status.",
+    )
+    resume_model_counts: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Grouped counts of scored resumes by final model name.",
     )
     reconciliation_status_counts: list[dict[str, Any]] = Field(
         default_factory=list,

@@ -1519,7 +1519,9 @@ def _upsert_reconciliation_decision(
             "decision_status": combined_decision["decision_status"],
             "decision_reason": combined_decision["decision_reason"],
             "confidence": combined_decision["confidence"],
-            "evidence_payload": Jsonb(combined_decision["evidence_payload"]),
+            "evidence_payload": Jsonb(
+                _make_json_safe_summary(combined_decision["evidence_payload"])
+            ),
         },
     )
     row = cursor.fetchone()

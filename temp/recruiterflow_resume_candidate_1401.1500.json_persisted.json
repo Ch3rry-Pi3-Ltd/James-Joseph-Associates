@@ -1,0 +1,225 @@
+{
+  "persisted_at": "2026-05-29T14:33:31.596989+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1401.1500.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "selected_resume_candidate_count": 20,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 19,
+  "new_resume_candidate_count": 1,
+  "persisted_resume_count": 1,
+  "accepted_resume_count": 1,
+  "non_pass_count": 0,
+  "skipped_count": 19,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-29T14:33:23.471950+00:00",
+      "person_id": "b7d839aa-2a01-4258-bb02-f374a0a58b95",
+      "candidate_id": "8dfcd705-048c-4db4-9f4a-0e616d55ebfc",
+      "current_company_id": "030eb506-88e1-412a-b1e4-580c3f1c8172",
+      "document_id": "f87fb46e-bf30-40ac-8f77-8a3a8de69b81",
+      "candidate_source_record_id": "69cae6db-4376-420c-90f1-bd93c6525676",
+      "resume_source_record_id": "a6638b76-250c-4596-aa1b-480715cc62bb",
+      "extraction_source_record_id": "89881f2f-5a66-4a5b-bca0-e08b86489392",
+      "candidate_skill_count": 104,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "993f325e-a24f-4c88-9905-e9a0727cf3c6",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sadiq_amir@yahoo.com"
+            ],
+            "resume_phones": [
+              "07796175630"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 8,
+            "projects_count": 5,
+            "education_count": 4,
+            "evidence_notes_count": 6,
+            "skills_count": 11,
+            "tools_and_platforms_count": 93,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sadiq_amir@yahoo.com"
+            ],
+            "resume_phones": [
+              "07796175630"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 8,
+            "projects_count": 5,
+            "education_count": 4,
+            "evidence_notes_count": 6,
+            "skills_count": 11,
+            "tools_and_platforms_count": 93,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3444,
+      "source_file_id": 3779,
+      "file_name": "Profile.pdf",
+      "source_record_id": "3444:3779",
+      "document_id": "c371e7ee-3b59-41ae-9fec-39dcd976c601",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3443,
+      "source_file_id": 3787,
+      "file_name": "Terry Watt CV Feb 2024.docx",
+      "source_record_id": "3443:3787",
+      "document_id": "0ae45fd6-07f4-4bf3-94d1-4f316f83f586",
+      "document_title": "Terry Watt CV Feb 2024.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3442,
+      "source_file_id": 3777,
+      "file_name": "Profile.pdf",
+      "source_record_id": "3442:3777",
+      "document_id": "b1ad49eb-4fac-47e7-8cf0-6cbda1088dfb",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3441,
+      "source_file_id": 3782,
+      "file_name": "Jamie Williams CV.docx",
+      "source_record_id": "3441:3782",
+      "document_id": "b60aa2a7-1ebd-45d1-86fb-43dd3dff01d3",
+      "document_title": "Jamie Williams CV.docx",
+      "quality_status": "pass",
+      "quality_score": 82
+    },
+    {
+      "source_candidate_id": 3440,
+      "source_file_id": 3774,
+      "file_name": "Profile.pdf",
+      "source_record_id": "3440:3774",
+      "document_id": "1cdb2856-acf6-448c-ac9c-10110dc7c076",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3439,
+      "source_file_id": 5641,
+      "file_name": "Profile.pdf",
+      "source_record_id": "3439:5641",
+      "document_id": "e180b50b-fae1-47a6-9b9c-8b563d0ff711",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3438,
+      "source_file_id": 3768,
+      "file_name": "Dmitry Pisklov.pdf",
+      "source_record_id": "3438:3768",
+      "document_id": "bda8b202-f0eb-447b-bba5-04d1d0ccf3f3",
+      "document_title": "Dmitry Pisklov.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3437,
+      "source_file_id": 3766,
+      "file_name": "Justin Kutlusan.pdf",
+      "source_record_id": "3437:3766",
+      "document_id": "a9f140c8-df4c-43d6-a623-df7ddbedef99",
+      "document_title": "Justin Kutlusan.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3436,
+      "source_file_id": 3772,
+      "file_name": "Hari_Sarasan_resume_13022024.docx",
+      "source_record_id": "3436:3772",
+      "document_id": "8ef1d42f-667b-4760-adfe-966d02233043",
+      "document_title": "Hari_Sarasan_resume_13022024.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3434,
+      "source_file_id": 3762,
+      "file_name": "Asad Hussain Quant Dev CV.pdf",
+      "source_record_id": "3434:3762",
+      "document_id": "928c99dc-be1f-4e6c-8a62-3c82e00ec3ce",
+      "document_title": "Asad Hussain Quant Dev CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": []
+}

@@ -71,7 +71,10 @@ def get_review_overview_route(
             "recent_applications": [...],
             "recent_documents": [...],
             "recent_source_records": [...],
-            "recent_reconciliation_decisions": [...]
+            "recent_reconciliation_decisions": [...],
+            "recent_scored_resumes": [...],
+            "quality_status_counts": [...],
+            "resume_model_counts": [...]
         }
 
     In plain language:

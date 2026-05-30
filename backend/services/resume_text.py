@@ -55,7 +55,7 @@ It does not:
 - run an LLM
 - infer skills or employers
 - write to the database
-- support legacy `.doc` Word binaries
+- support OCR for scanned/image-only PDFs
 
 That narrow scope is deliberate. The goal is simply to prove that the
 downloaded resume bytes can be turned into usable text reliably before the
@@ -100,6 +100,11 @@ In plain language:
 """
 
 from io import BytesIO
+import os
+from pathlib import Path
+import shutil
+import subprocess
+from tempfile import TemporaryDirectory
 from typing import Any
 from xml.etree import ElementTree
 from zipfile import BadZipFile, ZipFile
@@ -243,6 +248,7 @@ def extract_text_from_resume_bytes(
     - It currently supports:
         - PDF
         - DOCX
+        - DOC via a local `antiword` binary when available
     - Unsupported file types fail explicitly so the ingest layer can decide
       whether that is a terminal source-data problem or a feature gap.
 
@@ -281,6 +287,14 @@ def extract_text_from_resume_bytes(
         or normalised_file_name.endswith(".docx")
     ):
         return extract_text_from_docx_bytes(
+            content_bytes=content_bytes,
+            file_name=file_name,
+        )
+
+    if normalised_content_type == "application/msword" or normalised_file_name.endswith(
+        ".doc"
+    ):
+        return extract_text_from_doc_bytes(
             content_bytes=content_bytes,
             file_name=file_name,
         )
@@ -639,6 +653,199 @@ def extract_text_from_docx_bytes(
     }
 
 
+def extract_text_from_doc_bytes(
+    *,
+    content_bytes: bytes,
+    file_name: str | None = None,
+) -> dict[str, Any]:
+    """
+    Extract plain text from legacy binary Word `.doc` resume bytes.
+
+    Parameters
+    ----------
+    content_bytes : bytes
+        Raw `.doc` bytes from one upstream source attachment or archive member.
+
+    file_name : str | None
+        Optional source file name used for metadata and clearer error
+        reporting.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalised dictionary containing:
+
+        - `text`
+        - `page_count`
+        - `extractor`
+        - `file_name`
+        - `character_count`
+
+    Raises
+    ------
+    ResumeTextExtractionError
+        If the input bytes are empty, no legacy `.doc` converter is available,
+        or the converter cannot turn the file into usable text.
+
+    Examples
+    --------
+    A typical call looks like:
+
+        extract_text_from_doc_bytes(
+            content_bytes=downloaded_resume["content_bytes"],
+            file_name="Stephen Edwards CV.doc",
+        )
+
+    Notes
+    -----
+    - Legacy `.doc` files are not ZIP/XML like DOCX files.
+    - The shared ingestion layer therefore uses a local converter binary rather
+      than trying to hand-roll a binary Word parser.
+    - Keeping this logic here means JobAdder, Recruiterflow, Outlook, and
+      Dropbox all inherit the same `.doc` support automatically.
+    """
+
+    if not isinstance(content_bytes, bytes):
+        raise ResumeTextExtractionError(
+            "Resume content must be provided as raw bytes.",
+            stage="input_validation",
+            details=[{"file_name": file_name}],
+        )
+
+    if len(content_bytes) == 0:
+        raise ResumeTextExtractionError(
+            "Resume content bytes are empty.",
+            stage="input_validation",
+            details=[{"file_name": file_name}],
+        )
+
+    antiword_executable = _find_antiword_executable()
+    if antiword_executable is None:
+        raise ResumeTextExtractionError(
+            "Legacy Word `.doc` extraction requires a local antiword executable.",
+            stage="input_validation",
+            details=[{"file_name": file_name}],
+        )
+
+    extracted_text = _extract_text_from_doc_via_antiword(
+        content_bytes=content_bytes,
+        file_name=file_name,
+        antiword_executable=antiword_executable,
+    )
+    normalised_text = _normalise_extracted_page_text(extracted_text)
+
+    if normalised_text == "":
+        raise ResumeTextExtractionError(
+            "The resume DOC did not yield any usable text.",
+            stage="text_extraction",
+            details=[{"file_name": file_name}],
+        )
+
+    return {
+        "text": normalised_text,
+        "page_count": None,
+        "extractor": "antiword",
+        "file_name": file_name,
+        "character_count": len(normalised_text),
+    }
+
+
+def _extract_text_from_doc_via_antiword(
+    *,
+    content_bytes: bytes,
+    file_name: str | None,
+    antiword_executable: str,
+) -> str:
+    """
+    Extract plain text from one `.doc` file using `antiword`.
+
+    Examples
+    --------
+    For a downloaded resume such as `Candidate CV.doc`, this helper:
+
+    1. writes the bytes to a temporary `.doc` file
+    2. calls `antiword`
+    3. captures stdout as plain text
+    4. returns the extracted text to the shared normalisation layer
+    """
+
+    safe_file_name = (
+        Path(file_name).name
+        if isinstance(file_name, str) and file_name.strip() != ""
+        else "resume.doc"
+    )
+    if not safe_file_name.lower().endswith(".doc"):
+        safe_file_name = f"{safe_file_name}.doc"
+
+    with TemporaryDirectory(prefix="resume-doc-") as temp_dir:
+        temp_path = Path(temp_dir) / safe_file_name
+        temp_path.write_bytes(content_bytes)
+
+        try:
+            completed_process = subprocess.run(
+                [antiword_executable, str(temp_path)],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise ResumeTextExtractionError(
+                "Legacy Word `.doc` extraction timed out.",
+                stage="doc_parse",
+                details=[{"file_name": file_name}],
+            ) from exc
+        except OSError as exc:
+            raise ResumeTextExtractionError(
+                "Legacy Word `.doc` extraction could not start the local converter.",
+                stage="doc_parse",
+                details=[{"file_name": file_name}],
+            ) from exc
+
+    if completed_process.returncode != 0:
+        raise ResumeTextExtractionError(
+            "The resume DOC could not be parsed.",
+            stage="doc_parse",
+            details=[
+                {"file_name": file_name},
+                {"converter": antiword_executable},
+                {"return_code": completed_process.returncode},
+                {"stderr": completed_process.stderr.strip() or None},
+            ],
+        )
+
+    return completed_process.stdout
+
+
+def _find_antiword_executable() -> str | None:
+    """
+    Return a usable `antiword` executable path when one is available locally.
+
+    Examples
+    --------
+    On a Windows workstation with Git for Windows installed, this may resolve
+    to something like:
+
+        C:\\Program Files\\Git\\mingw64\\bin\\antiword.exe
+    """
+
+    candidate_paths = [
+        shutil.which("antiword"),
+        r"C:\Program Files\Git\mingw64\bin\antiword.exe",
+        r"C:\Program Files (x86)\Git\mingw64\bin\antiword.exe",
+    ]
+
+    for raw_path in candidate_paths:
+        if not raw_path:
+            continue
+        if os.path.isfile(raw_path):
+            return raw_path
+
+    return None
+
+
 def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     """
     Normalise one extracted PDF page into cleaner plain text.
@@ -774,6 +981,7 @@ def _extract_docx_paragraph_texts(root: ElementTree.Element) -> list[str]:
 
 __all__ = [
     "ResumeTextExtractionError",
+    "extract_text_from_doc_bytes",
     "extract_text_from_docx_bytes",
     "extract_text_from_pdf_bytes",
     "extract_text_from_resume_bytes",

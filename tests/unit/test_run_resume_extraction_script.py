@@ -7,7 +7,7 @@ This module tests the narrow script-level wiring in
 It gives the rest of the repository a stable way to check:
 
 - CLI flags are parsed into the expected runtime behaviour
-- accepted-output persistence is actually applied in `main(...)`
+- scored-output persistence is actually applied in `main(...)`
 - the JSON output path receives the enriched persisted payload
 
 These tests matter because script regressions are easy to miss: the core
@@ -23,9 +23,9 @@ from unittest.mock import patch
 import scripts.run_resume_extraction as run_resume_extraction
 
 
-def test_main_persists_accepted_output_when_flag_is_enabled() -> None:
+def test_main_persists_scored_output_when_flag_is_enabled() -> None:
     """
-    Verify that `main(...)` really applies accepted-output persistence.
+    Verify that `main(...)` really applies scored-output persistence.
 
     Notes
     -----
@@ -46,7 +46,7 @@ def test_main_persists_accepted_output_when_flag_is_enabled() -> None:
     -------
     A successful run with:
 
-        --persist-accepted-output
+        --persist-scored-output
         --output-json temp/resume_extraction_result_persisted.json
 
     should hand a JSON payload to `write_json_output(...)` that already
@@ -114,7 +114,7 @@ def test_main_persists_accepted_output_when_flag_is_enabled() -> None:
         return_value=fake_result,
     ), patch.object(
         run_resume_extraction,
-        "persist_accepted_resume_extraction_result",
+        "persist_scored_resume_extraction_result",
         return_value={
             "candidate_id": "candidate-uuid",
             "person_id": "person-uuid",
@@ -131,7 +131,7 @@ def test_main_persists_accepted_output_when_flag_is_enabled() -> None:
                 "--candidate-id",
                 "13902889",
                 "--enable-quality-gate",
-                "--persist-accepted-output",
+                "--persist-scored-output",
                 "--output-json",
                 "temp/resume_extraction_result_persisted.json",
             ]

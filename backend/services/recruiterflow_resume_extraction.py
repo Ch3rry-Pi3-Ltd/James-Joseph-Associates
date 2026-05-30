@@ -116,10 +116,14 @@ def build_recruiterflow_resume_text_bundle(
             "updated_at": candidate_payload.get("updated_at"),
         },
         "latest_resume": {
-            "file_id": source_file_id,
-            "filename": _pick_first_present_string(file_payload, "filename", "name"),
+            "attachmentId": source_file_id,
+            "fileName": _pick_first_present_string(
+                file_payload,
+                "filename",
+                "name",
+            ),
             "fileType": downloaded_file.get("content_type"),
-            "upload_time": _pick_first_present_string(
+            "createdAt": _pick_first_present_string(
                 file_payload,
                 "upload_time",
                 "created_at",

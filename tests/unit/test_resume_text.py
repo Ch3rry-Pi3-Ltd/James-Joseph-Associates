@@ -63,6 +63,7 @@ In plain language:
 """
 
 from io import BytesIO
+from subprocess import CompletedProcess
 from zipfile import ZipFile
 
 import pytest
@@ -71,6 +72,7 @@ from pypdf import PdfWriter
 import backend.services.resume_text as resume_text
 from backend.services.resume_text import (
     ResumeTextExtractionError,
+    extract_text_from_doc_bytes,
     extract_text_from_docx_bytes,
     extract_text_from_pdf_bytes,
     extract_text_from_resume_bytes,
@@ -280,6 +282,111 @@ def test_extract_text_from_resume_bytes_dispatches_to_docx_parser() -> None:
     assert result["extractor"] == "docx_xml"
     assert result["page_count"] is None
     assert result["text"] == "Susmitha Valluru\n\nData Engineer"
+
+
+def test_extract_text_from_resume_bytes_dispatches_to_doc_parser(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the format-dispatch helper routes legacy `.doc` files to the
+    shared `.doc` extractor.
+    """
+
+    captured_call: dict[str, object] = {}
+
+    def fake_doc_extract(
+        *,
+        content_bytes: bytes,
+        file_name: str | None,
+    ) -> dict[str, object]:
+        captured_call["content_bytes"] = content_bytes
+        captured_call["file_name"] = file_name
+        return {
+            "text": "Stephen Edwards\n\nProject Manager",
+            "page_count": None,
+            "extractor": "antiword",
+            "file_name": file_name,
+            "character_count": 33,
+        }
+
+    monkeypatch.setattr(resume_text, "extract_text_from_doc_bytes", fake_doc_extract)
+
+    result = extract_text_from_resume_bytes(
+        content_bytes=b"fake-doc-bytes",
+        file_name="Stephen Edwards CV.doc",
+        content_type="application/msword",
+    )
+
+    assert result["extractor"] == "antiword"
+    assert captured_call == {
+        "content_bytes": b"fake-doc-bytes",
+        "file_name": "Stephen Edwards CV.doc",
+    }
+
+
+def test_extract_text_from_doc_bytes_returns_text_metadata_for_valid_doc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the legacy `.doc` helper returns clean text and metadata when
+    `antiword` succeeds.
+    """
+
+    monkeypatch.setattr(
+        resume_text,
+        "_find_antiword_executable",
+        lambda: r"C:\Program Files\Git\mingw64\bin\antiword.exe",
+    )
+
+    def fake_run(*args, **kwargs):
+        return CompletedProcess(
+            args=args[0],
+            returncode=0,
+            stdout="Stephen Edwards\n\nProject Manager\n\nCapital Markets\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(resume_text.subprocess, "run", fake_run)
+
+    result = extract_text_from_doc_bytes(
+        content_bytes=b"fake legacy doc bytes",
+        file_name="Stephen Edwards CV.doc",
+    )
+
+    expected_text = "Stephen Edwards\n\nProject Manager\n\nCapital Markets"
+    assert result == {
+        "text": expected_text,
+        "page_count": None,
+        "extractor": "antiword",
+        "file_name": "Stephen Edwards CV.doc",
+        "character_count": len(expected_text),
+    }
+
+
+def test_extract_text_from_doc_bytes_raises_when_antiword_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that the legacy `.doc` helper fails clearly when no local converter
+    is available.
+    """
+
+    monkeypatch.setattr(resume_text, "_find_antiword_executable", lambda: None)
+
+    with pytest.raises(ResumeTextExtractionError) as exc_info:
+        extract_text_from_doc_bytes(
+            content_bytes=b"fake legacy doc bytes",
+            file_name="legacy.doc",
+        )
+
+    error = exc_info.value
+
+    assert (
+        str(error)
+        == "Legacy Word `.doc` extraction requires a local antiword executable."
+    )
+    assert error.stage == "input_validation"
+    assert error.details == [{"file_name": "legacy.doc"}]
 
 
 def test_extract_text_from_pdf_bytes_raises_when_input_is_not_bytes() -> None:

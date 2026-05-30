@@ -1,0 +1,124 @@
+{
+  "persisted_at": "2026-05-29T15:41:11.670195+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/1601.1700.json",
+  "candidate_limit": 20,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "candidate_count": 20,
+  "selected_resume_candidate_count": 20,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 20,
+  "new_resume_candidate_count": 0,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 20,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 3244,
+      "source_file_id": 3526,
+      "file_name": "RAJ_Updated_Resume_V3.pdf",
+      "source_record_id": "3244:3526",
+      "document_id": "c8d9a54e-5afa-4f4f-8cfb-94e12f999e91",
+      "document_title": "RAJ_Updated_Resume_V3.pdf",
+      "quality_status": "pass",
+      "quality_score": 92
+    },
+    {
+      "source_candidate_id": 3243,
+      "source_file_id": 3525,
+      "file_name": "Ragavendran_Seetharaman_CV.docx",
+      "source_record_id": "3243:3525",
+      "document_id": "cac20fea-f841-4dfe-9bce-281417f07075",
+      "document_title": "Ragavendran_Seetharaman_CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3242,
+      "source_file_id": 3524,
+      "file_name": "Rab_Bassi_2023-09-3.pdf",
+      "source_record_id": "3242:3524",
+      "document_id": "b39ec082-2212-4b48-96a8-6591031feb3c",
+      "document_title": "Rab_Bassi_2023-09-3.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3241,
+      "source_file_id": 3523,
+      "file_name": "Prokopcevs_Vladislavs_CV_2023_EM.pdf",
+      "source_record_id": "3241:3523",
+      "document_id": "bcd1db40-237a-4694-ad86-28195a846d8c",
+      "document_title": "Prokopcevs_Vladislavs_CV_2023_EM.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3240,
+      "source_file_id": 3522,
+      "file_name": "Poojan_Shah.pdf",
+      "source_record_id": "3240:3522",
+      "document_id": "794a5635-26fe-46aa-95fd-35fc2ed54637",
+      "document_title": "Poojan_Shah.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3239,
+      "source_file_id": 3521,
+      "file_name": "Pooja__Namdeo__Resume_S-2.pdf",
+      "source_record_id": "3239:3521",
+      "document_id": "94ed95a3-06ec-43f5-9051-20f7514ab291",
+      "document_title": "Pooja__Namdeo__Resume_S-2.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3238,
+      "source_file_id": 3520,
+      "file_name": "PB++30-8-23+CV+.pdf",
+      "source_record_id": "3238:3520",
+      "document_id": "63827aef-5e66-4671-a142-c8bd237565ca",
+      "document_title": "PB++30-8-23+CV+.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3237,
+      "source_file_id": 3519,
+      "file_name": "PaulSweeneyCV_T.pdf",
+      "source_record_id": "3237:3519",
+      "document_id": "f123845d-264a-489d-aecd-eb4e5c2782b6",
+      "document_title": "PaulSweeneyCV_T.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 3236,
+      "source_file_id": 3518,
+      "file_name": "Paul+McMahon+CV+24.pdf",
+      "source_record_id": "3236:3518",
+      "document_id": "8e0ab9b4-b540-4fec-aa40-cb17d4e3139b",
+      "document_title": "Paul+McMahon+CV+24.pdf",
+      "quality_status": "pass",
+      "quality_score": 92
+    },
+    {
+      "source_candidate_id": 3235,
+      "source_file_id": 3517,
+      "file_name": "Neeraj+Kumar.docx",
+      "source_record_id": "3235:3517",
+      "document_id": "4bd612b4-1843-43c1-98bf-afa807fd9b3f",
+      "document_title": "Neeraj+Kumar.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": []
+}

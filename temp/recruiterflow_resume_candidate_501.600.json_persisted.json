@@ -1,0 +1,342 @@
+{
+  "persisted_at": "2026-05-29T00:03:22.145047+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/501.600.json",
+  "candidate_limit": 50,
+  "persisted_resume_limit": 50,
+  "force_reprocess": false,
+  "candidate_count": 50,
+  "persisted_resume_count": 2,
+  "accepted_resume_count": 2,
+  "non_pass_count": 0,
+  "skipped_count": 46,
+  "unsupported_count": 0,
+  "failed_count": 2,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-29T00:01:37.554726+00:00",
+      "person_id": "f0d2b56f-88ab-4332-9600-1e354e818719",
+      "candidate_id": "71a1cdd3-a1b7-4112-be6d-4b9f1ce1b303",
+      "current_company_id": "c26690ba-711f-47a2-a575-1318216aa428",
+      "document_id": "96100b44-94a8-4739-9b9f-94091c5920c4",
+      "candidate_source_record_id": "d0a73776-ae15-4ce8-a334-377b391cba82",
+      "resume_source_record_id": "2d764fba-30f5-4ab7-8cbb-19f616d737f7",
+      "extraction_source_record_id": "87c84e29-5958-46b0-a25e-09990ce72734",
+      "candidate_skill_count": 136,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "8ee934f4-46e8-4593-b7c8-40cd1ea6ec0f",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 88,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 88,
+          "status": "pass",
+          "reasons": [
+            "education_empty_despite_education_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 2,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sharma1vikas@gmail.com",
+              "vikas4sharma@outlook.com"
+            ],
+            "resume_phones": [
+              "+91 9810452341"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 2,
+            "phone_count": 1,
+            "employment_history_count": 11,
+            "projects_count": 5,
+            "education_count": 0,
+            "evidence_notes_count": 5,
+            "skills_count": 104,
+            "tools_and_platforms_count": 32,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 88,
+          "status": "pass",
+          "reasons": [
+            "education_empty_despite_education_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 2,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "sharma1vikas@gmail.com",
+              "vikas4sharma@outlook.com"
+            ],
+            "resume_phones": [
+              "+91 9810452341"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 2,
+            "phone_count": 1,
+            "employment_history_count": 11,
+            "projects_count": 5,
+            "education_count": 0,
+            "evidence_notes_count": 5,
+            "skills_count": 104,
+            "tools_and_platforms_count": 32,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-05-29T00:03:16.535044+00:00",
+      "person_id": "977cf49a-f62f-4e7e-a7cb-228e5bac763a",
+      "candidate_id": "cefb9170-c892-43db-81a8-79efe1a51966",
+      "current_company_id": "d72214c8-9eeb-4973-8069-01468214a8f5",
+      "document_id": "a6dd9c7f-941f-49fd-9638-d8c623d9eb57",
+      "candidate_source_record_id": "af485c2c-1b4d-465d-89fc-52459d2ba090",
+      "resume_source_record_id": "d0131ec1-42b2-4357-a802-0ab070f4d700",
+      "extraction_source_record_id": "cb3feaf4-0e92-4e7e-acec-68959156019b",
+      "candidate_skill_count": 116,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "973bb24c-01a9-4f57-8eca-31b0b72d527e",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "UnitedKingdomanton.galchenko@gmail.com"
+            ],
+            "resume_phones": [
+              "+447415304720"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 14,
+            "projects_count": 7,
+            "education_count": 1,
+            "evidence_notes_count": 7,
+            "skills_count": 86,
+            "tools_and_platforms_count": 30,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "UnitedKingdomanton.galchenko@gmail.com"
+            ],
+            "resume_phones": [
+              "+447415304720"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 14,
+            "projects_count": 7,
+            "education_count": 1,
+            "evidence_notes_count": 7,
+            "skills_count": 86,
+            "tools_and_platforms_count": 30,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 4346,
+      "source_file_id": 4962,
+      "file_name": "Sabih+Behzad+Resume+2024.pdf",
+      "source_record_id": "4346:4962",
+      "document_id": "ac42dfc7-efa8-4aa1-97d7-ae0c6ca3b40b",
+      "document_title": "Sabih+Behzad+Resume+2024.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4345,
+      "source_file_id": 4961,
+      "file_name": "Oksana+Senior+CVVV.docx-3.docx",
+      "source_record_id": "4345:4961",
+      "document_id": "87c73f7f-db82-4b22-90e7-d83f39b64232",
+      "document_title": "Oksana+Senior+CVVV.docx-3.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4343,
+      "source_file_id": 4959,
+      "file_name": "Michael+McMullan+CV+-+Ops+&+Change (1).pdf",
+      "source_record_id": "4343:4959",
+      "document_id": "32d845b1-02d6-48b0-bc1a-7c9d8ca12146",
+      "document_title": "Michael+McMullan+CV+-+Ops+&+Change (1).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4342,
+      "source_file_id": 4958,
+      "file_name": "NinaMoraisHenry_CVJ.pdf",
+      "source_record_id": "4342:4958",
+      "document_id": "e05a679f-9ff8-4a00-9eff-487aab1f74b3",
+      "document_title": "NinaMoraisHenry_CVJ.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4341,
+      "source_file_id": 4957,
+      "file_name": "Resume_NusratTania.pdf",
+      "source_record_id": "4341:4957",
+      "document_id": "5439197a-1315-4773-b732-8ca04b7e3434",
+      "document_title": "Resume_NusratTania.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4340,
+      "source_file_id": 4956,
+      "file_name": "Soneji+Kaushal+CV.pdf",
+      "source_record_id": "4340:4956",
+      "document_id": "751a5ac1-0e3a-4046-a8fd-4c12f84caccf",
+      "document_title": "Soneji+Kaushal+CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4339,
+      "source_file_id": 4955,
+      "file_name": "phal-tatla-cv53-17.pdf",
+      "source_record_id": "4339:4955",
+      "document_id": "deb508a7-4ebd-44a6-989e-ead5c1e4793f",
+      "document_title": "phal-tatla-cv53-17.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4338,
+      "source_file_id": 4954,
+      "file_name": "CV+Manikantan+Ganapathy.docx",
+      "source_record_id": "4338:4954",
+      "document_id": "86b5d939-454a-4cbc-bb91-8e7c520bd751",
+      "document_title": "CV+Manikantan+Ganapathy.docx",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 4337,
+      "source_file_id": 4953,
+      "file_name": "Tony+Singh+CV.pdf",
+      "source_record_id": "4337:4953",
+      "document_id": "14d06b6a-700b-4709-8afc-2aeda6759e1d",
+      "document_title": "Tony+Singh+CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4335,
+      "source_file_id": 4951,
+      "file_name": "PaulSchleiferCV.docx",
+      "source_record_id": "4335:4951",
+      "document_id": "b47fcc75-d3bc-4cb7-88b5-feea037e1b29",
+      "document_title": "PaulSchleiferCV.docx",
+      "quality_status": "review",
+      "quality_score": 70
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 4344,
+      "file_name": "Alex-Manni-CV-2Aug.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 4336,
+      "file_name": "KumaraRaja.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

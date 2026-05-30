@@ -1,51 +1,123 @@
 {
-  "persisted_at": "2026-05-28T13:41:31.014108+00:00",
+  "persisted_at": "2026-05-28T19:45:52.800120+00:00",
   "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
   "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
   "candidate_member_name": "candidate/1.100.json",
-  "candidate_limit": 5,
-  "accepted_resume_limit": 1,
-  "candidate_count": 5,
-  "accepted_resume_count": 0,
+  "candidate_limit": 1,
+  "persisted_resume_limit": 1,
+  "candidate_count": 1,
+  "persisted_resume_count": 1,
+  "accepted_resume_count": 1,
   "non_pass_count": 0,
   "unsupported_count": 0,
-  "failed_count": 5,
-  "persisted_resume_preview": [],
-  "failed_items_preview": [
+  "failed_count": 0,
+  "persisted_resume_preview": [
     {
-      "source_candidate_id": 4847,
-      "file_name": "Bernardita Gutierrez CV EN 03-2026.pdf",
-      "stage": "structured_resume_extraction_or_persistence",
-      "error_type": "TypeError",
-      "message": "Object of type UUID is not JSON serializable"
-    },
-    {
-      "source_candidate_id": 4846,
-      "file_name": "PROFESSIONAL RESUME - RASHMI.pdf",
-      "stage": "structured_resume_extraction_or_persistence",
-      "error_type": "TypeError",
-      "message": "Object of type UUID is not JSON serializable"
-    },
-    {
-      "source_candidate_id": 4845,
-      "file_name": "CV_IT.docx",
-      "stage": "structured_resume_extraction_or_persistence",
-      "error_type": "TypeError",
-      "message": "Object of type UUID is not JSON serializable"
-    },
-    {
-      "source_candidate_id": 4844,
-      "file_name": "Justice Chiurunga. Finance.docx",
-      "stage": "structured_resume_extraction_or_persistence",
-      "error_type": "TypeError",
-      "message": "Object of type UUID is not JSON serializable"
-    },
-    {
-      "source_candidate_id": 4843,
-      "file_name": "RAJAN SINGH.pdf",
-      "stage": "structured_resume_extraction_or_persistence",
-      "error_type": "TypeError",
-      "message": "Object of type UUID is not JSON serializable"
+      "persisted_at": "2026-05-28T19:45:51.102530+00:00",
+      "person_id": "f32d5146-7043-4566-a1dc-87946feaf450",
+      "candidate_id": "009c78db-e3bc-424c-b3cc-5af19f7fdaea",
+      "current_company_id": "da7ef826-5320-4f74-b0bb-64f238a29337",
+      "document_id": "da8ac3e5-0b59-45d6-a6d7-b634e17bfba1",
+      "candidate_source_record_id": "dc29ba4f-ea0c-4c89-9c0f-fdfe37a8121c",
+      "resume_source_record_id": "6f4f4b01-a9ac-4eab-a61e-6bc943649ade",
+      "extraction_source_record_id": "7ec516bd-70ba-4f54-921d-ea9f388c22aa",
+      "candidate_skill_count": 11,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "d2c97dd7-343e-4e69-b3a3-07d5f89129ae",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 92,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 92,
+          "status": "pass",
+          "reasons": [
+            "phone_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 2,
+            "resume_emails": [
+              "bngutierrezvg@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7775 092914",
+              "978-956-\n405-239-7"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 2,
+            "education_count": 4,
+            "evidence_notes_count": 6,
+            "skills_count": 11,
+            "tools_and_platforms_count": 0,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 92,
+          "status": "pass",
+          "reasons": [
+            "phone_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 2,
+            "resume_emails": [
+              "bngutierrezvg@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7775 092914",
+              "978-956-\n405-239-7"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 3,
+            "projects_count": 2,
+            "education_count": 4,
+            "evidence_notes_count": 6,
+            "skills_count": 11,
+            "tools_and_platforms_count": 0,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
     }
-  ]
+  ],
+  "failed_items_preview": []
 }

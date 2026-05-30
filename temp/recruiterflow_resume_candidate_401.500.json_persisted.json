@@ -1,0 +1,221 @@
+{
+  "persisted_at": "2026-05-28T22:37:12.412787+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/401.500.json",
+  "candidate_limit": 30,
+  "persisted_resume_limit": 30,
+  "force_reprocess": false,
+  "candidate_count": 30,
+  "persisted_resume_count": 1,
+  "accepted_resume_count": 1,
+  "non_pass_count": 0,
+  "skipped_count": 29,
+  "unsupported_count": 0,
+  "failed_count": 0,
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-05-28T22:37:09.542482+00:00",
+      "person_id": "caab47a8-c116-41e8-813a-95a1671ea925",
+      "candidate_id": "f08a35f5-6416-4560-98bc-852951bb869f",
+      "current_company_id": "d23b80d4-c6c7-482a-bf4c-781b621ff5a6",
+      "document_id": "a9c2ea21-d7fd-456a-bd5b-819f104ecee0",
+      "candidate_source_record_id": "10b354d9-391c-4378-90f4-b184909ac7a0",
+      "resume_source_record_id": "9153c575-051c-43cc-b41e-f4dad360cb5c",
+      "extraction_source_record_id": "d599f4f1-1fd8-4ae7-a2fe-bcea67dc6b21",
+      "candidate_skill_count": 44,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "5bb68b55-0506-4a00-af9a-914001f04fb4",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "jadvani75@gmail.com"
+            ],
+            "resume_phones": [
+              "+447424517142"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 5,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 16,
+            "tools_and_platforms_count": 28,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "jadvani75@gmail.com"
+            ],
+            "resume_phones": [
+              "+447424517142"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 5,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 16,
+            "tools_and_platforms_count": 28,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 4446,
+      "source_file_id": 5108,
+      "file_name": "CV+-+Equities+-+AK.docx",
+      "source_record_id": "4446:5108",
+      "document_id": "c8135c20-6c65-4a5f-bc00-464cd125dd38",
+      "document_title": "CV+-+Equities+-+AK.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4445,
+      "source_file_id": 5107,
+      "file_name": "Stuart_Butler_NL.pdf",
+      "source_record_id": "4445:5107",
+      "document_id": "e68de53d-5f24-4d8b-bbd0-917354736bfd",
+      "document_title": "Stuart_Butler_NL.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4444,
+      "source_file_id": 5106,
+      "file_name": "Fedor_Smolyakov_CV_2023.pdf",
+      "source_record_id": "4444:5106",
+      "document_id": "264c3577-75dc-4c2c-bf23-a447f7fe2f1b",
+      "document_title": "Fedor_Smolyakov_CV_2023.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4443,
+      "source_file_id": 5105,
+      "file_name": "CV+-+Judith+Tang+2024_07.docx",
+      "source_record_id": "4443:5105",
+      "document_id": "46055dc9-6b50-40b6-947d-724e5c7b76d8",
+      "document_title": "CV+-+Judith+Tang+2024_07.docx",
+      "quality_status": "review",
+      "quality_score": 70
+    },
+    {
+      "source_candidate_id": 4442,
+      "source_file_id": 5104,
+      "file_name": "CVHewson_2024.pdf",
+      "source_record_id": "4442:5104",
+      "document_id": "9335d50b-3e4e-46be-8bfb-d59b46b6dbcc",
+      "document_title": "CVHewson_2024.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4441,
+      "source_file_id": 5101,
+      "file_name": "Profile.pdf",
+      "source_record_id": "4441:5101",
+      "document_id": "a955e350-8f50-41f6-b29d-60f735e7f20c",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 4440,
+      "source_file_id": 5100,
+      "file_name": "Profile.pdf",
+      "source_record_id": "4440:5100",
+      "document_id": "263bf9ca-56c1-45ae-b5dc-b7ff770b60f6",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4439,
+      "source_file_id": 5098,
+      "file_name": "Profile.pdf",
+      "source_record_id": "4439:5098",
+      "document_id": "7a2a1b16-e730-4a27-b3bb-f76fcf143350",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4438,
+      "source_file_id": 5096,
+      "file_name": "Profile.pdf",
+      "source_record_id": "4438:5096",
+      "document_id": "9053e7c6-4486-44b7-8abc-ac03e5b16c3e",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 4437,
+      "source_file_id": 5095,
+      "file_name": "Profile.pdf",
+      "source_record_id": "4437:5095",
+      "document_id": "9cbf3f0c-bc67-49c1-8c73-3e5ee88788cc",
+      "document_title": "Profile.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": []
+}
