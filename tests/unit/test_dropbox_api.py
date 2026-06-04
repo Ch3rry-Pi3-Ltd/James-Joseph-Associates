@@ -30,11 +30,13 @@ from backend.services.dropbox_api import (
     DROPBOX_DOWNLOAD_FILE_URL,
     DROPBOX_GET_CURRENT_ACCOUNT_URL,
     DROPBOX_LIST_FOLDER_URL,
+    DROPBOX_LIST_FOLDER_CONTINUE_URL,
     DROPBOX_UPLOAD_FILE_URL,
     DropboxApiError,
     ensure_dropbox_folder,
     download_dropbox_file,
     fetch_dropbox_current_account,
+    fetch_dropbox_list_folder_continue,
     fetch_dropbox_list_folder,
     upload_dropbox_file,
 )
@@ -144,6 +146,38 @@ def test_fetch_dropbox_list_folder_still_sends_json_payload() -> None:
     headers = request_kwargs["headers"]
     assert isinstance(headers, dict)
     assert headers["Content-Type"] == "application/json"
+
+
+def test_fetch_dropbox_list_folder_continue_sends_cursor_payload() -> None:
+    """
+    Verify that the folder-continuation helper sends only the cursor payload.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_post(url, **kwargs):
+        captured_request["url"] = url
+        captured_request["kwargs"] = kwargs
+        return httpx.Response(
+            200,
+            json={"entries": [], "cursor": "next-cursor", "has_more": True},
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = fetch_dropbox_list_folder_continue(
+            access_token="test-token",
+            cursor="fake-cursor",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert result["entry_count"] == 0
+    assert captured_request["url"] == DROPBOX_LIST_FOLDER_CONTINUE_URL
+    request_kwargs = captured_request["kwargs"]
+    assert isinstance(request_kwargs, dict)
+    assert request_kwargs["json"] == {"cursor": "fake-cursor"}
 
 
 def test_fetch_dropbox_current_account_raises_for_provider_http_error() -> None:

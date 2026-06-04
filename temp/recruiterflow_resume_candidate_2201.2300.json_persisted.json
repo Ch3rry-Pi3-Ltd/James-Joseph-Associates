@@ -1,0 +1,716 @@
+{
+  "persisted_at": "2026-06-03T13:52:58.638847+00:00",
+  "run_started_at": "2026-06-03T13:39:38.735636+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/2201.2300.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 91,
+  "new_resume_candidate_count": 9,
+  "persisted_resume_count": 3,
+  "accepted_resume_count": 3,
+  "non_pass_count": 0,
+  "skipped_count": 91,
+  "unsupported_count": 0,
+  "failed_count": 6,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 20.9163,
+    "embedded_member_lookup_seconds": 0.0408,
+    "resume_text_extraction_seconds": 0.9366,
+    "structured_resume_seconds": 253.3202,
+    "total_candidate_seconds": 773.7076
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.2092,
+    "embedded_member_lookup_seconds": 0.0004,
+    "resume_text_extraction_seconds": 0.0094,
+    "structured_resume_seconds": 2.5332,
+    "total_candidate_seconds": 7.7371
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 2638,
+      "status": "skipped",
+      "file_name": "Santosh_Gadkari_CV.PDF",
+      "skip_lookup_seconds": 0.1872,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1873
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 2637,
+      "status": "skipped",
+      "file_name": "IanLight20230330.docx",
+      "skip_lookup_seconds": 0.2083,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2084
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 2636,
+      "status": "skipped",
+      "file_name": "tommy-neeld-cv.pdf",
+      "skip_lookup_seconds": 0.1961,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1962
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 2635,
+      "status": "skipped",
+      "file_name": "Irwin Marmorat_CV.pdf",
+      "skip_lookup_seconds": 0.1911,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1911
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 2634,
+      "status": "skipped",
+      "file_name": "Daniel+Dinnyes+CV+(public).pdf",
+      "skip_lookup_seconds": 0.1818,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1819
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 2633,
+      "status": "skipped",
+      "file_name": "resume-mohammad-kamar.pdf",
+      "skip_lookup_seconds": 0.1782,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1783
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 2632,
+      "status": "skipped",
+      "file_name": "Minesh_Profile_DotNet.pdf",
+      "skip_lookup_seconds": 0.1811,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1811
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 2631,
+      "status": "skipped",
+      "file_name": "steven_tapping_resume_en.docx",
+      "skip_lookup_seconds": 0.1972,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1973
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 2630,
+      "status": "skipped",
+      "file_name": "CV-KisunSONG.pdf",
+      "skip_lookup_seconds": 0.2098,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2098
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 2629,
+      "status": "skipped",
+      "file_name": "Joshua_CassidyAlu_CV_2023.pdf",
+      "skip_lookup_seconds": 0.1921,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1921
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 2628,
+      "status": "skipped",
+      "file_name": "John Casebow CV 2023.pdf",
+      "skip_lookup_seconds": 0.2011,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2011
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 2627,
+      "status": "skipped",
+      "file_name": "SourceWhale Resume.pdf",
+      "skip_lookup_seconds": 0.1923,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1923
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 2626,
+      "status": "skipped",
+      "file_name": "Travis Resume.pdf",
+      "skip_lookup_seconds": 0.1939,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1939
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 2625,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.2071,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2071
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 2624,
+      "status": "skipped",
+      "file_name": "Warren Cully.pdf",
+      "skip_lookup_seconds": 0.1897,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1898
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 2623,
+      "status": "skipped",
+      "file_name": "John Cullen - CV 2023.docx",
+      "skip_lookup_seconds": 0.1792,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1793
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 2622,
+      "status": "skipped",
+      "file_name": "RESUME+DEVELOPER+SOFTWARE+ENGINEER+AXEL+GALION.docx",
+      "skip_lookup_seconds": 0.1863,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1864
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 2621,
+      "status": "skipped",
+      "file_name": "Muneish+Kumar+Adya.docx",
+      "skip_lookup_seconds": 0.1983,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1984
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 2620,
+      "status": "skipped",
+      "file_name": "Santosh_Prabhu_JavaDeveloper (1).pdf",
+      "skip_lookup_seconds": 0.1963,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1964
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 2619,
+      "status": "skipped",
+      "file_name": "IshwarPandeya_2023_Min.pdf",
+      "skip_lookup_seconds": 0.1917,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1918
+    }
+  ],
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-06-03T13:44:01.097459+00:00",
+      "person_id": "0cac40f8-c201-4d99-b8dc-1f61f5c8f437",
+      "candidate_id": "c7ae7084-db3b-4c60-a34d-78da32d96600",
+      "current_company_id": "06fab972-8294-4a8c-bd53-74a60481bdb6",
+      "document_id": "b11486e9-730e-422c-bd9a-9def27c70380",
+      "candidate_source_record_id": "a203fc44-cc70-4d96-8d70-55da1dccd15d",
+      "resume_source_record_id": "2d22ed08-4994-42c4-9e18-4eaefafe4c3b",
+      "extraction_source_record_id": "a5a5cafb-2fb5-4568-9a9d-c544b0df8b1c",
+      "candidate_skill_count": 96,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "8937857d-e971-4614-8b57-9f7e2336c877",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 0,
+            "phone_count": 0,
+            "employment_history_count": 15,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 74,
+            "tools_and_platforms_count": 22,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 0,
+            "phone_count": 0,
+            "employment_history_count": 15,
+            "projects_count": 6,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 74,
+            "tools_and_platforms_count": 22,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-03T13:46:55.609449+00:00",
+      "person_id": "b66fbf6b-3ad9-4e45-b6cd-a149e7b97d61",
+      "candidate_id": "5243a724-8453-4fc0-8c9e-7f7337075ba3",
+      "current_company_id": "6255cab2-6537-49a6-b0e1-fb44a6f97217",
+      "document_id": "a848783e-b198-4a54-bce5-d836f21dc49c",
+      "candidate_source_record_id": "cbae68c8-f4ed-4b64-881f-e4ea657004e0",
+      "resume_source_record_id": "a7127ef1-7480-4f7d-91da-995bb6b123f4",
+      "extraction_source_record_id": "f6c41124-418b-429f-9c6a-4e55ffbd9e8a",
+      "candidate_skill_count": 85,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "116da9bd-9e71-4895-a406-bd7aeb91e3c7",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 95,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 95,
+          "status": "pass",
+          "reasons": [
+            "certifications_empty_despite_certifications_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": false,
+            "has_education_section": false,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 0,
+            "phone_count": 0,
+            "employment_history_count": 14,
+            "projects_count": 7,
+            "education_count": 1,
+            "evidence_notes_count": 4,
+            "skills_count": 27,
+            "tools_and_platforms_count": 58,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 95,
+          "status": "pass",
+          "reasons": [
+            "certifications_empty_despite_certifications_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": false,
+            "has_education_section": false,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 0,
+            "phone_count": 0,
+            "employment_history_count": 14,
+            "projects_count": 7,
+            "education_count": 1,
+            "evidence_notes_count": 4,
+            "skills_count": 27,
+            "tools_and_platforms_count": 58,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-03T13:51:24.910515+00:00",
+      "person_id": "60ea2ceb-0a96-47ab-bd1e-5bd767e21fe3",
+      "candidate_id": "c67855ea-17df-49ea-ac14-04065aaaced4",
+      "current_company_id": "53a12f34-3b5d-449e-9d47-2590bf563b71",
+      "document_id": "0158460e-f280-478b-a154-673004d4cfa4",
+      "candidate_source_record_id": "144fca93-0d4c-4151-8c8d-bd18779cd4ab",
+      "resume_source_record_id": "0355f0b3-884d-43ae-8bea-a5035ec4f219",
+      "extraction_source_record_id": "8cd42fbb-38c7-49fc-91c8-a4e528e7e58f",
+      "candidate_skill_count": 79,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "bc3d0114-86eb-45eb-ac07-750a8b355ff4",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 92,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 92,
+          "status": "pass",
+          "reasons": [
+            "phone_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 3,
+            "resume_emails": [
+              "evans.paul@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 (0)7932 488 110\n\n2",
+              "07932 488 110",
+              "+44 (0)7932 488 110"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 23,
+            "projects_count": 9,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 19,
+            "tools_and_platforms_count": 60,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 92,
+          "status": "pass",
+          "reasons": [
+            "phone_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 3,
+            "resume_emails": [
+              "evans.paul@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 (0)7932 488 110\n\n2",
+              "07932 488 110",
+              "+44 (0)7932 488 110"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 23,
+            "projects_count": 9,
+            "education_count": 2,
+            "evidence_notes_count": 5,
+            "skills_count": 19,
+            "tools_and_platforms_count": 60,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 2638,
+      "source_file_id": 2719,
+      "file_name": "Santosh_Gadkari_CV.PDF",
+      "source_record_id": "2638:2719",
+      "document_id": "ddaf4290-c408-4b70-aa23-1219633860fd",
+      "document_title": "Santosh_Gadkari_CV.PDF",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2637,
+      "source_file_id": 2718,
+      "file_name": "IanLight20230330.docx",
+      "source_record_id": "2637:2718",
+      "document_id": "3db42e28-5358-45cb-b057-0362fd237102",
+      "document_title": "IanLight20230330.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2636,
+      "source_file_id": 2713,
+      "file_name": "tommy-neeld-cv.pdf",
+      "source_record_id": "2636:2713",
+      "document_id": "1e569ece-d73e-441a-b84d-800cb98a2ce7",
+      "document_title": "tommy-neeld-cv.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2635,
+      "source_file_id": 5563,
+      "file_name": "Irwin Marmorat_CV.pdf",
+      "source_record_id": "2635:5563",
+      "document_id": "5f484a95-5da0-4a25-9ebc-dd75791e4676",
+      "document_title": "Irwin Marmorat_CV.pdf",
+      "quality_status": "pass",
+      "quality_score": 96
+    },
+    {
+      "source_candidate_id": 2634,
+      "source_file_id": 2711,
+      "file_name": "Daniel+Dinnyes+CV+(public).pdf",
+      "source_record_id": "2634:2711",
+      "document_id": "3cfa34d5-69b0-4938-9ef8-733e70219ad4",
+      "document_title": "Daniel+Dinnyes+CV+(public).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2633,
+      "source_file_id": 2710,
+      "file_name": "resume-mohammad-kamar.pdf",
+      "source_record_id": "2633:2710",
+      "document_id": "f7968309-fdaa-4d4e-ac53-68b01cad494a",
+      "document_title": "resume-mohammad-kamar.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2632,
+      "source_file_id": 2709,
+      "file_name": "Minesh_Profile_DotNet.pdf",
+      "source_record_id": "2632:2709",
+      "document_id": "7f10c89a-2ed2-4db9-911b-07fbccbbaf6a",
+      "document_title": "Minesh_Profile_DotNet.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2631,
+      "source_file_id": 2708,
+      "file_name": "steven_tapping_resume_en.docx",
+      "source_record_id": "2631:2708",
+      "document_id": "ab229153-503c-4cd1-9883-a9277ccaeb8a",
+      "document_title": "steven_tapping_resume_en.docx",
+      "quality_status": "pass",
+      "quality_score": 96
+    },
+    {
+      "source_candidate_id": 2630,
+      "source_file_id": 2706,
+      "file_name": "CV-KisunSONG.pdf",
+      "source_record_id": "2630:2706",
+      "document_id": "93b12bbb-a6e5-4f7b-ba2f-18adc94ff372",
+      "document_title": "CV-KisunSONG.pdf",
+      "quality_status": "pass",
+      "quality_score": 92
+    },
+    {
+      "source_candidate_id": 2629,
+      "source_file_id": 2705,
+      "file_name": "Joshua_CassidyAlu_CV_2023.pdf",
+      "source_record_id": "2629:2705",
+      "document_id": "6da26a24-5a3a-4b1c-b73b-b4eb89c30e70",
+      "document_title": "Joshua_CassidyAlu_CV_2023.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 2590,
+      "file_name": "Baran_Ipek_Resume.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2581,
+      "file_name": "cv.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2574,
+      "file_name": "Saravanan_16+Java.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2549,
+      "file_name": "IanLight20230330.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2546,
+      "file_name": "Gregs-CV-GG.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2541,
+      "file_name": "Gareth.Hughes.2023.04.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

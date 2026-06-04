@@ -278,11 +278,14 @@ def build_resume_extraction_persistence_payload(
         extraction_input.get("cleaned_resume_text")
     )
 
-    first_name = _clean_optional_string(candidate_context.get("first_name"))
-    last_name = _clean_optional_string(candidate_context.get("last_name"))
-    full_name = _build_full_name(
-        first_name=first_name,
-        last_name=last_name,
+    (
+        full_name,
+        first_name,
+        last_name,
+    ) = _select_candidate_name_fields(
+        source_system=result["source_system"],
+        candidate_context=candidate_context,
+        structured_extraction=structured_extraction,
     )
 
     primary_email = _pick_first_nonempty(
@@ -556,9 +559,14 @@ def _validate_result_is_persistable(
     when the goal is to persist only high-confidence CVs.
     """
 
-    if result.get("source_system") not in {"jobadder", "recruiterflow", "outlook"}:
+    if result.get("source_system") not in {
+        "jobadder",
+        "dropbox",
+        "recruiterflow",
+        "outlook",
+    }:
         raise RuntimeError(
-            "Only JobAdder, Recruiterflow, and Outlook extraction results are currently supported for persistence."
+            "Only JobAdder, Dropbox, Recruiterflow, and Outlook extraction results are currently supported for persistence."
         )
 
     quality_assessment = result.get("quality_assessment")
@@ -762,6 +770,14 @@ def _build_resume_source_uri(
             f"{source_candidate_id}/files/{attachment_id}"
         )
 
+    if source_system == "dropbox":
+        if not isinstance(export_source_uri, str) or export_source_uri.strip() == "":
+            return None
+        return (
+            f"dropbox://{export_source_uri}#candidate={source_candidate_id}"
+            f"&attachment={attachment_id}"
+        )
+
     if source_system == "outlook":
         return None
 
@@ -821,6 +837,72 @@ def _build_full_name(*, first_name: str | None, last_name: str | None) -> str:
     if joined_name != "":
         return joined_name
     return "Unknown Candidate"
+
+
+def _select_candidate_name_fields(
+    *,
+    source_system: str,
+    candidate_context: dict[str, Any],
+    structured_extraction: dict[str, Any],
+) -> tuple[str, str | None, str | None]:
+    """
+    Resolve canonical candidate-name fields from source metadata and extraction output.
+
+    Notes
+    -----
+    JobAdder and Recruiterflow already carry structured upstream name fields,
+    so they remain the primary source there.
+
+    Direct Dropbox CV ingestion is different: the upstream source is just a
+    file path plus filename heuristics, so when the LLM extracts a credible
+    name from the CV body we should prefer that over the filename guess.
+    """
+
+    context_first_name = _clean_optional_string(candidate_context.get("first_name"))
+    context_last_name = _clean_optional_string(candidate_context.get("last_name"))
+    context_full_name = _clean_optional_string(candidate_context.get("full_name"))
+    if context_full_name is None and (
+        context_first_name is not None or context_last_name is not None
+    ):
+        context_full_name = _build_full_name(
+            first_name=context_first_name,
+            last_name=context_last_name,
+        )
+
+    extracted_first_name = _clean_optional_string(structured_extraction.get("first_name"))
+    extracted_last_name = _clean_optional_string(structured_extraction.get("last_name"))
+    extracted_full_name = _clean_optional_string(structured_extraction.get("full_name"))
+
+    if source_system == "dropbox":
+        preferred_first_name = extracted_first_name or context_first_name
+        preferred_last_name = extracted_last_name or context_last_name
+        preferred_full_name = extracted_full_name or context_full_name
+    else:
+        preferred_first_name = context_first_name or extracted_first_name
+        preferred_last_name = context_last_name or extracted_last_name
+        preferred_full_name = context_full_name or extracted_full_name
+
+    if preferred_first_name is None and preferred_last_name is None and preferred_full_name is not None:
+        preferred_first_name, preferred_last_name = _split_full_name(preferred_full_name)
+
+    full_name = preferred_full_name or _build_full_name(
+        first_name=preferred_first_name,
+        last_name=preferred_last_name,
+    )
+    return full_name, preferred_first_name, preferred_last_name
+
+
+def _split_full_name(full_name: str) -> tuple[str | None, str | None]:
+    """
+    Split one full-name string into first/last-name components.
+    """
+
+    parts = [part for part in full_name.split() if part]
+    if not parts:
+        return None, None
+    if len(parts) == 1:
+        return parts[0], None
+    return parts[0], " ".join(parts[1:])
 
 
 def _pick_first_nonempty(

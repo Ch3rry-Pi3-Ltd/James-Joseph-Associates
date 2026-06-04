@@ -256,6 +256,73 @@ def test_build_resume_extraction_persistence_payload_strips_nul_bytes() -> None:
     assert "\x00" not in payload["resume_source_payload"]["resume_content_hash"]
 
 
+def test_build_resume_extraction_persistence_payload_uses_explicit_full_name() -> None:
+    """
+    Verify that an explicit candidate-context full name survives into persistence.
+    """
+
+    result = _build_sample_result()
+    result["extraction_input"]["candidate_context"]["first_name"] = None
+    result["extraction_input"]["candidate_context"]["last_name"] = None
+    result["extraction_input"]["candidate_context"]["full_name"] = (
+        "Mary Jane Watson"
+    )
+
+    payload = build_resume_extraction_persistence_payload(result)
+
+    assert payload["full_name"] == "Mary Jane Watson"
+    assert payload["first_name"] == "Mary"
+    assert payload["last_name"] == "Jane Watson"
+
+
+def test_build_resume_extraction_persistence_payload_prefers_extracted_name_for_dropbox() -> None:
+    """
+    Verify that direct Dropbox CV ingestion prefers CV-extracted names over filename guesses.
+    """
+
+    result = _build_sample_result(quality_status="review")
+    result["source_system"] = "dropbox"
+    result["source_candidate_id"] = "/folder/AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx"
+    result["export_source_uri"] = result["source_candidate_id"]
+    result["extraction_input"]["candidate_context"]["first_name"] = "Ajay"
+    result["extraction_input"]["candidate_context"]["last_name"] = "Totaljobs"
+    result["extraction_input"]["candidate_context"]["full_name"] = "Ajay Totaljobs"
+    result["structured_extraction"]["full_name"] = "Ajay Abraham Mathew"
+    result["structured_extraction"]["first_name"] = "Ajay"
+    result["structured_extraction"]["last_name"] = "Abraham Mathew"
+    result["extraction_input"]["latest_resume"] = {
+        "attachment_id": "/folder/AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx",
+        "file_name": "AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx",
+        "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "created_at": "2026-05-11T12:00:00Z",
+    }
+
+    payload = build_resume_extraction_persistence_payload(result)
+
+    assert payload["full_name"] == "Ajay Abraham Mathew"
+    assert payload["first_name"] == "Ajay"
+    assert payload["last_name"] == "Abraham Mathew"
+
+
+def test_build_resume_extraction_persistence_payload_keeps_upstream_name_for_jobadder() -> None:
+    """
+    Verify that upstream ATS metadata remains primary for JobAdder/Recruiteflow-style sources.
+    """
+
+    result = _build_sample_result()
+    result["extraction_input"]["candidate_context"]["first_name"] = "Roger"
+    result["extraction_input"]["candidate_context"]["last_name"] = "Campbell"
+    result["structured_extraction"]["full_name"] = "Roger C"
+    result["structured_extraction"]["first_name"] = "Roger"
+    result["structured_extraction"]["last_name"] = "C"
+
+    payload = build_resume_extraction_persistence_payload(result)
+
+    assert payload["full_name"] == "Roger Campbell"
+    assert payload["first_name"] == "Roger"
+    assert payload["last_name"] == "Campbell"
+
+
 def test_persist_accepted_resume_extraction_result_rejects_non_pass_status() -> None:
     """
     Verify that non-pass results are blocked before any database write.
@@ -302,6 +369,43 @@ def test_persist_scored_resume_extraction_result_allows_review_status() -> None:
         "quality_status": "review",
     }
     mock_persist.assert_called_once()
+
+
+def test_persist_scored_resume_extraction_result_allows_dropbox_source() -> None:
+    """
+    Verify that Dropbox CV results can use the same scored persistence path.
+    """
+
+    result = _build_sample_result(quality_status="review")
+    result["source_system"] = "dropbox"
+    result["source_candidate_id"] = "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf"
+    result["export_source_uri"] = "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf"
+    result["extraction_input"]["latest_resume"] = {
+        "attachment_id": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf",
+        "file_name": "Jane-Doe-CV.pdf",
+        "mime_type": "application/pdf",
+        "created_at": "2026-05-11T12:00:00Z",
+    }
+
+    with patch(
+        "backend.services.resume_extraction_persistence.persist_resume_extraction_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "quality_status": "review",
+        }
+
+        persisted_summary = persist_scored_resume_extraction_result(result)
+
+    assert persisted_summary == {
+        "candidate_id": "candidate-uuid",
+        "person_id": "person-uuid",
+        "quality_status": "review",
+    }
+    payload = mock_persist.call_args.args[0]
+    assert payload["source_system"] == "dropbox"
+    assert payload["resume_source_uri"].startswith("dropbox:///")
 
 
 def test_persist_scored_resume_extraction_result_rejects_missing_resume_artifact() -> None:

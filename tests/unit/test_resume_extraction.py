@@ -1392,6 +1392,9 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
     """
 
     payload = {
+        "full_name": "Roger Campbell",
+        "first_name": "Roger",
+        "last_name": "Campbell",
         "current_employer": "Pirum",
         "current_title": "Senior Data Scientist",
         "professional_summary": "Senior applied machine learning candidate.",
@@ -1449,6 +1452,9 @@ def test_resume_structured_extraction_schema_accepts_valid_nested_payload() -> N
     result = ResumeStructuredExtraction.model_validate(payload)
 
     assert result.current_employer == "Pirum"
+    assert result.full_name == "Roger Campbell"
+    assert result.first_name == "Roger"
+    assert result.last_name == "Campbell"
     assert result.current_title == "Senior Data Scientist"
     assert result.education[0].institution == "University of Warwick"
     assert result.employment_history[0].employer == "Pirum"

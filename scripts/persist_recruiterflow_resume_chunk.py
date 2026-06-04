@@ -16,6 +16,7 @@ import json
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 from zipfile import ZipFile
 
@@ -42,6 +43,7 @@ DEFAULT_CANDIDATE_MEMBER_NAME = "candidate/1.100.json"
 SUPPORTED_RESUME_SUFFIXES = (".pdf", ".docx", ".doc", ".rtf", ".txt")
 DEFAULT_CANDIDATE_LIMIT = 10
 DEFAULT_PERSISTED_RESUME_LIMIT = 10
+CHECKPOINT_WRITE_INTERVAL = 5
 
 
 def parse_args() -> argparse.Namespace:
@@ -61,7 +63,13 @@ def parse_args() -> argparse.Namespace:
         "--candidate-limit",
         type=int,
         default=DEFAULT_CANDIDATE_LIMIT,
-        help="Maximum number of candidate rows to process from the chunk.",
+        help="Maximum number of candidate rows to process from the chunk, or window size when auto-windowing the full chunk.",
+    )
+    parser.add_argument(
+        "--candidate-offset",
+        type=int,
+        default=0,
+        help="Zero-based candidate row offset within the JSON chunk.",
     )
     parser.add_argument(
         "--persisted-resume-limit",
@@ -75,6 +83,11 @@ def parse_args() -> argparse.Namespace:
         "--force-reprocess",
         action="store_true",
         help="Bypass the source-record skip check and reprocess already-ingested CVs.",
+    )
+    parser.add_argument(
+        "--process-entire-chunk",
+        action="store_true",
+        help="Automatically walk the whole candidate JSON chunk in candidate-limit-sized windows starting at candidate-offset.",
     )
     return parser.parse_args()
 
@@ -97,8 +110,11 @@ def main() -> None:
     candidate_member_name = str(args.candidate_member)
     artifact_path = build_artifact_path(candidate_member_name)
     candidate_limit = max(1, int(args.candidate_limit))
+    candidate_offset = max(0, int(args.candidate_offset))
     persisted_resume_limit = max(1, int(args.persisted_resume_limit))
     force_reprocess = bool(args.force_reprocess)
+    process_entire_chunk = bool(args.process_entire_chunk)
+    run_started_at = datetime.now(timezone.utc)
 
     stored_connection = _load_dropbox_connection(DROPBOX_ACCOUNT_ID)
     access_token = stored_connection["access_token"]
@@ -125,6 +141,7 @@ def main() -> None:
         persisted_resumes: list[dict[str, Any]] = []
         failed_items: list[dict[str, Any]] = []
         skipped_items: list[dict[str, Any]] = []
+        candidate_timing_preview: list[dict[str, Any]] = []
         status_counts = {
             "accepted": 0,
             "non_pass": 0,
@@ -134,164 +151,307 @@ def main() -> None:
             "no_resume_selected": 0,
             "selected_resume_candidate": 0,
         }
+        timing_totals_seconds = {
+            "skip_lookup_seconds": 0.0,
+            "embedded_member_lookup_seconds": 0.0,
+            "resume_text_extraction_seconds": 0.0,
+            "structured_resume_seconds": 0.0,
+            "total_candidate_seconds": 0.0,
+        }
+        processed_candidate_count = 0
+        checkpoint_write_count = 0
+        last_processed_candidate_index = 0
+        raw_candidate_count = len(raw_candidate_records)
+        if process_entire_chunk:
+            window_offsets = list(range(candidate_offset, raw_candidate_count, candidate_limit))
+        else:
+            window_offsets = [candidate_offset]
+        window_offsets_processed: list[int] = []
+        candidate_rows_target_count = _compute_target_candidate_count(
+            raw_candidate_count=raw_candidate_count,
+            candidate_limit=candidate_limit,
+            candidate_offset=candidate_offset,
+            process_entire_chunk=process_entire_chunk,
+        )
 
-        for candidate_item in raw_candidate_records[:candidate_limit]:
-            if not isinstance(candidate_item, dict):
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+
+        for window_offset in window_offsets:
+            candidate_rows = raw_candidate_records[
+                window_offset : window_offset + candidate_limit
+            ]
+            if not candidate_rows:
                 continue
 
-            if (status_counts["accepted"] + status_counts["non_pass"]) >= persisted_resume_limit:
-                break
+            window_offsets_processed.append(window_offset)
+            window_persisted_resume_count = 0
 
-            selected_file_item = _select_preferred_resume_file(
-                candidate_item.get("files", [])
-            )
-            if selected_file_item is None:
-                status_counts["no_resume_selected"] += 1
-                continue
+            for candidate_index, candidate_item in enumerate(
+                candidate_rows,
+                start=window_offset + 1,
+            ):
+                if not isinstance(candidate_item, dict):
+                    continue
 
-            status_counts["selected_resume_candidate"] += 1
-            file_item = selected_file_item
-            try:
-                source_candidate_id = int(candidate_item["id"])
-                file_name = str(file_item["filename"])
-                source_file_id = _extract_recruiterflow_file_id(file_payload=file_item)
-                extraction_source_record_key = _build_recruiterflow_extraction_source_record_key(
-                    source_candidate_id=source_candidate_id,
-                    source_file_id=source_file_id,
+                if window_persisted_resume_count >= persisted_resume_limit:
+                    break
+
+                candidate_started_at = perf_counter()
+                candidate_timing: dict[str, Any] = {
+                    "candidate_index": candidate_index,
+                    "source_candidate_id": candidate_item.get("id"),
+                    "status": None,
+                    "file_name": None,
+                    "skip_lookup_seconds": 0.0,
+                    "embedded_member_lookup_seconds": 0.0,
+                    "resume_text_extraction_seconds": 0.0,
+                    "structured_resume_seconds": 0.0,
+                }
+
+                selected_file_item = _select_preferred_resume_file(
+                    candidate_item.get("files", [])
                 )
-                if not force_reprocess:
-                    existing_skip_record = _find_existing_recruiterflow_resume_skip_record(
-                        extraction_source_record_id=extraction_source_record_key,
+                if selected_file_item is None:
+                    status_counts["no_resume_selected"] += 1
+                    candidate_timing["status"] = "no_resume_selected"
+                    _finalize_candidate_timing(
+                        candidate_timing=candidate_timing,
+                        timing_totals_seconds=timing_totals_seconds,
+                        candidate_started_at=candidate_started_at,
+                        candidate_timing_preview=candidate_timing_preview,
                     )
-                    if existing_skip_record is not None:
-                        status_counts["skipped"] += 1
-                        skipped_items.append(
+                    processed_candidate_count += 1
+                    last_processed_candidate_index = candidate_index
+                    checkpoint_write_count = _maybe_write_checkpoint(
+                        artifact_path=artifact_path,
+                        checkpoint_write_count=checkpoint_write_count,
+                        checkpoint_interval=CHECKPOINT_WRITE_INTERVAL,
+                        processed_candidate_count=processed_candidate_count,
+                        summary=_build_run_summary(
+                            run_started_at=run_started_at,
+                            run_complete=False,
+                            candidate_member_name=candidate_member_name,
+                            candidate_limit=candidate_limit,
+                            candidate_offset=candidate_offset,
+                            process_entire_chunk=process_entire_chunk,
+                            persisted_resume_limit=persisted_resume_limit,
+                            force_reprocess=force_reprocess,
+                            raw_candidate_count=raw_candidate_count,
+                            candidate_rows_target_count=candidate_rows_target_count,
+                            status_counts=status_counts,
+                            processed_candidate_count=processed_candidate_count,
+                            checkpoint_write_count=checkpoint_write_count,
+                            last_processed_candidate_index=last_processed_candidate_index,
+                            window_offsets_processed=window_offsets_processed,
+                            timing_totals_seconds=timing_totals_seconds,
+                            candidate_timing_preview=candidate_timing_preview,
+                            persisted_resumes=persisted_resumes,
+                            skipped_items=skipped_items,
+                            failed_items=failed_items,
+                        ),
+                    )
+                    continue
+
+                status_counts["selected_resume_candidate"] += 1
+                file_item = selected_file_item
+                candidate_timing["file_name"] = str(file_item.get("filename"))
+                try:
+                    source_candidate_id = int(candidate_item["id"])
+                    file_name = str(file_item["filename"])
+                    source_file_id = _extract_recruiterflow_file_id(file_payload=file_item)
+                    extraction_source_record_key = _build_recruiterflow_extraction_source_record_key(
+                        source_candidate_id=source_candidate_id,
+                        source_file_id=source_file_id,
+                    )
+                    if not force_reprocess:
+                        skip_lookup_started_at = perf_counter()
+                        existing_skip_record = _find_existing_recruiterflow_resume_skip_record(
+                            extraction_source_record_id=extraction_source_record_key,
+                        )
+                        candidate_timing["skip_lookup_seconds"] = round(
+                            perf_counter() - skip_lookup_started_at,
+                            4,
+                        )
+                        if existing_skip_record is not None:
+                            status_counts["skipped"] += 1
+                            candidate_timing["status"] = "skipped"
+                            skipped_items.append(
+                                {
+                                    "source_candidate_id": source_candidate_id,
+                                    "source_file_id": source_file_id,
+                                    "file_name": file_name,
+                                    "source_record_id": extraction_source_record_key,
+                                    "document_id": existing_skip_record.get("document_id"),
+                                    "document_title": existing_skip_record.get("document_title"),
+                                    "quality_status": existing_skip_record.get("quality_status"),
+                                    "quality_score": existing_skip_record.get("quality_score"),
+                                }
+                            )
+                            continue
+
+                    embedded_lookup_started_at = perf_counter()
+                    embedded_member_name = _resolve_embedded_candidate_file_member(
+                        archive=archive,
+                        source_candidate_id=source_candidate_id,
+                        file_name=file_name,
+                    )
+                    candidate_timing["embedded_member_lookup_seconds"] = round(
+                        perf_counter() - embedded_lookup_started_at,
+                        4,
+                    )
+                    if embedded_member_name is None:
+                        status_counts["failed"] += 1
+                        candidate_timing["status"] = "failed"
+                        failed_items.append(
                             {
                                 "source_candidate_id": source_candidate_id,
-                                "source_file_id": source_file_id,
                                 "file_name": file_name,
-                                "source_record_id": extraction_source_record_key,
-                                "document_id": existing_skip_record.get("document_id"),
-                                "document_title": existing_skip_record.get("document_title"),
-                                "quality_status": existing_skip_record.get("quality_status"),
-                                "quality_score": existing_skip_record.get("quality_score"),
+                                "stage": "embedded_member_lookup",
+                                "error_type": "EmbeddedMemberNotFound",
+                                "message": "Embedded candidate CV member was not found in the ZIP export.",
                             }
                         )
                         continue
 
-                embedded_member_name = _resolve_embedded_candidate_file_member(
-                    archive=archive,
-                    source_candidate_id=source_candidate_id,
-                    file_name=file_name,
-                )
-                if embedded_member_name is None:
-                    status_counts["failed"] += 1
+                    embedded_bytes = archive.read(embedded_member_name)
+                    downloaded_file = {
+                        "source_uri": f"{RECRUITERFLOW_ZIP_PATH}#{embedded_member_name}",
+                        "file_name": file_name,
+                        "content_type": None,
+                        "content_bytes": embedded_bytes,
+                        "byte_count": len(embedded_bytes),
+                        "status_code": 200,
+                    }
+                    text_extraction_started_at = perf_counter()
+                    extracted_resume_text = extract_text_from_resume_bytes(
+                        content_bytes=embedded_bytes,
+                        file_name=file_name,
+                        content_type=None,
+                    )
+                    candidate_timing["resume_text_extraction_seconds"] = round(
+                        perf_counter() - text_extraction_started_at,
+                        4,
+                    )
+                    structured_resume_started_at = perf_counter()
+                    result = extract_recruiterflow_candidate_resume_profile_with_quality_gate(
+                        export_source_uri=RECRUITERFLOW_ZIP_PATH,
+                        member_name=candidate_member_name,
+                        candidate_payload=candidate_item,
+                        file_payload=file_item,
+                        downloaded_file=downloaded_file,
+                        extracted_resume_text=extracted_resume_text,
+                    )
+                    persisted_summary = persist_scored_resume_extraction_result(result)
+                    candidate_timing["structured_resume_seconds"] = round(
+                        perf_counter() - structured_resume_started_at,
+                        4,
+                    )
+                    persisted_resumes.append(
+                        {
+                            **persisted_summary,
+                            "model_name": result.get("model_profile", {}).get(
+                                "model_name"
+                            ),
+                            "quality_score": result.get(
+                                "quality_assessment", {}
+                            ).get("quality_score"),
+                            "quality_gate": result.get("quality_gate"),
+                        }
+                    )
+                    if result.get("quality_assessment", {}).get("status") == "pass":
+                        status_counts["accepted"] += 1
+                        candidate_timing["status"] = "accepted"
+                    else:
+                        status_counts["non_pass"] += 1
+                        candidate_timing["status"] = "non_pass"
+                    window_persisted_resume_count += 1
+                    if window_persisted_resume_count >= persisted_resume_limit:
+                        break
+                except ResumeTextExtractionError as exc:
+                    status_counts["unsupported"] += 1
+                    candidate_timing["status"] = "unsupported"
                     failed_items.append(
                         {
                             "source_candidate_id": source_candidate_id,
                             "file_name": file_name,
-                            "stage": "embedded_member_lookup",
-                            "error_type": "EmbeddedMemberNotFound",
-                            "message": "Embedded candidate CV member was not found in the ZIP export.",
+                            "stage": "resume_text_extraction",
+                            "error_type": exc.__class__.__name__,
+                            "message": str(exc),
                         }
                     )
-                    continue
-
-                embedded_bytes = archive.read(embedded_member_name)
-                downloaded_file = {
-                    "source_uri": f"{RECRUITERFLOW_ZIP_PATH}#{embedded_member_name}",
-                    "file_name": file_name,
-                    "content_type": None,
-                    "content_bytes": embedded_bytes,
-                    "byte_count": len(embedded_bytes),
-                    "status_code": 200,
-                }
-                extracted_resume_text = extract_text_from_resume_bytes(
-                    content_bytes=embedded_bytes,
-                    file_name=file_name,
-                    content_type=None,
-                )
-                result = extract_recruiterflow_candidate_resume_profile_with_quality_gate(
-                    export_source_uri=RECRUITERFLOW_ZIP_PATH,
-                    member_name=candidate_member_name,
-                    candidate_payload=candidate_item,
-                    file_payload=file_item,
-                    downloaded_file=downloaded_file,
-                    extracted_resume_text=extracted_resume_text,
-                )
-                persisted_summary = persist_scored_resume_extraction_result(result)
-                persisted_resumes.append(
-                    {
-                        **persisted_summary,
-                        "model_name": result.get("model_profile", {}).get(
-                            "model_name"
+                except Exception as exc:
+                    status_counts["failed"] += 1
+                    candidate_timing["status"] = "failed"
+                    failed_items.append(
+                        {
+                            "source_candidate_id": source_candidate_id,
+                            "file_name": file_name,
+                            "stage": "structured_resume_extraction_or_persistence",
+                            "error_type": exc.__class__.__name__,
+                            "message": str(exc),
+                        }
+                    )
+                finally:
+                    _finalize_candidate_timing(
+                        candidate_timing=candidate_timing,
+                        timing_totals_seconds=timing_totals_seconds,
+                        candidate_started_at=candidate_started_at,
+                        candidate_timing_preview=candidate_timing_preview,
+                    )
+                    processed_candidate_count += 1
+                    last_processed_candidate_index = candidate_index
+                    checkpoint_write_count = _maybe_write_checkpoint(
+                        artifact_path=artifact_path,
+                        checkpoint_write_count=checkpoint_write_count,
+                        checkpoint_interval=CHECKPOINT_WRITE_INTERVAL,
+                        processed_candidate_count=processed_candidate_count,
+                        summary=_build_run_summary(
+                            run_started_at=run_started_at,
+                            run_complete=False,
+                            candidate_member_name=candidate_member_name,
+                            candidate_limit=candidate_limit,
+                            candidate_offset=candidate_offset,
+                            process_entire_chunk=process_entire_chunk,
+                            persisted_resume_limit=persisted_resume_limit,
+                            force_reprocess=force_reprocess,
+                            raw_candidate_count=raw_candidate_count,
+                            candidate_rows_target_count=candidate_rows_target_count,
+                            status_counts=status_counts,
+                            processed_candidate_count=processed_candidate_count,
+                            checkpoint_write_count=checkpoint_write_count,
+                            last_processed_candidate_index=last_processed_candidate_index,
+                            window_offsets_processed=window_offsets_processed,
+                            timing_totals_seconds=timing_totals_seconds,
+                            candidate_timing_preview=candidate_timing_preview,
+                            persisted_resumes=persisted_resumes,
+                            skipped_items=skipped_items,
+                            failed_items=failed_items,
                         ),
-                        "quality_score": result.get(
-                            "quality_assessment", {}
-                        ).get("quality_score"),
-                        "quality_gate": result.get("quality_gate"),
-                    }
-                )
-                if result.get("quality_assessment", {}).get("status") == "pass":
-                    status_counts["accepted"] += 1
-                else:
-                    status_counts["non_pass"] += 1
-                if (status_counts["accepted"] + status_counts["non_pass"]) >= persisted_resume_limit:
-                    break
-            except ResumeTextExtractionError as exc:
-                status_counts["unsupported"] += 1
-                failed_items.append(
-                    {
-                        "source_candidate_id": source_candidate_id,
-                        "file_name": file_name,
-                        "stage": "resume_text_extraction",
-                        "error_type": exc.__class__.__name__,
-                        "message": str(exc),
-                    }
-                )
-            except Exception as exc:
-                status_counts["failed"] += 1
-                failed_items.append(
-                    {
-                        "source_candidate_id": source_candidate_id,
-                        "file_name": file_name,
-                        "stage": "structured_resume_extraction_or_persistence",
-                        "error_type": exc.__class__.__name__,
-                        "message": str(exc),
-                    }
-                )
+                    )
 
-    summary = {
-        "persisted_at": datetime.now(timezone.utc).isoformat(),
-        "dropbox_account_id": DROPBOX_ACCOUNT_ID,
-        "zip_path": RECRUITERFLOW_ZIP_PATH,
-        "candidate_member_name": candidate_member_name,
-        "candidate_limit": candidate_limit,
-        "persisted_resume_limit": persisted_resume_limit,
-        "force_reprocess": force_reprocess,
-        "candidate_count": min(candidate_limit, len(raw_candidate_records)),
-        "selected_resume_candidate_count": status_counts["selected_resume_candidate"],
-        "no_resume_selected_count": status_counts["no_resume_selected"],
-        "already_processed_count": status_counts["skipped"],
-        "new_resume_candidate_count": (
-            status_counts["selected_resume_candidate"] - status_counts["skipped"]
-        ),
-        "persisted_resume_count": status_counts["accepted"] + status_counts["non_pass"],
-        "accepted_resume_count": status_counts["accepted"],
-        "non_pass_count": status_counts["non_pass"],
-        "skipped_count": status_counts["skipped"],
-        "unsupported_count": status_counts["unsupported"],
-        "failed_count": status_counts["failed"],
-        "persisted_resume_preview": persisted_resumes[:10],
-        "skipped_items_preview": skipped_items[:10],
-        "failed_items_preview": failed_items[:10],
-    }
-
-    artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    artifact_path.write_text(
-        json.dumps(summary, indent=2, default=str),
-        encoding="utf-8",
+    summary = _build_run_summary(
+        run_started_at=run_started_at,
+        run_complete=True,
+        candidate_member_name=candidate_member_name,
+        candidate_limit=candidate_limit,
+        candidate_offset=candidate_offset,
+        process_entire_chunk=process_entire_chunk,
+        persisted_resume_limit=persisted_resume_limit,
+        force_reprocess=force_reprocess,
+        raw_candidate_count=raw_candidate_count,
+        candidate_rows_target_count=candidate_rows_target_count,
+        status_counts=status_counts,
+        processed_candidate_count=processed_candidate_count,
+        checkpoint_write_count=checkpoint_write_count,
+        last_processed_candidate_index=last_processed_candidate_index,
+        window_offsets_processed=window_offsets_processed,
+        timing_totals_seconds=timing_totals_seconds,
+        candidate_timing_preview=candidate_timing_preview,
+        persisted_resumes=persisted_resumes,
+        skipped_items=skipped_items,
+        failed_items=failed_items,
     )
+    _write_summary_artifact(artifact_path=artifact_path, summary=summary)
 
     print(f"artifact: {artifact_path}")
     print(f"candidate member: {summary['candidate_member_name']}")
@@ -312,12 +472,165 @@ def main() -> None:
         "new resume candidates: "
         f"{summary['new_resume_candidate_count']}"
     )
+    print(
+        "window offsets processed: "
+        f"{summary['window_offsets_processed']}"
+    )
     print(f"persisted resumes: {summary['persisted_resume_count']}")
     print(f"pass resumes: {summary['accepted_resume_count']}")
     print(f"non-pass resumes: {summary['non_pass_count']}")
     print(f"skipped resumes: {summary['skipped_count']}")
     print(f"unsupported files: {summary['unsupported_count']}")
     print(f"failed files: {summary['failed_count']}")
+
+
+def _build_run_summary(
+    *,
+    run_started_at: datetime,
+    run_complete: bool,
+    candidate_member_name: str,
+    candidate_limit: int,
+    candidate_offset: int,
+    process_entire_chunk: bool,
+    persisted_resume_limit: int,
+    force_reprocess: bool,
+    raw_candidate_count: int,
+    candidate_rows_target_count: int,
+    status_counts: dict[str, int],
+    processed_candidate_count: int,
+    checkpoint_write_count: int,
+    last_processed_candidate_index: int,
+    window_offsets_processed: list[int],
+    timing_totals_seconds: dict[str, float],
+    candidate_timing_preview: list[dict[str, Any]],
+    persisted_resumes: list[dict[str, Any]],
+    skipped_items: list[dict[str, Any]],
+    failed_items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """
+    Build the artifact summary for one Recruiterflow resume-chunk run.
+    """
+
+    processed_candidate_denominator = max(processed_candidate_count, 1)
+    timing_averages_seconds = {
+        key: round(value / processed_candidate_denominator, 4)
+        for key, value in timing_totals_seconds.items()
+    }
+    rounded_timing_totals_seconds = {
+        key: round(value, 4) for key, value in timing_totals_seconds.items()
+    }
+
+    return {
+        "persisted_at": datetime.now(timezone.utc).isoformat(),
+        "run_started_at": run_started_at.isoformat(),
+        "run_complete": run_complete,
+        "dropbox_account_id": DROPBOX_ACCOUNT_ID,
+        "zip_path": RECRUITERFLOW_ZIP_PATH,
+        "candidate_member_name": candidate_member_name,
+        "candidate_limit": candidate_limit,
+        "candidate_offset": candidate_offset,
+        "process_entire_chunk": process_entire_chunk,
+        "persisted_resume_limit": persisted_resume_limit,
+        "force_reprocess": force_reprocess,
+        "checkpoint_write_interval": CHECKPOINT_WRITE_INTERVAL,
+        "checkpoint_write_count": checkpoint_write_count,
+        "candidate_count": candidate_rows_target_count,
+        "chunk_total_candidate_count": raw_candidate_count,
+        "processed_candidate_count": processed_candidate_count,
+        "last_processed_candidate_index": last_processed_candidate_index,
+        "window_offsets_processed": window_offsets_processed,
+        "selected_resume_candidate_count": status_counts["selected_resume_candidate"],
+        "no_resume_selected_count": status_counts["no_resume_selected"],
+        "already_processed_count": status_counts["skipped"],
+        "new_resume_candidate_count": (
+            status_counts["selected_resume_candidate"] - status_counts["skipped"]
+        ),
+        "persisted_resume_count": status_counts["accepted"] + status_counts["non_pass"],
+        "accepted_resume_count": status_counts["accepted"],
+        "non_pass_count": status_counts["non_pass"],
+        "skipped_count": status_counts["skipped"],
+        "unsupported_count": status_counts["unsupported"],
+        "failed_count": status_counts["failed"],
+        "timing_totals_seconds": rounded_timing_totals_seconds,
+        "timing_averages_seconds": timing_averages_seconds,
+        "candidate_timing_preview": candidate_timing_preview[:20],
+        "persisted_resume_preview": persisted_resumes[:10],
+        "skipped_items_preview": skipped_items[:10],
+        "failed_items_preview": failed_items[:10],
+    }
+
+
+def _write_summary_artifact(*, artifact_path: Path, summary: dict[str, Any]) -> None:
+    """
+    Write one JSON artifact snapshot for the current batch state.
+    """
+
+    artifact_path.write_text(
+        json.dumps(summary, indent=2, default=str),
+        encoding="utf-8",
+    )
+
+
+def _maybe_write_checkpoint(
+    *,
+    artifact_path: Path,
+    checkpoint_write_count: int,
+    checkpoint_interval: int,
+    processed_candidate_count: int,
+    summary: dict[str, Any],
+) -> int:
+    """
+    Write an in-progress artifact checkpoint when the row interval is reached.
+    """
+
+    if processed_candidate_count % checkpoint_interval != 0:
+        return checkpoint_write_count
+
+    _write_summary_artifact(artifact_path=artifact_path, summary=summary)
+    return checkpoint_write_count + 1
+
+
+def _compute_target_candidate_count(
+    *,
+    raw_candidate_count: int,
+    candidate_limit: int,
+    candidate_offset: int,
+    process_entire_chunk: bool,
+) -> int:
+    """
+    Return the number of candidate rows this run intends to target.
+    """
+
+    if process_entire_chunk:
+        return max(0, raw_candidate_count - candidate_offset)
+
+    return max(
+        0,
+        min(candidate_limit, raw_candidate_count - candidate_offset),
+    )
+
+
+def _finalize_candidate_timing(
+    *,
+    candidate_timing: dict[str, Any],
+    timing_totals_seconds: dict[str, float],
+    candidate_started_at: float,
+    candidate_timing_preview: list[dict[str, Any]],
+) -> None:
+    """
+    Finalize one candidate timing row and fold it into preview + totals.
+    """
+
+    candidate_timing["total_candidate_seconds"] = round(
+        perf_counter() - candidate_started_at,
+        4,
+    )
+
+    for key in timing_totals_seconds:
+        timing_totals_seconds[key] += float(candidate_timing.get(key, 0.0) or 0.0)
+
+    if len(candidate_timing_preview) < 20:
+        candidate_timing_preview.append(dict(candidate_timing))
 
 
 def _select_preferred_resume_file(

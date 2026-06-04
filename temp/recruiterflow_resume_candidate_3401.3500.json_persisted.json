@@ -1,0 +1,384 @@
+{
+  "persisted_at": "2026-06-03T14:40:35.660557+00:00",
+  "run_started_at": "2026-06-03T14:39:42.313117+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/3401.3500.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 98,
+  "no_resume_selected_count": 2,
+  "already_processed_count": 97,
+  "new_resume_candidate_count": 1,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 97,
+  "unsupported_count": 1,
+  "failed_count": 0,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 19.01,
+    "embedded_member_lookup_seconds": 0.0027,
+    "resume_text_extraction_seconds": 0.0,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 19.0183
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.1901,
+    "embedded_member_lookup_seconds": 0.0,
+    "resume_text_extraction_seconds": 0.0,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 0.1902
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 1396,
+      "status": "skipped",
+      "file_name": "Arina+Nevzorova+.pdf",
+      "skip_lookup_seconds": 0.206,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2061
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 1395,
+      "status": "skipped",
+      "file_name": "Annalie+Tanner.pdf",
+      "skip_lookup_seconds": 0.1967,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1968
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 1394,
+      "status": "skipped",
+      "file_name": "Angus+Dahl+CV..pdf",
+      "skip_lookup_seconds": 0.2084,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2084
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 1393,
+      "status": "skipped",
+      "file_name": "AML-KYC+CV+(1).pdf",
+      "skip_lookup_seconds": 0.1977,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1977
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 1392,
+      "status": "skipped",
+      "file_name": "Alex+Kerslake+CV.docx",
+      "skip_lookup_seconds": 0.2335,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2336
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 1391,
+      "status": "skipped",
+      "file_name": "ADEWALE+IGE-1 (1).pdf",
+      "skip_lookup_seconds": 0.1942,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1943
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 1390,
+      "status": "skipped",
+      "file_name": "Adeel_Hussain_-_CV13 (1).pdf",
+      "skip_lookup_seconds": 0.1828,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1829
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 1389,
+      "status": "skipped",
+      "file_name": "Verouschka_Salle_August_2022.docx",
+      "skip_lookup_seconds": 0.1876,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1876
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 1388,
+      "status": "skipped",
+      "file_name": "V+Harry+CV.docx",
+      "skip_lookup_seconds": 0.1771,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1772
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 1387,
+      "status": "skipped",
+      "file_name": "Tom+Foulsham+CV.docx",
+      "skip_lookup_seconds": 0.1876,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1876
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 1386,
+      "status": "skipped",
+      "file_name": "Toby_Dobson_CV.pdf",
+      "skip_lookup_seconds": 0.1806,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1807
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 1385,
+      "status": "skipped",
+      "file_name": "syd_Rizvi+CV-.docx",
+      "skip_lookup_seconds": 0.1999,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 1384,
+      "status": "skipped",
+      "file_name": "Richard+Grattan+CV.pdf",
+      "skip_lookup_seconds": 0.2014,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2014
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 1383,
+      "status": "skipped",
+      "file_name": "Sherif+Abdel+Hafez+v4.3 (1).doc",
+      "skip_lookup_seconds": 0.1988,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1988
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 1382,
+      "status": "unsupported",
+      "file_name": "Sharon-Wigwe-CV.docx",
+      "skip_lookup_seconds": 0.1831,
+      "embedded_member_lookup_seconds": 0.0027,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1862
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 1381,
+      "status": "skipped",
+      "file_name": "CV-DmitryKostin.pdf",
+      "skip_lookup_seconds": 0.1884,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1884
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 1380,
+      "status": "skipped",
+      "file_name": "CV+C-+Steven+Walsh+Senior+Dev+20220731.pdf",
+      "skip_lookup_seconds": 0.1938,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1939
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 1379,
+      "status": "skipped",
+      "file_name": "CV+-+Nael+Rashdeen.pdf",
+      "skip_lookup_seconds": 0.1915,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1915
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 1378,
+      "status": "skipped",
+      "file_name": "CV+-+M+Wake+July+22+(1) (1).pdf",
+      "skip_lookup_seconds": 0.1934,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1934
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 1376,
+      "status": "skipped",
+      "file_name": "20220706+CV.pdf",
+      "skip_lookup_seconds": 0.188,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.188
+    }
+  ],
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 1396,
+      "source_file_id": 1417,
+      "file_name": "Arina+Nevzorova+.pdf",
+      "source_record_id": "1396:1417",
+      "document_id": "9ccccdab-364a-4f91-a8dd-5b73eb0d1ec1",
+      "document_title": "Arina+Nevzorova+.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1395,
+      "source_file_id": 1416,
+      "file_name": "Annalie+Tanner.pdf",
+      "source_record_id": "1395:1416",
+      "document_id": "39ba720a-ad8b-48ca-a1d8-e68a589dc5b4",
+      "document_title": "Annalie+Tanner.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1394,
+      "source_file_id": 1415,
+      "file_name": "Angus+Dahl+CV..pdf",
+      "source_record_id": "1394:1415",
+      "document_id": "8bde097a-4faa-4cda-a4cb-cd846ecaa241",
+      "document_title": "Angus+Dahl+CV..pdf",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 1393,
+      "source_file_id": 1414,
+      "file_name": "AML-KYC+CV+(1).pdf",
+      "source_record_id": "1393:1414",
+      "document_id": "5891374a-684a-4a3e-a559-49d4e45f917d",
+      "document_title": "AML-KYC+CV+(1).pdf",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 1392,
+      "source_file_id": 1413,
+      "file_name": "Alex+Kerslake+CV.docx",
+      "source_record_id": "1392:1413",
+      "document_id": "11622972-e7ce-4e3d-810b-dd0f4564c8eb",
+      "document_title": "Alex+Kerslake+CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1391,
+      "source_file_id": 1412,
+      "file_name": "ADEWALE+IGE-1 (1).pdf",
+      "source_record_id": "1391:1412",
+      "document_id": "616e5d02-492d-419b-9b2b-cd6bf78ed923",
+      "document_title": "ADEWALE+IGE-1 (1).pdf",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 1390,
+      "source_file_id": 1411,
+      "file_name": "Adeel_Hussain_-_CV13 (1).pdf",
+      "source_record_id": "1390:1411",
+      "document_id": "bd286982-2bb5-4d6d-82b0-c0743c59c31f",
+      "document_title": "Adeel_Hussain_-_CV13 (1).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1389,
+      "source_file_id": 1410,
+      "file_name": "Verouschka_Salle_August_2022.docx",
+      "source_record_id": "1389:1410",
+      "document_id": "a42cc15c-3776-45c4-ad2e-08a05e599ec1",
+      "document_title": "Verouschka_Salle_August_2022.docx",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 1388,
+      "source_file_id": 1409,
+      "file_name": "V+Harry+CV.docx",
+      "source_record_id": "1388:1409",
+      "document_id": "372a67cd-f6e3-480f-b02c-45799efccc76",
+      "document_title": "V+Harry+CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1387,
+      "source_file_id": 1408,
+      "file_name": "Tom+Foulsham+CV.docx",
+      "source_record_id": "1387:1408",
+      "document_id": "8f6fc74c-4693-4b81-b0e3-4edee9b991ae",
+      "document_title": "Tom+Foulsham+CV.docx",
+      "quality_status": "pass",
+      "quality_score": 85
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 1382,
+      "file_name": "Sharon-Wigwe-CV.docx",
+      "stage": "resume_text_extraction",
+      "error_type": "ResumeTextExtractionError",
+      "message": "The resume DOCX does not contain the main document body."
+    }
+  ]
+}

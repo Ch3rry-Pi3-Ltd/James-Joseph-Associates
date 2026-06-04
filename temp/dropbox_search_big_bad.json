@@ -1,0 +1,4270 @@
+{
+  "BIG BAD": {
+    "status_code": 200,
+    "body": {
+      "cursor": "ChwKB0JJRyBCQUQSBBAyaAEiBgij9cn/AzIDIKABEDI=",
+      "has_more": true,
+      "matches": [
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAIBmw",
+              "name": "### BIG BAD CV ARCHIVE inc. RFL",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL",
+              "path_lower": "/### big bad cv archive inc. rfl"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-07-02T23:27:30Z",
+              "content_hash": "f2ff339e920e6a729ed8558a00f5a78c8a41b9965388b469fcff126b9ae37b38",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHv0g",
+              "is_downloadable": true,
+              "name": "Hassnain+Badami+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Hassnain+Badami+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/hassnain+badami+cv.docx",
+              "rev": "639a8822526703ff27aa3",
+              "server_modified": "2025-07-11T14:56:01Z",
+              "size": 29455
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-21T23:12:04Z",
+              "content_hash": "1cf86dbe03a26894e309f9cb4588666978713a025a8569199688e846daceeab4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG8Ng",
+              "is_downloadable": true,
+              "name": "Abhinav_Aditya_BigData_6_10yrsExp (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Abhinav_Aditya_BigData_6_10yrsExp (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/abhinav_aditya_bigdata_6_10yrsexp (1).docx",
+              "rev": "639a880be6a823ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 44191
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-21T23:00:24Z",
+              "content_hash": "774e585a2c92840bba1e03bb4ec2c451316d58fc730879a98eb4d520556381af",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGvQA",
+              "is_downloadable": true,
+              "name": "CV_Cloud_Data_BigData_Architect_Developer.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_Cloud_Data_BigData_Architect_Developer.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_cloud_data_bigdata_architect_developer.docx",
+              "rev": "639a881a83adc3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 20966
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-21T23:11:58Z",
+              "content_hash": "1cf86dbe03a26894e309f9cb4588666978713a025a8569199688e846daceeab4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG8NQ",
+              "is_downloadable": true,
+              "name": "Abhinav_Aditya_BigData_6_10yrsExp.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Abhinav_Aditya_BigData_6_10yrsExp.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/abhinav_aditya_bigdata_6_10yrsexp.docx",
+              "rev": "639a880be6a7d3ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 44191
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T23:39:40Z",
+              "content_hash": "beb76980e20637ad37edf02a332806d625276dd5e177674421dcddc20e6d1748",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGfsA",
+              "is_downloadable": true,
+              "name": "Sean.doc",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Sean.doc",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/sean.doc",
+              "rev": "639a880705e523ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 118272
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-01-17T19:00:07Z",
+              "content_hash": "6360fbc5dab94dfda21d117861a9bb4eda27fd9336e82ba92368248483579152",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGKKQ",
+              "is_downloadable": true,
+              "name": "BENNY+YAO+-+Resume+2020+-+WIth+BigData.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/BENNY+YAO+-+Resume+2020+-+WIth+BigData.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/benny+yao+-+resume+2020+-+with+bigdata.docx",
+              "rev": "639a881a83a9a3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 32710
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-04-20T16:40:23Z",
+              "content_hash": "87f2a1970327ccf1b3ab993fc082601352f012c09740f6e43240c785ca61d236",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGYgg",
+              "is_downloadable": true,
+              "name": "Robert+Gonda+-+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Robert+Gonda+-+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/robert+gonda+-+cv.docx",
+              "rev": "639a881fbdd9d3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 20432
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-06-22T23:15:24Z",
+              "content_hash": "e881419e7415fab12ac4f3d879d692fe5f1751de9b8f1ccd7669d49cd0b15f14",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGoxQ",
+              "is_downloadable": true,
+              "name": "Vikas Wahi (30407751 - Totaljobs).pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Vikas Wahi (30407751 - Totaljobs).pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/vikas wahi (30407751 - totaljobs).pdf",
+              "rev": "639a881fbddd13ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 262308
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-14T12:26:33Z",
+              "content_hash": "6dacb8c409dafe2a4057f7e74d4a3701fdba3ed08df4b0d141c598b57d5a0919",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG3dw",
+              "is_downloadable": true,
+              "name": "Saheed Busari (72560683 - Totaljobs).pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Saheed Busari (72560683 - Totaljobs).pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/saheed busari (72560683 - totaljobs).pdf",
+              "rev": "639a8824f9b363ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 166217
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-19T15:31:05Z",
+              "content_hash": "ea94f8259edb0eef42a6eb649e93ed81a6193678a52903d9297f80a0f0453208",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHWPw",
+              "is_downloadable": true,
+              "name": "lukman-yale-DevOps-3.51.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/lukman-yale-DevOps-3.51.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/lukman-yale-devops-3.51.docx",
+              "rev": "639a881fbdf233ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 66817
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:43:20Z",
+              "content_hash": "b7606da7b4b6893c89a15f2a2843d52149188d0a888284c468969afce2d58e85",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGqg",
+              "is_downloadable": true,
+              "name": "PeterCV22.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/efin 21-12-22 - TO UPLOAD/tw296/PeterCV22.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/efin 21-12-22 - to upload/tw296/petercv22.docx",
+              "rev": "639a87d902d0c3ff27aa3",
+              "server_modified": "2025-07-11T14:54:44Z",
+              "size": 19605
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-12T13:49:53Z",
+              "content_hash": "eb58db0bc129c6b9e5d10085cb9070bfaf35f264a9c48f661e7bd3a6b34eaf3c",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAImgA",
+              "is_downloadable": true,
+              "name": "tw239&tw275_Najm_Resume_2021.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/tw239&tw275_Najm_Resume_2021.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/tw239&tw275_najm_resume_2021.docx",
+              "rev": "6519f237ca8af3ff27aa3",
+              "server_modified": "2026-05-12T13:49:57Z",
+              "size": 14267
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-08-22T00:04:22Z",
+              "content_hash": "4d9bd702df07f736ee142f50a10a004d8ca6792288b1ab2c0b74f1a6d911985d",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG1HA",
+              "is_downloadable": true,
+              "name": "cv.rony.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/### CV's TO IMPORT PRIOR TO 21-11-22/cv.rony.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/### cv's to import prior to 21-11-22/cv.rony.pdf",
+              "rev": "639a87d646f6a3ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 103757
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-06-30T00:46:11Z",
+              "content_hash": "c293f35b0d2988a9c6e62a10f34155c039d18293a8fb27a89ebd280ffd824dd9",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGqdw",
+              "is_downloadable": true,
+              "name": "Muhammad Waqas Amjad (84359126 - Totaljobs).pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Muhammad Waqas Amjad (84359126 - Totaljobs).pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/muhammad waqas amjad (84359126 - totaljobs).pdf",
+              "rev": "639a881fbdddb3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 105766
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-21T20:11:44Z",
+              "content_hash": "4d9bd702df07f736ee142f50a10a004d8ca6792288b1ab2c0b74f1a6d911985d",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG5Ng",
+              "is_downloadable": true,
+              "name": "cv.rony.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/### CV's TO IMPORT PRIOR TO 21-11-22/# aaa - EFIN - JBS-CVR - bklg/tw296/cv.rony.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/### cv's to import prior to 21-11-22/# aaa - efin - jbs-cvr - bklg/tw296/cv.rony.pdf",
+              "rev": "639a87d6470513ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 103757
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-07-02T22:54:22Z",
+              "content_hash": "4521e1e080c9b239487125f4b385267fc3bccd0f09a73af07bd3ea881ad37a92",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHvug",
+              "is_downloadable": true,
+              "name": "JNayak_Phoenix.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/JNayak_Phoenix.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/jnayak_phoenix.docx",
+              "rev": "639a880e553883ff27aa3",
+              "server_modified": "2025-07-11T14:55:40Z",
+              "size": 57548
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-07-10T06:05:12Z",
+              "content_hash": "27fa47ae78b65d1ff1d361c4a30fab217b0578aed3e91211446ca85c7a777019",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHxiQ",
+              "is_downloadable": true,
+              "name": "BenMorris(1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/BenMorris(1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/benmorris(1).docx",
+              "rev": "639a8824f9c593ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 34932
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-06-14T01:02:00Z",
+              "content_hash": "9bb6971d93edf0832bec504ff8a57c7c414e6abfff5bee4b9fafababccde15aa",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHuIQ",
+              "is_downloadable": true,
+              "name": "Veeranjaneyulu K.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Veeranjaneyulu K.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/veeranjaneyulu k.docx",
+              "rev": "639a880965cc33ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 54224
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:08:28Z",
+              "content_hash": "d3f21772ff1d38e2549c4ee92cc8b4b3be2cabcb493f12160ee45da7249c0dbe",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGNg",
+              "is_downloadable": true,
+              "name": "GBFCD9A.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/GBFCD9A.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/gbfcd9a.docx",
+              "rev": "639a881a83bd53ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 54996
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-03-09T14:35:07Z",
+              "content_hash": "60a7721a16fcab0f7415d92d6307d7eb791da89add69fef8d23e6216391ba4b5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIgdA",
+              "is_downloadable": true,
+              "name": "Marilyn-Osei-Fosu_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/tw396/WIP in GPT/Marilyn-Osei-Fosu_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/tw396/wip in gpt/marilyn-osei-fosu_cv-library.docx",
+              "rev": "652bba2ca9ab23ff27aa3",
+              "server_modified": "2026-05-26T17:15:03Z",
+              "size": 81516
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-06-15T21:47:42Z",
+              "content_hash": "c35e7ee4221492ea15ee0668d937af72730b4b45cff282bc25c829d3d45c506a",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHuhA",
+              "is_downloadable": true,
+              "name": "Vimmi Nagpal.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Vimmi Nagpal.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/vimmi nagpal.docx",
+              "rev": "639a8824f9c4b3ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 20547
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T22:40:27Z",
+              "content_hash": "0b15c99391baebe470705bb8e40d15152bd06524233ee54f41d9460751ec83f7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzvA",
+              "is_downloadable": true,
+              "name": "CharlesCai_CV_EN20240731.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CharlesCai_CV_EN20240731.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/charlescai_cv_en20240731.docx",
+              "rev": "639a8818165243ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 75882
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T22:40:35Z",
+              "content_hash": "0b15c99391baebe470705bb8e40d15152bd06524233ee54f41d9460751ec83f7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzvg",
+              "is_downloadable": true,
+              "name": "CharlesCai_CV_EN20240731 (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CharlesCai_CV_EN20240731 (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/charlescai_cv_en20240731 (1).docx",
+              "rev": "639a880e553c33ff27aa3",
+              "server_modified": "2025-07-11T14:55:40Z",
+              "size": 75882
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-08-22T00:03:22Z",
+              "content_hash": "a832f774b8343ddc7b26f81d2e261ba8b7df22a1e4bbcc2d6286c6a0f351373d",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG04Q",
+              "is_downloadable": true,
+              "name": "Vikas+KUMAR_Resume.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Vikas+KUMAR_Resume.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/vikas+kumar_resume.docx",
+              "rev": "639a880be6a343ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 50200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-24T07:29:06Z",
+              "content_hash": "71764698ac35812bdbe519c7cde49ef0118e884ae2c6d4ccbf112449e1bf991f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGgog",
+              "is_downloadable": true,
+              "name": "Eldho+Mathew (1).doc",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Eldho+Mathew (1).doc",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/eldho+mathew (1).doc",
+              "rev": "639a881a83a933ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 94208
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-07-04T14:18:11Z",
+              "content_hash": "f89ca655852a92c83b0b6a20b36e90c0f3faf9ebd751d8e8c19e706a8de8e6a2",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHXXA",
+              "is_downloadable": true,
+              "name": "Hari Sekhon july 2023.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Hari Sekhon july 2023.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/hari sekhon july 2023.docx",
+              "rev": "639a880705ff13ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 51769
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-21T20:15:58Z",
+              "content_hash": "f7cc46b91b1b3f9fdd1a9638f3ee6f67e6277898bb0f1b57e1c44970925003e2",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG5Hw",
+              "is_downloadable": true,
+              "name": "Resume_KN_Thejas_P_2022_CKAD_AWS_Blockchain.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/### CV's TO IMPORT PRIOR TO 21-11-22/# aaa - EFIN - JBS-CVR - bklg/tw296/Resume_KN_Thejas_P_2022_CKAD_AWS_Blockchain.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/### cv's to import prior to 21-11-22/# aaa - efin - jbs-cvr - bklg/tw296/resume_kn_thejas_p_2022_ckad_aws_blockchain.pdf",
+              "rev": "639a87d6470753ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 225262
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-07-05T15:00:57Z",
+              "content_hash": "094dad3c2387e82ea24fc07d621ae02d3d2adb4b3378d5f77aeb35bc4f947eed",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHXfw",
+              "is_downloadable": true,
+              "name": "CharlesCai_CV_EN20210501-CTO.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CharlesCai_CV_EN20210501-CTO.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/charlescai_cv_en20210501-cto.docx",
+              "rev": "639a881fbdf283ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 50998
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-04-20T16:41:34Z",
+              "content_hash": "92787b3abd5928708eeefd550a4182229e45c08c24a803dfd0a41ba3ef6d512a",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGYfw",
+              "is_downloadable": true,
+              "name": "danholle-cv-220407.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/danholle-cv-220407.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/danholle-cv-220407.docx",
+              "rev": "639a881a83a993ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 34754
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T23:08:00Z",
+              "content_hash": "134a4611a962806ad37c97e131e84bae34b1665b1a1ee09b3c7d1977f9179b89",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzmw",
+              "is_downloadable": true,
+              "name": "Preeti_Dhage_CV_BA_PM.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Preeti_Dhage_CV_BA_PM.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/preeti_dhage_cv_ba_pm.docx",
+              "rev": "639a88181651f3ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 37075
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-21T23:15:22Z",
+              "content_hash": "8f5e9c3584afa7032ecb808af53dbafaae5f61d935c8a8cb1f2fa18d17fe87ae",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGvFw",
+              "is_downloadable": true,
+              "name": "ChandraPandey_CV_2022.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/ChandraPandey_CV_2022.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/chandrapandey_cv_2022.docx",
+              "rev": "639a8810ebee23ff27aa3",
+              "server_modified": "2025-07-11T14:55:42Z",
+              "size": 33793
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-01-22T23:42:13Z",
+              "content_hash": "c30b49b1b74a8242a8c59d132bd42f35a678fda34b407cd20bc39d49d753d2c3",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHJ9Q",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Iman+Samizadeh,+Ph.D.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/iman+samizadeh,+ph.d.docx",
+              "rev": "639a880965d0d3ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 31676
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-07-03T11:19:03Z",
+              "content_hash": "fc3abdf93b4449e3b4bdd978de77154f51526dc1716c8c1a69f47157aa50cd48",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHXTQ",
+              "is_downloadable": true,
+              "name": "Hari_Sekhon_CV_2023_06.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Hari_Sekhon_CV_2023_06.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/hari_sekhon_cv_2023_06.docx",
+              "rev": "639a881fbdf263ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 51188
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-06-22T23:15:24Z",
+              "content_hash": "f92721545b6af8adb709bcaea1d9efc604efd323b8cfd8fd9f3302a7e28b34ec",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGovw",
+              "is_downloadable": true,
+              "name": "Gaurav Kakirwar (80540354 - Totaljobs).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Gaurav Kakirwar (80540354 - Totaljobs).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/gaurav kakirwar (80540354 - totaljobs).docx",
+              "rev": "639a880705e963ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 43958
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T08:06:16Z",
+              "content_hash": "8f5e9c3584afa7032ecb808af53dbafaae5f61d935c8a8cb1f2fa18d17fe87ae",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGedQ",
+              "is_downloadable": true,
+              "name": "ChandraPandey_CV_2022 (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/ChandraPandey_CV_2022 (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/chandrapandey_cv_2022 (1).docx",
+              "rev": "639a880705e2b3ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 33793
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-11-09T00:01:29Z",
+              "content_hash": "559e6661a5ab0fc2a79d4000cfa10e1acdc6954ee9ec26496317dcdcd4fc58cc",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAH3ug",
+              "is_downloadable": true,
+              "name": "Nataraj+Donthula-C-Suite+Leader-3Page-Sep2024.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Nataraj+Donthula-C-Suite+Leader-3Page-Sep2024.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/nataraj+donthula-c-suite+leader-3page-sep2024.docx",
+              "rev": "639a8822526d03ff27aa3",
+              "server_modified": "2025-07-11T14:56:01Z",
+              "size": 34493
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-01-22T23:45:27Z",
+              "content_hash": "c30b49b1b74a8242a8c59d132bd42f35a678fda34b407cd20bc39d49d753d2c3",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHJ9g",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Iman+Samizadeh,+Ph.D (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/iman+samizadeh,+ph.d (1).docx",
+              "rev": "639a8822526923ff27aa3",
+              "server_modified": "2025-07-11T14:56:01Z",
+              "size": 31676
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-21T19:43:15Z",
+              "content_hash": "0bd92059e255d41fb11453a48060be94d0f1ae75b689485f28669c98bdc678a9",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG4eA",
+              "is_downloadable": true,
+              "name": "ChandraPandey_CV_2022+(2)+(1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/ChandraPandey_CV_2022+(2)+(1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/chandrapandey_cv_2022+(2)+(1).docx",
+              "rev": "639a881a83b443ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 20553
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:28:32Z",
+              "content_hash": "bd53d867e97a7df3a8d45ecb4d57c25e0a3f4314c083c64766ff1ec6cfa91f6b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGZg",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/efin 21-12-22 - TO UPLOAD/tw216/Iman+Samizadeh,+Ph.D.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/efin 21-12-22 - to upload/tw216/iman+samizadeh,+ph.d.docx",
+              "rev": "639a87d902ca53ff27aa3",
+              "server_modified": "2025-07-11T14:54:44Z",
+              "size": 31378
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:04:59Z",
+              "content_hash": "bd53d867e97a7df3a8d45ecb4d57c25e0a3f4314c083c64766ff1ec6cfa91f6b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGLQ",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/efin 21-12-22 - TO UPLOAD/tw309/Iman+Samizadeh,+Ph.D.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/efin 21-12-22 - to upload/tw309/iman+samizadeh,+ph.d.docx",
+              "rev": "639a87d6470e93ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 31378
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2018-02-27T07:58:41Z",
+              "content_hash": "2f2250d50e5147095872783f13ee8259531e881a41da9ff3529daf6c836fac16",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAABpRg",
+              "is_downloadable": true,
+              "name": "Leo_Odutola-JS-27022018.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/ARCHIVE - JBS - [to export to BH]/CVs to export/php 27 feb/Leo_Odutola-JS-27022018.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/archive - jbs - [to export to bh]/cvs to export/php 27 feb/leo_odutola-js-27022018.docx",
+              "rev": "64d4a45960d3a3ff27aa3",
+              "server_modified": "2026-03-18T10:54:10Z",
+              "size": 110252
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:44:17Z",
+              "content_hash": "76e7fb849072250337b1e4d4ac72f5de95919fff38347e334b65347dfa3ea75b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGrA",
+              "is_downloadable": true,
+              "name": "Adebola+Alli-Balogun+-+Cloud+Security+Architect-Engineer_2022.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/efin 21-12-22 - TO UPLOAD/tw296/Adebola+Alli-Balogun+-+Cloud+Security+Architect-Engineer_2022.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/efin 21-12-22 - to upload/tw296/adebola+alli-balogun+-+cloud+security+architect-engineer_2022.docx",
+              "rev": "639a87d902d013ff27aa3",
+              "server_modified": "2025-07-11T14:54:44Z",
+              "size": 19918
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-21T20:06:54Z",
+              "content_hash": "bd53d867e97a7df3a8d45ecb4d57c25e0a3f4314c083c64766ff1ec6cfa91f6b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG44g",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/### CV's TO IMPORT PRIOR TO 21-11-22/# aaa - EFIN - JBS-CVR - bklg/tw296/Iman+Samizadeh,+Ph.D.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/### cv's to import prior to 21-11-22/# aaa - efin - jbs-cvr - bklg/tw296/iman+samizadeh,+ph.d.docx",
+              "rev": "639a87d64700f3ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 31378
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-21T19:52:40Z",
+              "content_hash": "bd53d867e97a7df3a8d45ecb4d57c25e0a3f4314c083c64766ff1ec6cfa91f6b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG4lg",
+              "is_downloadable": true,
+              "name": "Iman+Samizadeh,+Ph.D.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/######## ADV&JBS-CVR-bklg/### CV's TO IMPORT PRIOR TO 21-11-22/# aaa - EFIN - JBS-CVR - bklg/tw288/Iman+Samizadeh,+Ph.D.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/######## adv&jbs-cvr-bklg/### cv's to import prior to 21-11-22/# aaa - efin - jbs-cvr - bklg/tw288/iman+samizadeh,+ph.d.docx",
+              "rev": "639a87d646fd53ff27aa3",
+              "server_modified": "2025-07-11T14:54:41Z",
+              "size": 31378
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2018-03-16T17:31:46Z",
+              "content_hash": "8c7306480234db46ea78b0da3f6b741205572903383288d8ac762d4612a6da7f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAABsJQ",
+              "is_downloadable": true,
+              "name": "GoodBellyBadBelly.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/GoodBellyBadBelly.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/goodbellybadbelly.pdf",
+              "rev": "5f9d5d378e4d9ec1a5841",
+              "server_modified": "2023-04-21T10:07:34Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 782791
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-06-01T16:59:52Z",
+              "content_hash": "3a04fc444c8f6407c0d1a55b483edc6953c3b8e840673983bc46482519bae4b5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAITgg",
+              "is_downloadable": true,
+              "name": "Copy of LIVE JOBS - DASHBOARD - 2026.xlsx",
+              "path_display": "/new dropbox/# DLV/Copy of LIVE JOBS - DASHBOARD - 2026.xlsx",
+              "path_lower": "/new dropbox/# dlv/copy of live jobs - dashboard - 2026.xlsx",
+              "rev": "6533420a91a223ff27aa3",
+              "server_modified": "2026-06-01T17:00:11Z",
+              "size": 286461
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-27T09:06:10Z",
+              "content_hash": "87f2a1970327ccf1b3ab993fc082601352f012c09740f6e43240c785ca61d236",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIpbw",
+              "is_downloadable": true,
+              "name": "Robert+Gonda+-+CV.docx",
+              "path_display": "/#################----CV's- IN-JAD-JobAdder/Robert+Gonda+-+CV.docx",
+              "path_lower": "/#################----cv's- in-jad-jobadder/robert+gonda+-+cv.docx",
+              "rev": "652c8ed3a00e23ff27aa3",
+              "server_modified": "2026-05-27T09:06:27Z",
+              "size": 20432
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-03-04T12:55:20Z",
+              "content_hash": "f5112b05ba0c3d4e52405126e34b9ad17b8107465e369ab252e263289967b2b4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFkhQ",
+              "is_downloadable": true,
+              "name": "Big-Data-London-Online_Member_List_on_2021-03-04.txt",
+              "path_display": "/NEW Dropbox/# BDD/### NOT Categorised/Big-Data-London-Online_Member_List_on_2021-03-04.txt",
+              "path_lower": "/new dropbox/# bdd/### not categorised/big-data-london-online_member_list_on_2021-03-04.txt",
+              "rev": "5f758d9ce11893ff27aa3",
+              "server_modified": "2023-03-20T18:11:06Z",
+              "size": 140687
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2018-03-16T20:20:30Z",
+              "content_hash": "8a0a8931c1fdbf41fe4ab5f1d476bcb6d4212d5d5ff64e056d22dd96b40cc363",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAABsKQ",
+              "is_downloadable": true,
+              "name": "Good Belly - Bad Belly - Fat Loss.pdf",
+              "path_display": "/new dropbox/# life/# lms/FIT - LMS/Good Belly - Bad Belly - Fat Loss.pdf",
+              "path_lower": "/new dropbox/# life/# lms/fit - lms/good belly - bad belly - fat loss.pdf",
+              "rev": "602e1f5b3bbcf3ff27aa3",
+              "server_modified": "2023-08-14T13:22:53Z",
+              "size": 706436
+            }
+          }
+        }
+      ]
+    }
+  },
+  "RFL": {
+    "status_code": 200,
+    "body": {
+      "cursor": "ChgKA1JGTBIEEDJoASIGCKP1yf8DMgMgoAEQMg==",
+      "has_more": true,
+      "matches": [
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAInmw",
+              "name": "+++ RFL - Recruiterflow DATA backup downloaded 19.05.26",
+              "path_display": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26",
+              "path_lower": "/+++ rfl - recruiterflow data backup downloaded 19.05.26"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAIBmw",
+              "name": "### BIG BAD CV ARCHIVE inc. RFL",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL",
+              "path_lower": "/### big bad cv archive inc. rfl"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAIiAA",
+              "name": "#copy of - FINISHED - GPT has reviewed  recorded on tw397 - RFL Search",
+              "path_display": "/### CVR GPT - upload to JAD/ACH [legacy old] tw397 to UPLOAD TO JAD/# powershell solution folders/#copy of - FINISHED - GPT has reviewed  recorded on tw397 - RFL Search",
+              "path_lower": "/### cvr gpt - upload to jad/ach [legacy old] tw397 to upload to jad/# powershell solution folders/#copy of - finished - gpt has reviewed  recorded on tw397 - rfl search"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAGZXw",
+              "name": "DLV-JBS-bklg folder [export to RFL!]",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/DLV-JBS-bklg folder [export to RFL!]",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/dlv-jbs-bklg folder [export to rfl!]",
+              "sharing_info": {
+                "is_parent_shared_folder_read_only": false,
+                "no_access": false,
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false,
+                "traverse_only": false
+              }
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAGY6g",
+              "name": "##############ACHTUNG! in RFL!",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAGwTA",
+              "name": "info.9 - ALL - RFL Exports",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.35 - Vincere Implement Phase-I/INFO & RESOURCES/info.9 - ALL - RFL Exports",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.35 - vincere implement phase-i/info & resources/info.9 - all - rfl exports"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-10-10T11:09:48Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_tQ",
+              "is_downloadable": true,
+              "name": "XDRlx1.mp3",
+              "preview_url": "https://www.dropbox.com/scl/fi/frfdwljv35h3grlbt5s4z",
+              "rev": "641abf455709307e769ca",
+              "server_modified": "2025-10-21T14:24:14Z",
+              "size": 17870098
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-21T13:28:06Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_nQ",
+              "is_downloadable": true,
+              "name": "Tranquility.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/6ku9ahrwfqomciu0wf6dg",
+              "rev": "6410b5174290407e769ca",
+              "server_modified": "2025-10-13T14:45:27Z",
+              "size": 31496764
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-28T11:53:51Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAEAlQ",
+              "is_downloadable": true,
+              "name": "At Ease.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/l06wcvff9iloijxov2z9x",
+              "rev": "644f8940ff44007e769ca",
+              "server_modified": "2025-12-02T14:04:46Z",
+              "size": 29094355
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2015-01-27T16:24:52Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_zw",
+              "is_downloadable": true,
+              "name": "AnxAway.MP3",
+              "preview_url": "https://www.dropbox.com/scl/fi/4q0csy3pjsjjtgfrclyy2",
+              "rev": "6423994d8d4ef07e769ca",
+              "server_modified": "2025-10-28T15:22:18Z",
+              "size": 20515109
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-02-25T13:22:26Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_GQ",
+              "is_downloadable": true,
+              "name": "IMRexplained(03).m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/rzc9x1h03cjxrrt6fxw5d",
+              "rev": "63eed3d036f8107e769ca",
+              "server_modified": "2025-09-16T16:01:52Z",
+              "size": 31900264
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-02-19T16:27:01Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAEAIw",
+              "is_downloadable": true,
+              "name": "Pure Peace.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/p1ag0y9syc21x2zn591dy",
+              "rev": "64353b023308c07e769ca",
+              "server_modified": "2025-11-11T15:56:16Z",
+              "size": 21284261
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-02-19T16:26:39Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_MA",
+              "is_downloadable": true,
+              "name": "Walk Onwards.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/2b9td4huqbox0oyoedq31",
+              "rev": "63f790ef7e4d807e769ca",
+              "server_modified": "2025-09-23T14:50:34Z",
+              "size": 26256808
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-02-25T13:53:16Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_hw",
+              "is_downloadable": true,
+              "name": "New Perspective.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/v4xbw139go2s8wvq7qidx",
+              "rev": "6407e29d7b50a07e769ca",
+              "server_modified": "2025-10-06T14:21:12Z",
+              "size": 20925805
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2010-10-04T13:15:04Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAEAsQ",
+              "is_downloadable": true,
+              "name": "NewBeginnings.MP3",
+              "preview_url": "https://www.dropbox.com/scl/fi/6nd6xtbf17g2tbjcfmzuw",
+              "rev": "64586716f60e107e769ca",
+              "server_modified": "2025-12-09T15:19:51Z",
+              "size": 15655542
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-29T16:40:08Z",
+              "content_hash": "885895b2694ec1b35292ba803be93486a398298082d6abe746775b89289d8b5c",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIg4A",
+              "is_downloadable": true,
+              "name": "daily scribble.txt",
+              "path_display": "/NEW Dropbox/daily scribble.txt",
+              "path_lower": "/new dropbox/daily scribble.txt",
+              "rev": "652f77f86e0303ff27aa3",
+              "server_modified": "2026-05-29T16:40:10Z",
+              "size": 6708
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2019-08-08T09:17:14Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAD_DQ",
+              "is_downloadable": true,
+              "name": "Hypno Foundation.mp3",
+              "preview_url": "https://www.dropbox.com/scl/fi/zce1dw7v4jhmkbshx7eel",
+              "rev": "63e75ed01b46207e769ca",
+              "server_modified": "2025-09-10T17:41:08Z",
+              "size": 21343649
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-08-06T11:03:38Z",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:S0hKOLbWZeEAAAAAAAEBWQ",
+              "is_downloadable": true,
+              "name": "Pure Peaceful Sleep.m4a",
+              "preview_url": "https://www.dropbox.com/scl/fi/gzt4lmkh23vby70d1f71w",
+              "rev": "6496179aeac7c07e769ca",
+              "server_modified": "2026-01-27T16:54:22Z",
+              "size": 19270148
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-06-01T16:59:52Z",
+              "content_hash": "3a04fc444c8f6407c0d1a55b483edc6953c3b8e840673983bc46482519bae4b5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAITgg",
+              "is_downloadable": true,
+              "name": "Copy of LIVE JOBS - DASHBOARD - 2026.xlsx",
+              "path_display": "/new dropbox/# DLV/Copy of LIVE JOBS - DASHBOARD - 2026.xlsx",
+              "path_lower": "/new dropbox/# dlv/copy of live jobs - dashboard - 2026.xlsx",
+              "rev": "6533420a91a223ff27aa3",
+              "server_modified": "2026-06-01T17:00:11Z",
+              "size": 286461
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-26T23:14:52Z",
+              "content_hash": "efae428fd5c0fd195a60d758dbbf46841558279f1d313ccb4b0a281d2c7ce201",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGwSw",
+              "is_downloadable": true,
+              "name": "info.9 - RFL export - 270722 - 0014.xlsx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.35 - Vincere Implement Phase-I/INFO & RESOURCES/info.9 - ALL - RFL Exports/info.9 - RFL export - 270722 - 0014.xlsx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.35 - vincere implement phase-i/info & resources/info.9 - all - rfl exports/info.9 - rfl export - 270722 - 0014.xlsx",
+              "rev": "5f758ebafb35d3ff27aa3",
+              "server_modified": "2023-03-20T18:16:06Z",
+              "size": 198472
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-27T09:06:07Z",
+              "content_hash": "a22c13729eac69ce8a952358e8537fce808d34c8356abd509e7719369e6e9af8",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIpAg",
+              "is_downloadable": true,
+              "name": "Davison Bullock (2341734 - Totaljobs).doc",
+              "path_display": "/#################----CV's- IN-JAD-JobAdder/Davison Bullock (2341734 - Totaljobs).doc",
+              "path_lower": "/#################----cv's- in-jad-jobadder/davison bullock (2341734 - totaljobs).doc",
+              "rev": "652c8eca003d13ff27aa3",
+              "server_modified": "2026-05-27T09:06:17Z",
+              "size": 105472
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-27T09:06:07Z",
+              "content_hash": "a22c13729eac69ce8a952358e8537fce808d34c8356abd509e7719369e6e9af8",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIpEQ",
+              "is_downloadable": true,
+              "name": "Davison Bullock (2341734 - Totaljobs) (1).doc",
+              "path_display": "/#################----CV's- IN-JAD-JobAdder/Davison Bullock (2341734 - Totaljobs) (1).doc",
+              "path_lower": "/#################----cv's- in-jad-jobadder/davison bullock (2341734 - totaljobs) (1).doc",
+              "rev": "652c8ecad1fc93ff27aa3",
+              "server_modified": "2026-05-27T09:06:17Z",
+              "size": 105472
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-13T09:24:45Z",
+              "content_hash": "31dd87868e07ed4dc1ac0f1b6508b4466ab83cdfee5318ccfc00d7d311f924ae",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAInGA",
+              "is_downloadable": true,
+              "name": "December 2025 - Statement - JJA Santander Business Bank Account.pdf",
+              "path_display": "/new dropbox/# CFO/###########aaa - SHIT WE ACTUALLY LOOK AT/### FreeAgent - DOCS - Statements etc for DEbit and Credit Cards and Bank Accs/JJA Bank Accounts/JJA - Santander Business Acccount - Statements/December 2025 - Statement - JJA Santander Business Bank Account.pdf",
+              "path_lower": "/new dropbox/# cfo/###########aaa - shit we actually look at/### freeagent - docs - statements etc for debit and credit cards and bank accs/jja bank accounts/jja - santander business acccount - statements/december 2025 - statement - jja santander business bank account.pdf",
+              "rev": "651af9a0112723ff27aa3",
+              "server_modified": "2026-05-13T09:28:25Z",
+              "size": 1738219
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-21T23:01:59Z",
+              "content_hash": "8d715215953b4f13fcd42bedcb70656b2ec2d07b43e59513e7e0d3bf5b9fc3e5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGvOA",
+              "is_downloadable": true,
+              "name": "Andrea+Menaldo_New+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Andrea+Menaldo_New+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/andrea+menaldo_new+cv.docx",
+              "rev": "639a881a83adb3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 36261
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-04-26T07:59:43Z",
+              "content_hash": "7cc232fbdac4d1c6fa2995d7229e391cd75db1cbceaed23ede88be219e87ba40",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHpBg",
+              "is_downloadable": true,
+              "name": "notepad 010623 onwards.txt",
+              "path_display": "/notepad 010623 onwards.txt",
+              "path_lower": "/notepad 010623 onwards.txt",
+              "rev": "616fb4965a8343ff27aa3",
+              "server_modified": "2024-04-26T07:59:44Z",
+              "size": 23491
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-12-17T17:22:23Z",
+              "content_hash": "dd31ffc5bf8d390f190033a3fa2893b422bb495086dc7f67f21e8387af92f3d5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGGdQ",
+              "is_downloadable": true,
+              "name": "Andrea+Menaldo.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Andrea+Menaldo.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/andrea+menaldo.docx",
+              "rev": "5f9d5d398f4dbec1a5841",
+              "server_modified": "2023-04-21T10:07:36Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 34859
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2019-12-23T22:51:36Z",
+              "content_hash": "03f4426c7fda22e32219edcf73b8e851ea297fefcaabfded09ba2b50b9d6d6b4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAE7XA",
+              "is_downloadable": true,
+              "name": "Karandeep Rayaguru (14958791 - Totaljobs).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Karandeep Rayaguru (14958791 - Totaljobs).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/karandeep rayaguru (14958791 - totaljobs).docx",
+              "rev": "5f9d5d378e510ec1a5841",
+              "server_modified": "2023-04-21T10:07:34Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 27759
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-04-21T16:42:56Z",
+              "content_hash": "676b6cdbf97c48daeb2a97738dd7c168854a73a62aee9996485d8b9dca6274b6",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFB3Q",
+              "is_downloadable": true,
+              "name": "Colin Goldson (74131694 - Totaljobs).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/DLV-JBS-bklg folder [export to RFL!]/tw126/Colin Goldson (74131694 - Totaljobs).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/dlv-jbs-bklg folder [export to rfl!]/tw126/colin goldson (74131694 - totaljobs).docx",
+              "rev": "5f9d5d4ea3b5fec1a5841",
+              "server_modified": "2023-04-21T10:07:59Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 30671
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-03-23T10:53:06Z",
+              "content_hash": "676b6cdbf97c48daeb2a97738dd7c168854a73a62aee9996485d8b9dca6274b6",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFBmQ",
+              "is_downloadable": true,
+              "name": "Colin Goldson (74131694 - Totaljobs).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Colin Goldson (74131694 - Totaljobs).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/colin goldson (74131694 - totaljobs).docx",
+              "rev": "5f9d5d4877f32ec1a5841",
+              "server_modified": "2023-04-21T10:07:52Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 30671
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2018-05-25T02:46:18Z",
+              "content_hash": "fe1aa1813606a32bf94cd5b72dbb18ad4b957461db66ef1838ee31d94d603604",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAB29A",
+              "is_downloadable": true,
+              "name": "Martin Okello (5772053 - Jobsite).doc",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/ARCHIVE - JBS - [to export to BH]/CVs to export/mstar dev in test 11 aprl/Martin Okello (5772053 - Jobsite).doc",
+              "path_lower": "/### big bad cv archive inc. rfl/archive - jbs - [to export to bh]/cvs to export/mstar dev in test 11 aprl/martin okello (5772053 - jobsite).doc",
+              "rev": "64d4a45960cc03ff27aa3",
+              "server_modified": "2026-03-18T10:54:10Z",
+              "size": 69632
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-12-30T04:03:05Z",
+              "content_hash": "11aa778b1dfd8b2ce3b860ad442f7ce2f26f6d8d357eb4933865479a90d90183",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAH5fw",
+              "is_downloadable": true,
+              "name": "174620887-Improvised-Sabotage-Devices.pdf",
+              "path_display": "/NEW Dropbox/# LIFE/SECURITY - SHTF - Apocalypse/ACHTHUNG - dodgy books to categorie LMS/174620887-Improvised-Sabotage-Devices.pdf",
+              "path_lower": "/new dropbox/# life/security - shtf - apocalypse/achthung - dodgy books to categorie lms/174620887-improvised-sabotage-devices.pdf",
+              "rev": "62c1c7c6c72563ff27aa3",
+              "server_modified": "2025-01-20T05:25:18Z",
+              "size": 38160805
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-04-17T20:57:11Z",
+              "content_hash": "83aeafb1e2df932a9d74e7c0f9dd5f52744dc500fe8da00c89cd1c070211a39e",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIkPA",
+              "is_downloadable": true,
+              "name": "OUTLOOK CALENDAR AO170426.ics",
+              "path_display": "/NEW Dropbox/# CTOO/OUTLOOK CALENDAR AO170426.ics",
+              "path_lower": "/new dropbox/# ctoo/outlook calendar ao170426.ics",
+              "rev": "64fae3b0b7e2a3ff27aa3",
+              "server_modified": "2026-04-17T20:59:53Z",
+              "size": 1166315
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-07-25T00:21:01Z",
+              "content_hash": "36eda8d91b0970a0880f96ecb99e096f75a5c224a41a258ed0fe400c5b1cf1f7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHywQ",
+              "is_downloadable": true,
+              "name": "fox tw366 draft response.docx",
+              "path_display": "/NEW Dropbox/# DLV/ARCHIVES/ARCHIVE - Job Specs/tw366 - GSR - DeFi Algorithmic Trader/fox tw366 draft response.docx",
+              "path_lower": "/new dropbox/# dlv/archives/archive - job specs/tw366 - gsr - defi algorithmic trader/fox tw366 draft response.docx",
+              "rev": "649ee7361e7213ff27aa3",
+              "server_modified": "2026-02-03T17:05:47Z",
+              "size": 18309
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-23T11:05:34Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGvyw",
+              "is_downloadable": false,
+              "name": "PRJ.35 - Vincere Implement Phase-I.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.35 - Vincere Implement Phase-I/PRJ.35 - Vincere Implement Phase-I.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.35 - vincere implement phase-i/prj.35 - vincere implement phase-i.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/n8pt0ayc9s07g4qb7kwjo/PRJ.35-Vincere-Implement-Phase-I.paper?dl=0",
+              "rev": "5f758ebafb3843ff27aa3",
+              "server_modified": "2023-03-20T18:16:06Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2017-09-21T11:37:17Z",
+              "content_hash": "03eeb11422b2bee4674fa55afe6ce4e8bbf898c51fa22b892501586ca3b1799f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEHpg",
+              "is_downloadable": true,
+              "name": "4331.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BH Backup Data/### UNZIPPED BACKUP FILES/UserWorkFiles/21624/2017.09/4331.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bh backup data/### unzipped backup files/userworkfiles/21624/2017.09/4331.docx",
+              "rev": "5f758e92f97083ff27aa3",
+              "server_modified": "2023-03-20T18:15:24Z",
+              "size": 32808
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-30T18:43:56Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGbTg",
+              "is_downloadable": false,
+              "name": "prj.29 - New Website & Email & LKDN reccomends.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/prj.29 - New Website & Email/prj.29 - New Website & Email & LKDN reccomends.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/prj.29 - new website & email/prj.29 - new website & email & lkdn reccomends.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/458rscvprhhzcpy0cmsvr/prj.29-New-Website-Email-LKDN-reccomends.paper?dl=0",
+              "rev": "5f758eb89070b3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-08T09:14:47Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGOlw",
+              "is_downloadable": false,
+              "name": "prj.28 - Recruiter Flow CRMATS.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.28 - Recruiter Flow CRMATS/prj.28 - Recruiter Flow CRMATS.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.28 - recruiter flow crmats/prj.28 - recruiter flow crmats.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/wtg8xnowy7z80ba7tnfna/prj.28-Recruiter-Flow-CRMATS.paper?dl=0",
+              "rev": "5f758eb8905ee3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2017-09-21T11:10:22Z",
+              "content_hash": "7d50aac559cc11dc585606b59ba86144d7b631d1f82a789a20a388057f9feff5",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEC7g",
+              "is_downloadable": true,
+              "name": "3210.doc",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BH Backup Data/### UNZIPPED BACKUP FILES/UserWorkFiles/21624/2017.09/3210.doc",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bh backup data/### unzipped backup files/userworkfiles/21624/2017.09/3210.doc",
+              "rev": "5f758ea6b3dbf3ff27aa3",
+              "server_modified": "2023-03-20T18:15:45Z",
+              "size": 67586
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2015-12-09T00:38:41Z",
+              "content_hash": "7ed23600487b06508cef8e112ea45758b561ba011f28b9ec04b1b60e01328814",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAAJ7g",
+              "is_downloadable": true,
+              "name": "Jerome Williamson.doc",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BBB - Bullhorn Export - 19-09-17/Jerome Williamson.doc",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bbb - bullhorn export - 19-09-17/jerome williamson.doc",
+              "rev": "5f758e0065a8e3ff27aa3",
+              "server_modified": "2023-03-20T18:12:51Z",
+              "size": 67584
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2018-03-21T18:09:20Z",
+              "content_hash": "3fdb4c347825a15fdee487d4e9ce1d27e87ff7834658cfcf6954968f60687318",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEcKA",
+              "is_downloadable": true,
+              "name": "8909.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BH Backup Data/### UNZIPPED BACKUP FILES/UserWorkFiles/21624/2018.03/8909.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bh backup data/### unzipped backup files/userworkfiles/21624/2018.03/8909.docx",
+              "rev": "5f758ea967e0d3ff27aa3",
+              "server_modified": "2023-03-20T18:15:48Z",
+              "size": 25044
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2017-09-21T09:47:18Z",
+              "content_hash": "23a7a53daa0efbdbb4d1722052238c909e70f5e27b4eaa940b48790fb93d122b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEEVA",
+              "is_downloadable": true,
+              "name": "363.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BH Backup Data/### UNZIPPED BACKUP FILES/UserWorkFiles/21624/2017.09/363.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bh backup data/### unzipped backup files/userworkfiles/21624/2017.09/363.docx",
+              "rev": "5f758e8e25ad63ff27aa3",
+              "server_modified": "2023-03-20T18:15:19Z",
+              "size": 28149
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2016-09-06T12:44:06Z",
+              "content_hash": "3a392f2b482b538ad83e74f5aec3c4e511eef7bae1c883a22fb987ada14ba1ed",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAAgUQ",
+              "is_downloadable": true,
+              "name": "Martin Okello 2016 per dev c# sql web.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BBB - Bullhorn Export - 19-09-17/Martin Okello 2016 per dev c# sql web.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bbb - bullhorn export - 19-09-17/martin okello 2016 per dev c# sql web.docx",
+              "rev": "5f758e00659083ff27aa3",
+              "server_modified": "2023-03-20T18:12:51Z",
+              "size": 32806
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-10T14:57:09Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG6cQ",
+              "is_downloadable": false,
+              "name": "PRG.8 - Done by 16-12-22 !!! ;D.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/PRG.8 - Done by 16-12-22 !!! ;D/PRG.8 - Done by 16-12-22 !!! ;D.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prg.8 - done by 16-12-22 !!! ;d/prg.8 - done by 16-12-22 !!! ;d.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/ylymrbo18qqmj2pkk5n8s/PRG.8-Done-by-16-12-22-D.paper?dl=0",
+              "rev": "5fcd0fd8f17303ff27aa3",
+              "server_modified": "2023-05-29T08:37:00Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2025-10-15T10:42:43Z",
+              "content_hash": "258dec09acfe57bd5d5ca3a93675c26c14c3f6c149b946d4ea50db24bc893043",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIOgg",
+              "is_downloadable": true,
+              "name": "Helen Lesser x4.m4a",
+              "path_display": "/NEW Dropbox/# LIFE/# HYPNO HELEN LESSER - audio recordings/Helen Lesser x4.m4a",
+              "path_lower": "/new dropbox/# life/# hypno helen lesser - audio recordings/helen lesser x4.m4a",
+              "rev": "641cf9967b74b3ff27aa3",
+              "server_modified": "2025-10-23T08:55:48Z",
+              "size": 31496764
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-07-27T07:00:24Z",
+              "content_hash": "5c4ce814e97650e9de1c5ea5b583df3a2d6501c70404876031787adef85b6166",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGwXw",
+              "is_downloadable": true,
+              "name": "info.12 - Notes from vincere data migration tutorial on 270722.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.35 - Vincere Implement Phase-I/INFO & RESOURCES/info.12 - Notes from vincere data migration tutorial on 270722.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.35 - vincere implement phase-i/info & resources/info.12 - notes from vincere data migration tutorial on 270722.docx",
+              "rev": "5f758ebafb37a3ff27aa3",
+              "server_modified": "2023-03-20T18:16:06Z",
+              "size": 18223
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2025-10-23T08:55:04Z",
+              "content_hash": "a1e5462c75eccd4bb60896ea642211eee07712073aaa7100731405f0df3bbf35",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIPCA",
+              "is_downloadable": true,
+              "name": "Helen Lesser x5.mp3",
+              "path_display": "/NEW Dropbox/# LIFE/# HYPNO HELEN LESSER - audio recordings/Helen Lesser x5.mp3",
+              "path_lower": "/new dropbox/# life/# hypno helen lesser - audio recordings/helen lesser x5.mp3",
+              "rev": "641cf9833d46d3ff27aa3",
+              "server_modified": "2025-10-23T08:55:27Z",
+              "size": 17870098
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "metadata"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2025-09-16T19:28:56Z",
+              "content_hash": "81b9e645b758fcdcca13fb7436ed4f1e22c2c0dc9e4231b043583a6f037878d8",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIKOw",
+              "is_downloadable": true,
+              "name": "Helen Lesser x2.mp3",
+              "path_display": "/NEW Dropbox/# LIFE/# HYPNO HELEN LESSER - audio recordings/Helen Lesser x2.mp3",
+              "path_lower": "/new dropbox/# life/# hypno helen lesser - audio recordings/helen lesser x2.mp3",
+              "rev": "63ef02a67e04a3ff27aa3",
+              "server_modified": "2025-09-16T19:31:24Z",
+              "size": 21343649
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2017-09-10T21:57:12Z",
+              "content_hash": "076b5f889af1264c79606ac93445d358bde19aeda041def48e520637ecb967b6",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAABRDA",
+              "is_downloadable": true,
+              "name": "2f8a7edf-dab6-4ab2-87b7-a7a700e949cd_Solange Fraley_PrgrM_BCPM_May 2017.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/CRL CSV BACKUP DATA/Crelate - Data Dump/Attachments/2f8a7edf-dab6-4ab2-87b7-a7a700e949cd_Solange Fraley_PrgrM_BCPM_May 2017.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/crl csv backup data/crelate - data dump/attachments/2f8a7edf-dab6-4ab2-87b7-a7a700e949cd_solange fraley_prgrm_bcpm_may 2017.docx",
+              "rev": "5f758e179d0ca3ff27aa3",
+              "server_modified": "2023-03-20T18:13:15Z",
+              "size": 44912
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2016-02-04T23:29:58Z",
+              "content_hash": "31083f32a4f4a817392accb2bc06fff8ab751f744ec898c2b53dc0e56c415f09",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:fxW_XrJdEMAAAAAAAAAAAQ",
+              "is_downloadable": true,
+              "name": "Alina Ciorici DEV CNTR SQL BUSINESS INTELLIGENCE.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BBB - Bullhorn Export - 19-09-17/Alina Ciorici DEV CNTR SQL BUSINESS INTELLIGENCE.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bbb - bullhorn export - 19-09-17/alina ciorici dev cntr sql business intelligence.docx",
+              "rev": "5f758deec3cbf3ff27aa3",
+              "server_modified": "2023-03-20T18:12:32Z",
+              "size": 28147
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2016-03-05T13:46:08Z",
+              "content_hash": "ae88f46d25b36220a019546b3aecd0c4acc010f916012a8542aab0b36e5d49eb",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:FhrOaTbNfrAAAAAAAAAAAQ",
+              "is_downloadable": true,
+              "name": "JUSTIN OPARAH.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.5 - CRM-IA/IMPORT DATA - to Categorise/BBB - Bullhorn Export - 19-09-17/JUSTIN OPARAH.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.5 - crm-ia/import data - to categorise/bbb - bullhorn export - 19-09-17/justin oparah.docx",
+              "rev": "5f758df37062b3ff27aa3",
+              "server_modified": "2023-03-20T18:12:37Z",
+              "size": 19089
+            }
+          }
+        }
+      ]
+    }
+  },
+  "ACHTUNG": {
+    "status_code": 200,
+    "body": {
+      "has_more": false,
+      "matches": [
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAGY6g",
+              "name": "##############ACHTUNG! in RFL!",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAABgdQ",
+              "name": "ACHTUNG!!! - UNCATEGORISED - pro unlimited invoices",
+              "path_display": "/NEW Dropbox/# CFO/###bbb - ALL THE OTHER SHIT/ACHTUNG!!! - UNCATEGORISED - pro unlimited invoices",
+              "path_lower": "/new dropbox/# cfo/###bbb - all the other shit/achtung!!! - uncategorised - pro unlimited invoices"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAG66g",
+              "name": "ACHTUNG! - info.17 - documents and info sent to HMRC so far",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/GCP - prj.46 - CJRS Enquiry/ACHTUNG! - info.17 - documents and info sent to HMRC so far",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/gcp - prj.46 - cjrs enquiry/achtung! - info.17 - documents and info sent to hmrc so far"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-05-19T10:39:29Z",
+              "content_hash": "78f3a01ef34dd8e9eae12bdbef5b7108ceac9a4e3e0f80f5f8ccb55443003173",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHZ9Q",
+              "is_downloadable": true,
+              "name": "Accounts JJA - v.2 110823 onwards.xlsx",
+              "path_display": "/NEW Dropbox/# CFO/###########aaa - SHIT WE ACTUALLY LOOK AT/Accounts JJA - v.2 110823 onwards.xlsx",
+              "path_lower": "/new dropbox/# cfo/###########aaa - shit we actually look at/accounts jja - v.2 110823 onwards.xlsx",
+              "rev": "652294b9d5a333ff27aa3",
+              "server_modified": "2026-05-19T10:39:36Z",
+              "size": 127227
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-04-12T10:28:44Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFzyw",
+              "is_downloadable": false,
+              "name": "prj.15 - LKDN 3.0.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/prj.15 - LKDN 3.0/prj.15 - LKDN 3.0.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/prj.15 - lkdn 3.0/prj.15 - lkdn 3.0.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/ei5nlx49wrm28q7gb9l9c/prj.15-LKDN-3.0.paper?dl=0",
+              "rev": "5f921129298943ff27aa3",
+              "server_modified": "2023-04-12T10:28:44Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2019-05-03T08:42:10Z",
+              "content_hash": "18efc538f4f9c55ff56a20452da50fe14a38fa53f33ce4eed3ee53a82fbaf5b4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEh4Q",
+              "is_downloadable": true,
+              "name": "Lenovo hardware guide.pdf",
+              "path_display": "/NEW Dropbox/# CTOO/### OLD - # CIOO/Lenovo hardware guide.pdf",
+              "path_lower": "/new dropbox/# ctoo/### old - # cioo/lenovo hardware guide.pdf",
+              "rev": "5f758de2f40923ff27aa3",
+              "server_modified": "2023-03-20T18:12:20Z",
+              "size": 8356500
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-09-07T00:12:28Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAF2QA",
+              "is_downloadable": false,
+              "name": "prj.18 - VAT return May, June, July 2021.paper",
+              "path_display": "/prj.18 - VAT return May, June, July 2021.paper",
+              "path_lower": "/prj.18 - vat return may, june, july 2021.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/3n3wntw7dgik787qg7b18/prj.18-VAT-return-May-June-July-2021.paper?dl=0",
+              "rev": "5cb5c9efd70363ff27aa3",
+              "server_modified": "2021-09-07T00:12:28Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-06T10:38:37Z",
+              "content_hash": "fa874eca754808f5ee0ae6621ac1f6d2c630dc58abbc299feeb090b8b0373db0",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAEhhA",
+              "is_downloadable": true,
+              "name": "# NEW 2019 - PRO Unlimited Accounts.xlsx",
+              "path_display": "/new dropbox/# CFO/###########aaa - SHIT WE ACTUALLY LOOK AT/Client Accounts/ProUnlimited Blackrock - Client/# NEW 2019 - PRO Unlimited Accounts.xlsx",
+              "path_lower": "/new dropbox/# cfo/###########aaa - shit we actually look at/client accounts/prounlimited blackrock - client/# new 2019 - pro unlimited accounts.xlsx",
+              "rev": "62ddf488042393ff27aa3",
+              "server_modified": "2025-02-11T15:14:37Z",
+              "size": 101651
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-05-16T15:26:45Z",
+              "content_hash": "18844fadc44ddb7114af20148cf9b52c658c6cca00a20d0576956050482cea90",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFCQw",
+              "is_downloadable": true,
+              "name": "DRONE insturctions manual - parrot bebop 2 adventurer.pdf",
+              "path_display": "/NEW Dropbox/# LIFE/#### !ach! - NEEDS CATEGORISING/DRONE insturctions manual - parrot bebop 2 adventurer.pdf",
+              "path_lower": "/new dropbox/# life/#### !ach! - needs categorising/drone insturctions manual - parrot bebop 2 adventurer.pdf",
+              "rev": "6252dd75b798d3ff27aa3",
+              "server_modified": "2024-10-24T00:11:17Z",
+              "size": 12286934
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-12-17T14:52:10Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFczQ",
+              "is_downloadable": false,
+              "name": "PRJ.0002 - Xero VAT.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/PRJ.0002 - Xero/PRJ.0002 - Xero VAT.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.0002 - xero/prj.0002 - xero vat.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/gnndn3d9lyhbeci7qca0j/PRJ.0002-Xero-VAT.paper?dl=0",
+              "rev": "5f758de2f41133ff27aa3",
+              "server_modified": "2023-03-20T18:12:20Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-11-25T14:39:55Z",
+              "content_hash": "cfe7bfae1ad1be06fe39d34068a9740fd98b890123a02b51eee7e9338bd2d44f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFGdA",
+              "is_downloadable": true,
+              "name": "ALL notes inventory (outlook, icloud, to do etc).xlsx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/######ANNA cv's/ALL notes inventory (outlook, icloud, to do etc).xlsx",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive/######anna cv's/all notes inventory (outlook, icloud, to do etc).xlsx",
+              "rev": "5f9d5d4240f99ec1a5841",
+              "server_modified": "2023-04-21T10:07:46Z",
+              "sharing_info": {
+                "modified_by": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                "parent_shared_folder_id": "3961149505",
+                "read_only": false
+              },
+              "size": 62942
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-25T12:49:21Z",
+              "content_hash": "2bd913a3c3f749de9cf6da6041d67f68bb7f13843a29260ef5db405749426d3e",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFBLw",
+              "is_downloadable": true,
+              "name": "CJRS SPRD.xlsx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/GCP - prj.46 - CJRS Enquiry/info.7 - # CJRS/CJRS SPRD.xlsx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/gcp - prj.46 - cjrs enquiry/info.7 - # cjrs/cjrs sprd.xlsx",
+              "rev": "5f758eb8906bd3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 18971
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-02-21T13:17:24Z",
+              "content_hash": "cd90b2bf932456decbafa09037ae38b6b7b18c72a72b9dab614e4c88ae8791d6",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAE9ug",
+              "is_downloadable": true,
+              "name": "KPI - Life Tracker - 2020 - v.3.xlsx",
+              "path_display": "/new dropbox/# scrum/kpi tracking/KPI's - 2020/KPI - Life Tracker - 2020 - v.3.xlsx",
+              "path_lower": "/new dropbox/# scrum/kpi tracking/kpi's - 2020/kpi - life tracker - 2020 - v.3.xlsx",
+              "rev": "5f758dd2748f03ff27aa3",
+              "server_modified": "2023-03-20T18:12:03Z",
+              "size": 160268
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-02-16T11:37:45Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGJdA",
+              "is_downloadable": false,
+              "name": "prj.25 - Onboard Colin Jones.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.25 - Onboard Colin Jones/prj.25 - Onboard Colin Jones.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.25 - onboard colin jones/prj.25 - onboard colin jones.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/r2mlnayv65yfrm577c7u3/prj.25-Onboard-Colin-Jones.paper?dl=0",
+              "rev": "5f758eb8905be3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-02-02T22:23:28Z",
+              "content_hash": "dca6ff681890393794dc0c392d4d3163a79fb9a9dce9764827c69d296dcb7eeb",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHLFw",
+              "is_downloadable": true,
+              "name": "PRG_1_-_Lili_Shares_in_Vinci.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/PRG.1 - Lili Shares in Vinci/PRG_1_-_Lili_Shares_in_Vinci.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prg.1 - lili shares in vinci/prg_1_-_lili_shares_in_vinci.docx",
+              "rev": "5f758eb8906f63ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 197201
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-01-05T11:27:43Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAF4rw",
+              "is_downloadable": false,
+              "name": "prj.21 - Organised 3.0.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.21 - Organsied 3.0/prj.21 - Organised 3.0.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.21 - organsied 3.0/prj.21 - organised 3.0.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/alrketcq2miazdifpcjst/prj.21-Organised-3.0.paper?dl=0",
+              "rev": "5f758eb8905e53ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-02-02T22:33:14Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAF4rA",
+              "is_downloadable": false,
+              "name": "PRG.1 - Lili Shares in Vinci.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/PRG.1 - Lili Shares in Vinci/PRG.1 - Lili Shares in Vinci.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prg.1 - lili shares in vinci/prg.1 - lili shares in vinci.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/8h4qj0k94rbnd38gl755d/PRG.1-Lili-Shares-in-Vinci.paper?dl=0",
+              "rev": "5f758eb8906f73ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-05-14T15:37:12Z",
+              "content_hash": "9ef29d35f9adc16c2dcb0ca6e1ac390e4678f5e76e8d8b1bb9fc0b612fc81ced",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHCgA",
+              "is_downloadable": true,
+              "name": "info.55 scenario tracker spreadsheet.xlsx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.32 - Remortgage House 2022/s.1 info & resources/info.55 scenario tracker spreadsheet.xlsx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.32 - remortgage house 2022/s.1 info & resources/info.55 scenario tracker spreadsheet.xlsx",
+              "rev": "5fba91d0a54833ff27aa3",
+              "server_modified": "2023-05-14T15:37:18Z",
+              "size": 21827
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2019-11-22T13:09:29Z",
+              "content_hash": "0cc601803d4bcffa19af8cde401f5e9a9e7d35158a75d166b75bdeabe69fe6bb",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAACQwA",
+              "is_downloadable": true,
+              "name": "BDD - Trust Market - JSY - DATA-MAP.xlsx",
+              "path_display": "/new dropbox/# bdd/BDD MARKET - DATA - MAPs/BDD - Trust Market - JSY - DATA-MAP.xlsx",
+              "path_lower": "/new dropbox/# bdd/bdd market - data - maps/bdd - trust market - jsy - data-map.xlsx",
+              "rev": "5f758d9ce11313ff27aa3",
+              "server_modified": "2023-03-20T18:11:06Z",
+              "size": 57090
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-08-01T18:44:45Z",
+              "content_hash": "6929882344c2b3ed05d763a0054814858869654d99d65803a936281655ed0bde",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGxIg",
+              "is_downloadable": true,
+              "name": "Info.17 - Sandbox Trial Word.Doc notes.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/# ACTIVE - PRJ's AND PRG's/GCP - prj.35 - Vincere Implement Phase-I/INFO & RESOURCES/Info.17 - Sandbox Trial Word.Doc notes.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/# active - prj's and prg's/gcp - prj.35 - vincere implement phase-i/info & resources/info.17 - sandbox trial word.doc notes.docx",
+              "rev": "5f758ebafb37b3ff27aa3",
+              "server_modified": "2023-03-20T18:16:06Z",
+              "size": 19175
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-11-29T19:07:45Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGDIQ",
+              "is_downloadable": false,
+              "name": "prj.23 - Vat Return Aug-Sept-Oct-2021.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.23 - Vat Return Aug-Sept-Oct-2021/prj.23 - Vat Return Aug-Sept-Oct-2021.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.23 - vat return aug-sept-oct-2021/prj.23 - vat return aug-sept-oct-2021.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/w2sb7oi3bi2x9crr31htn/prj.23-Vat-Return-Aug-Sept-Oct-2021.paper?dl=0",
+              "rev": "5f758eb8905cb3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-09-03T22:33:07Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGkAw",
+              "is_downloadable": false,
+              "name": "prj.31 - VAT Return - Feb, March, April - 2022.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.31 - VAT Return - Feb, March, April - 2022/prj.31 - VAT Return - Feb, March, April - 2022.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.31 - vat return - feb, march, april - 2022/prj.31 - vat return - feb, march, april - 2022.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/y7gozm5xhljlme7rj23ab/prj.31-VAT-Return-Feb-March-April-2022.paper?dl=0",
+              "rev": "5f758eb8905dc3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-03-20T18:50:33Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG2Xg",
+              "is_downloadable": false,
+              "name": "PRJ.44 - VAT reutrn  mayjunejuly 2022.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.44 - VAT reutrn  mayjunejuly 2022/PRJ.44 - VAT reutrn  mayjunejuly 2022.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.44 - vat reutrn  mayjunejuly 2022/prj.44 - vat reutrn  mayjunejuly 2022.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/cqwxqs2nba2aa0rnosjyk/PRJ.44-VAT-reutrn-mayjunejuly-2022.paper?dl=0",
+              "rev": "5f75966e6be923ff27aa3",
+              "server_modified": "2023-03-20T18:50:34Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2021-11-27T12:25:41Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFplA",
+              "is_downloadable": false,
+              "name": "prj.12 - VAT Return Feb, march, april 2021.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.12 - VAT Return Feb, march, april 2021/prj.12 - VAT Return Feb, march, april 2021.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.12 - vat return feb, march, april 2021/prj.12 - vat return feb, march, april 2021.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/9w9x44gfxfeisqm7apcxg/prj.12-VAT-Return-Feb-march-april-2021.paper?dl=0",
+              "rev": "5f758de2f41343ff27aa3",
+              "server_modified": "2023-03-20T18:12:20Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-18T18:34:44Z",
+              "content_hash": "babf436ce026617717300459a77f7a9d7754c500c0de0553215b6159631e205a",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG6Uw",
+              "is_downloadable": true,
+              "name": "info.4.1 - formatted george bara notes.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.37 - Worshipful Master/s.1 - INFO & RESOURCES/info.4.1 - formatted george bara notes.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.37 - worshipful master/s.1 - info & resources/info.4.1 - formatted george bara notes.docx",
+              "rev": "5fcd0f788f6873ff27aa3",
+              "server_modified": "2023-05-29T08:35:19Z",
+              "size": 21191
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-29T21:55:45Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGMiQ",
+              "is_downloadable": false,
+              "name": "prj.26 - VAT return nov,dec,jan 2021-2022.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.26 - VAT return nov,dec,jan 2021-2022/prj.26 - VAT return nov,dec,jan 2021-2022.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.26 - vat return nov,dec,jan 2021-2022/prj.26 - vat return nov,dec,jan 2021-2022.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/ab7xy1jv54c8voeiz0ftq/prj.26-VAT-return-nov-dec-jan-2021-2022.paper?dl=0",
+              "rev": "5f758eb8905a03ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-14T22:19:18Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG_5Q",
+              "is_downloadable": false,
+              "name": "prj.49 - VAT aug sept oct 2022.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.49 - VAT aug sept oct 2022/prj.49 - VAT aug sept oct 2022.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.49 - vat aug sept oct 2022/prj.49 - vat aug sept oct 2022.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/61dn3csi5nxoouwd9mgka/prj.49-VAT-aug-sept-oct-2022.paper?dl=0",
+              "rev": "5f758eb8906063ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-02-01T07:19:14Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFjuA",
+              "is_downloadable": false,
+              "name": "prj.10 - VAT Return Nov 2020 to Jan 2021.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/prj.10 - Vat Return Nov 2020 to Jan 2021/prj.10 - VAT Return Nov 2020 to Jan 2021.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prj.10 - vat return nov 2020 to jan 2021/prj.10 - vat return nov 2020 to jan 2021.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/ixishgtherunibblb4h5v/prj.10-VAT-Return-Nov-2020-to-Jan-2021.paper?dl=0",
+              "rev": "5f758de2f41283ff27aa3",
+              "server_modified": "2023-03-20T18:12:20Z",
+              "size": 200
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2020-08-06T13:34:38Z",
+              "content_hash": "33dac253f638af4a49a3458d3d83adab571e71fa6724fccf9555e9a0c73fdc0e",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAFBMA",
+              "is_downloadable": true,
+              "name": "CJRS claim transcript for 01-03-20 to 30-04-20.docx",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/GCP - prj.46 - CJRS Enquiry/info.7 - # CJRS/CJRS claim transcript for 01-03-20 to 30-04-20.docx",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/gcp - prj.46 - cjrs enquiry/info.7 - # cjrs/cjrs claim transcript for 01-03-20 to 30-04-20.docx",
+              "rev": "5f758eb8906bb3ff27aa3",
+              "server_modified": "2023-03-20T18:16:04Z",
+              "size": 19815
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "file_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-26T03:42:01Z",
+              "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "export_info": {
+                "export_as": "html",
+                "export_options": [
+                  "html",
+                  "markdown"
+                ]
+              },
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG9oQ",
+              "is_downloadable": false,
+              "name": "PRG.9 _ 9.1, 9.2, 9.3, 9.4 - Done by 16-12-2023! ;D.paper",
+              "path_display": "/NEW Dropbox/#  [#.OKR.A1 !!!] - PPM & OKR & PUZZLES/ARCHIVE - PRJ's/PRG.9 - .1.2.3.4/PRG.9 _ 9.1, 9.2, 9.3, 9.4 - Done by 16-12-2023! ;D.paper",
+              "path_lower": "/new dropbox/#  [#.okr.a1 !!!] - ppm & okr & puzzles/archive - prj's/prg.9 - .1.2.3.4/prg.9 _ 9.1, 9.2, 9.3, 9.4 - done by 16-12-2023! ;d.paper",
+              "preview_url": "https://www.dropbox.com/scl/fi/tvy2xreab8vr98awqntcb/PRG.9-_-9.1-9.2-9.3-9.4-Done-by-16-12-2023-D.paper?dl=0",
+              "rev": "5fcd0fd5f0c353ff27aa3",
+              "server_modified": "2023-05-29T08:36:57Z",
+              "size": 200
+            }
+          }
+        }
+      ]
+    }
+  },
+  "CV ARCHIVE": {
+    "status_code": 200,
+    "body": {
+      "cursor": "Ch8KCkNWIEFSQ0hJVkUSBBAyaAEiBgij9cn/AzIDIKABEDI=",
+      "has_more": true,
+      "matches": [
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAHQ5w",
+              "name": "### CV Archive",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive",
+              "path_lower": "/### big bad cv archive inc. rfl/### cv archive",
+              "sharing_info": {
+                "no_access": false,
+                "read_only": false,
+                "shared_folder_id": "3961149505",
+                "traverse_only": false
+              }
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "folder",
+              "file_owner_team_encrypted_id": "",
+              "id": "id:tdOCGswI9PAAAAAAAAIBmw",
+              "name": "### BIG BAD CV ARCHIVE inc. RFL",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL",
+              "path_lower": "/### big bad cv archive inc. rfl"
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-03-09T14:38:49Z",
+              "content_hash": "31da2754da1b157f6fc6ae57e08aedb6f125d72a1b5246db3bb3a58cc85cba08",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIgTA",
+              "is_downloadable": true,
+              "name": "Karoly Egyed - CV.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/tw396/WIP in GPT/Karoly Egyed - CV.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/tw396/wip in gpt/karoly egyed - cv.pdf",
+              "rev": "652bba2ca9a843ff27aa3",
+              "server_modified": "2026-05-26T17:15:03Z",
+              "size": 197611
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2026-03-09T14:39:35Z",
+              "content_hash": "be46f800c175828a2bfb84a0c1a32468840e935f69a5e6c7842e9ec0603ced5f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAIgUQ",
+              "is_downloadable": true,
+              "name": "Kacper-Langowski_cv-library.pdf",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/tw396/WIP in GPT/Kacper-Langowski_cv-library.pdf",
+              "path_lower": "/### big bad cv archive inc. rfl/tw396/wip in gpt/kacper-langowski_cv-library.pdf",
+              "rev": "652bba2ca9a833ff27aa3",
+              "server_modified": "2026-05-26T17:15:03Z",
+              "size": 105892
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T22:43:39Z",
+              "content_hash": "b73d7e778c46f0a54f30e7c18f4f192e1bd18d6bba91522c614f16c3be54ba8b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzsg",
+              "is_downloadable": true,
+              "name": "PaulSchleiferCV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/PaulSchleiferCV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/paulschleifercv.docx",
+              "rev": "639a8818165263ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 41936
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-01-14T17:00:52Z",
+              "content_hash": "79c211c776678f510974cfddda6a2d3ab7ff9768e5581bc985401c08364f441b",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHhzQ",
+              "is_downloadable": true,
+              "name": "RajanBhandari_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/RajanBhandari_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/rajanbhandari_cv.docx",
+              "rev": "639a881d2f9ea3ff27aa3",
+              "server_modified": "2025-07-11T14:55:55Z",
+              "size": 180704
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-07T19:37:29Z",
+              "content_hash": "85b50e657d24281c56b5e3d45f5aa2e2a253b42d9e0ab0031f9cc82f0821a4fd",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHUzQ",
+              "is_downloadable": true,
+              "name": "Amit_Pandey_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Amit_Pandey_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/amit_pandey_cv.docx",
+              "rev": "639a8810ebfe63ff27aa3",
+              "server_modified": "2025-07-11T14:55:42Z",
+              "size": 87006
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-01-07T14:49:27Z",
+              "content_hash": "09f7b79ff8edee1f9e06f65e2b0f914539a364086b25c42ca25acd061cf971f4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHgnQ",
+              "is_downloadable": true,
+              "name": "NitinDahale_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/NitinDahale_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/nitindahale_cv.docx",
+              "rev": "639a8824f9bdb3ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 28185
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-21T23:09:58Z",
+              "content_hash": "ebe7a9e0c7fc7a02958f3fd14ea610e09908b9cfa97b76b408b043d9268a7455",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHBJA",
+              "is_downloadable": true,
+              "name": "CV+150119.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV+150119.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv+150119.docx",
+              "rev": "639a880705f823ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 115518
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-08-21T23:56:38Z",
+              "content_hash": "fa7ae330daf585f89f9466725a503010ba7d9b5474208d29f39d18f803ada3fe",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG0yw",
+              "is_downloadable": true,
+              "name": "Arunava_Sarkar_BA_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Arunava_Sarkar_BA_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/arunava_sarkar_ba_cv.docx",
+              "rev": "639a880be6a0d3ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 50580
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T22:40:27Z",
+              "content_hash": "0b15c99391baebe470705bb8e40d15152bd06524233ee54f41d9460751ec83f7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzvA",
+              "is_downloadable": true,
+              "name": "CharlesCai_CV_EN20240731.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CharlesCai_CV_EN20240731.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/charlescai_cv_en20240731.docx",
+              "rev": "639a8818165243ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 75882
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-07T19:58:08Z",
+              "content_hash": "b1d2b63dbb7c67a0fb6a2f801ba9511d7de243eb00cace1f9752667bfea75867",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHUnw",
+              "is_downloadable": true,
+              "name": "CV-DevendraKhoker.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV-DevendraKhoker.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv-devendrakhoker.docx",
+              "rev": "639a880705fce3ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 34807
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-07-05T14:58:20Z",
+              "content_hash": "9496377c7f59b8431506091b85282975b0dffa32da6320f0319a82a3ef3b275f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHXhQ",
+              "is_downloadable": true,
+              "name": "djessamy_cv_functional5.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/djessamy_cv_functional5.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/djessamy_cv_functional5.docx",
+              "rev": "639a881fbdf2a3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 26296
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-03-07T20:22:10Z",
+              "content_hash": "69522cf439dba62a56c3ec78325849ca353d7bb025b31ba44a20f5d6907b283e",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHk_Q",
+              "is_downloadable": true,
+              "name": "Siddique_CV-Data-DB.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Siddique_CV-Data-DB.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/siddique_cv-data-db.docx",
+              "rev": "639a880965c453ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 154906
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-21T23:24:03Z",
+              "content_hash": "075d692b34e659f446b921e4d02dca5d5aa8d24771b472055cae32cffc62ae21",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHBUw",
+              "is_downloadable": true,
+              "name": "Aftab-IT-CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Aftab-IT-CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/aftab-it-cv.docx",
+              "rev": "639a881a83bb13ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 39249
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-02-07T15:44:52Z",
+              "content_hash": "7003e7846c6345a35fdd9d1e15c1dfb57621896420b1bf9eccb375354b2c66b6",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHjUw",
+              "is_downloadable": true,
+              "name": "Rakesh+Vekaria+-+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Rakesh+Vekaria+-+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/rakesh+vekaria+-+cv.docx",
+              "rev": "639a8822525cb3ff27aa3",
+              "server_modified": "2025-07-11T14:56:01Z",
+              "size": 61322
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-24T22:44:39Z",
+              "content_hash": "6415cd175ac8b1612699eb88fd00614069f2fe3e67293011400d9d173b63f157",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHCLQ",
+              "is_downloadable": true,
+              "name": "Steven Wildman CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Steven Wildman CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/steven wildman cv.docx",
+              "rev": "639a881fbdec33ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 26222
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-30T23:00:28Z",
+              "content_hash": "302cc359989df1daa2cd3eb591919506bbb0e961595a0aed195b959d6c31842c",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHC7w",
+              "is_downloadable": true,
+              "name": "Shravan-Divity_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Shravan-Divity_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/shravan-divity_cv-library.docx",
+              "rev": "639a880be6ad33ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 83835
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-02-27T11:41:47Z",
+              "content_hash": "3b933f56ef2680146f39c57e25570f5901e98b144d1a2fa6b1f6ab2a2a2ec42f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHkbA",
+              "is_downloadable": true,
+              "name": "Jamie Williams CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Jamie Williams CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/jamie williams cv.docx",
+              "rev": "639a880965c413ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 23429
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T11:14:33Z",
+              "content_hash": "4b3772b3b2ddfc56e95d0c0674d4678d672f76e7e6aa39bfeb09091d0a2c7a4e",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGevw",
+              "is_downloadable": true,
+              "name": "CV+latest+KP+(1) (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV+latest+KP+(1) (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv+latest+kp+(1) (1).docx",
+              "rev": "639a881a83a7e3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 30336
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T22:56:58Z",
+              "content_hash": "a758ad78ab73c8cc3dee7fef79ddb7c51f5cf9f02e5ed9c413001d1059d551fd",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGfdw",
+              "is_downloadable": true,
+              "name": "KuldeepPatil_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/KuldeepPatil_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/kuldeeppatil_cv.docx",
+              "rev": "639a881fbdd743ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 32769
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-08-07T22:40:35Z",
+              "content_hash": "0b15c99391baebe470705bb8e40d15152bd06524233ee54f41d9460751ec83f7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHzvg",
+              "is_downloadable": true,
+              "name": "CharlesCai_CV_EN20240731 (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CharlesCai_CV_EN20240731 (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/charlescai_cv_en20240731 (1).docx",
+              "rev": "639a880e553c33ff27aa3",
+              "server_modified": "2025-07-11T14:55:40Z",
+              "size": 75882
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-14T15:40:45Z",
+              "content_hash": "2bfd4b7f8701250d986b14f828cdcf55865edf4df8348328aa5a7c913b264fb7",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHCPQ",
+              "is_downloadable": true,
+              "name": "Andrew-Mason_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Andrew-Mason_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/andrew-mason_cv-library.docx",
+              "rev": "639a8810ebfa23ff27aa3",
+              "server_modified": "2025-07-11T14:55:42Z",
+              "size": 31071
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-12-07T17:32:28Z",
+              "content_hash": "6d9decac77ed1da6b70714367e3d7b60c5d197e6f3a77ab20483f3f169ec9f87",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHfvg",
+              "is_downloadable": true,
+              "name": "CV_UK_permanent.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_UK_permanent.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_uk_permanent.docx",
+              "rev": "639a8818163fb3ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 26098
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-11-07T14:54:21Z",
+              "content_hash": "80c6cadf7607b242ff7c9e5ec5970f3ab71f3a2c0e7d2c26cf595d87f74122fe",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHeBw",
+              "is_downloadable": true,
+              "name": "Indhu+Chandhrasekaran+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Indhu+Chandhrasekaran+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/indhu+chandhrasekaran+cv.docx",
+              "rev": "639a8824f9bcc3ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 32688
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-07T20:05:37Z",
+              "content_hash": "c9b1441ac18137652150cc4f819295b90bfbd1a578d00f4a649bd78e435a7a22",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHUmg",
+              "is_downloadable": true,
+              "name": "Chenna_ServerSide_CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Chenna_ServerSide_CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/chenna_serverside_cv.docx",
+              "rev": "639a880be6b173ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 35766
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-22T12:16:43Z",
+              "content_hash": "8803d181a5605636e66df68f436bc072e8e5530441498bd4739de4c0f6226dd9",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG9SQ",
+              "is_downloadable": true,
+              "name": "Isha+Keymist+CV+August+2022.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Isha+Keymist+CV+August+2022.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/isha+keymist+cv+august+2022.docx",
+              "rev": "639a8824f9b403ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 49395
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-07-03T04:51:24Z",
+              "content_hash": "bf53afce35590fa5fbaf888e7e66b11601e7fe4ab9f127435c5e8e39bcdabdd0",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHwcw",
+              "is_downloadable": true,
+              "name": "cv_imtiaz_07052024_fullstack.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/cv_imtiaz_07052024_fullstack.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_imtiaz_07052024_fullstack.docx",
+              "rev": "639a8818164f43ff27aa3",
+              "server_modified": "2025-07-11T14:55:50Z",
+              "size": 28660
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-21T23:09:43Z",
+              "content_hash": "93388ac915c24be5fa3ad5dd9ccdbc2ea1252b296ba0eb365528b1354fb2a4d4",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHBKg",
+              "is_downloadable": true,
+              "name": "PradeepSrinivasagam_CV.doc.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/PradeepSrinivasagam_CV.doc.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/pradeepsrinivasagam_cv.doc.docx",
+              "rev": "639a8810ebf9c3ff27aa3",
+              "server_modified": "2025-07-11T14:55:42Z",
+              "size": 44476
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-21T23:09:37Z",
+              "content_hash": "48154aed271c3ba95c3ecfcc30aae2352bae776e11b861b796517208c107e335",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHGOg",
+              "is_downloadable": true,
+              "name": "CV_English_New.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_English_New.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_english_new.docx",
+              "rev": "639a880be6af23ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 26819
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-24T21:59:56Z",
+              "content_hash": "2a3ea91af5578e822f43fa8263ba2b4bd30317972be207511b9e56f2aca29c72",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHCJw",
+              "is_downloadable": true,
+              "name": "Ram Suriya_20215818_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Ram Suriya_20215818_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/ram suriya_20215818_cv-library.docx",
+              "rev": "639a881a83bb63ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 31023
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-01-16T11:55:57Z",
+              "content_hash": "75ecee831568928b112908c6608990d2469d73b615db061ee0f4c40a30812325",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHiEg",
+              "is_downloadable": true,
+              "name": "Nilesh-Patel_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Nilesh-Patel_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/nilesh-patel_cv-library.docx",
+              "rev": "639a881d2f9ee3ff27aa3",
+              "server_modified": "2025-07-11T14:55:55Z",
+              "size": 27635
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-10-25T13:36:59Z",
+              "content_hash": "db14e252c969748f1251273f2280cb0993fe27ad89f411f2cac5efdb6eecfe4f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAG93Q",
+              "is_downloadable": true,
+              "name": "Andrzej_MikolajczykCV202207.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Andrzej_MikolajczykCV202207.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/andrzej_mikolajczykcv202207.docx",
+              "rev": "639a880705f463ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 32000
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T08:09:06Z",
+              "content_hash": "2090861ffc9b0a134ee8db1a370a15c375f3a335a53968c255b6bfea6d721e93",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGeeQ",
+              "is_downloadable": true,
+              "name": "CV_JobChung_20210606.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_JobChung_20210606.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_jobchung_20210606.docx",
+              "rev": "639a880705e2c3ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 22468
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-03-07T20:37:06Z",
+              "content_hash": "767b3448ab62d1af441b211d8123b146712f8d5a502fd2754932de2312134ffa",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHlEA",
+              "is_downloadable": true,
+              "name": "CV+Victoria+Van+Praagh.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV+Victoria+Van+Praagh.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv+victoria+van+praagh.docx",
+              "rev": "639a880965c433ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 36328
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T23:36:18Z",
+              "content_hash": "a758ad78ab73c8cc3dee7fef79ddb7c51f5cf9f02e5ed9c413001d1059d551fd",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGfng",
+              "is_downloadable": true,
+              "name": "KuldeepPatil_CV (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/KuldeepPatil_CV (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/kuldeeppatil_cv (1).docx",
+              "rev": "639a881fbdd813ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 32769
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-08T14:09:19Z",
+              "content_hash": "fcba3139547663e655efc3416b4a4def06b270791a8edefbfc03d0d2523eee0d",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHD4A",
+              "is_downloadable": true,
+              "name": "Srinidh-R_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Srinidh-R_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/srinidh-r_cv-library.docx",
+              "rev": "639a881a83bbb3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 45617
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-01-10T17:35:42Z",
+              "content_hash": "ce89e34cd54142347bdb2dfcd48153d5917459c6e16737400977b955f5b3c29c",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHhRg",
+              "is_downloadable": true,
+              "name": "Stephen+Leonard+CV+Jun23.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Stephen+Leonard+CV+Jun23.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/stephen+leonard+cv+jun23.docx",
+              "rev": "639a880965c1f3ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 39958
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2024-03-25T14:40:00Z",
+              "content_hash": "3323c192cfb537f7a1c0b874fe0c427c26ec6107589ecd30c41cfceac5c1399f",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHmfg",
+              "is_downloadable": true,
+              "name": "Ashwin_Pawar_CV_Jan_2024.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Ashwin_Pawar_CV_Jan_2024.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/ashwin_pawar_cv_jan_2024.docx",
+              "rev": "639a880965c613ff27aa3",
+              "server_modified": "2025-07-11T14:55:34Z",
+              "size": 45709
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T10:02:21Z",
+              "content_hash": "d753714baabce8e2c013f34570c9e08938a0401b190e10591e6d1dbccc498f57",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGe6g",
+              "is_downloadable": true,
+              "name": "CV_NikiMimikou (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_NikiMimikou (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_nikimimikou (1).docx",
+              "rev": "639a880be696e3ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 35881
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-06-23T12:44:19Z",
+              "content_hash": "87ad6b640cb87ad1cded8c106d728498b442af19dc5b23518b328bb99c45a43d",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGpeg",
+              "is_downloadable": true,
+              "name": "Ian+Francis+-+CV.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Ian+Francis+-+CV.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/ian+francis+-+cv.docx",
+              "rev": "639a880705e9f3ff27aa3",
+              "server_modified": "2025-07-11T14:55:32Z",
+              "size": 22244
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-04-27T11:27:15Z",
+              "content_hash": "fc460b466dc1f29d1e14cc0ecac62b4cffb344a0c9934416d5f0f7130f139cb2",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGaGg",
+              "is_downloadable": true,
+              "name": "Richard Link_23906256_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Richard Link_23906256_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/richard link_23906256_cv-library.docx",
+              "rev": "639a880be69493ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 44471
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-02-15T17:21:49Z",
+              "content_hash": "e0ca942ec3e8d19a272ba995490bc322cb01514911b2cdb9641425e6f757a01a",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHLlQ",
+              "is_downloadable": true,
+              "name": "ranjith mudupu_24946276_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/ranjith mudupu_24946276_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/ranjith mudupu_24946276_cv-library.docx",
+              "rev": "639a8824f9b803ff27aa3",
+              "server_modified": "2025-07-11T14:56:03Z",
+              "size": 44942
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-04-27T11:32:49Z",
+              "content_hash": "46bba1b2ff2f501518894d5e1a592560f258f465721f48e0bf2f4528d5e508ff",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGaLQ",
+              "is_downloadable": true,
+              "name": "Giridhar Injam_23883848_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Giridhar Injam_23883848_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/giridhar injam_23883848_cv-library.docx",
+              "rev": "639a880be69483ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 83407
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-20T22:33:36Z",
+              "content_hash": "65eac60d0c2fb82ffa3653fda2b996da037fd0b3b247e80f870e87d651f38629",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGfMw",
+              "is_downloadable": true,
+              "name": "CV_Mohamad-Behery_5.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/CV_Mohamad-Behery_5.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/cv_mohamad-behery_5.docx",
+              "rev": "639a881fbdd6f3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 29727
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2023-06-07T13:28:46Z",
+              "content_hash": "4882307d1a9832eb04f0fd500ba4c514a61e61d27e5fa1778ff281a7089c2b29",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHUgg",
+              "is_downloadable": true,
+              "name": "Minesh Kanani_22963969_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Minesh Kanani_22963969_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/minesh kanani_22963969_cv-library.docx",
+              "rev": "639a881fbdefa3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 42815
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-24T07:29:15Z",
+              "content_hash": "8e08a982e52f75c0bb72c092d7c29232cf6d71a7cb244aff10f63263ac44cc3a",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGglQ",
+              "is_downloadable": true,
+              "name": "Adam+Chan+CV (1).docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Adam+Chan+CV (1).docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/adam+chan+cv (1).docx",
+              "rev": "639a881fbdd8e3ff27aa3",
+              "server_modified": "2025-07-11T14:55:58Z",
+              "size": 22648
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-11-16T14:21:49Z",
+              "content_hash": "9410f0ca54c221c0897a9316ab8ed5e90cf85f0387ca9f9fdd4821200166c485",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHAVw",
+              "is_downloadable": true,
+              "name": "Daniel-Blandford_22876860_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Daniel-Blandford_22876860_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/daniel-blandford_22876860_cv-library.docx",
+              "rev": "639a881a83b923ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 45100
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-12-08T14:48:14Z",
+              "content_hash": "04594ab8ed7992cb5ae73be184adfad292c08f54cc46d2401eec0d6380d7b2ab",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAHD5g",
+              "is_downloadable": true,
+              "name": "Harishbabu D_24909493_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Harishbabu D_24909493_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/harishbabu d_24909493_cv-library.docx",
+              "rev": "639a881a83bbc3ff27aa3",
+              "server_modified": "2025-07-11T14:55:52Z",
+              "size": 41333
+            }
+          }
+        },
+        {
+          "highlight_spans": [],
+          "match_type": {
+            ".tag": "filename_and_content"
+          },
+          "metadata": {
+            ".tag": "metadata",
+            "metadata": {
+              ".tag": "file",
+              "client_modified": "2022-05-04T01:57:32Z",
+              "content_hash": "1df38a25a7df36e0e6f013096772f0f87b094cddec72514c0184fb6477408988",
+              "file_owner_team_encrypted_id": "dbtid:AACTXQ5GJ7RKGE8LuYfXTqseLqXRSMszmK4",
+              "id": "id:tdOCGswI9PAAAAAAAAGbPg",
+              "is_downloadable": true,
+              "name": "Madhu Bokka_23744658_cv-library.docx",
+              "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/##############ACHTUNG! in RFL!/Madhu Bokka_23744658_cv-library.docx",
+              "path_lower": "/### big bad cv archive inc. rfl/##############achtung! in rfl!/madhu bokka_23744658_cv-library.docx",
+              "rev": "639a880be69443ff27aa3",
+              "server_modified": "2025-07-11T14:55:37Z",
+              "size": 34980
+            }
+          }
+        }
+      ]
+    }
+  }
+}

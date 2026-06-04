@@ -22,9 +22,12 @@ from backend.db.resume_extraction_persistence import (
     _combine_reconciliation_decisions,
     _find_document_linked_entity_id,
     _find_existing_resume_document_id,
+    _refresh_current_resume_links,
     _resolve_person_reconciliation,
+    _upsert_candidate_with_reconciliation,
     _upsert_reconciliation_decision,
     _upsert_person,
+    _upsert_resume_document,
     persist_jobadder_candidate_profile_snapshot,
     persist_resume_extraction_snapshot,
 )
@@ -195,6 +198,94 @@ def test_find_document_linked_entity_id_reads_existing_candidate_link() -> None:
     )
 
     assert candidate_id == candidate_uuid
+
+
+def test_upsert_resume_document_persists_resume_updated_at() -> None:
+    """
+    Verify that canonical resume documents keep the upstream resume timestamp.
+    """
+
+    mock_cursor = MagicMock()
+    document_uuid = uuid4()
+    mock_cursor.fetchone.side_effect = [None, None, {"id": document_uuid}]
+
+    document_id = _upsert_resume_document(
+        mock_cursor,
+        source_record_id="resume-source-1",
+        resume_title="Roger-Campbell-CV.pdf",
+        resume_updated_at="2026-05-11T12:00:00Z",
+        mime_type="application/pdf",
+        source_uri="dropbox://resume.pdf",
+        content_hash="resume-content-hash",
+        extracted_text="Resume body",
+    )
+
+    assert document_id == document_uuid
+    insert_sql = mock_cursor.execute.call_args_list[2].args[0]
+    insert_payload = mock_cursor.execute.call_args_list[2].args[1]
+    assert "resume_updated_at" in insert_sql
+    assert insert_payload["resume_updated_at"] == "2026-05-11T12:00:00Z"
+
+
+def test_upsert_candidate_with_reconciliation_keeps_latest_resume_timestamp() -> None:
+    """
+    Verify that candidate resume timestamps never move backwards.
+    """
+
+    mock_cursor = MagicMock()
+
+    with patch(
+        "backend.db.resume_extraction_persistence._resolve_candidate_reconciliation",
+        return_value={
+            "decision_status": "auto_matched",
+            "decision_reason": "person_unique_candidate",
+            "confidence": 0.95,
+            "matched_candidate_id": "candidate-1",
+        },
+    ):
+        candidate_id, resolution = _upsert_candidate_with_reconciliation(
+            mock_cursor,
+            source_record_id="source-record-1",
+            person_id="person-1",
+            current_title="Software Engineer",
+            current_company_id=None,
+            candidate_status="Active",
+            availability_status=None,
+            last_contacted_at=None,
+            resume_updated_at="2026-05-11T12:00:00Z",
+        )
+
+    assert candidate_id == "candidate-1"
+    assert resolution["decision_status"] == "auto_matched"
+    update_sql = mock_cursor.execute.call_args.args[0]
+    assert "greatest(%(resume_updated_at)s::timestamptz, resume_updated_at)" in update_sql
+
+
+def test_refresh_current_resume_links_prefers_latest_document() -> None:
+    """
+    Verify that the newest known resume document becomes `current_resume`.
+    """
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        {"document_id": "document-new"},
+        None,
+        None,
+    ]
+
+    current_document_id = _refresh_current_resume_links(
+        mock_cursor,
+        candidate_id="candidate-1",
+        person_id="person-1",
+        source_record_id="resume-source-1",
+    )
+
+    assert current_document_id == "document-new"
+    executed_sql = "\n".join(
+        str(call.args[0]) for call in mock_cursor.execute.call_args_list
+    )
+    assert "relationship_type = 'current_resume'" in executed_sql
+    assert "delete from document_links" in executed_sql
 
 
 def test_upsert_person_reuses_primary_phone_match() -> None:

@@ -54,6 +54,7 @@ import httpx
 
 DROPBOX_GET_CURRENT_ACCOUNT_URL = "https://api.dropboxapi.com/2/users/get_current_account"
 DROPBOX_LIST_FOLDER_URL = "https://api.dropboxapi.com/2/files/list_folder"
+DROPBOX_LIST_FOLDER_CONTINUE_URL = "https://api.dropboxapi.com/2/files/list_folder/continue"
 DROPBOX_CREATE_FOLDER_URL = "https://api.dropboxapi.com/2/files/create_folder_v2"
 DROPBOX_DOWNLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/download"
 DROPBOX_UPLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/upload"
@@ -298,6 +299,68 @@ def fetch_dropbox_list_folder(
         "cursor": payload.get("cursor"),
         "has_more": bool(payload.get("has_more")),
         "endpoint_url": DROPBOX_LIST_FOLDER_URL,
+        "raw_payload": payload,
+    }
+
+
+def fetch_dropbox_list_folder_continue(
+    *,
+    access_token: str,
+    cursor: str,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch the next page of a Dropbox folder listing using a prior cursor.
+
+    Parameters
+    ----------
+    access_token : str
+        Dropbox OAuth access token to use for the read.
+
+    cursor : str
+        Dropbox folder-list cursor returned by an earlier page.
+
+    timeout_seconds : float
+        HTTP timeout used for the provider request.
+
+    Returns
+    -------
+    dict[str, Any]
+        Normalized folder page containing:
+
+        - `entry_count`
+        - `entries`
+        - `cursor`
+        - `has_more`
+        - `endpoint_url`
+        - `raw_payload`
+    """
+
+    cleaned_cursor = cursor.strip()
+    if cleaned_cursor == "":
+        raise DropboxApiError(
+            "Dropbox folder listing cursor cannot be empty.",
+            endpoint_url=DROPBOX_LIST_FOLDER_CONTINUE_URL,
+            request_payload={"cursor": cursor},
+        )
+
+    payload = _post_to_dropbox_api(
+        endpoint_url=DROPBOX_LIST_FOLDER_CONTINUE_URL,
+        access_token=access_token,
+        json_payload={"cursor": cleaned_cursor},
+        timeout_seconds=timeout_seconds,
+        provider_failure_message="Dropbox folder continuation failed.",
+    )
+
+    raw_entries = payload.get("entries")
+    entries = raw_entries if isinstance(raw_entries, list) else []
+
+    return {
+        "entry_count": len(entries),
+        "entries": entries,
+        "cursor": payload.get("cursor"),
+        "has_more": bool(payload.get("has_more")),
+        "endpoint_url": DROPBOX_LIST_FOLDER_CONTINUE_URL,
         "raw_payload": payload,
     }
 
@@ -926,11 +989,13 @@ __all__ = [
     "DROPBOX_DOWNLOAD_FILE_URL",
     "DROPBOX_GET_CURRENT_ACCOUNT_URL",
     "DROPBOX_LIST_FOLDER_URL",
+    "DROPBOX_LIST_FOLDER_CONTINUE_URL",
     "DROPBOX_UPLOAD_FILE_URL",
     "DropboxApiError",
     "ensure_dropbox_folder",
     "download_dropbox_file",
     "fetch_dropbox_current_account",
+    "fetch_dropbox_list_folder_continue",
     "fetch_dropbox_list_folder",
     "upload_dropbox_file",
 ]

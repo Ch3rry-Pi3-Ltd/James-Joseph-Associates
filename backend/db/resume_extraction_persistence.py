@@ -78,6 +78,9 @@ SourceRecordType = Literal[
     "jobadder_candidate_profile_only",
     "jobadder_resume_attachment",
     "jobadder_resume_extraction",
+    "dropbox_candidate_file",
+    "dropbox_resume_attachment",
+    "dropbox_resume_extraction",
     "recruiterflow_candidate",
     "recruiterflow_resume_attachment",
     "recruiterflow_resume_extraction",
@@ -280,6 +283,7 @@ def persist_resume_extraction_snapshot(
                     cursor,
                     source_record_id=resume_source_record["id"],
                     resume_title=(latest_resume or {}).get("file_name"),
+                    resume_updated_at=persistence_payload.get("resume_updated_at"),
                     mime_type=(latest_resume or {}).get("mime_type"),
                     source_uri=persistence_payload.get("resume_source_uri"),
                     content_hash=persistence_payload.get("resume_content_hash"),
@@ -369,6 +373,16 @@ def persist_resume_extraction_snapshot(
                     if resume_source_record is not None
                     else None,
                 )
+                current_resume_document_id = _refresh_current_resume_links(
+                    cursor,
+                    candidate_id=candidate_id,
+                    person_id=person_id,
+                    source_record_id=resume_source_record["id"]
+                    if resume_source_record is not None
+                    else None,
+                )
+            else:
+                current_resume_document_id = None
 
             reconciliation_decision = _upsert_reconciliation_decision(
                 cursor,
@@ -408,6 +422,7 @@ def persist_resume_extraction_snapshot(
             "candidate_id": candidate_id,
             "current_company_id": current_company_id,
             "document_id": document_id,
+            "current_resume_document_id": current_resume_document_id,
             "candidate_source_record_id": candidate_source_record["id"],
             "resume_source_record_id": (
                 resume_source_record["id"] if resume_source_record is not None else None
@@ -711,6 +726,8 @@ def _get_candidate_source_record_type(*, source_system: str) -> SourceRecordType
 
     if source_system == "jobadder":
         return "jobadder_candidate_snapshot"
+    if source_system == "dropbox":
+        return "dropbox_candidate_file"
     if source_system == "recruiterflow":
         return "recruiterflow_candidate"
     raise RuntimeError(f"Unsupported source system for candidate persistence: {source_system}")
@@ -723,6 +740,8 @@ def _get_resume_source_record_type(*, source_system: str) -> SourceRecordType:
 
     if source_system == "jobadder":
         return "jobadder_resume_attachment"
+    if source_system == "dropbox":
+        return "dropbox_resume_attachment"
     if source_system == "recruiterflow":
         return "recruiterflow_resume_attachment"
     raise RuntimeError(f"Unsupported source system for resume persistence: {source_system}")
@@ -735,6 +754,8 @@ def _get_extraction_source_record_type(*, source_system: str) -> SourceRecordTyp
 
     if source_system == "jobadder":
         return "jobadder_resume_extraction"
+    if source_system == "dropbox":
+        return "dropbox_resume_extraction"
     if source_system == "recruiterflow":
         return "recruiterflow_resume_extraction"
     raise RuntimeError(f"Unsupported source system for extraction persistence: {source_system}")
@@ -1098,10 +1119,11 @@ def _upsert_candidate_with_reconciliation(
                 %(last_contacted_at)s,
                 last_contacted_at
             ),
-            resume_updated_at = coalesce(
-                %(resume_updated_at)s,
-                resume_updated_at
-            )
+            resume_updated_at = case
+                when %(resume_updated_at)s::timestamptz is null then resume_updated_at
+                when resume_updated_at is null then %(resume_updated_at)s::timestamptz
+                else greatest(%(resume_updated_at)s::timestamptz, resume_updated_at)
+            end
         where id = %(candidate_id)s
         """,
         {
@@ -1358,6 +1380,7 @@ def _upsert_resume_document(
     *,
     source_record_id: str,
     resume_title: str | None,
+    resume_updated_at: str | None,
     mime_type: str | None,
     source_uri: str | None,
     content_hash: str | None,
@@ -1393,6 +1416,7 @@ def _upsert_resume_document(
             insert into documents (
                 document_type,
                 title,
+                resume_updated_at,
                 source_uri,
                 mime_type,
                 content_hash,
@@ -1401,6 +1425,7 @@ def _upsert_resume_document(
             values (
                 'resume',
                 %(title)s,
+                %(resume_updated_at)s,
                 %(source_uri)s,
                 %(mime_type)s,
                 %(content_hash)s,
@@ -1410,6 +1435,7 @@ def _upsert_resume_document(
             """,
             {
                 "title": resume_title,
+                "resume_updated_at": resume_updated_at,
                 "source_uri": source_uri,
                 "mime_type": mime_type,
                 "content_hash": content_hash,
@@ -1426,6 +1452,14 @@ def _upsert_resume_document(
         update documents
         set
             title = coalesce(%(title)s, title),
+            resume_updated_at = case
+                when %(resume_updated_at)s::timestamptz is null then resume_updated_at
+                when resume_updated_at is null then %(resume_updated_at)s::timestamptz
+                else greatest(
+                    %(resume_updated_at)s::timestamptz,
+                    resume_updated_at
+                )
+            end,
             source_uri = coalesce(%(source_uri)s, source_uri),
             mime_type = coalesce(%(mime_type)s, mime_type),
             content_hash = coalesce(%(content_hash)s, content_hash),
@@ -1435,6 +1469,7 @@ def _upsert_resume_document(
         {
             "document_id": existing_document_id,
             "title": resume_title,
+            "resume_updated_at": resume_updated_at,
             "source_uri": source_uri,
             "mime_type": mime_type,
             "content_hash": content_hash,
@@ -2449,6 +2484,117 @@ def _ensure_document_link(
             "relationship_type": relationship_type,
         },
     )
+
+
+def _refresh_current_resume_links(
+    cursor: Cursor[Any],
+    *,
+    candidate_id: str,
+    person_id: str,
+    source_record_id: str | None,
+) -> str | None:
+    """
+    Maintain one preferred/current resume document link per candidate/person.
+
+    Notes
+    -----
+    Candidates can legitimately accumulate several resume documents over time.
+    We keep that history through ordinary `relationship_type='resume'` links,
+    then expose the newest known CV explicitly through
+    `relationship_type='current_resume'`.
+
+    Resume recency is derived first from linked resume attachment source
+    records (`source_payload.latest_resume.created_at`). If that timestamp is
+    missing, the helper falls back to canonical document and link timestamps so
+    the current-document choice still stays deterministic.
+    """
+
+    cursor.execute(
+        """
+        with ranked_resume_documents as (
+            select
+                dl.document_id,
+                max(d.resume_updated_at) as stored_resume_updated_at,
+                max(
+                    nullif(
+                        sr.source_payload -> 'latest_resume' ->> 'created_at',
+                        ''
+                    )::timestamptz
+                ) as latest_resume_updated_at,
+                max(d.updated_at) as latest_document_updated_at,
+                max(d.created_at) as latest_document_created_at,
+                max(dl.created_at) as latest_link_created_at
+            from document_links dl
+            join documents d
+              on d.id = dl.document_id
+            left join source_record_links srl
+              on srl.document_id = dl.document_id
+            left join source_records sr
+              on sr.id = srl.source_record_id
+            where dl.candidate_id = %(candidate_id)s
+              and dl.relationship_type = 'resume'
+            group by dl.document_id
+        )
+        select document_id
+        from ranked_resume_documents
+        order by
+            stored_resume_updated_at desc nulls last,
+            latest_resume_updated_at desc nulls last,
+            latest_document_updated_at desc nulls last,
+            latest_document_created_at desc nulls last,
+            latest_link_created_at desc nulls last,
+            document_id desc
+        limit 1
+        """,
+        {"candidate_id": candidate_id},
+    )
+    row = cursor.fetchone()
+    if row is None:
+        return None
+
+    current_resume_document_id = row["document_id"]
+
+    cursor.execute(
+        """
+        delete from document_links
+        where candidate_id = %(candidate_id)s
+          and relationship_type = 'current_resume'
+          and document_id <> %(document_id)s
+        """,
+        {
+            "candidate_id": candidate_id,
+            "document_id": current_resume_document_id,
+        },
+    )
+    cursor.execute(
+        """
+        delete from document_links
+        where person_id = %(person_id)s
+          and relationship_type = 'current_resume'
+          and document_id <> %(document_id)s
+        """,
+        {
+            "person_id": person_id,
+            "document_id": current_resume_document_id,
+        },
+    )
+
+    _ensure_document_link(
+        cursor,
+        document_id=current_resume_document_id,
+        candidate_id=candidate_id,
+        relationship_type="current_resume",
+        source_record_id=source_record_id,
+    )
+    _ensure_document_link(
+        cursor,
+        document_id=current_resume_document_id,
+        person_id=person_id,
+        relationship_type="current_resume",
+        source_record_id=source_record_id,
+    )
+
+    return current_resume_document_id
 
 
 def _pick_single_entity_target(

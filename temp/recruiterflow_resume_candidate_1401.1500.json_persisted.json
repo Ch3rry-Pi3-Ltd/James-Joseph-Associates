@@ -1,35 +1,287 @@
 {
-  "persisted_at": "2026-05-29T14:33:31.596989+00:00",
+  "persisted_at": "2026-06-01T21:40:13.264950+00:00",
+  "run_started_at": "2026-06-01T21:29:27.232988+00:00",
+  "run_complete": true,
   "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
   "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
   "candidate_member_name": "candidate/1401.1500.json",
   "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
   "persisted_resume_limit": 20,
   "force_reprocess": false,
-  "candidate_count": 20,
-  "selected_resume_candidate_count": 20,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
   "no_resume_selected_count": 0,
-  "already_processed_count": 19,
-  "new_resume_candidate_count": 1,
-  "persisted_resume_count": 1,
-  "accepted_resume_count": 1,
-  "non_pass_count": 0,
-  "skipped_count": 19,
+  "already_processed_count": 87,
+  "new_resume_candidate_count": 13,
+  "persisted_resume_count": 13,
+  "accepted_resume_count": 12,
+  "non_pass_count": 1,
+  "skipped_count": 87,
   "unsupported_count": 0,
   "failed_count": 0,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 19.7442,
+    "embedded_member_lookup_seconds": 0.0608,
+    "resume_text_extraction_seconds": 1.2539,
+    "structured_resume_seconds": 594.4051,
+    "total_candidate_seconds": 615.4814
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.1974,
+    "embedded_member_lookup_seconds": 0.0006,
+    "resume_text_extraction_seconds": 0.0125,
+    "structured_resume_seconds": 5.9441,
+    "total_candidate_seconds": 6.1548
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 3444,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.2357,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2358
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 3443,
+      "status": "skipped",
+      "file_name": "Terry Watt CV Feb 2024.docx",
+      "skip_lookup_seconds": 0.1779,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.178
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 3442,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.1768,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1769
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 3441,
+      "status": "skipped",
+      "file_name": "Jamie Williams CV.docx",
+      "skip_lookup_seconds": 0.1842,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1843
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 3440,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.2011,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2011
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 3439,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.1876,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1877
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 3438,
+      "status": "skipped",
+      "file_name": "Dmitry Pisklov.pdf",
+      "skip_lookup_seconds": 0.1866,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1866
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 3437,
+      "status": "skipped",
+      "file_name": "Justin Kutlusan.pdf",
+      "skip_lookup_seconds": 0.189,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1891
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 3436,
+      "status": "skipped",
+      "file_name": "Hari_Sarasan_resume_13022024.docx",
+      "skip_lookup_seconds": 0.1955,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1956
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 3435,
+      "status": "skipped",
+      "file_name": "Amir Sadiq.pdf",
+      "skip_lookup_seconds": 0.1901,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1901
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 3434,
+      "status": "skipped",
+      "file_name": "Asad Hussain Quant Dev CV.pdf",
+      "skip_lookup_seconds": 0.1779,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1779
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 3433,
+      "status": "skipped",
+      "file_name": "Profile.pdf",
+      "skip_lookup_seconds": 0.1957,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1958
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 3432,
+      "status": "skipped",
+      "file_name": "olumide+akanbi+cv.pdf",
+      "skip_lookup_seconds": 0.1937,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1938
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 3431,
+      "status": "skipped",
+      "file_name": "Kush+Raval+SW.pdf",
+      "skip_lookup_seconds": 0.1843,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1843
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 3430,
+      "status": "skipped",
+      "file_name": "CV-Niansheng-Liu.pdf",
+      "skip_lookup_seconds": 0.1908,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1909
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 3429,
+      "status": "skipped",
+      "file_name": "Callum_Barry_CV.pdf",
+      "skip_lookup_seconds": 0.2098,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2098
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 3428,
+      "status": "skipped",
+      "file_name": "Sanjay+Lalwani.pdf",
+      "skip_lookup_seconds": 0.2019,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.202
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 3427,
+      "status": "skipped",
+      "file_name": "Peter+Manoharan+-+Technical+Architect.pdf",
+      "skip_lookup_seconds": 0.1901,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1902
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 3426,
+      "status": "skipped",
+      "file_name": "PAUL ONWUGBENU_CV.pdf",
+      "skip_lookup_seconds": 0.1881,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1881
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 3425,
+      "status": "skipped",
+      "file_name": "Muhamed+Rafi.docx",
+      "skip_lookup_seconds": 0.1857,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1858
+    }
+  ],
   "persisted_resume_preview": [
     {
-      "persisted_at": "2026-05-29T14:33:23.471950+00:00",
-      "person_id": "b7d839aa-2a01-4258-bb02-f374a0a58b95",
-      "candidate_id": "8dfcd705-048c-4db4-9f4a-0e616d55ebfc",
-      "current_company_id": "030eb506-88e1-412a-b1e4-580c3f1c8172",
-      "document_id": "f87fb46e-bf30-40ac-8f77-8a3a8de69b81",
-      "candidate_source_record_id": "69cae6db-4376-420c-90f1-bd93c6525676",
-      "resume_source_record_id": "a6638b76-250c-4596-aa1b-480715cc62bb",
-      "extraction_source_record_id": "89881f2f-5a66-4a5b-bca0-e08b86489392",
-      "candidate_skill_count": 104,
+      "persisted_at": "2026-06-01T21:31:42.605533+00:00",
+      "person_id": "5d75c149-87b8-4e10-b55e-d04fd673484a",
+      "candidate_id": "df997681-3ad4-4835-912e-389f99826f8f",
+      "current_company_id": "b0ebce16-3092-4ca1-a0d3-33b99e20ebd1",
+      "document_id": "e3339227-fe9f-49fc-9aec-b067621aa493",
+      "candidate_source_record_id": "21fa04e2-2e9d-4a04-ad01-9b3c04b7143b",
+      "resume_source_record_id": "8f533443-2c56-4edb-9933-ab444d39397d",
+      "extraction_source_record_id": "12c50107-5143-4694-a856-7b1b1e5485e9",
+      "candidate_skill_count": 53,
       "candidate_note_interaction_count": 0,
-      "reconciliation_decision_id": "993f325e-a24f-4c88-9905-e9a0727cf3c6",
+      "reconciliation_decision_id": "66066d2f-3c9b-49c0-8921-7563088cf890",
       "reconciliation_status": "created_new",
       "quality_status": "pass",
       "model_name": "gpt-4.1-mini",
@@ -48,14 +300,14 @@
             "resume_email_count": 1,
             "resume_phone_count": 1,
             "resume_emails": [
-              "sadiq_amir@yahoo.com"
+              "oom207239@gmail.com"
             ],
             "resume_phones": [
-              "07796175630"
+              "+234 814 252 1002"
             ],
             "has_experience_section": true,
             "has_education_section": true,
-            "has_skills_section": false,
+            "has_skills_section": true,
             "has_certifications_section": false,
             "has_projects_section": true,
             "resume_contains_bp": false
@@ -65,12 +317,12 @@
             "has_current_title": true,
             "email_count": 1,
             "phone_count": 1,
-            "employment_history_count": 8,
-            "projects_count": 5,
+            "employment_history_count": 7,
+            "projects_count": 7,
             "education_count": 4,
             "evidence_notes_count": 6,
-            "skills_count": 11,
-            "tools_and_platforms_count": 93,
+            "skills_count": 29,
+            "tools_and_platforms_count": 24,
             "certifications_count": 1,
             "empty_project_detail_count": 0,
             "duplicate_skill_count": 0,
@@ -86,13 +338,899 @@
             "resume_email_count": 1,
             "resume_phone_count": 1,
             "resume_emails": [
-              "sadiq_amir@yahoo.com"
+              "oom207239@gmail.com"
             ],
             "resume_phones": [
-              "07796175630"
+              "+234 814 252 1002"
             ],
             "has_experience_section": true,
             "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 7,
+            "education_count": 4,
+            "evidence_notes_count": 6,
+            "skills_count": 29,
+            "tools_and_platforms_count": 24,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:32:15.497876+00:00",
+      "person_id": "f802d07f-7119-401e-a705-c870891b2a0b",
+      "candidate_id": "f3d04833-69c3-4b1e-b726-8e8b18bdcede",
+      "current_company_id": "77e1aeaf-ca48-46d1-85a8-e958512af425",
+      "document_id": "5ffb41ad-fdf1-4518-9d8a-e64507a32c63",
+      "candidate_source_record_id": "dc27ba8e-b1f1-4583-b912-1c3ba0ef15ec",
+      "resume_source_record_id": "09c2c665-891f-413e-a135-60a2c68e22b2",
+      "extraction_source_record_id": "f52a6db2-f359-4113-ad85-f1e7f8c955b3",
+      "candidate_skill_count": 64,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "a92d68b2-67f1-46c2-9c17-afe02f62cc19",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "maria.munoz.pardo@gmail.com"
+            ],
+            "resume_phones": [
+              "07851 468 817"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 4,
+            "education_count": 6,
+            "evidence_notes_count": 8,
+            "skills_count": 28,
+            "tools_and_platforms_count": 36,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "maria.munoz.pardo@gmail.com"
+            ],
+            "resume_phones": [
+              "07851 468 817"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 4,
+            "education_count": 6,
+            "evidence_notes_count": 8,
+            "skills_count": 28,
+            "tools_and_platforms_count": 36,
+            "certifications_count": 6,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:33:58.108870+00:00",
+      "person_id": "1da75207-3c94-412e-a5a3-5c3b4fdab5a3",
+      "candidate_id": "edefb6c8-7baf-49de-ac57-a83b801dcaa0",
+      "current_company_id": null,
+      "document_id": "85d933c9-b2a3-490b-b697-f5b6e249be31",
+      "candidate_source_record_id": "1180658f-a6b1-4512-a3cf-774d882854a6",
+      "resume_source_record_id": "96a84880-07b0-4a75-800d-1c563b1ad057",
+      "extraction_source_record_id": "a06349e8-bd7e-48a0-8c98-e889fb7193f2",
+      "candidate_skill_count": 54,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "180ce921-5b71-47c0-8816-9e50bea9cadb",
+      "reconciliation_status": "created_new",
+      "quality_status": "rerun",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 48,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": true,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 48,
+          "status": "rerun",
+          "reasons": [
+            "missing_current_employer_and_title",
+            "email_count_lower_than_resume_hint",
+            "phone_count_lower_than_resume_hint",
+            "malformed_linkedin_url"
+          ],
+          "source_hints": {
+            "resume_email_count": 6,
+            "resume_phone_count": 8,
+            "resume_emails": [
+              "karimsumar@gmail.com",
+              "Matt@glowgfs.com",
+              "lmacken5@lifescan.com",
+              "ecem.altan@sanofi.com",
+              "oliver.bradley@markssattin.com",
+              "Elaine.Ashton@hays.com"
+            ],
+            "resume_phones": [
+              "2141088604927",
+              "0208 230 9950",
+              "07956 808 692",
+              "07487 336 505",
+              "01463 721 000",
+              "0118 354 3000",
+              "020 7747 9751",
+              "07780 465 213"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 3,
+            "employment_history_count": 23,
+            "projects_count": 9,
+            "education_count": 3,
+            "evidence_notes_count": 7,
+            "skills_count": 24,
+            "tools_and_platforms_count": 30,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 48,
+          "status": "rerun",
+          "reasons": [
+            "missing_current_employer_and_title",
+            "email_count_lower_than_resume_hint",
+            "phone_count_lower_than_resume_hint",
+            "malformed_linkedin_url"
+          ],
+          "source_hints": {
+            "resume_email_count": 6,
+            "resume_phone_count": 8,
+            "resume_emails": [
+              "karimsumar@gmail.com",
+              "Matt@glowgfs.com",
+              "lmacken5@lifescan.com",
+              "ecem.altan@sanofi.com",
+              "oliver.bradley@markssattin.com",
+              "Elaine.Ashton@hays.com"
+            ],
+            "resume_phones": [
+              "2141088604927",
+              "0208 230 9950",
+              "07956 808 692",
+              "07487 336 505",
+              "01463 721 000",
+              "0118 354 3000",
+              "020 7747 9751",
+              "07780 465 213"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": false,
+            "has_current_title": false,
+            "email_count": 1,
+            "phone_count": 3,
+            "employment_history_count": 23,
+            "projects_count": 9,
+            "education_count": 3,
+            "evidence_notes_count": 7,
+            "skills_count": 24,
+            "tools_and_platforms_count": 30,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:34:19.780300+00:00",
+      "person_id": "803fe146-6269-4e79-add8-2596931d825f",
+      "candidate_id": "cf1e5a31-9758-4d07-8a13-c87dd00d766e",
+      "current_company_id": "bf014bc9-ba5b-4f34-a9db-abc26a4ea782",
+      "document_id": "ffba89d6-1e0d-4d50-a4b2-66357d2bc183",
+      "candidate_source_record_id": "6f19c947-fc05-4dd7-967f-cec2edd1d613",
+      "resume_source_record_id": "ec60bd94-1ef3-4826-b1ec-baef928aa934",
+      "extraction_source_record_id": "c44cbbc5-a8d0-43be-bec1-aa8e52f13b9d",
+      "candidate_skill_count": 33,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "42f028da-629f-48d7-8a21-4d59218337e3",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 95,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 95,
+          "status": "pass",
+          "reasons": [
+            "certifications_empty_despite_certifications_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 8,
+            "projects_count": 2,
+            "education_count": 5,
+            "evidence_notes_count": 4,
+            "skills_count": 16,
+            "tools_and_platforms_count": 17,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 95,
+          "status": "pass",
+          "reasons": [
+            "certifications_empty_despite_certifications_section"
+          ],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 8,
+            "projects_count": 2,
+            "education_count": 5,
+            "evidence_notes_count": 4,
+            "skills_count": 16,
+            "tools_and_platforms_count": 17,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:34:34.050604+00:00",
+      "person_id": "d47ba67d-45f8-4334-acb3-d5c982c7d553",
+      "candidate_id": "eb877c61-1777-41b7-af14-735eec464d4e",
+      "current_company_id": "2fb6c25b-ff4b-4040-9b2b-7c3baf81f2bc",
+      "document_id": "4ad9297d-e868-4c2e-bb77-d1698df4ff0f",
+      "candidate_source_record_id": "c6499b3b-1a50-4fb2-8086-21d49b8ea0a9",
+      "resume_source_record_id": "7b174da1-09fb-4915-a5af-9e112c969863",
+      "extraction_source_record_id": "3f3ae837-33d4-442d-8382-e402e9ef3d6b",
+      "candidate_skill_count": 15,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "c6f46352-467c-4668-ae12-b7a74847ef24",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "deepeshpatel@hotmail.co.uk"
+            ],
+            "resume_phones": [
+              "07939 423 900"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 2,
+            "education_count": 2,
+            "evidence_notes_count": 4,
+            "skills_count": 10,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "deepeshpatel@hotmail.co.uk"
+            ],
+            "resume_phones": [
+              "07939 423 900"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 2,
+            "education_count": 2,
+            "evidence_notes_count": 4,
+            "skills_count": 10,
+            "tools_and_platforms_count": 5,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:34:52.289324+00:00",
+      "person_id": "3d1c7f9e-db7d-407b-8589-eb9e6d65c9b0",
+      "candidate_id": "6c0c0864-019c-4e0a-aae5-89b56233e27e",
+      "current_company_id": "8465ac7c-1333-45f2-a422-5a5a0f38986d",
+      "document_id": "2ee58158-5324-4fdd-9f97-86b3d05ab0c0",
+      "candidate_source_record_id": "20ceb222-e393-452f-beb3-d52fe18e19e5",
+      "resume_source_record_id": "6a74ca9a-c49a-44fb-92c1-f5b71f0560e6",
+      "extraction_source_record_id": "590c9477-0fa3-4734-a0ac-658ad846fb97",
+      "candidate_skill_count": 29,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "84676d57-8cfd-4315-a8f1-049fd6bcc1d3",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "MrDeclanDoyle@outlook.com"
+            ],
+            "resume_phones": [
+              "07467645612"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 1,
+            "education_count": 3,
+            "evidence_notes_count": 4,
+            "skills_count": 21,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "MrDeclanDoyle@outlook.com"
+            ],
+            "resume_phones": [
+              "07467645612"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 6,
+            "projects_count": 1,
+            "education_count": 3,
+            "evidence_notes_count": 4,
+            "skills_count": 21,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 1,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:35:26.570295+00:00",
+      "person_id": "df733224-f6ef-4691-90c9-c9107d103947",
+      "candidate_id": "65a59f74-9a38-408c-ae06-adf57c852352",
+      "current_company_id": "8ac453f1-b8e6-41eb-a146-7bbcd6ffcc0a",
+      "document_id": "83dadd0b-ba22-4d9a-8e33-7c9bdb6768ae",
+      "candidate_source_record_id": "f323f550-e1b8-4bc1-9abb-d1014e0bd659",
+      "resume_source_record_id": "e1d5a624-db41-42a9-944e-86cb154fc91f",
+      "extraction_source_record_id": "e4c5c3b5-a103-4e6b-8880-d56ec321d78d",
+      "candidate_skill_count": 31,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "81eaedfb-74fc-4921-be9f-2efaa6049e2a",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 90,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 90,
+          "status": "pass",
+          "reasons": [
+            "email_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 2,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "marieangecombe@me.com",
+              "marieangecombe@me.comPROFILE"
+            ],
+            "resume_phones": [
+              "07985 106 067"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 15,
+            "projects_count": 1,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 21,
+            "tools_and_platforms_count": 10,
+            "certifications_count": 5,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 90,
+          "status": "pass",
+          "reasons": [
+            "email_count_lower_than_resume_hint"
+          ],
+          "source_hints": {
+            "resume_email_count": 2,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "marieangecombe@me.com",
+              "marieangecombe@me.comPROFILE"
+            ],
+            "resume_phones": [
+              "07985 106 067"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 15,
+            "projects_count": 1,
+            "education_count": 3,
+            "evidence_notes_count": 6,
+            "skills_count": 21,
+            "tools_and_platforms_count": 10,
+            "certifications_count": 5,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:35:51.054155+00:00",
+      "person_id": "0c9b8bf2-e558-4be9-9796-bf4c869c5437",
+      "candidate_id": "627e8a49-44e8-4bec-b8f3-590e05082607",
+      "current_company_id": "99217368-86c6-4e07-b977-c6b784e2de3d",
+      "document_id": "96da02e9-904a-4def-bf3c-a424ec155c18",
+      "candidate_source_record_id": "1c0ed1fd-21ae-4326-9e6a-fb355d8cdffe",
+      "resume_source_record_id": "d5a5ea04-032f-47f2-94ee-270d15e2f323",
+      "extraction_source_record_id": "6b09d862-fc02-42b5-b0f5-c3ee2521f664",
+      "candidate_skill_count": 25,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "3f3f978d-aa09-40b9-a2bc-7e0087c5e16d",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 0,
+            "education_count": 3,
+            "evidence_notes_count": 5,
+            "skills_count": 17,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": false,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 0,
+            "education_count": 3,
+            "evidence_notes_count": 5,
+            "skills_count": 17,
+            "tools_and_platforms_count": 8,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:36:16.196994+00:00",
+      "person_id": "5ab30624-ddda-4941-b45c-f3a68c7c597a",
+      "candidate_id": "b87092d5-786a-45e8-97be-68ffd0f7bc9d",
+      "current_company_id": "934ea407-0319-4a87-be26-780b399ac2ae",
+      "document_id": "4f9f1c49-eaf5-48d0-83c2-cf0446986ec1",
+      "candidate_source_record_id": "f0d5b58b-2661-4b5f-8d69-0e2d99e7b9fc",
+      "resume_source_record_id": "ed32b7b1-5591-4e80-b002-3012fc4ba363",
+      "extraction_source_record_id": "38c71fa5-573d-49c7-a9ac-3f194bb4fe03",
+      "candidate_skill_count": 23,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "67e89ede-a0aa-4d59-8884-a268e69dcd1a",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "neil@holly-grove.com"
+            ],
+            "resume_phones": [
+              "+44 (0)7768 798366"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 3,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 17,
+            "tools_and_platforms_count": 6,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "neil@holly-grove.com"
+            ],
+            "resume_phones": [
+              "+44 (0)7768 798366"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 7,
+            "projects_count": 3,
+            "education_count": 1,
+            "evidence_notes_count": 6,
+            "skills_count": 17,
+            "tools_and_platforms_count": 6,
+            "certifications_count": 0,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-01T21:37:38.365679+00:00",
+      "person_id": "71c3451f-4803-4a02-ae43-9261fcd324dd",
+      "candidate_id": "e58d5e0d-24ab-492e-9872-590a1ed65062",
+      "current_company_id": "5f6842c6-b303-4bc8-9849-081f238b646a",
+      "document_id": "4f9ca450-d691-4c6f-a775-4e3bf7b42b28",
+      "candidate_source_record_id": "3a645706-d3d4-4ed2-ae3d-46cab1f6e09e",
+      "resume_source_record_id": "7975eb4b-bcce-4956-9f1a-214a43d394aa",
+      "extraction_source_record_id": "3a9237d8-6ed0-460a-b982-6ef62ef89db1",
+      "candidate_skill_count": 27,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "2245467e-0b88-42ff-bdbd-a08a625724de",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": false,
             "has_skills_section": false,
             "has_certifications_section": false,
             "has_projects_section": true,
@@ -103,13 +1241,47 @@
             "has_current_title": true,
             "email_count": 1,
             "phone_count": 1,
-            "employment_history_count": 8,
-            "projects_count": 5,
-            "education_count": 4,
-            "evidence_notes_count": 6,
-            "skills_count": 11,
-            "tools_and_platforms_count": 93,
-            "certifications_count": 1,
+            "employment_history_count": 12,
+            "projects_count": 12,
+            "education_count": 0,
+            "evidence_notes_count": 5,
+            "skills_count": 13,
+            "tools_and_platforms_count": 14,
+            "certifications_count": 3,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 0,
+            "resume_phone_count": 0,
+            "resume_emails": [],
+            "resume_phones": [],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": false,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 12,
+            "projects_count": 12,
+            "education_count": 0,
+            "evidence_notes_count": 5,
+            "skills_count": 13,
+            "tools_and_platforms_count": 14,
+            "certifications_count": 3,
             "empty_project_detail_count": 0,
             "duplicate_skill_count": 0,
             "duplicate_tool_count": 0,
@@ -211,12 +1383,12 @@
       "quality_score": 100
     },
     {
-      "source_candidate_id": 3434,
-      "source_file_id": 3762,
-      "file_name": "Asad Hussain Quant Dev CV.pdf",
-      "source_record_id": "3434:3762",
-      "document_id": "928c99dc-be1f-4e6c-8a62-3c82e00ec3ce",
-      "document_title": "Asad Hussain Quant Dev CV.pdf",
+      "source_candidate_id": 3435,
+      "source_file_id": 3769,
+      "file_name": "Amir Sadiq.pdf",
+      "source_record_id": "3435:3769",
+      "document_id": "f87fb46e-bf30-40ac-8f77-8a3a8de69b81",
+      "document_title": "Amir Sadiq.pdf",
       "quality_status": "pass",
       "quality_score": 100
     }

@@ -425,6 +425,15 @@ class ResumeStructuredExtraction(BaseModel):
 
     Attributes
     ----------
+    full_name : str | None
+        Candidate full name when clearly visible in the resume itself.
+
+    first_name : str | None
+        Candidate first/given name when clearly visible in the resume itself.
+
+    last_name : str | None
+        Candidate surname/family name when clearly visible in the resume itself.
+
     current_employer : str | None
         Best current-employer value supported by the resume and notes.
 
@@ -485,6 +494,9 @@ class ResumeStructuredExtraction(BaseModel):
     A successful extraction object might look like:
 
         ResumeStructuredExtraction(
+            full_name="Roger Campbell",
+            first_name="Roger",
+            last_name="Campbell",
             current_employer="Pirum",
             current_title="Senior Data Scientist",
             professional_summary="Senior applied machine learning candidate with Python, NLP, and data-platform experience.",
@@ -515,6 +527,9 @@ class ResumeStructuredExtraction(BaseModel):
     - the output contract should not be flexible
     """
 
+    full_name: str | None = Field(default=None)
+    first_name: str | None = Field(default=None)
+    last_name: str | None = Field(default=None)
     current_employer: str | None = Field(default=None)
     current_title: str | None = Field(default=None)
     professional_summary: str | None = Field(default=None)
@@ -1319,22 +1334,25 @@ Rules:
 11. `certifications` should include clearly supported certifications when present in the source.
 12. `linkedin_url` should only be populated when the actual URL text is visible in the source. If the resume says "click here" without the URL, leave it null.
 13. `portfolio_references` may include named portfolio/project references when the source clearly mentions them, even if the actual URL text is hidden.
-14. Employment history should be ordered from most recent to oldest when possible.
-15. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
-16. Project entries should preserve employer context, role context, responsibilities, deliverables, business outcomes, and tools where the source supports them.
-17. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
-18. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
-19. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
-20. If the source provides a clear project name, use that exact project name in `projects[].name`. Put descriptive wording in `summary`, not in `name`. Only use a short factual label when the source does not provide a clear project name.
-21. Education should include only entries reasonably supported by the source.
-22. If a note-only item does not meet the evidence threshold for inclusion, exclude it from the final structured fields.
-23. `certifications` must be a list of plain strings only, not objects or nested records. Remove display separators like `|` when they are just joining an issuer and certification fragment rather than forming the visible certification title itself.
-24. `ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects.
-25. Evidence notes should cite whether support came from resume text, candidate metadata, or notes. If notes are used, explain exactly what they supported.
-26. Ambiguity notes should explain uncertainty, contradictions, or missing context, especially when notes mention tools or projects that are not clearly part of the candidate's own proven experience.
-27. Only populate `location` when the source clearly states the candidate's current location. Do not use university locations, old job locations, or remote/hybrid labels as a proxy for current location.
-28. For education entries, keep `qualification` and `subject` separate. Example: `MSc Data Science` should become `qualification = "MSc"` and `subject = "Data Science"`.
-29. Return data that matches the requested schema exactly.
+14. `full_name`, `first_name`, and `last_name` should come from the candidate's own resume content first, especially the header/contact block. Use source metadata only as secondary support.
+15. Do not copy transport or marketplace noise into name fields. Exclude tokens like `Totaljobs`, `cv-library`, `Jobsite`, `Resume`, numeric IDs, duplicate markers like `(1)`, and archive suffixes like `JS-02102017`.
+16. If the source clearly shows a full name but splitting it into first/last is uncertain, preserve `full_name` and use conservative best-effort `first_name`/`last_name` only when the split is reasonably clear.
+17. Employment history should be ordered from most recent to oldest when possible.
+18. `projects` should contain only clearly supported major projects or initiatives. Prioritise substantial work over minor bullet points.
+19. Project entries should preserve employer context, role context, responsibilities, deliverables, business outcomes, and tools where the source supports them.
+20. For `projects`, prefer project-local source evidence first, such as project bullets, sub-bullets, or initiative descriptions under the relevant role.
+21. If a project bullet does not name tools directly, `projects[].tools_and_platforms` may include tools or platforms mentioned in adjacent bullets within the same role only when the linkage is strong and factual.
+22. Do not copy broad resume-wide skill lists into every project. If project-specific tooling is unclear, leave `projects[].tools_and_platforms` empty.
+23. If the source provides a clear project name, use that exact project name in `projects[].name`. Put descriptive wording in `summary`, not in `name`. Only use a short factual label when the source does not provide a clear project name.
+24. Education should include only entries reasonably supported by the source.
+25. If a note-only item does not meet the evidence threshold for inclusion, exclude it from the final structured fields.
+26. `certifications` must be a list of plain strings only, not objects or nested records. Remove display separators like `|` when they are just joining an issuer and certification fragment rather than forming the visible certification title itself.
+27. `ambiguity_notes` must be a list of short strings only, not one long paragraph and not nested objects.
+28. Evidence notes should cite whether support came from resume text, candidate metadata, or notes. If notes are used, explain exactly what they supported.
+29. Ambiguity notes should explain uncertainty, contradictions, or missing context, especially when notes mention tools or projects that are not clearly part of the candidate's own proven experience.
+30. Only populate `location` when the source clearly states the candidate's current location. Do not use university locations, old job locations, or remote/hybrid labels as a proxy for current location.
+31. For education entries, keep `qualification` and `subject` separate. Example: `MSc Data Science` should become `qualification = "MSc"` and `subject = "Data Science"`.
+32. Return data that matches the requested schema exactly.
 
 Worked example for source priority and field boundaries:
 
@@ -1362,6 +1380,20 @@ Correct output shape:
 - `education`: [{"institution": "University of St Andrews", "qualification": "MSc", "subject": "Data Science"}]
 - `location`: null
 - Do not use study locations or remote/hybrid labels as the candidate's current location unless the source states that explicitly.
+
+Worked example for name extraction versus filename noise:
+
+Resume header:
+- "Ajay Abraham Mathew"
+
+Source filename:
+- "AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx"
+
+Correct output shape:
+- `full_name`: "Ajay Abraham Mathew"
+- `first_name`: "Ajay"
+- `last_name`: "Abraham Mathew"
+- Do not include `Totaljobs`, numeric IDs, or duplicate/archive suffixes in any name field.
 
 Worked example for preserving major projects under a role:
 

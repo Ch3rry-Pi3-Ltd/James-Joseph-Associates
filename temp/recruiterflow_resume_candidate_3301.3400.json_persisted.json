@@ -1,0 +1,398 @@
+{
+  "persisted_at": "2026-06-03T14:39:39.577599+00:00",
+  "run_started_at": "2026-06-03T14:34:41.410682+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/3301.3400.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 97,
+  "new_resume_candidate_count": 3,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 97,
+  "unsupported_count": 0,
+  "failed_count": 3,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 19.5145,
+    "embedded_member_lookup_seconds": 0.0098,
+    "resume_text_extraction_seconds": 0.5086,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 271.3955
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.1951,
+    "embedded_member_lookup_seconds": 0.0001,
+    "resume_text_extraction_seconds": 0.0051,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 2.714
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 1498,
+      "status": "skipped",
+      "file_name": "NigamKumar37_trm.docx",
+      "skip_lookup_seconds": 0.1706,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1707
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 1497,
+      "status": "skipped",
+      "file_name": "Naomi+Prescod-Green.pdf",
+      "skip_lookup_seconds": 0.1801,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1802
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 1496,
+      "status": "failed",
+      "file_name": "Motolani_Adedeji_DEV_main.docx",
+      "skip_lookup_seconds": 0.1642,
+      "embedded_member_lookup_seconds": 0.0038,
+      "resume_text_extraction_seconds": 0.0132,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 68.8932
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 1495,
+      "status": "skipped",
+      "file_name": "Minato_Matsui_-_Blockchain_Engineer.pdf",
+      "skip_lookup_seconds": 0.2868,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2869
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 1494,
+      "status": "skipped",
+      "file_name": "KSChan-Resume-3+Mar+2022.pdf",
+      "skip_lookup_seconds": 0.2074,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2074
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 1493,
+      "status": "skipped",
+      "file_name": "KrishnaTeja_CV_MC_0408.pdf",
+      "skip_lookup_seconds": 0.1832,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1833
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 1492,
+      "status": "skipped",
+      "file_name": "KPP+CV22_Mac.pdf",
+      "skip_lookup_seconds": 0.187,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.187
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 1490,
+      "status": "skipped",
+      "file_name": "Ken_Chan_90677468+-+SG(Algorithmic+Trader).pdf",
+      "skip_lookup_seconds": 0.1952,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1953
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 1489,
+      "status": "skipped",
+      "file_name": "Kelly_Coulter_CVMay22.doc",
+      "skip_lookup_seconds": 0.205,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.205
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 1488,
+      "status": "failed",
+      "file_name": "kapil-CV-PM-insurance-data-010724.doc",
+      "skip_lookup_seconds": 0.1799,
+      "embedded_member_lookup_seconds": 0.0033,
+      "resume_text_extraction_seconds": 0.0322,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 98.492
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 1487,
+      "status": "skipped",
+      "file_name": "Kanagavel.A.pdf",
+      "skip_lookup_seconds": 0.2147,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2147
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 1486,
+      "status": "skipped",
+      "file_name": "Jonathan+Dale+-+2022.pdf",
+      "skip_lookup_seconds": 0.1899,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.19
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 1485,
+      "status": "skipped",
+      "file_name": "Joan_CV-Mar2022.pdf",
+      "skip_lookup_seconds": 0.2246,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2246
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 1484,
+      "status": "skipped",
+      "file_name": "JayBhosle+cv_2022_NOV.pdf",
+      "skip_lookup_seconds": 0.1886,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1886
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 1483,
+      "status": "skipped",
+      "file_name": "JanaResume.pdf",
+      "skip_lookup_seconds": 0.1721,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1722
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 1482,
+      "status": "skipped",
+      "file_name": "Jack+Markle.pdf",
+      "skip_lookup_seconds": 0.169,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1691
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 1481,
+      "status": "skipped",
+      "file_name": "hsx.pdf",
+      "skip_lookup_seconds": 0.1668,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1669
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 1480,
+      "status": "skipped",
+      "file_name": "GavinLeeGoodship-cv.pdf",
+      "skip_lookup_seconds": 0.1801,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1802
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 1479,
+      "status": "skipped",
+      "file_name": "Full+stack+developer+CV+v6.pdf",
+      "skip_lookup_seconds": 0.1708,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1709
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 1478,
+      "status": "skipped",
+      "file_name": "Freddie-CV.docx",
+      "skip_lookup_seconds": 0.177,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.177
+    }
+  ],
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 1498,
+      "source_file_id": 1519,
+      "file_name": "NigamKumar37_trm.docx",
+      "source_record_id": "1498:1519",
+      "document_id": "075ca5da-a7a5-4410-8d01-4749a3957e2d",
+      "document_title": "NigamKumar37_trm.docx",
+      "quality_status": "pass",
+      "quality_score": 88
+    },
+    {
+      "source_candidate_id": 1497,
+      "source_file_id": 1518,
+      "file_name": "Naomi+Prescod-Green.pdf",
+      "source_record_id": "1497:1518",
+      "document_id": "52a80de3-962c-4672-9732-be9ada8b8f17",
+      "document_title": "Naomi+Prescod-Green.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1495,
+      "source_file_id": 4499,
+      "file_name": "Minato_Matsui_-_Blockchain_Engineer.pdf",
+      "source_record_id": "1495:4499",
+      "document_id": "fd9b6da4-1720-4fef-9c67-124e7b605027",
+      "document_title": "Minato_Matsui_-_Blockchain_Engineer.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1494,
+      "source_file_id": 1515,
+      "file_name": "KSChan-Resume-3+Mar+2022.pdf",
+      "source_record_id": "1494:1515",
+      "document_id": "1210c9c5-3f33-4a4b-95a2-d763fbec9e90",
+      "document_title": "KSChan-Resume-3+Mar+2022.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1493,
+      "source_file_id": 1514,
+      "file_name": "KrishnaTeja_CV_MC_0408.pdf",
+      "source_record_id": "1493:1514",
+      "document_id": "7ff184aa-d31b-4845-899f-2e62f64cd554",
+      "document_title": "KrishnaTeja_CV_MC_0408.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1492,
+      "source_file_id": 1513,
+      "file_name": "KPP+CV22_Mac.pdf",
+      "source_record_id": "1492:1513",
+      "document_id": "06e2489f-c2e4-426e-9d0d-ca88b6d70299",
+      "document_title": "KPP+CV22_Mac.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1490,
+      "source_file_id": 1511,
+      "file_name": "Ken_Chan_90677468+-+SG(Algorithmic+Trader).pdf",
+      "source_record_id": "1490:1511",
+      "document_id": "3a0b797e-0055-4959-8a02-427cdb67c49a",
+      "document_title": "Ken_Chan_90677468+-+SG(Algorithmic+Trader).pdf",
+      "quality_status": "pass",
+      "quality_score": 81
+    },
+    {
+      "source_candidate_id": 1489,
+      "source_file_id": 1510,
+      "file_name": "Kelly_Coulter_CVMay22.doc",
+      "source_record_id": "1489:1510",
+      "document_id": "13f4b12f-b49c-4377-931e-1a2ae749f6cb",
+      "document_title": "Kelly_Coulter_CVMay22.doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1487,
+      "source_file_id": 1508,
+      "file_name": "Kanagavel.A.pdf",
+      "source_record_id": "1487:1508",
+      "document_id": "36ff14d6-642d-4fde-948d-ad32d692f60c",
+      "document_title": "Kanagavel.A.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 1486,
+      "source_file_id": 1507,
+      "file_name": "Jonathan+Dale+-+2022.pdf",
+      "source_record_id": "1486:1507",
+      "document_id": "bcf44313-b570-4204-8d97-71c40312d8e7",
+      "document_title": "Jonathan+Dale+-+2022.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 1496,
+      "file_name": "Motolani_Adedeji_DEV_main.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 1488,
+      "file_name": "kapil-CV-PM-insurance-data-010724.doc",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 1468,
+      "file_name": "DrEKLua-CV-2021-X.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}

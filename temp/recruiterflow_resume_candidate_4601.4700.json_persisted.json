@@ -1,0 +1,447 @@
+{
+  "persisted_at": "2026-06-03T15:52:23.370357+00:00",
+  "run_started_at": "2026-06-03T15:50:03.218014+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/4601.4700.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 39,
+  "new_resume_candidate_count": 61,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 39,
+  "unsupported_count": 0,
+  "failed_count": 61,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 19.6502,
+    "embedded_member_lookup_seconds": 0.18,
+    "resume_text_extraction_seconds": 0.0062,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 112.8349
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.1965,
+    "embedded_member_lookup_seconds": 0.0018,
+    "resume_text_extraction_seconds": 0.0001,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 1.1283
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 165,
+      "status": "skipped",
+      "file_name": "cv_dalkilic_deniz_updated.pdf",
+      "skip_lookup_seconds": 0.1812,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1813
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 164,
+      "status": "skipped",
+      "file_name": "CV_Btihal+El+Aatabi.docx",
+      "skip_lookup_seconds": 0.1744,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1745
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 163,
+      "status": "skipped",
+      "file_name": "Chris+Ciszak+CV+-+CTO.docx",
+      "skip_lookup_seconds": 0.1731,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1732
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 162,
+      "status": "failed",
+      "file_name": "Cenk+Ozan+Kahraman+CV.docx",
+      "skip_lookup_seconds": 0.1686,
+      "embedded_member_lookup_seconds": 0.0028,
+      "resume_text_extraction_seconds": 0.0062,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 93.17
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 161,
+      "status": "skipped",
+      "file_name": "AdeTalabi_aws.doc",
+      "skip_lookup_seconds": 0.2234,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2235
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 160,
+      "status": "skipped",
+      "file_name": "KRISZTIAN DAVID - lbs search.docx",
+      "skip_lookup_seconds": 0.1899,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1899
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 159,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Yuri Heymann CV.docx",
+      "skip_lookup_seconds": 0.1927,
+      "embedded_member_lookup_seconds": 0.0033,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1961
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 158,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Yogiraj_Patil.docx",
+      "skip_lookup_seconds": 0.1799,
+      "embedded_member_lookup_seconds": 0.0049,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1849
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 157,
+      "status": "skipped",
+      "file_name": "sudeep_das_gupta_230727.pdf",
+      "skip_lookup_seconds": 0.1869,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1869
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 156,
+      "status": "failed",
+      "file_name": "add anyway as they look good/SeanCreightonCV_2021.docx",
+      "skip_lookup_seconds": 0.1965,
+      "embedded_member_lookup_seconds": 0.0029,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1994
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 154,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Resume+Meghdeep+Basu.pdf",
+      "skip_lookup_seconds": 0.1972,
+      "embedded_member_lookup_seconds": 0.0027,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1999
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 153,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Resume+-+Harry+C+Y+WONG+2022-01.docx",
+      "skip_lookup_seconds": 0.1979,
+      "embedded_member_lookup_seconds": 0.0026,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2005
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 152,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Rafael+Alfinito+Vieira+CFA.docx",
+      "skip_lookup_seconds": 0.2199,
+      "embedded_member_lookup_seconds": 0.003,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.223
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 151,
+      "status": "failed",
+      "file_name": "add anyway as they look good/Puneet_CV.docx",
+      "skip_lookup_seconds": 0.1951,
+      "embedded_member_lookup_seconds": 0.0032,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1984
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 150,
+      "status": "skipped",
+      "file_name": "Prabhakar_Raokhande_CV1.docx",
+      "skip_lookup_seconds": 0.1844,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1845
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 149,
+      "status": "skipped",
+      "file_name": "NitinDahale_CV.docx",
+      "skip_lookup_seconds": 0.1904,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1904
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 148,
+      "status": "failed",
+      "file_name": "add anyway as they look good/marvin+ntege+2022+cv.pdf",
+      "skip_lookup_seconds": 0.1864,
+      "embedded_member_lookup_seconds": 0.0027,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1892
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 147,
+      "status": "failed",
+      "file_name": "add anyway as they look good/MarcelloAlivertiCV.docx",
+      "skip_lookup_seconds": 0.1962,
+      "embedded_member_lookup_seconds": 0.0049,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2012
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 146,
+      "status": "failed",
+      "file_name": "add anyway as they look good/LSpyrou.pdf",
+      "skip_lookup_seconds": 0.2151,
+      "embedded_member_lookup_seconds": 0.0029,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2181
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 145,
+      "status": "failed",
+      "file_name": "add anyway as they look good/KyriakosDimitrios_Kantarakias_Resume_TP.pdf",
+      "skip_lookup_seconds": 0.1873,
+      "embedded_member_lookup_seconds": 0.0026,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1899
+    }
+  ],
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 165,
+      "source_file_id": 168,
+      "file_name": "cv_dalkilic_deniz_updated.pdf",
+      "source_record_id": "165:168",
+      "document_id": "4b4772fe-7e10-4e4c-a928-45eb8a963179",
+      "document_title": "cv_dalkilic_deniz_updated.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 164,
+      "source_file_id": 167,
+      "file_name": "CV_Btihal+El+Aatabi.docx",
+      "source_record_id": "164:167",
+      "document_id": "bfc8ad58-d728-470a-a9aa-0ba1b50aba09",
+      "document_title": "CV_Btihal+El+Aatabi.docx",
+      "quality_status": "review",
+      "quality_score": 77
+    },
+    {
+      "source_candidate_id": 163,
+      "source_file_id": 166,
+      "file_name": "Chris+Ciszak+CV+-+CTO.docx",
+      "source_record_id": "163:166",
+      "document_id": "c8d9d21f-b369-4b27-b8fd-2f43e1f270dc",
+      "document_title": "Chris+Ciszak+CV+-+CTO.docx",
+      "quality_status": "pass",
+      "quality_score": 96
+    },
+    {
+      "source_candidate_id": 161,
+      "source_file_id": 164,
+      "file_name": "AdeTalabi_aws.doc",
+      "source_record_id": "161:164",
+      "document_id": "9aed2c5c-e107-4ede-b39b-6d319e014cfa",
+      "document_title": "AdeTalabi_aws.doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 160,
+      "source_file_id": 162,
+      "file_name": "KRISZTIAN DAVID - lbs search.docx",
+      "source_record_id": "160:162",
+      "document_id": "04481e4d-c0a9-4864-b1c3-6618612c5089",
+      "document_title": "KRISZTIAN DAVID - lbs search.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 157,
+      "source_file_id": 4871,
+      "file_name": "sudeep_das_gupta_230727.pdf",
+      "source_record_id": "157:4871",
+      "document_id": "3f4f622c-6030-4bf5-819d-a7c8c9c981d4",
+      "document_title": "sudeep_das_gupta_230727.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 150,
+      "source_file_id": 2384,
+      "file_name": "Prabhakar_Raokhande_CV1.docx",
+      "source_record_id": "150:2384",
+      "document_id": "cb71d6b6-889a-458e-a645-bda17ef51b60",
+      "document_title": "Prabhakar_Raokhande_CV1.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 149,
+      "source_file_id": 3552,
+      "file_name": "NitinDahale_CV.docx",
+      "source_record_id": "149:3552",
+      "document_id": "31cb83e6-8cc8-4d82-9533-34af6e351316",
+      "document_title": "NitinDahale_CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 143,
+      "source_file_id": 3744,
+      "file_name": "Eugene_Isakov_resume.pdf",
+      "source_record_id": "143:3744",
+      "document_id": "a0bcf690-724b-4dfb-8b5f-bec445ce245c",
+      "document_title": "Eugene_Isakov_resume.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 138,
+      "source_file_id": 3490,
+      "file_name": "CV+-+Zhengxin+(Joseph)+Ye.pdf",
+      "source_record_id": "138:3490",
+      "document_id": "9ffa0da7-5619-41df-9dc1-2bc647ce1a1e",
+      "document_title": "CV+-+Zhengxin+(Joseph)+Ye.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 162,
+      "file_name": "Cenk+Ozan+Kahraman+CV.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 159,
+      "file_name": "add anyway as they look good/Yuri Heymann CV.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 158,
+      "file_name": "add anyway as they look good/Yogiraj_Patil.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 156,
+      "file_name": "add anyway as they look good/SeanCreightonCV_2021.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 154,
+      "file_name": "add anyway as they look good/Resume+Meghdeep+Basu.pdf",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 153,
+      "file_name": "add anyway as they look good/Resume+-+Harry+C+Y+WONG+2022-01.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 152,
+      "file_name": "add anyway as they look good/Rafael+Alfinito+Vieira+CFA.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 151,
+      "file_name": "add anyway as they look good/Puneet_CV.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 148,
+      "file_name": "add anyway as they look good/marvin+ntege+2022+cv.pdf",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    },
+    {
+      "source_candidate_id": 147,
+      "file_name": "add anyway as they look good/MarcelloAlivertiCV.docx",
+      "stage": "embedded_member_lookup",
+      "error_type": "EmbeddedMemberNotFound",
+      "message": "Embedded candidate CV member was not found in the ZIP export."
+    }
+  ]
+}

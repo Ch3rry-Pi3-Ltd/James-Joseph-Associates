@@ -1,0 +1,447 @@
+{
+  "persisted_at": "2026-06-03T14:04:00.069854+00:00",
+  "run_started_at": "2026-06-03T13:58:24.776278+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/2501.2600.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 70,
+  "new_resume_candidate_count": 30,
+  "persisted_resume_count": 0,
+  "accepted_resume_count": 0,
+  "non_pass_count": 0,
+  "skipped_count": 70,
+  "unsupported_count": 0,
+  "failed_count": 30,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 14.5794,
+    "embedded_member_lookup_seconds": 0.0156,
+    "resume_text_extraction_seconds": 0.154,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 306.9471
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.1458,
+    "embedded_member_lookup_seconds": 0.0002,
+    "resume_text_extraction_seconds": 0.0015,
+    "structured_resume_seconds": 0.0,
+    "total_candidate_seconds": 3.0695
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 2330,
+      "status": "skipped",
+      "file_name": "Saranya  K (512147486 - Totaljobs).doc",
+      "skip_lookup_seconds": 0.2084,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2085
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 2329,
+      "status": "skipped",
+      "file_name": "AlexWynne.doc",
+      "skip_lookup_seconds": 0.1911,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1912
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 2328,
+      "status": "skipped",
+      "file_name": "Sunday Ukwungwu (511879298 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.2135,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2136
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 2327,
+      "status": "skipped",
+      "file_name": "parthiban_d@hotmail.com.tldr.pdf",
+      "skip_lookup_seconds": 0.1921,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1922
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 2326,
+      "status": "skipped",
+      "file_name": "Joseph_Antoniou_CV_March_2023.pdf",
+      "skip_lookup_seconds": 0.2015,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2015
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 2325,
+      "status": "skipped",
+      "file_name": "Sergei Fedulov CV.docx",
+      "skip_lookup_seconds": 0.2058,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2058
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 2324,
+      "status": "skipped",
+      "file_name": "1583989495487.pdf",
+      "skip_lookup_seconds": 0.1924,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1924
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 2323,
+      "status": "skipped",
+      "file_name": "CV_WilliamHo_2023.pdf",
+      "skip_lookup_seconds": 0.1883,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1884
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 2322,
+      "status": "skipped",
+      "file_name": "Harideep M (85983308 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1943,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1944
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 2321,
+      "status": "skipped",
+      "file_name": "Kanthi Kumar Thota_23610280_cv-library.docx",
+      "skip_lookup_seconds": 0.1889,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.189
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 2320,
+      "status": "skipped",
+      "file_name": "Ola Oke_15621306_cv-library.doc",
+      "skip_lookup_seconds": 0.1847,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1847
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 2319,
+      "status": "skipped",
+      "file_name": "Uchenna  Okonkwo (79775302 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1838,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1838
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 2318,
+      "status": "skipped",
+      "file_name": "aftab ahmad (511327684 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1827,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1828
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 2317,
+      "status": "skipped",
+      "file_name": "Anand Krishnamurthy - Profile 2023.docx",
+      "skip_lookup_seconds": 0.1924,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1925
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 2316,
+      "status": "skipped",
+      "file_name": "Albert Su Resume-1.pdf",
+      "skip_lookup_seconds": 0.1851,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1852
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 2315,
+      "status": "skipped",
+      "file_name": "Preethi J (87317919 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1944,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1945
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 2314,
+      "status": "skipped",
+      "file_name": "Mark Gavin (14393884 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1842,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1842
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 2313,
+      "status": "skipped",
+      "file_name": "khurram jamal (3537663 - Totaljobs).doc",
+      "skip_lookup_seconds": 0.1994,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1995
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 2312,
+      "status": "skipped",
+      "file_name": "Emmanuel Ogunsanya (510746722 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1923,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1924
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 2311,
+      "status": "skipped",
+      "file_name": "CV_Shafie_2023.pdf",
+      "skip_lookup_seconds": 0.185,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.185
+    }
+  ],
+  "persisted_resume_preview": [],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 2330,
+      "source_file_id": 2388,
+      "file_name": "Saranya  K (512147486 - Totaljobs).doc",
+      "source_record_id": "2330:2388",
+      "document_id": "64c24e71-e2f4-4ff2-83c1-3eb100e2a679",
+      "document_title": "Saranya  K (512147486 - Totaljobs).doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2329,
+      "source_file_id": 2400,
+      "file_name": "AlexWynne.doc",
+      "source_record_id": "2329:2400",
+      "document_id": "d6e81549-1c7c-401e-8cf7-ccbad6817bb0",
+      "document_title": "AlexWynne.doc",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2328,
+      "source_file_id": 2386,
+      "file_name": "Sunday Ukwungwu (511879298 - Totaljobs).docx",
+      "source_record_id": "2328:2386",
+      "document_id": "484fbc30-adcf-41f3-bdad-1b90df0d5543",
+      "document_title": "Sunday Ukwungwu (511879298 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2327,
+      "source_file_id": 2412,
+      "file_name": "parthiban_d@hotmail.com.tldr.pdf",
+      "source_record_id": "2327:2412",
+      "document_id": "3cc017c5-8714-4793-abc4-1321610b5d25",
+      "document_title": "parthiban_d@hotmail.com.tldr.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2326,
+      "source_file_id": 2560,
+      "file_name": "Joseph_Antoniou_CV_March_2023.pdf",
+      "source_record_id": "2326:2560",
+      "document_id": "1ee27024-282a-48e7-bdb5-80a6436eab0d",
+      "document_title": "Joseph_Antoniou_CV_March_2023.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2325,
+      "source_file_id": 5580,
+      "file_name": "Sergei Fedulov CV.docx",
+      "source_record_id": "2325:5580",
+      "document_id": "de9898b3-7603-4b72-b1d8-bc6c8cc70d80",
+      "document_title": "Sergei Fedulov CV.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2324,
+      "source_file_id": 2380,
+      "file_name": "1583989495487.pdf",
+      "source_record_id": "2324:2380",
+      "document_id": "9e2ab1f1-9bdb-4774-99fe-b54f6be6eabe",
+      "document_title": "1583989495487.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2323,
+      "source_file_id": 2379,
+      "file_name": "CV_WilliamHo_2023.pdf",
+      "source_record_id": "2323:2379",
+      "document_id": "20b4aabc-28f6-4277-bdf9-e0e3ff8d3a54",
+      "document_title": "CV_WilliamHo_2023.pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 2322,
+      "source_file_id": 2378,
+      "file_name": "Harideep M (85983308 - Totaljobs).docx",
+      "source_record_id": "2322:2378",
+      "document_id": "e81a5be4-66e6-4d68-8cb1-e26c745a9576",
+      "document_title": "Harideep M (85983308 - Totaljobs).docx",
+      "quality_status": "review",
+      "quality_score": 75
+    },
+    {
+      "source_candidate_id": 2321,
+      "source_file_id": 2377,
+      "file_name": "Kanthi Kumar Thota_23610280_cv-library.docx",
+      "source_record_id": "2321:2377",
+      "document_id": "1e3ad637-86be-4714-a078-800714edb98d",
+      "document_title": "Kanthi Kumar Thota_23610280_cv-library.docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 2301,
+      "file_name": "Profile.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2289,
+      "file_name": "sundaresan chandrasekar (8387436 - Totaljobs).doc",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2258,
+      "file_name": "CVPaulWright20220915.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 2257,
+      "file_name": "CV+-+Faidh+Feisal.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2256,
+      "file_name": "Ajay+Patel+Nov+2022.docx.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2255,
+      "file_name": "Rajesh_Jayachandran_Devops.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2254,
+      "file_name": "Rajashekar+updated.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2253,
+      "file_name": "Raja_SrCloud_Engineer.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2252,
+      "file_name": "Prashant_devops.uk_18.01.2023.pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    },
+    {
+      "source_candidate_id": 2251,
+      "file_name": "Prasad_CV.docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "OperationalError",
+      "message": "failed to resolve host 'aws-1-eu-west-2.pooler.supabase.com': [Errno 11001] getaddrinfo failed"
+    }
+  ]
+}

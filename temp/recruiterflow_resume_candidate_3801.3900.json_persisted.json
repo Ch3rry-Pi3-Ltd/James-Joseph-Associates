@@ -1,0 +1,706 @@
+{
+  "persisted_at": "2026-06-03T15:10:28.216124+00:00",
+  "run_started_at": "2026-06-03T14:58:19.817160+00:00",
+  "run_complete": true,
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "zip_path": "/+++ RFL - Recruiterflow DATA backup downloaded 19.05.26/James Joseph Associates.b0ac635f.zip",
+  "candidate_member_name": "candidate/3801.3900.json",
+  "candidate_limit": 20,
+  "candidate_offset": 0,
+  "process_entire_chunk": true,
+  "persisted_resume_limit": 20,
+  "force_reprocess": false,
+  "checkpoint_write_interval": 5,
+  "checkpoint_write_count": 20,
+  "candidate_count": 100,
+  "chunk_total_candidate_count": 100,
+  "processed_candidate_count": 100,
+  "last_processed_candidate_index": 100,
+  "window_offsets_processed": [
+    0,
+    20,
+    40,
+    60,
+    80
+  ],
+  "selected_resume_candidate_count": 100,
+  "no_resume_selected_count": 0,
+  "already_processed_count": 93,
+  "new_resume_candidate_count": 7,
+  "persisted_resume_count": 3,
+  "accepted_resume_count": 3,
+  "non_pass_count": 0,
+  "skipped_count": 93,
+  "unsupported_count": 0,
+  "failed_count": 4,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 20.0696,
+    "embedded_member_lookup_seconds": 0.027,
+    "resume_text_extraction_seconds": 0.7974,
+    "structured_resume_seconds": 360.0419,
+    "total_candidate_seconds": 705.0746
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.2007,
+    "embedded_member_lookup_seconds": 0.0003,
+    "resume_text_extraction_seconds": 0.008,
+    "structured_resume_seconds": 3.6004,
+    "total_candidate_seconds": 7.0507
+  },
+  "candidate_timing_preview": [
+    {
+      "candidate_index": 1,
+      "source_candidate_id": 985,
+      "status": "skipped",
+      "file_name": "Garikayi katsande (24767615 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.2591,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2592
+    },
+    {
+      "candidate_index": 2,
+      "source_candidate_id": 984,
+      "status": "skipped",
+      "file_name": "Fatmata Newland (82678083 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.192,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1921
+    },
+    {
+      "candidate_index": 3,
+      "source_candidate_id": 983,
+      "status": "skipped",
+      "file_name": "FAREED BURNEY (16438889 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.2421,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2421
+    },
+    {
+      "candidate_index": 4,
+      "source_candidate_id": 982,
+      "status": "skipped",
+      "file_name": "Emma Carter (73044666 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.2219,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.222
+    },
+    {
+      "candidate_index": 5,
+      "source_candidate_id": 981,
+      "status": "skipped",
+      "file_name": "Diroshan robert-calacius (83593111 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1882,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1882
+    },
+    {
+      "candidate_index": 6,
+      "source_candidate_id": 980,
+      "status": "skipped",
+      "file_name": "Daniele De Astis (16616415 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1852,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1852
+    },
+    {
+      "candidate_index": 7,
+      "source_candidate_id": 979,
+      "status": "skipped",
+      "file_name": "Dana Anwar (84533314 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1974,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1974
+    },
+    {
+      "candidate_index": 8,
+      "source_candidate_id": 978,
+      "status": "skipped",
+      "file_name": "Chioma Anyanwu (77918662 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1898,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1899
+    },
+    {
+      "candidate_index": 9,
+      "source_candidate_id": 977,
+      "status": "skipped",
+      "file_name": "Ching Yiu So (84331921 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1932,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1933
+    },
+    {
+      "candidate_index": 10,
+      "source_candidate_id": 976,
+      "status": "skipped",
+      "file_name": "Brayan Saguma Carpio (83402080 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1964,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1965
+    },
+    {
+      "candidate_index": 11,
+      "source_candidate_id": 975,
+      "status": "skipped",
+      "file_name": "Bethan Smith (80884020 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1922,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1923
+    },
+    {
+      "candidate_index": 12,
+      "source_candidate_id": 974,
+      "status": "skipped",
+      "file_name": "Anita Vaghela (73999725 - Totaljobs).doc",
+      "skip_lookup_seconds": 0.1951,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1952
+    },
+    {
+      "candidate_index": 13,
+      "source_candidate_id": 973,
+      "status": "skipped",
+      "file_name": "Aneesah Mukadam (82146605 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1852,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1852
+    },
+    {
+      "candidate_index": 14,
+      "source_candidate_id": 972,
+      "status": "skipped",
+      "file_name": "Anas Mohammed Ilyas (41045756 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1916,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1916
+    },
+    {
+      "candidate_index": 15,
+      "source_candidate_id": 971,
+      "status": "skipped",
+      "file_name": "Vikas Wahi (30407751 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.2014,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2015
+    },
+    {
+      "candidate_index": 16,
+      "source_candidate_id": 970,
+      "status": "skipped",
+      "file_name": "Varun kumar Nalluri (75664285 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.1924,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1925
+    },
+    {
+      "candidate_index": 17,
+      "source_candidate_id": 969,
+      "status": "skipped",
+      "file_name": "Srinath Jamboju (82058201 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.2098,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2099
+    },
+    {
+      "candidate_index": 18,
+      "source_candidate_id": 968,
+      "status": "skipped",
+      "file_name": "Sree sumanth Kavuri (73703673 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.2157,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2158
+    },
+    {
+      "candidate_index": 19,
+      "source_candidate_id": 967,
+      "status": "skipped",
+      "file_name": "Soumen Trivedi (8675120 - Totaljobs).pdf",
+      "skip_lookup_seconds": 0.1966,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.1966
+    },
+    {
+      "candidate_index": 20,
+      "source_candidate_id": 966,
+      "status": "skipped",
+      "file_name": "singu venkatesh (82426949 - Totaljobs).docx",
+      "skip_lookup_seconds": 0.2203,
+      "embedded_member_lookup_seconds": 0.0,
+      "resume_text_extraction_seconds": 0.0,
+      "structured_resume_seconds": 0.0,
+      "total_candidate_seconds": 0.2203
+    }
+  ],
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-06-03T15:02:17.093538+00:00",
+      "person_id": "36c43d34-9b3e-4e4e-8920-c1c1a5457481",
+      "candidate_id": "9852c949-e80b-47ac-ba17-c7ede6fec1ee",
+      "current_company_id": "b92ca67b-1bf7-4ae8-a563-6c330b656cc0",
+      "document_id": "12a2cc90-cdf4-4d60-b3d5-fe7fa35a148b",
+      "candidate_source_record_id": "202c88ca-16c0-4aad-b8bb-63016c04a6df",
+      "resume_source_record_id": "d64962bb-b9c7-484e-af22-524b029e01cc",
+      "extraction_source_record_id": "ee8037be-5360-4891-bb8e-ed0a982af34c",
+      "candidate_skill_count": 66,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "80f67d46-13eb-4d8a-ad6a-2a86ca742917",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "martinjasonthorpe@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7803 524 698"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 4,
+            "education_count": 0,
+            "evidence_notes_count": 6,
+            "skills_count": 19,
+            "tools_and_platforms_count": 47,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "martinjasonthorpe@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7803 524 698"
+            ],
+            "has_experience_section": true,
+            "has_education_section": false,
+            "has_skills_section": false,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 13,
+            "projects_count": 4,
+            "education_count": 0,
+            "evidence_notes_count": 6,
+            "skills_count": 19,
+            "tools_and_platforms_count": 47,
+            "certifications_count": 4,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-03T15:07:30.671836+00:00",
+      "person_id": "a7680a25-c351-42c5-9374-59426b69f7d6",
+      "candidate_id": "c2306aa8-0416-4272-be9b-66fb5a24799a",
+      "current_company_id": "96d6cdc6-84f5-452a-950b-a1795b2e14da",
+      "document_id": "37cad5c6-6014-4462-af6f-eb63799bc8af",
+      "candidate_source_record_id": "1ae3cbcb-82b5-458e-ba95-0fccfdc9c6f7",
+      "resume_source_record_id": "df4d6769-b37e-42d0-8a7d-fb711d00ef3b",
+      "extraction_source_record_id": "f98c1eee-a92f-45e1-aa1d-e16ca6192678",
+      "candidate_skill_count": 79,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "2cd1e3eb-c85e-40a1-8c08-6dc922c6109e",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gybotye@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7798 586758"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 4,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 67,
+            "certifications_count": 7,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "gybotye@gmail.com"
+            ],
+            "resume_phones": [
+              "+44 7798 586758"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": false,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 1,
+            "employment_history_count": 5,
+            "projects_count": 4,
+            "education_count": 2,
+            "evidence_notes_count": 6,
+            "skills_count": 12,
+            "tools_and_platforms_count": 67,
+            "certifications_count": 7,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    },
+    {
+      "persisted_at": "2026-06-03T15:10:12.788673+00:00",
+      "person_id": "4a6c5102-14c0-483b-92ef-5903e1532fc0",
+      "candidate_id": "eb3e7e05-4d55-4ad0-a904-1be64d4e48c7",
+      "current_company_id": "f0392197-81f6-4123-bdf8-579cf89c2b7f",
+      "document_id": "62fc9a73-a083-4ba2-9fb5-ad7c59fd0063",
+      "candidate_source_record_id": "fb220b4a-ba1c-4c69-afb0-bad73cd7dfdb",
+      "resume_source_record_id": "627d5abb-9b4f-4a7c-b12f-4fd19dec7bf5",
+      "extraction_source_record_id": "6018133a-33eb-499f-b8c5-f50a7b54c990",
+      "candidate_skill_count": 106,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "9de5c878-393c-4ad6-857d-e5305c6b7a50",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "first_pass_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "eniadeyemi@gmail.com"
+            ],
+            "resume_phones": [
+              "07411516436"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 8,
+            "projects_count": 5,
+            "education_count": 8,
+            "evidence_notes_count": 5,
+            "skills_count": 43,
+            "tools_and_platforms_count": 63,
+            "certifications_count": 12,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        },
+        "final_quality_assessment": {
+          "quality_score": 100,
+          "status": "pass",
+          "reasons": [],
+          "source_hints": {
+            "resume_email_count": 1,
+            "resume_phone_count": 1,
+            "resume_emails": [
+              "eniadeyemi@gmail.com"
+            ],
+            "resume_phones": [
+              "07411516436"
+            ],
+            "has_experience_section": true,
+            "has_education_section": true,
+            "has_skills_section": true,
+            "has_certifications_section": true,
+            "has_projects_section": true,
+            "resume_contains_bp": false
+          },
+          "check_results": {
+            "has_current_employer": true,
+            "has_current_title": true,
+            "email_count": 1,
+            "phone_count": 2,
+            "employment_history_count": 8,
+            "projects_count": 5,
+            "education_count": 8,
+            "evidence_notes_count": 5,
+            "skills_count": 43,
+            "tools_and_platforms_count": 63,
+            "certifications_count": 12,
+            "empty_project_detail_count": 0,
+            "duplicate_skill_count": 0,
+            "duplicate_tool_count": 0,
+            "suspicious_terms_present": []
+          }
+        }
+      }
+    }
+  ],
+  "skipped_items_preview": [
+    {
+      "source_candidate_id": 985,
+      "source_file_id": 992,
+      "file_name": "Garikayi katsande (24767615 - Totaljobs).docx",
+      "source_record_id": "985:992",
+      "document_id": "699cb25f-cd3e-447c-8cfa-0b1d7113320a",
+      "document_title": "Garikayi katsande (24767615 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 984,
+      "source_file_id": 991,
+      "file_name": "Fatmata Newland (82678083 - Totaljobs).docx",
+      "source_record_id": "984:991",
+      "document_id": "a0f83bca-eda9-4160-86f3-5df366edd461",
+      "document_title": "Fatmata Newland (82678083 - Totaljobs).docx",
+      "quality_status": "review",
+      "quality_score": 70
+    },
+    {
+      "source_candidate_id": 983,
+      "source_file_id": 990,
+      "file_name": "FAREED BURNEY (16438889 - Totaljobs).docx",
+      "source_record_id": "983:990",
+      "document_id": "8cbee4f3-8c43-4db5-a1fc-03e5225ca062",
+      "document_title": "FAREED BURNEY (16438889 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 85
+    },
+    {
+      "source_candidate_id": 982,
+      "source_file_id": 989,
+      "file_name": "Emma Carter (73044666 - Totaljobs).docx",
+      "source_record_id": "982:989",
+      "document_id": "a3b19c6e-960e-4ae2-8c65-8a79b246f732",
+      "document_title": "Emma Carter (73044666 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 82
+    },
+    {
+      "source_candidate_id": 981,
+      "source_file_id": 988,
+      "file_name": "Diroshan robert-calacius (83593111 - Totaljobs).pdf",
+      "source_record_id": "981:988",
+      "document_id": "0d194b78-fd56-4d1b-9469-a34c18798471",
+      "document_title": "Diroshan robert-calacius (83593111 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 90
+    },
+    {
+      "source_candidate_id": 980,
+      "source_file_id": 987,
+      "file_name": "Daniele De Astis (16616415 - Totaljobs).pdf",
+      "source_record_id": "980:987",
+      "document_id": "7f7d7c0f-d2fd-4af6-8913-4e1542262218",
+      "document_title": "Daniele De Astis (16616415 - Totaljobs).pdf",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 979,
+      "source_file_id": 986,
+      "file_name": "Dana Anwar (84533314 - Totaljobs).docx",
+      "source_record_id": "979:986",
+      "document_id": "9e76eec4-281a-4d4c-a600-093eb3a7ec46",
+      "document_title": "Dana Anwar (84533314 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 978,
+      "source_file_id": 985,
+      "file_name": "Chioma Anyanwu (77918662 - Totaljobs).docx",
+      "source_record_id": "978:985",
+      "document_id": "d00ed3da-9465-4d90-ae32-dfff97ba05a7",
+      "document_title": "Chioma Anyanwu (77918662 - Totaljobs).docx",
+      "quality_status": "pass",
+      "quality_score": 100
+    },
+    {
+      "source_candidate_id": 977,
+      "source_file_id": 984,
+      "file_name": "Ching Yiu So (84331921 - Totaljobs).docx",
+      "source_record_id": "977:984",
+      "document_id": "eefe37e7-5895-4121-abad-9a9165094fda",
+      "document_title": "Ching Yiu So (84331921 - Totaljobs).docx",
+      "quality_status": "review",
+      "quality_score": 70
+    },
+    {
+      "source_candidate_id": 976,
+      "source_file_id": 983,
+      "file_name": "Brayan Saguma Carpio (83402080 - Totaljobs).docx",
+      "source_record_id": "976:983",
+      "document_id": "556fd85b-ce9b-4903-8c5d-28df449fa7b3",
+      "document_title": "Brayan Saguma Carpio (83402080 - Totaljobs).docx",
+      "quality_status": "review",
+      "quality_score": 70
+    }
+  ],
+  "failed_items_preview": [
+    {
+      "source_candidate_id": 964,
+      "file_name": "Santhosh Unnithan (78488481 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 949,
+      "file_name": "Gaurav Kakirwar (80540354 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 944,
+      "file_name": "arshad nazir (82163964 - Totaljobs).docx",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    },
+    {
+      "source_candidate_id": 935,
+      "file_name": "Omair Malik (85423860 - Totaljobs).doc",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}
