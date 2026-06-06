@@ -1,0 +1,682 @@
+{
+  "persisted_at": "2026-06-04T18:15:08.446326+00:00",
+  "run_started_at": "2026-06-04T18:05:31.145757+00:00",
+  "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+  "folder_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive",
+  "file_limit": 20,
+  "dropbox_list_limit": 800,
+  "resume_file_offset": 2880,
+  "force_reprocess": false,
+  "folder_entry_count": 3200,
+  "folder_has_more": true,
+  "listed_file_preview": [
+    {
+      "name": "###ZIP files exported to Zoho - DONE!",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/###ZIP files exported to Zoho - DONE!",
+      "tag": "folder"
+    },
+    {
+      "name": "###ZIP archives TO-EXPORT",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/###ZIP archives TO-EXPORT",
+      "tag": "folder"
+    },
+    {
+      "name": "CV Arseny Blagoveshchensky.pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/CV Arseny Blagoveshchensky.pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Lyndsey Appleyard (19095300 - Totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Lyndsey Appleyard (19095300 - Totaljobs).pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Vijay Patel (29671959 - Jobsite).doc",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Vijay Patel (29671959 - Jobsite).doc",
+      "tag": "file"
+    },
+    {
+      "name": "David Blackshaw (67087647 - Totaljobs) - Shortcut.lnk",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/David Blackshaw (67087647 - Totaljobs) - Shortcut.lnk",
+      "tag": "file"
+    },
+    {
+      "name": "Kirk Smith (392590682 - totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kirk Smith (392590682 - totaljobs).pdf",
+      "tag": "file"
+    },
+    {
+      "name": "AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/AJAY ABRAHAM MATHEW (6608403 - Totaljobs).docx",
+      "tag": "file"
+    },
+    {
+      "name": "graham fletcher.pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/graham fletcher.pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Michael_Young-JS-11102017.doc",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Michael_Young-JS-11102017.doc",
+      "tag": "file"
+    },
+    {
+      "name": "Gabriele_De Luca-JS-27092017.doc",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Gabriele_De Luca-JS-27092017.doc",
+      "tag": "file"
+    },
+    {
+      "name": "Ally_Kondakova_CV.docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Ally_Kondakova_CV.docx",
+      "tag": "file"
+    },
+    {
+      "name": "Yin Zhang (73629794 - Totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Yin Zhang (73629794 - Totaljobs).pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Carl Fitch (5256604 - Totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Carl Fitch (5256604 - Totaljobs).pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Andy Taylor (74756379 - Totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Andy Taylor (74756379 - Totaljobs).pdf",
+      "tag": "file"
+    },
+    {
+      "name": "Stephen_Lynn-JS-02102017.docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Stephen_Lynn-JS-02102017.docx",
+      "tag": "file"
+    },
+    {
+      "name": "Jenni Hartman CV.docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jenni Hartman CV.docx",
+      "tag": "file"
+    },
+    {
+      "name": "Charalampos Michail (357279210 - totaljobs).docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Charalampos Michail (357279210 - totaljobs).docx",
+      "tag": "file"
+    },
+    {
+      "name": "Mikael-Khah_20239602_cv-library.docx",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Mikael-Khah_20239602_cv-library.docx",
+      "tag": "file"
+    },
+    {
+      "name": "Joe Paul (366028451 - totaljobs).pdf",
+      "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Joe Paul (366028451 - totaljobs).pdf",
+      "tag": "file"
+    }
+  ],
+  "processed_file_count": 20,
+  "selected_resume_file_count": 20,
+  "already_processed_count": 0,
+  "new_resume_file_count": 20,
+  "persisted_resume_count": 19,
+  "accepted_resume_count": 16,
+  "non_pass_count": 3,
+  "skipped_count": 0,
+  "unsupported_count": 0,
+  "failed_count": 1,
+  "timing_totals_seconds": {
+    "skip_lookup_seconds": 4.0224,
+    "download_seconds": 23.3023,
+    "resume_text_extraction_seconds": 5.7021,
+    "structured_resume_seconds": 480.9754,
+    "total_file_seconds": 572.1351
+  },
+  "timing_averages_seconds": {
+    "skip_lookup_seconds": 0.2011,
+    "download_seconds": 1.1651,
+    "resume_text_extraction_seconds": 0.2851,
+    "structured_resume_seconds": 24.0488,
+    "total_file_seconds": 28.6068
+  },
+  "file_timing_preview": [
+    {
+      "file_index": 1,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/CV+Alex+Antoniou.pdf",
+      "file_name": "CV+Alex+Antoniou.pdf",
+      "status": "non_pass",
+      "skip_lookup_seconds": 0.1887,
+      "download_seconds": 1.2687,
+      "resume_text_extraction_seconds": 0.0695,
+      "structured_resume_seconds": 31.5535,
+      "total_file_seconds": 33.0804
+    },
+    {
+      "file_index": 2,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Antonio+Emmanouilidis+2021.docx",
+      "file_name": "Antonio+Emmanouilidis+2021.docx",
+      "status": "non_pass",
+      "skip_lookup_seconds": 0.1957,
+      "download_seconds": 1.0996,
+      "resume_text_extraction_seconds": 0.0099,
+      "structured_resume_seconds": 16.7685,
+      "total_file_seconds": 18.0737
+    },
+    {
+      "file_index": 3,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kasum Shamus (62072990 - Totaljobs).pdf",
+      "file_name": "Kasum Shamus (62072990 - Totaljobs).pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1867,
+      "download_seconds": 1.0808,
+      "resume_text_extraction_seconds": 0.2533,
+      "structured_resume_seconds": 12.5117,
+      "total_file_seconds": 14.0326
+    },
+    {
+      "file_index": 4,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Sagarchandra-Shettigar_cv-library.docx",
+      "file_name": "Sagarchandra-Shettigar_cv-library.docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2003,
+      "download_seconds": 1.1532,
+      "resume_text_extraction_seconds": 0.0103,
+      "structured_resume_seconds": 55.518,
+      "total_file_seconds": 56.882
+    },
+    {
+      "file_index": 5,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/CV - Paul Parkins.pdf",
+      "file_name": "CV - Paul Parkins.pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1974,
+      "download_seconds": 1.5142,
+      "resume_text_extraction_seconds": 0.2231,
+      "structured_resume_seconds": 24.024,
+      "total_file_seconds": 25.9588
+    },
+    {
+      "file_index": 6,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Vijay-Chinthalapudi_cv-library.pdf",
+      "file_name": "Vijay-Chinthalapudi_cv-library.pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.216,
+      "download_seconds": 1.1794,
+      "resume_text_extraction_seconds": 0.5382,
+      "structured_resume_seconds": 23.6497,
+      "total_file_seconds": 25.5834
+    },
+    {
+      "file_index": 7,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Dinesh suram (493569410 - Totaljobs).docx",
+      "file_name": "Dinesh suram (493569410 - Totaljobs).docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1948,
+      "download_seconds": 1.1666,
+      "resume_text_extraction_seconds": 0.0131,
+      "structured_resume_seconds": 10.028,
+      "total_file_seconds": 11.4026
+    },
+    {
+      "file_index": 8,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/MICHAEL JOHNSON (493544537 - Totaljobs).pdf",
+      "file_name": "MICHAEL JOHNSON (493544537 - Totaljobs).pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2047,
+      "download_seconds": 1.2771,
+      "resume_text_extraction_seconds": 0.1499,
+      "structured_resume_seconds": 14.0003,
+      "total_file_seconds": 15.6321
+    },
+    {
+      "file_index": 9,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Simone-Pinto_cv-library.pdf",
+      "file_name": "Simone-Pinto_cv-library.pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2075,
+      "download_seconds": 1.0534,
+      "resume_text_extraction_seconds": 0.3044,
+      "structured_resume_seconds": 52.2642,
+      "total_file_seconds": 53.8297
+    },
+    {
+      "file_index": 10,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Ashley Hogarth - CV.pdf",
+      "file_name": "Ashley Hogarth - CV.pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2392,
+      "download_seconds": 1.3228,
+      "resume_text_extraction_seconds": 3.2213,
+      "structured_resume_seconds": 17.1246,
+      "total_file_seconds": 21.908
+    },
+    {
+      "file_index": 11,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/BCVENG_bg.docx",
+      "file_name": "BCVENG_bg.docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2085,
+      "download_seconds": 1.0705,
+      "resume_text_extraction_seconds": 0.0215,
+      "structured_resume_seconds": 21.0767,
+      "total_file_seconds": 22.3772
+    },
+    {
+      "file_index": 12,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Low+latency+infrastructure+project+manager.doc",
+      "file_name": "Low+latency+infrastructure+project+manager.doc",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2074,
+      "download_seconds": 1.1634,
+      "resume_text_extraction_seconds": 0.0327,
+      "structured_resume_seconds": 61.5466,
+      "total_file_seconds": 62.9501
+    },
+    {
+      "file_index": 13,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Bertie_CV_191117.pdf",
+      "file_name": "Bertie_CV_191117.pdf",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1988,
+      "download_seconds": 1.2247,
+      "resume_text_extraction_seconds": 0.1928,
+      "structured_resume_seconds": 20.6609,
+      "total_file_seconds": 22.2773
+    },
+    {
+      "file_index": 14,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kanagarajah+Sivachami-IT+Project+Manager-CV+(London).pdf",
+      "file_name": "Kanagarajah+Sivachami-IT+Project+Manager-CV+(London).pdf",
+      "status": "failed",
+      "skip_lookup_seconds": 0.2045,
+      "download_seconds": 1.1549,
+      "resume_text_extraction_seconds": 0.4658,
+      "structured_resume_seconds": 0.0,
+      "total_file_seconds": 59.9566
+    },
+    {
+      "file_index": 15,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/AnthonyBAyoolaCV_Latest.docx",
+      "file_name": "AnthonyBAyoolaCV_Latest.docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.2185,
+      "download_seconds": 1.1247,
+      "resume_text_extraction_seconds": 0.0212,
+      "structured_resume_seconds": 23.5519,
+      "total_file_seconds": 24.9163
+    },
+    {
+      "file_index": 16,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jennifer+Horsfield+11_2022.docx",
+      "file_name": "Jennifer+Horsfield+11_2022.docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1862,
+      "download_seconds": 1.1715,
+      "resume_text_extraction_seconds": 0.0179,
+      "structured_resume_seconds": 25.1833,
+      "total_file_seconds": 26.559
+    },
+    {
+      "file_index": 17,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kerry+West++CV.DOC",
+      "file_name": "Kerry+West++CV.DOC",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1933,
+      "download_seconds": 1.0574,
+      "resume_text_extraction_seconds": 0.0298,
+      "structured_resume_seconds": 20.329,
+      "total_file_seconds": 21.6095
+    },
+    {
+      "file_index": 18,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Marc-Lemmon_cv-library.pdf",
+      "file_name": "Marc-Lemmon_cv-library.pdf",
+      "status": "non_pass",
+      "skip_lookup_seconds": 0.203,
+      "download_seconds": 1.0176,
+      "resume_text_extraction_seconds": 0.0923,
+      "structured_resume_seconds": 14.9197,
+      "total_file_seconds": 16.2327
+    },
+    {
+      "file_index": 19,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Senthilkumar-Manjini_cv-library.doc",
+      "file_name": "Senthilkumar-Manjini_cv-library.doc",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1784,
+      "download_seconds": 1.1175,
+      "resume_text_extraction_seconds": 0.0254,
+      "structured_resume_seconds": 21.6053,
+      "total_file_seconds": 22.9267
+    },
+    {
+      "file_index": 20,
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/sahithi mulakala (498011775 - Totaljobs).docx",
+      "file_name": "sahithi mulakala (498011775 - Totaljobs).docx",
+      "status": "accepted",
+      "skip_lookup_seconds": 0.1928,
+      "download_seconds": 1.0843,
+      "resume_text_extraction_seconds": 0.0097,
+      "structured_resume_seconds": 14.6595,
+      "total_file_seconds": 15.9464
+    }
+  ],
+  "persisted_resume_preview": [
+    {
+      "persisted_at": "2026-06-04T18:06:06.686976+00:00",
+      "person_id": "abe79e29-2e68-4d5c-bb40-2464a7e5e89b",
+      "candidate_id": "77f40033-d2a2-4387-9002-7cbac645dc93",
+      "current_company_id": "59f2b04e-bafb-4121-bf83-b9d8f2ad13b8",
+      "document_id": "8b96d8a5-e70d-4435-8148-563394a9de7a",
+      "current_resume_document_id": "8b96d8a5-e70d-4435-8148-563394a9de7a",
+      "candidate_source_record_id": "e941058a-76c3-4be2-8836-cabf2de3854e",
+      "resume_source_record_id": "623641b7-c1dd-48ce-ae6c-bb5eaa173d27",
+      "extraction_source_record_id": "a2de20ee-fad4-4bd9-9a87-e927bdbb97dc",
+      "candidate_skill_count": 21,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "fad616db-4079-438e-bc3b-f61ab5d18a98",
+      "reconciliation_status": "created_new",
+      "quality_status": "rerun",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/CV+Alex+Antoniou.pdf",
+      "file_name": "CV+Alex+Antoniou.pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 60,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": true,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "rerun",
+        "final_quality_score": 60
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:06:25.354741+00:00",
+      "person_id": "d1b42ee2-37c1-422a-ba4a-b2d8c9f16c0c",
+      "candidate_id": "60e2fc2b-29fe-4da5-9ca3-127c917f2a73",
+      "current_company_id": null,
+      "document_id": "303c7463-2754-43d2-b9ee-d90eb901f4df",
+      "current_resume_document_id": "303c7463-2754-43d2-b9ee-d90eb901f4df",
+      "candidate_source_record_id": "a17e5498-8ac1-403e-8b32-9ce41ffa131e",
+      "resume_source_record_id": "fcb961b1-9869-4609-9447-52634ff6bc98",
+      "extraction_source_record_id": "f6a82b98-c1a2-4329-8d4d-0a5e226cc3cf",
+      "candidate_skill_count": 17,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "4689fa4a-5e2f-468f-8404-102b94517e85",
+      "reconciliation_status": "auto_matched",
+      "quality_status": "review",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Antonio+Emmanouilidis+2021.docx",
+      "file_name": "Antonio+Emmanouilidis+2021.docx",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 66,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "review",
+        "final_quality_score": 66
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:06:38.188992+00:00",
+      "person_id": "023e4b15-ddab-42aa-920f-85ad738eadb5",
+      "candidate_id": "272b16aa-f0b5-4963-8301-47189cbde292",
+      "current_company_id": "7b49303b-9c12-42a7-8109-2b6d5577056f",
+      "document_id": "dc9c8b16-4e3c-4c3c-994f-0a3b0baf3666",
+      "current_resume_document_id": "dc9c8b16-4e3c-4c3c-994f-0a3b0baf3666",
+      "candidate_source_record_id": "5072693e-5430-44dc-be1e-b3a4ced1cb2e",
+      "resume_source_record_id": "89bc5edf-7fc4-4090-b5e1-9a789e3e1b89",
+      "extraction_source_record_id": "6edcbd44-db75-4e29-8c3f-232b7f5f94c8",
+      "candidate_skill_count": 35,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "94d8ec0c-1493-462f-a7c5-7878372347a9",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kasum Shamus (62072990 - Totaljobs).pdf",
+      "file_name": "Kasum Shamus (62072990 - Totaljobs).pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:07:33.035976+00:00",
+      "person_id": "18e327d6-cdbb-421f-b6b1-526dde8ecb5f",
+      "candidate_id": "b019f9f2-26b3-4ff8-918a-63394e8418e9",
+      "current_company_id": "4600e8d2-dfc9-47a6-95ed-8b1be47402bd",
+      "document_id": "e50a3844-0841-464e-aa3d-638c9909f064",
+      "current_resume_document_id": "e50a3844-0841-464e-aa3d-638c9909f064",
+      "candidate_source_record_id": "b4cc94e9-b78c-47b7-9e97-06109f5a6645",
+      "resume_source_record_id": "d7a3dca4-46ec-4013-8f45-14e9c27aea56",
+      "extraction_source_record_id": "2af81de4-e73d-4d06-8b1d-27e4379683f5",
+      "candidate_skill_count": 77,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "15d405d0-31d6-4455-b1d9-605d2f16f70d",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Sagarchandra-Shettigar_cv-library.docx",
+      "file_name": "Sagarchandra-Shettigar_cv-library.docx",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:07:57.885016+00:00",
+      "person_id": "73a982b7-bd59-4f28-b6eb-747691afa5ee",
+      "candidate_id": "53138c4d-bd4f-4af7-afd7-93fc62cc4b31",
+      "current_company_id": "78ad5dcd-e5f3-42e6-8117-9afd7de0bd0f",
+      "document_id": "19b2b560-5b09-49e1-86d2-971fe1c8417e",
+      "current_resume_document_id": "19b2b560-5b09-49e1-86d2-971fe1c8417e",
+      "candidate_source_record_id": "92b38389-8873-4e80-8969-ed5938c9720f",
+      "resume_source_record_id": "88f4b501-aa63-4fb7-ae89-8653a2e7edfe",
+      "extraction_source_record_id": "9a1322df-9947-4ad5-93ae-ecb39ebda8bb",
+      "candidate_skill_count": 97,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "5c54f4c0-fda8-4f16-a2e2-c51ed5e6eb6c",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/CV - Paul Parkins.pdf",
+      "file_name": "CV - Paul Parkins.pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:08:24.830075+00:00",
+      "person_id": "246eef74-27a2-42a2-a14b-755d3c155716",
+      "candidate_id": "10f70e17-91d0-4409-a10b-2bc1976f5cf7",
+      "current_company_id": "1c1e2a01-dd85-4ec7-baf1-ffeca5d228de",
+      "document_id": "2bdc8205-3519-4fce-821d-2a170cee6725",
+      "current_resume_document_id": "2bdc8205-3519-4fce-821d-2a170cee6725",
+      "candidate_source_record_id": "85a6a88e-0c0f-40bc-b9f9-8bc1d09fda10",
+      "resume_source_record_id": "4ee41092-6c98-4421-95b7-7484d3a87766",
+      "extraction_source_record_id": "dc1c080d-c5ca-4878-a4b9-c217b3f9becd",
+      "candidate_skill_count": 75,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "258e0f07-9e3b-4244-8117-f6ac21a4df9a",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Vijay-Chinthalapudi_cv-library.pdf",
+      "file_name": "Vijay-Chinthalapudi_cv-library.pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:08:38.691380+00:00",
+      "person_id": "3aa2e97d-c8c5-49d0-9f56-d5c55bfaafe6",
+      "candidate_id": "8dc7f87d-2b89-46b7-9227-3999958a4285",
+      "current_company_id": "5d7254ae-bb7b-4af1-9c5a-f31407faf982",
+      "document_id": "2386d19b-0b41-4bcc-b701-6fe51027ea29",
+      "current_resume_document_id": "2386d19b-0b41-4bcc-b701-6fe51027ea29",
+      "candidate_source_record_id": "024f4891-a571-457c-ac8a-2f21f46fc763",
+      "resume_source_record_id": "ab4cccbf-fe03-4de0-a867-d442bc6198f9",
+      "extraction_source_record_id": "8f64dfc3-836b-45af-9a32-a4ff24d605e0",
+      "candidate_skill_count": 25,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "9644488d-9b21-4574-81b2-71bc5a28b1e9",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Dinesh suram (493569410 - Totaljobs).docx",
+      "file_name": "Dinesh suram (493569410 - Totaljobs).docx",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 85,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 85
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:08:53.858286+00:00",
+      "person_id": "8a70146b-0ca2-4ed7-ab68-64e0c173a0f0",
+      "candidate_id": "efcf904c-5ed0-429b-8249-d72ef9f4e5d9",
+      "current_company_id": "c94d0396-8da9-4a1c-aabf-03c1c36f4eb3",
+      "document_id": "d48a31e9-c0a0-41fa-8ca0-ebe6af52563f",
+      "current_resume_document_id": "d48a31e9-c0a0-41fa-8ca0-ebe6af52563f",
+      "candidate_source_record_id": "9363ad36-9b67-4636-95b9-840328ec2acf",
+      "resume_source_record_id": "6e4fffac-9736-4978-a88e-4fbb56a318ca",
+      "extraction_source_record_id": "9c78bee8-76c8-40d1-bf94-d659baceffb0",
+      "candidate_skill_count": 34,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "72ca3040-1f04-4488-8058-ac176dbea0d2",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/MICHAEL JOHNSON (493544537 - Totaljobs).pdf",
+      "file_name": "MICHAEL JOHNSON (493544537 - Totaljobs).pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:09:48.621300+00:00",
+      "person_id": "8d37fd1c-d4c8-4b13-85b4-742a7a6c8cc0",
+      "candidate_id": "b56f94c5-d3db-496e-9c2a-a33a4ada654d",
+      "current_company_id": "bd1f8218-c81b-4707-b501-86d57997b42b",
+      "document_id": "f2ad9d96-1080-4a4e-8e39-6c950ab32a6d",
+      "current_resume_document_id": "f2ad9d96-1080-4a4e-8e39-6c950ab32a6d",
+      "candidate_source_record_id": "bbdbe57c-9b66-4817-b7e2-7f93547fd829",
+      "resume_source_record_id": "ee513c93-cd38-4c76-929a-c5ef7f1dc088",
+      "extraction_source_record_id": "e0c53cc6-09f4-4011-b57c-2a4eba93c1be",
+      "candidate_skill_count": 13,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "5ddb7a71-34b5-4804-adeb-3cb58bd7d77e",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Simone-Pinto_cv-library.pdf",
+      "file_name": "Simone-Pinto_cv-library.pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 100,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 100
+      }
+    },
+    {
+      "persisted_at": "2026-06-04T18:10:09.923539+00:00",
+      "person_id": "61f1e120-2180-457c-9959-ec3c5d8e2c10",
+      "candidate_id": "21b56615-d0fd-40ef-b92a-f986155c8450",
+      "current_company_id": "d187d3f0-8f27-4323-88f1-2983257d9047",
+      "document_id": "f5c6587d-ee61-4b80-9428-ff56bb9c0e2c",
+      "current_resume_document_id": "f5c6587d-ee61-4b80-9428-ff56bb9c0e2c",
+      "candidate_source_record_id": "b1de8ff2-91c3-46ae-9087-7fd6a56bfe5f",
+      "resume_source_record_id": "5724da2f-bd4b-4d99-85b7-fed892be0de4",
+      "extraction_source_record_id": "c865f013-78eb-4ede-bf69-28b70b9f9147",
+      "candidate_skill_count": 22,
+      "candidate_note_interaction_count": 0,
+      "reconciliation_decision_id": "2c2f6420-28ce-43b1-846b-2bb2d5e08c53",
+      "reconciliation_status": "created_new",
+      "quality_status": "pass",
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Ashley Hogarth - CV.pdf",
+      "file_name": "Ashley Hogarth - CV.pdf",
+      "model_name": "gpt-4.1-mini",
+      "quality_score": 80,
+      "quality_gate": {
+        "enabled": true,
+        "first_pass_model_name": "gpt-4.1-mini",
+        "fallback_model_name": "gpt-4.1-mini",
+        "fallback_invoked": false,
+        "final_model_name": "gpt-4.1-mini",
+        "pass_threshold": 80,
+        "rerun_threshold": 65,
+        "final_quality_status": "pass",
+        "final_quality_score": 80
+      }
+    }
+  ],
+  "skipped_items_preview": [],
+  "failed_items_preview": [
+    {
+      "dropbox_path": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Kanagarajah+Sivachami-IT+Project+Manager-CV+(London).pdf",
+      "file_name": "Kanagarajah+Sivachami-IT+Project+Manager-CV+(London).pdf",
+      "stage": "structured_resume_extraction_or_persistence",
+      "error_type": "ResumeExtractionError",
+      "message": "The resume extraction model call failed."
+    }
+  ]
+}
