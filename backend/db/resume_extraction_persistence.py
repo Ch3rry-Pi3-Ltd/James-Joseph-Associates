@@ -625,6 +625,251 @@ def persist_jobadder_candidate_profile_snapshot(
     )
 
 
+def find_existing_resume_content_match(
+    *,
+    content_hash: str,
+) -> dict[str, Any] | None:
+    """
+    Return one existing canonical resume/person/candidate match by content hash.
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            document_id = _find_existing_resume_document_id(
+                cursor,
+                source_record_id=None,
+                content_hash=content_hash,
+            )
+            if document_id is None:
+                return None
+
+            person_id = _find_document_linked_entity_id(
+                cursor,
+                document_id=document_id,
+                entity_column="person_id",
+            )
+            candidate_id = _find_document_linked_entity_id(
+                cursor,
+                document_id=document_id,
+                entity_column="candidate_id",
+            )
+            if person_id is None or candidate_id is None:
+                return None
+
+            cursor.execute(
+                """
+                select
+                    id,
+                    title,
+                    resume_updated_at
+                from documents
+                where id = %(document_id)s
+                limit 1
+                """,
+                {"document_id": document_id},
+            )
+            document_row = cursor.fetchone()
+            if document_row is None:
+                return None
+
+            quality_assessment = _find_document_quality_assessment(
+                cursor,
+                document_id=document_id,
+            )
+
+    return _make_json_safe_summary(
+        {
+            "document_id": document_row["id"],
+            "document_title": document_row.get("title"),
+            "resume_updated_at": document_row.get("resume_updated_at"),
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "quality_status": quality_assessment.get("quality_status"),
+            "quality_score": quality_assessment.get("quality_score"),
+        }
+    )
+
+
+def persist_dropbox_duplicate_resume_snapshot(
+    persistence_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Persist Dropbox provenance for a CV that matches an existing resume document.
+    """
+
+    source_candidate_id = str(persistence_payload["source_candidate_id"])
+    latest_resume = persistence_payload.get("latest_resume", {})
+    extraction_source_record_key = f"{source_candidate_id}:{source_candidate_id}"
+    persisted_at = datetime.now(timezone.utc)
+
+    person_id = str(persistence_payload["matched_person_id"])
+    candidate_id = str(persistence_payload["matched_candidate_id"])
+    existing_document_id = str(persistence_payload["matched_document_id"])
+    reconciliation_reason = "existing_resume_content_hash_match"
+    reconciliation_evidence_payload = {
+        "matched_document_id": existing_document_id,
+        "match_strategy": "resume_content_hash",
+    }
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            candidate_source_record = _upsert_source_record(
+                cursor,
+                source_system="dropbox",
+                source_record_type="dropbox_candidate_file",
+                source_record_id=source_candidate_id,
+                source_payload=persistence_payload["candidate_source_payload"],
+                source_payload_hash=persistence_payload[
+                    "candidate_source_payload_hash"
+                ],
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+                sync_status="accepted",
+            )
+            resume_source_record = _upsert_source_record(
+                cursor,
+                source_system="dropbox",
+                source_record_type="dropbox_resume_attachment",
+                source_record_id=source_candidate_id,
+                source_payload=persistence_payload["resume_source_payload"],
+                source_payload_hash=persistence_payload["resume_source_payload_hash"],
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+                sync_status="accepted",
+            )
+            extraction_source_record = _upsert_source_record(
+                cursor,
+                source_system="dropbox",
+                source_record_type="dropbox_resume_extraction",
+                source_record_id=extraction_source_record_key,
+                source_payload=persistence_payload["extraction_source_payload"],
+                source_payload_hash=persistence_payload[
+                    "extraction_source_payload_hash"
+                ],
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+                sync_status="accepted",
+            )
+
+            document_id = _upsert_resume_document(
+                cursor,
+                source_record_id=resume_source_record["id"],
+                resume_title=(latest_resume or {}).get("file_name"),
+                resume_updated_at=persistence_payload.get("resume_updated_at"),
+                mime_type=(latest_resume or {}).get("mime_type"),
+                source_uri=persistence_payload.get("resume_source_uri"),
+                content_hash=persistence_payload.get("resume_content_hash"),
+                extracted_text=persistence_payload.get("cleaned_resume_text"),
+                existing_document_id=existing_document_id,
+            )
+
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                person_id=person_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=candidate_source_record["id"],
+                candidate_id=candidate_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=resume_source_record["id"],
+                document_id=document_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=resume_source_record["id"],
+                person_id=person_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=resume_source_record["id"],
+                candidate_id=candidate_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=extraction_source_record["id"],
+                document_id=document_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=extraction_source_record["id"],
+                person_id=person_id,
+            )
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=extraction_source_record["id"],
+                candidate_id=candidate_id,
+            )
+
+            _ensure_document_link(
+                cursor,
+                document_id=document_id,
+                candidate_id=candidate_id,
+                relationship_type="resume",
+                source_record_id=resume_source_record["id"],
+            )
+            _ensure_document_link(
+                cursor,
+                document_id=document_id,
+                person_id=person_id,
+                relationship_type="resume",
+                source_record_id=resume_source_record["id"],
+            )
+            current_resume_document_id = _refresh_current_resume_links(
+                cursor,
+                candidate_id=candidate_id,
+                person_id=person_id,
+                source_record_id=resume_source_record["id"],
+            )
+            reconciliation_decision = _upsert_reconciliation_decision(
+                cursor,
+                source_record_id=extraction_source_record["id"],
+                document_id=document_id,
+                person_id=person_id,
+                candidate_id=candidate_id,
+                person_reconciliation={
+                    "decision_status": "auto_matched",
+                    "decision_reason": reconciliation_reason,
+                    "confidence": 0.99,
+                    "matched_person_id": person_id,
+                    "evidence_payload": reconciliation_evidence_payload,
+                },
+                candidate_reconciliation={
+                    "decision_status": "auto_matched",
+                    "decision_reason": reconciliation_reason,
+                    "confidence": 0.99,
+                    "matched_candidate_id": candidate_id,
+                    "evidence_payload": reconciliation_evidence_payload,
+                },
+            )
+
+        connection.commit()
+
+    return _make_json_safe_summary(
+        {
+            "persisted_at": persisted_at.isoformat(),
+            "person_id": person_id,
+            "candidate_id": candidate_id,
+            "current_company_id": None,
+            "document_id": document_id,
+            "current_resume_document_id": current_resume_document_id,
+            "candidate_source_record_id": candidate_source_record["id"],
+            "resume_source_record_id": resume_source_record["id"],
+            "extraction_source_record_id": extraction_source_record["id"],
+            "candidate_skill_count": 0,
+            "candidate_note_interaction_count": 0,
+            "reconciliation_decision_id": reconciliation_decision["id"],
+            "reconciliation_status": reconciliation_decision["decision_status"],
+            "quality_status": persistence_payload.get("quality_status"),
+            "quality_score": persistence_payload.get("quality_score"),
+            "persistence_mode": "reused_existing_resume",
+        }
+    )
+
+
 def _upsert_source_record(
     cursor: Cursor[Any],
     *,
@@ -2236,6 +2481,46 @@ def _find_existing_resume_document_id(
             return row["id"]
 
     return None
+
+
+def _find_document_quality_assessment(
+    cursor: Cursor[Any],
+    *,
+    document_id: str,
+) -> dict[str, Any]:
+    """
+    Return the latest known quality status/score linked to a resume document.
+    """
+
+    cursor.execute(
+        """
+        select
+            sr.source_payload -> 'quality_assessment' ->> 'status' as quality_status,
+            nullif(
+                sr.source_payload -> 'quality_assessment' ->> 'quality_score',
+                ''
+            )::int as quality_score
+        from source_record_links srl
+        join source_records sr
+          on sr.id = srl.source_record_id
+        where srl.document_id = %(document_id)s
+          and sr.source_record_type in (
+              'jobadder_resume_extraction',
+              'dropbox_resume_extraction',
+              'recruiterflow_resume_extraction'
+          )
+        order by sr.processed_at desc nulls last, sr.created_at desc
+        limit 1
+        """,
+        {"document_id": document_id},
+    )
+    row = cursor.fetchone()
+    if row is None:
+        return {
+            "quality_status": None,
+            "quality_score": None,
+        }
+    return dict(row)
 
 
 def _find_document_linked_entity_id(

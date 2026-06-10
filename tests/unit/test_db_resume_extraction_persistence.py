@@ -28,6 +28,8 @@ from backend.db.resume_extraction_persistence import (
     _upsert_reconciliation_decision,
     _upsert_person,
     _upsert_resume_document,
+    find_existing_resume_content_match,
+    persist_dropbox_duplicate_resume_snapshot,
     persist_jobadder_candidate_profile_snapshot,
     persist_resume_extraction_snapshot,
 )
@@ -198,6 +200,51 @@ def test_find_document_linked_entity_id_reads_existing_candidate_link() -> None:
     )
 
     assert candidate_id == candidate_uuid
+
+
+def test_find_existing_resume_content_match_returns_linked_resume_identity() -> None:
+    """
+    Verify that content-hash lookup can resolve back to canonical IDs.
+    """
+
+    document_uuid = uuid4()
+    person_uuid = uuid4()
+    candidate_uuid = uuid4()
+
+    with patch(
+        "backend.db.resume_extraction_persistence.postgres_connection"
+    ) as mock_postgres_connection, patch(
+        "backend.db.resume_extraction_persistence._find_document_quality_assessment",
+        return_value={"quality_status": "pass", "quality_score": 96},
+    ):
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.side_effect = [
+            {"id": document_uuid},
+            {"person_id": person_uuid},
+            {"candidate_id": candidate_uuid},
+            {
+                "id": document_uuid,
+                "title": "Jane-Doe-CV.pdf",
+                "resume_updated_at": "2026-05-11T12:00:00Z",
+            },
+        ]
+        mock_connection = MagicMock()
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        match = find_existing_resume_content_match(content_hash="resume-hash")
+
+    assert match == {
+        "document_id": str(document_uuid),
+        "document_title": "Jane-Doe-CV.pdf",
+        "resume_updated_at": "2026-05-11T12:00:00Z",
+        "person_id": str(person_uuid),
+        "candidate_id": str(candidate_uuid),
+        "quality_status": "pass",
+        "quality_score": 96,
+    }
 
 
 def test_upsert_resume_document_persists_resume_updated_at() -> None:
@@ -544,4 +591,80 @@ def test_persist_jobadder_candidate_profile_snapshot_commits_and_returns_summary
     assert summary["reconciliation_decision_id"] == "rec-2"
     assert summary["reconciliation_status"] == "created_new"
     assert summary["quality_status"] == "profile_only"
+    mock_connection.commit.assert_called_once()
+
+
+def test_persist_dropbox_duplicate_resume_snapshot_commits_and_returns_summary() -> None:
+    """
+    Verify that Dropbox duplicate reuse writes provenance and reuses canonical IDs.
+    """
+
+    persistence_payload = {
+        "source_candidate_id": "/folder/Jane-Doe-CV.pdf",
+        "candidate_source_payload": {"candidate_context": {"full_name": "Jane Doe"}},
+        "candidate_source_payload_hash": "candidate-hash",
+        "resume_source_payload": {"latest_resume": {"file_name": "Jane-Doe-CV.pdf"}},
+        "resume_source_payload_hash": "resume-hash",
+        "extraction_source_payload": {"llm_extraction_skipped": True},
+        "extraction_source_payload_hash": "extraction-hash",
+        "import_run_id": "run-789",
+        "quality_status": "pass",
+        "quality_score": 96,
+        "matched_person_id": "person-uuid",
+        "matched_candidate_id": "candidate-uuid",
+        "matched_document_id": "document-uuid",
+        "latest_resume": {
+            "file_name": "Jane-Doe-CV.pdf",
+            "mime_type": "application/pdf",
+        },
+        "resume_updated_at": "2026-05-11T12:00:00Z",
+        "resume_source_uri": "dropbox:///folder/Jane-Doe-CV.pdf#candidate=/folder/Jane-Doe-CV.pdf&attachment=/folder/Jane-Doe-CV.pdf",
+        "resume_content_hash": "resume-content-hash",
+        "cleaned_resume_text": "Jane Doe CV body text",
+    }
+
+    mock_cursor = MagicMock()
+    candidate_source_record_uuid = uuid4()
+    resume_source_record_uuid = uuid4()
+    extraction_source_record_uuid = uuid4()
+    mock_cursor.fetchone.side_effect = [
+        {"id": candidate_source_record_uuid},
+        {"id": resume_source_record_uuid},
+        {"id": extraction_source_record_uuid},
+    ]
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.resume_extraction_persistence.postgres_connection"
+    ) as mock_postgres_connection, patch(
+        "backend.db.resume_extraction_persistence._upsert_resume_document",
+        return_value="document-uuid",
+    ), patch(
+        "backend.db.resume_extraction_persistence._ensure_source_record_link",
+    ), patch(
+        "backend.db.resume_extraction_persistence._ensure_document_link",
+    ), patch(
+        "backend.db.resume_extraction_persistence._refresh_current_resume_links",
+        return_value="document-uuid",
+    ), patch(
+        "backend.db.resume_extraction_persistence._upsert_reconciliation_decision",
+        return_value={"id": "rec-3", "decision_status": "auto_matched"},
+    ):
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        summary = persist_dropbox_duplicate_resume_snapshot(persistence_payload)
+
+    assert summary["person_id"] == "person-uuid"
+    assert summary["candidate_id"] == "candidate-uuid"
+    assert summary["document_id"] == "document-uuid"
+    assert summary["current_resume_document_id"] == "document-uuid"
+    assert summary["candidate_source_record_id"] == str(candidate_source_record_uuid)
+    assert summary["resume_source_record_id"] == str(resume_source_record_uuid)
+    assert summary["extraction_source_record_id"] == str(extraction_source_record_uuid)
+    assert summary["quality_status"] == "pass"
+    assert summary["persistence_mode"] == "reused_existing_resume"
     mock_connection.commit.assert_called_once()

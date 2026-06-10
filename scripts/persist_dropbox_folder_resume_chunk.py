@@ -28,9 +28,15 @@ from backend.services.dropbox_api import (
     fetch_dropbox_list_folder_continue,
 )
 from backend.services.dropbox_resume_extraction import (
+    build_dropbox_resume_text_bundle,
     extract_dropbox_candidate_resume_profile_with_quality_gate,
 )
+from backend.services.resume_extraction import (
+    build_resume_extraction_input_from_resume_bundle,
+)
 from backend.services.resume_extraction_persistence import (
+    find_existing_resume_duplicate_match,
+    persist_dropbox_duplicate_resume_match,
     persist_scored_resume_extraction_result,
 )
 from backend.services.resume_text import (
@@ -85,6 +91,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Bypass the Dropbox-path skip check and reprocess already-ingested CVs.",
     )
+    parser.add_argument(
+        "--process-entire-folder",
+        action="store_true",
+        help="Walk the whole folder from the starting offset in file-limit windows.",
+    )
     return parser.parse_args()
 
 
@@ -113,6 +124,7 @@ def main() -> None:
     dropbox_list_limit = max(file_limit, int(args.dropbox_list_limit))
     resume_file_offset = max(0, int(args.resume_file_offset))
     force_reprocess = bool(args.force_reprocess)
+    process_entire_folder = bool(args.process_entire_folder)
     artifact_path = build_artifact_path(
         folder_path,
         resume_file_offset=resume_file_offset,
@@ -123,12 +135,30 @@ def main() -> None:
     access_token = stored_connection["access_token"]
     assert isinstance(access_token, str)
 
-    folder_preview, entries, selected_entries = _list_selected_resume_entries(
+    folder_preview, entries = _list_folder_entries(
         access_token=access_token,
         folder_path=folder_path,
         dropbox_list_limit=dropbox_list_limit,
+        stop_after_resume_file_count=(
+            None if process_entire_folder else resume_file_offset + file_limit
+        ),
+    )
+    total_eligible_resume_file_count = _count_resume_entries(entries)
+    selected_entries = _slice_resume_entries(
+        entries,
         resume_file_offset=resume_file_offset,
-        file_limit=file_limit,
+        file_limit=(
+            max(0, total_eligible_resume_file_count - resume_file_offset)
+            if process_entire_folder
+            else file_limit
+        ),
+    )
+    window_offsets_processed = list(
+        range(
+            resume_file_offset,
+            resume_file_offset + len(selected_entries),
+            file_limit,
+        )
     )
 
     persisted_resumes: list[dict[str, Any]] = []
@@ -229,6 +259,52 @@ def main() -> None:
                 4,
             )
 
+            duplicate_resume_match: dict[str, Any] | None = None
+            prepared_extraction_input: dict[str, Any] | None = None
+            if not force_reprocess and isinstance(extracted_resume_text, dict):
+                prepared_resume_bundle = build_dropbox_resume_text_bundle(
+                    dropbox_path=dropbox_path,
+                    dropbox_folder_path=folder_path,
+                    downloaded_file=downloaded_file,
+                    extracted_resume_text=extracted_resume_text,
+                )
+                prepared_extraction_input = (
+                    build_resume_extraction_input_from_resume_bundle(
+                        resume_text_bundle=prepared_resume_bundle,
+                    )
+                )
+                cleaned_resume_text = prepared_extraction_input.get("cleaned_resume_text")
+                if isinstance(cleaned_resume_text, str) and cleaned_resume_text.strip() != "":
+                    duplicate_resume_match = find_existing_resume_duplicate_match(
+                        cleaned_resume_text=cleaned_resume_text,
+                    )
+
+            if (
+                duplicate_resume_match is not None
+                and prepared_extraction_input is not None
+            ):
+                persisted_summary = persist_dropbox_duplicate_resume_match(
+                    extraction_input=prepared_extraction_input,
+                    matched_resume=duplicate_resume_match,
+                )
+                persisted_resumes.append(
+                    {
+                        **persisted_summary,
+                        "dropbox_path": dropbox_path,
+                        "file_name": file_name,
+                        "model_name": None,
+                        "quality_score": persisted_summary.get("quality_score"),
+                        "quality_gate": {"llm_extraction_skipped": True},
+                    }
+                )
+                if persisted_summary.get("quality_status") == "pass":
+                    status_counts["accepted"] += 1
+                    file_timing["status"] = "accepted"
+                else:
+                    status_counts["non_pass"] += 1
+                    file_timing["status"] = "non_pass"
+                continue
+
             structured_resume_started_at = perf_counter()
             result = extract_dropbox_candidate_resume_profile_with_quality_gate(
                 dropbox_path=dropbox_path,
@@ -300,8 +376,11 @@ def main() -> None:
         dropbox_list_limit=dropbox_list_limit,
         resume_file_offset=resume_file_offset,
         force_reprocess=force_reprocess,
+        process_entire_folder=process_entire_folder,
         folder_preview=folder_preview,
         entries=entries,
+        total_eligible_resume_file_count=total_eligible_resume_file_count,
+        window_offsets_processed=window_offsets_processed,
         processed_file_count=processed_file_count,
         status_counts=status_counts,
         timing_totals_seconds=timing_totals_seconds,
@@ -318,8 +397,11 @@ def main() -> None:
     print(f"artifact: {artifact_path}")
     print(f"folder path: {summary['folder_path']}")
     print(f"listed entries: {summary['folder_entry_count']}")
+    print(f"total eligible resume-like files: {summary['total_eligible_resume_file_count']}")
     print(f"resume-like files selected: {summary['selected_resume_file_count']}")
     print(f"resume-file offset: {summary['resume_file_offset']}")
+    if process_entire_folder:
+        print(f"window offsets processed: {summary['window_offsets_processed']}")
     print(f"already processed: {summary['already_processed_count']}")
     print(f"new resume files: {summary['new_resume_file_count']}")
     print(f"persisted resumes: {summary['persisted_resume_count']}")
@@ -338,8 +420,11 @@ def _build_run_summary(
     dropbox_list_limit: int,
     resume_file_offset: int,
     force_reprocess: bool,
+    process_entire_folder: bool,
     folder_preview: dict[str, Any],
     entries: list[dict[str, Any]],
+    total_eligible_resume_file_count: int,
+    window_offsets_processed: list[int],
     processed_file_count: int,
     status_counts: dict[str, int],
     timing_totals_seconds: dict[str, float],
@@ -370,8 +455,11 @@ def _build_run_summary(
         "dropbox_list_limit": dropbox_list_limit,
         "resume_file_offset": resume_file_offset,
         "force_reprocess": force_reprocess,
+        "process_entire_folder": process_entire_folder,
         "folder_entry_count": len(entries),
         "folder_has_more": bool(folder_preview.get("has_more")),
+        "total_eligible_resume_file_count": total_eligible_resume_file_count,
+        "window_offsets_processed": window_offsets_processed,
         "listed_file_preview": [
             {
                 "name": entry.get("name"),
@@ -401,16 +489,15 @@ def _build_run_summary(
     }
 
 
-def _list_selected_resume_entries(
+def _list_folder_entries(
     *,
     access_token: str,
     folder_path: str,
     dropbox_list_limit: int,
-    resume_file_offset: int,
-    file_limit: int,
-) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    stop_after_resume_file_count: int | None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """
-    Page through Dropbox folder results until the requested resume-file window is available.
+    Page through Dropbox folder results until enough eligible CV files are available.
     """
 
     folder_preview = fetch_dropbox_list_folder(
@@ -422,15 +509,15 @@ def _list_selected_resume_entries(
     )
     raw_entries = folder_preview.get("entries", [])
     entries = raw_entries if isinstance(raw_entries, list) else []
-    selected_entries = _slice_resume_entries(
-        entries,
-        resume_file_offset=resume_file_offset,
-        file_limit=file_limit,
-    )
     cursor = folder_preview.get("cursor")
     has_more = bool(folder_preview.get("has_more"))
 
-    while len(selected_entries) < file_limit and has_more:
+    while has_more:
+        if (
+            stop_after_resume_file_count is not None
+            and _count_resume_entries(entries) >= stop_after_resume_file_count
+        ):
+            break
         if not isinstance(cursor, str) or cursor.strip() == "":
             break
 
@@ -443,17 +530,24 @@ def _list_selected_resume_entries(
         if isinstance(continued_entries, list):
             entries.extend(continued_entries)
 
-        selected_entries = _slice_resume_entries(
-            entries,
-            resume_file_offset=resume_file_offset,
-            file_limit=file_limit,
-        )
         cursor = continuation_page.get("cursor")
         has_more = bool(continuation_page.get("has_more"))
         folder_preview["cursor"] = cursor
         folder_preview["has_more"] = has_more
 
-    return folder_preview, entries, selected_entries
+    return folder_preview, entries
+
+
+def _count_resume_entries(raw_entries: list[dict[str, Any]]) -> int:
+    """
+    Return the number of resume-like file entries in one Dropbox listing.
+    """
+
+    return sum(
+        1
+        for entry in raw_entries
+        if isinstance(entry, dict) and _looks_like_resume_entry(entry)
+    )
 
 
 def _select_resume_entries(

@@ -51,7 +51,9 @@ import hashlib
 from typing import Any
 
 from backend.db.resume_extraction_persistence import (
+    find_existing_resume_content_match,
     persist_jobadder_candidate_profile_snapshot,
+    persist_dropbox_duplicate_resume_snapshot,
     persist_resume_extraction_snapshot,
 )
 
@@ -144,6 +146,53 @@ def persist_scored_resume_extraction_result(
     )
     persistence_payload = build_resume_extraction_persistence_payload(result)
     return persist_resume_extraction_snapshot(persistence_payload)
+
+
+def find_existing_resume_duplicate_match(
+    *,
+    cleaned_resume_text: str,
+) -> dict[str, Any] | None:
+    """
+    Return one existing canonical resume match for cleaned resume text.
+
+    Notes
+    -----
+    This helper exists so ingest scripts can short-circuit expensive LLM
+    extraction work when the resume text already maps to a canonical resume
+    document in Supabase.
+    """
+
+    sanitized_resume_text = _sanitize_text_preserve_structure(cleaned_resume_text)
+    if sanitized_resume_text is None or sanitized_resume_text.strip() == "":
+        return None
+
+    return find_existing_resume_content_match(
+        content_hash=_hash_text(sanitized_resume_text),
+    )
+
+
+def persist_dropbox_duplicate_resume_match(
+    *,
+    extraction_input: dict[str, Any],
+    matched_resume: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Reuse an existing canonical resume for a duplicate Dropbox CV upload.
+
+    Notes
+    -----
+    This path is intentionally narrower than full scored extraction:
+
+    - the Dropbox file still gets canonical provenance rows
+    - the existing person/candidate/document are reused
+    - the expensive structured extraction model call is skipped
+    """
+
+    persistence_payload = build_dropbox_duplicate_resume_persistence_payload(
+        extraction_input=extraction_input,
+        matched_resume=matched_resume,
+    )
+    return persist_dropbox_duplicate_resume_snapshot(persistence_payload)
 
 
 def persist_jobadder_candidate_profile_without_resume(
@@ -385,6 +434,118 @@ def build_resume_extraction_persistence_payload(
         "extraction_source_payload": extraction_source_payload,
         "extraction_source_payload_hash": _hash_json_ready_payload(
             extraction_source_payload
+        ),
+    }
+
+
+def build_dropbox_duplicate_resume_persistence_payload(
+    *,
+    extraction_input: dict[str, Any],
+    matched_resume: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Build the provenance-only persistence payload for a duplicate Dropbox CV.
+    """
+
+    source_system = extraction_input.get("source_system")
+    if source_system != "dropbox":
+        raise RuntimeError(
+            "Dropbox duplicate resume reuse only supports source_system='dropbox'."
+        )
+
+    source_candidate_id = extraction_input.get("source_candidate_id")
+    if not isinstance(source_candidate_id, str) or source_candidate_id.strip() == "":
+        raise RuntimeError(
+            "Dropbox duplicate resume reuse requires a source_candidate_id path."
+        )
+
+    candidate_context = _sanitize_json_ready_value(
+        extraction_input.get("candidate_context", {})
+    )
+    latest_resume = _sanitize_json_ready_value(extraction_input.get("latest_resume", {}))
+    cleaned_resume_text = _sanitize_text_preserve_structure(
+        extraction_input.get("cleaned_resume_text")
+    )
+    if cleaned_resume_text is None or cleaned_resume_text.strip() == "":
+        raise RuntimeError(
+            "Dropbox duplicate resume reuse requires cleaned resume text."
+        )
+
+    matched_document_id = matched_resume.get("document_id")
+    matched_person_id = matched_resume.get("person_id")
+    matched_candidate_id = matched_resume.get("candidate_id")
+    if matched_document_id is None or matched_person_id is None or matched_candidate_id is None:
+        raise RuntimeError(
+            "Dropbox duplicate resume reuse requires matched document, person, and candidate IDs."
+        )
+
+    quality_status = _clean_optional_string(matched_resume.get("quality_status")) or "pass"
+    quality_score = matched_resume.get("quality_score")
+    duplicate_match_payload = {
+        "match_strategy": "resume_content_hash",
+        "matched_document_id": matched_document_id,
+        "matched_document_title": _clean_optional_string(
+            matched_resume.get("document_title")
+        ),
+        "matched_person_id": matched_person_id,
+        "matched_candidate_id": matched_candidate_id,
+        "matched_quality_status": quality_status,
+        "matched_quality_score": quality_score,
+    }
+    resume_content_hash = _hash_text(cleaned_resume_text)
+    candidate_source_payload = {
+        "candidate_context": candidate_context,
+        "latest_resume": latest_resume,
+        "duplicate_resume_match": duplicate_match_payload,
+    }
+    resume_source_payload = {
+        "latest_resume": latest_resume,
+        "resume_content_hash": resume_content_hash,
+        "duplicate_resume_match": duplicate_match_payload,
+    }
+    extraction_source_payload = {
+        "deduplication_strategy": "resume_content_hash",
+        "llm_extraction_skipped": True,
+        "quality_assessment": {
+            "status": quality_status,
+            "quality_score": quality_score,
+            "reasons": ["existing_resume_content_hash_match"],
+        },
+        "matched_existing_resume": duplicate_match_payload,
+        "structured_extraction": {},
+    }
+
+    return {
+        "source_system": "dropbox",
+        "source_candidate_id": source_candidate_id,
+        "import_run_id": _build_dropbox_duplicate_import_run_id(
+            source_candidate_id=source_candidate_id
+        ),
+        "quality_status": quality_status,
+        "quality_score": quality_score,
+        "matched_document_id": matched_document_id,
+        "matched_person_id": matched_person_id,
+        "matched_candidate_id": matched_candidate_id,
+        "candidate_source_payload": candidate_source_payload,
+        "candidate_source_payload_hash": _hash_json_ready_payload(
+            candidate_source_payload
+        ),
+        "resume_source_payload": resume_source_payload,
+        "resume_source_payload_hash": _hash_json_ready_payload(resume_source_payload),
+        "extraction_source_payload": extraction_source_payload,
+        "extraction_source_payload_hash": _hash_json_ready_payload(
+            extraction_source_payload
+        ),
+        "latest_resume": latest_resume,
+        "cleaned_resume_text": cleaned_resume_text,
+        "resume_content_hash": resume_content_hash,
+        "resume_updated_at": _clean_optional_string(latest_resume.get("created_at")),
+        "resume_source_uri": _build_resume_source_uri(
+            source_system="dropbox",
+            jobadder_account=None,
+            export_source_uri=source_candidate_id,
+            source_candidate_id=source_candidate_id,
+            attachment_id=latest_resume.get("attachment_id"),
         ),
     }
 
@@ -707,6 +868,15 @@ def _build_profile_only_import_run_id(*, ingest_payload: dict[str, Any]) -> str:
     candidate_id = ingest_payload["source_candidate_id"]
     timestamp = datetime.now(timezone.utc).isoformat()
     return f"jobadder_candidate_profile_only:{candidate_id}:{timestamp}"
+
+
+def _build_dropbox_duplicate_import_run_id(*, source_candidate_id: str) -> str:
+    """
+    Build a simple import-run identifier for Dropbox duplicate-content reuse.
+    """
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return f"dropbox_resume_duplicate:{source_candidate_id}:{timestamp}"
 
 
 def _build_resume_source_uri(
@@ -1070,8 +1240,11 @@ def _hash_json_ready_payload(payload: dict[str, Any]) -> str:
 
 __all__ = [
     "build_jobadder_candidate_profile_persistence_payload",
+    "build_dropbox_duplicate_resume_persistence_payload",
     "build_resume_extraction_persistence_payload",
+    "find_existing_resume_duplicate_match",
     "persist_jobadder_candidate_profile_without_resume",
     "persist_accepted_resume_extraction_result",
+    "persist_dropbox_duplicate_resume_match",
     "persist_scored_resume_extraction_result",
 ]

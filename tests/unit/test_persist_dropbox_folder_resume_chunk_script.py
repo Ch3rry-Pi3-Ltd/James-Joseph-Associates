@@ -85,6 +85,7 @@ def test_main_processes_bounded_resume_like_files(
             dropbox_list_limit=10,
             resume_file_offset=0,
             force_reprocess=False,
+            process_entire_folder=False,
         ),
     )
     monkeypatch.setattr(
@@ -176,6 +177,142 @@ def test_main_processes_bounded_resume_like_files(
     assert artifact["resume_file_offset"] == 0
 
 
+def test_main_reuses_existing_resume_content_without_llm_extraction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Verify that duplicate Dropbox CV content reuses an existing canonical resume.
+    """
+
+    artifact_path = tmp_path / "dropbox_folder_duplicate_summary.json"
+
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "parse_args",
+        lambda: MagicMock(
+            folder_path="/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive",
+            file_limit=1,
+            dropbox_list_limit=10,
+            resume_file_offset=0,
+            force_reprocess=False,
+            process_entire_folder=False,
+        ),
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "build_artifact_path",
+        lambda folder_path, *, resume_file_offset: artifact_path,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "_load_dropbox_connection",
+        lambda account_id: {"access_token": "token"},
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "fetch_dropbox_list_folder",
+        lambda **kwargs: {
+            "entries": [
+                {
+                    ".tag": "file",
+                    "name": "Jane-Doe-CV.pdf",
+                    "path_display": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf",
+                }
+            ],
+            "has_more": False,
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "_find_existing_dropbox_resume_skip_record",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "download_dropbox_file",
+        lambda **kwargs: {
+            "file_name": "Jane-Doe-CV.pdf",
+            "content_type": "application/pdf",
+            "content_bytes": b"%PDF fake bytes",
+            "file_metadata": {"server_modified": "2026-05-19T10:12:40Z"},
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "extract_text_from_resume_bytes",
+        lambda **kwargs: {
+            "text": "Jane Doe CV body text",
+            "file_name": "Jane-Doe-CV.pdf",
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "build_resume_extraction_input_from_resume_bundle",
+        lambda **kwargs: {
+            "source_system": "dropbox",
+            "source_candidate_id": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf",
+            "candidate_context": {"full_name": "Jane Doe"},
+            "latest_resume": {
+                "attachment_id": "/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/Jane-Doe-CV.pdf",
+                "file_name": "Jane-Doe-CV.pdf",
+                "mime_type": "application/pdf",
+                "created_at": "2026-05-19T10:12:40Z",
+            },
+            "cleaned_resume_text": "Jane Doe CV body text",
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "find_existing_resume_duplicate_match",
+        lambda **kwargs: {
+            "document_id": "document-uuid",
+            "document_title": "Jane-Doe-CV.pdf",
+            "person_id": "person-uuid",
+            "candidate_id": "candidate-uuid",
+            "quality_status": "pass",
+            "quality_score": 96,
+        },
+    )
+
+    def fail_if_called(**kwargs: object) -> None:
+        raise AssertionError("LLM extraction path should have been skipped")
+
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "extract_dropbox_candidate_resume_profile_with_quality_gate",
+        fail_if_called,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "persist_scored_resume_extraction_result",
+        fail_if_called,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "persist_dropbox_duplicate_resume_match",
+        lambda **kwargs: {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "document_id": "document-uuid",
+            "quality_status": "pass",
+            "quality_score": 96,
+            "persistence_mode": "reused_existing_resume",
+        },
+    )
+
+    dropbox_folder_resume_chunk.main()
+
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["selected_resume_file_count"] == 1
+    assert artifact["persisted_resume_count"] == 1
+    assert artifact["accepted_resume_count"] == 1
+    assert artifact["non_pass_count"] == 0
+    assert artifact["failed_count"] == 0
+    assert artifact["persisted_resume_preview"][0]["persistence_mode"] == (
+        "reused_existing_resume"
+    )
+
+
 def test_main_skips_already_persisted_dropbox_resume_before_extraction(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -194,6 +331,7 @@ def test_main_skips_already_persisted_dropbox_resume_before_extraction(
             dropbox_list_limit=10,
             resume_file_offset=0,
             force_reprocess=False,
+            process_entire_folder=False,
         ),
     )
     monkeypatch.setattr(
@@ -285,6 +423,7 @@ def test_main_respects_resume_file_offset_across_folder_pages(
             dropbox_list_limit=2,
             resume_file_offset=2,
             force_reprocess=False,
+            process_entire_folder=False,
         ),
     )
     monkeypatch.setattr(
@@ -373,3 +512,116 @@ def test_main_respects_resume_file_offset_across_folder_pages(
     assert artifact["persisted_resume_count"] == 2
     assert artifact["file_timing_preview"][0]["dropbox_path"] == "/folder/C.pdf"
     assert artifact["file_timing_preview"][1]["dropbox_path"] == "/folder/D.pdf"
+
+
+def test_main_processes_entire_folder_in_windows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """
+    Verify that whole-folder mode walks every eligible file after the start offset.
+    """
+
+    artifact_path = tmp_path / "dropbox_folder_entire_summary.json"
+
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "parse_args",
+        lambda: MagicMock(
+            folder_path="/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive",
+            file_limit=2,
+            dropbox_list_limit=2,
+            resume_file_offset=0,
+            force_reprocess=False,
+            process_entire_folder=True,
+        ),
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "build_artifact_path",
+        lambda folder_path, *, resume_file_offset: artifact_path,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "_load_dropbox_connection",
+        lambda account_id: {"access_token": "token"},
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "fetch_dropbox_list_folder",
+        lambda **kwargs: {
+            "entries": [
+                {".tag": "file", "name": "A.pdf", "path_display": "/folder/A.pdf"},
+                {".tag": "file", "name": "B.pdf", "path_display": "/folder/B.pdf"},
+            ],
+            "cursor": "cursor-1",
+            "has_more": True,
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "fetch_dropbox_list_folder_continue",
+        lambda **kwargs: {
+            "entries": [
+                {".tag": "file", "name": "C.pdf", "path_display": "/folder/C.pdf"},
+                {".tag": "file", "name": "D.pdf", "path_display": "/folder/D.pdf"},
+                {".tag": "file", "name": "E.pdf", "path_display": "/folder/E.pdf"},
+            ],
+            "cursor": "cursor-2",
+            "has_more": False,
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "_find_existing_dropbox_resume_skip_record",
+        lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "download_dropbox_file",
+        lambda **kwargs: {
+            "file_name": Path(kwargs["path"]).name,
+            "content_type": "application/pdf",
+            "content_bytes": b"%PDF fake bytes",
+            "file_metadata": {"server_modified": "2026-05-19T10:12:40Z"},
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "extract_text_from_resume_bytes",
+        lambda **kwargs: "Extracted CV text",
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "extract_dropbox_candidate_resume_profile_with_quality_gate",
+        lambda **kwargs: {
+            "model_profile": {"model_name": "gpt-4.1-mini"},
+            "quality_assessment": {"status": "pass", "quality_score": 100},
+            "quality_gate": {
+                "first_pass_model_name": "gpt-4.1-mini",
+                "fallback_model_name": "gpt-4.1-mini",
+                "fallback_invoked": False,
+                "final_model_name": "gpt-4.1-mini",
+            },
+        },
+    )
+    monkeypatch.setattr(
+        dropbox_folder_resume_chunk,
+        "persist_scored_resume_extraction_result",
+        lambda result: {
+            "source_record_id": "path:path",
+            "document_id": "document-uuid",
+            "document_title": "Resume.pdf",
+        },
+    )
+
+    dropbox_folder_resume_chunk.main()
+
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["process_entire_folder"] is True
+    assert artifact["resume_file_offset"] == 0
+    assert artifact["total_eligible_resume_file_count"] == 5
+    assert artifact["selected_resume_file_count"] == 5
+    assert artifact["persisted_resume_count"] == 5
+    assert artifact["window_offsets_processed"] == [0, 2, 4]
+    assert artifact["file_timing_preview"][0]["dropbox_path"] == "/folder/A.pdf"
+    assert artifact["file_timing_preview"][-1]["dropbox_path"] == "/folder/E.pdf"

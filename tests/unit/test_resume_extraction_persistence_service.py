@@ -15,15 +15,19 @@ are not only about SQL correctness. They also define when a result is allowed
 to become canonical state at all.
 """
 
+import hashlib
 from unittest.mock import patch
 
 import pytest
 
 from backend.services.resume_extraction_persistence import (
+    build_dropbox_duplicate_resume_persistence_payload,
     build_jobadder_candidate_profile_persistence_payload,
     build_resume_extraction_persistence_payload,
+    find_existing_resume_duplicate_match,
     persist_jobadder_candidate_profile_without_resume,
     persist_accepted_resume_extraction_result,
+    persist_dropbox_duplicate_resume_match,
     persist_scored_resume_extraction_result,
 )
 
@@ -406,6 +410,92 @@ def test_persist_scored_resume_extraction_result_allows_dropbox_source() -> None
     payload = mock_persist.call_args.args[0]
     assert payload["source_system"] == "dropbox"
     assert payload["resume_source_uri"].startswith("dropbox:///")
+
+
+def test_find_existing_resume_duplicate_match_hashes_cleaned_text() -> None:
+    """
+    Verify that duplicate resume lookup reuses the shared text-hash semantics.
+    """
+
+    with patch(
+        "backend.services.resume_extraction_persistence.find_existing_resume_content_match"
+    ) as mock_find:
+        mock_find.return_value = {"document_id": "document-uuid"}
+
+        match = find_existing_resume_duplicate_match(
+            cleaned_resume_text="Roger Campbell CV body text"
+        )
+
+    assert match == {"document_id": "document-uuid"}
+    assert (
+        mock_find.call_args.kwargs["content_hash"]
+        == hashlib.sha256("Roger Campbell CV body text".encode("utf-8")).hexdigest()
+    )
+
+
+def test_persist_dropbox_duplicate_resume_match_delegates_to_db_helper() -> None:
+    """
+    Verify that Dropbox duplicate reuse builds a provenance-only payload.
+    """
+
+    extraction_input = {
+        "source_system": "dropbox",
+        "source_candidate_id": "/folder/Jane-Doe-CV.pdf",
+        "candidate_context": {
+            "candidate_id": "/folder/Jane-Doe-CV.pdf",
+            "full_name": "Jane Doe",
+            "status": "Dropbox archive CV",
+        },
+        "latest_resume": {
+            "attachment_id": "/folder/Jane-Doe-CV.pdf",
+            "file_name": "Jane-Doe-CV.pdf",
+            "mime_type": "application/pdf",
+            "created_at": "2026-05-11T12:00:00Z",
+        },
+        "cleaned_resume_text": "Jane Doe CV body text",
+    }
+    matched_resume = {
+        "document_id": "document-uuid",
+        "document_title": "Jane-Doe-CV.pdf",
+        "person_id": "person-uuid",
+        "candidate_id": "candidate-uuid",
+        "quality_status": "pass",
+        "quality_score": 96,
+    }
+
+    payload = build_dropbox_duplicate_resume_persistence_payload(
+        extraction_input=extraction_input,
+        matched_resume=matched_resume,
+    )
+
+    assert payload["source_system"] == "dropbox"
+    assert payload["matched_document_id"] == "document-uuid"
+    assert payload["matched_person_id"] == "person-uuid"
+    assert payload["matched_candidate_id"] == "candidate-uuid"
+    assert payload["quality_status"] == "pass"
+    assert payload["resume_content_hash"]
+    assert payload["resume_source_uri"].startswith("dropbox:///folder/Jane-Doe-CV.pdf")
+
+    with patch(
+        "backend.services.resume_extraction_persistence.persist_dropbox_duplicate_resume_snapshot"
+    ) as mock_persist:
+        mock_persist.return_value = {
+            "candidate_id": "candidate-uuid",
+            "person_id": "person-uuid",
+            "document_id": "document-uuid",
+            "quality_status": "pass",
+            "persistence_mode": "reused_existing_resume",
+        }
+
+        persisted_summary = persist_dropbox_duplicate_resume_match(
+            extraction_input=extraction_input,
+            matched_resume=matched_resume,
+        )
+
+    assert persisted_summary["persistence_mode"] == "reused_existing_resume"
+    persisted_payload = mock_persist.call_args.args[0]
+    assert persisted_payload["matched_document_id"] == "document-uuid"
+    assert persisted_payload["quality_status"] == "pass"
 
 
 def test_persist_scored_resume_extraction_result_rejects_missing_resume_artifact() -> None:
