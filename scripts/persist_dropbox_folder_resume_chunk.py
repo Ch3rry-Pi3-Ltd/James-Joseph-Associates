@@ -15,6 +15,7 @@ It intentionally stays narrow:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -104,12 +105,29 @@ def build_artifact_path(folder_path: str, *, resume_file_offset: int) -> Path:
     Return the artifact path for one Dropbox folder run.
     """
 
-    safe_name = folder_path.strip("/").replace("/", "__").replace(" ", "_")
+    safe_name = (
+        folder_path.strip("/")
+        .replace("/", "__")
+        .replace("\\", "_")
+        .replace(" ", "_")
+        .replace(":", "_")
+        .replace("*", "_")
+        .replace("?", "_")
+        .replace('"', "_")
+        .replace("<", "_")
+        .replace(">", "_")
+        .replace("|", "_")
+    )
     if safe_name == "":
         safe_name = "dropbox_root"
+    safe_hash = hashlib.sha1(folder_path.encode("utf-8")).hexdigest()[:12]
+    safe_name = safe_name[:120].rstrip("._")
     return (
         Path("temp")
-        / f"dropbox_resume_{safe_name}_offset_{resume_file_offset}_persisted.json"
+        / (
+            f"dropbox_resume_{safe_name}_{safe_hash}_"
+            f"offset_{resume_file_offset}_persisted.json"
+        )
     )
 
 
