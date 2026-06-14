@@ -32,7 +32,10 @@ In plain language:
 
 from typing import Any
 
-from backend.db.candidates import get_candidate_profile
+from backend.db.candidates import (
+    get_candidate_profile,
+    search_candidates_by_resume_text,
+)
 from backend.db.skills import get_candidate_skills
 
 
@@ -109,6 +112,40 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     }
 
 
+def search_candidate_resumes(
+    *,
+    query: str,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """
+    Return one ranked resume-search result set for the canonical candidate corpus.
+
+    Notes
+    -----
+    This is the first MVP search layer for Tom's "search all CVs in Supabase"
+    request. It intentionally keeps the first pass simple:
+
+    - use canonical current resumes only
+    - use Postgres full-text search directly
+    - return ranked candidate hits with a resume excerpt
+
+    That gives the project a usable retrieval primitive before adding any
+    OpenAI ranking or job-spec-specific orchestration on top.
+    """
+
+    normalized_query = query.strip()
+    results = search_candidates_by_resume_text(
+        query=normalized_query,
+        limit=limit,
+    )
+    return {
+        "query": normalized_query,
+        "limit": limit,
+        "results": results,
+    }
+
+
 __all__ = [
     "build_candidate_profile",
+    "search_candidate_resumes",
 ]

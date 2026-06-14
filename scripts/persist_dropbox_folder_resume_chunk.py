@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from time import perf_counter
@@ -181,6 +182,7 @@ def main() -> None:
 
     persisted_resumes: list[dict[str, Any]] = []
     failed_items: list[dict[str, Any]] = []
+    unsupported_items: list[dict[str, Any]] = []
     skipped_items: list[dict[str, Any]] = []
     file_timing_preview: list[dict[str, Any]] = []
     status_counts = {
@@ -220,12 +222,14 @@ def main() -> None:
             "resume_text_extraction_seconds": 0.0,
             "structured_resume_seconds": 0.0,
         }
+        current_stage = "preflight"
 
         try:
             if dropbox_path is None or file_name is None:
                 raise RuntimeError("Dropbox folder entry did not expose a usable path.")
 
             if not force_reprocess:
+                current_stage = "existing_dropbox_skip_lookup"
                 skip_lookup_started_at = perf_counter()
                 existing_skip_record = _find_existing_dropbox_resume_skip_record(
                     dropbox_path=dropbox_path
@@ -252,6 +256,7 @@ def main() -> None:
                     )
                     continue
 
+            current_stage = "dropbox_download"
             download_started_at = perf_counter()
             downloaded_file = download_dropbox_file(
                 access_token=access_token,
@@ -266,6 +271,7 @@ def main() -> None:
             content_bytes = downloaded_file["content_bytes"]
             assert isinstance(content_bytes, bytes)
 
+            current_stage = "resume_text_extraction"
             text_extraction_started_at = perf_counter()
             extracted_resume_text = extract_text_from_resume_bytes(
                 content_bytes=content_bytes,
@@ -280,6 +286,7 @@ def main() -> None:
             duplicate_resume_match: dict[str, Any] | None = None
             prepared_extraction_input: dict[str, Any] | None = None
             if not force_reprocess and isinstance(extracted_resume_text, dict):
+                current_stage = "duplicate_resume_match_lookup"
                 prepared_resume_bundle = build_dropbox_resume_text_bundle(
                     dropbox_path=dropbox_path,
                     dropbox_folder_path=folder_path,
@@ -301,6 +308,7 @@ def main() -> None:
                 duplicate_resume_match is not None
                 and prepared_extraction_input is not None
             ):
+                current_stage = "duplicate_resume_persistence"
                 persisted_summary = persist_dropbox_duplicate_resume_match(
                     extraction_input=prepared_extraction_input,
                     matched_resume=duplicate_resume_match,
@@ -323,6 +331,7 @@ def main() -> None:
                     file_timing["status"] = "non_pass"
                 continue
 
+            current_stage = "structured_resume_extraction"
             structured_resume_started_at = perf_counter()
             result = extract_dropbox_candidate_resume_profile_with_quality_gate(
                 dropbox_path=dropbox_path,
@@ -330,6 +339,7 @@ def main() -> None:
                 downloaded_file=downloaded_file,
                 extracted_resume_text=extracted_resume_text,
             )
+            current_stage = "structured_resume_persistence"
             persisted_summary = persist_scored_resume_extraction_result(result)
             file_timing["structured_resume_seconds"] = round(
                 perf_counter() - structured_resume_started_at,
@@ -357,11 +367,11 @@ def main() -> None:
         except ResumeTextExtractionError as exc:
             status_counts["unsupported"] += 1
             file_timing["status"] = "unsupported"
-            failed_items.append(
+            unsupported_items.append(
                 {
                     "dropbox_path": dropbox_path,
                     "file_name": file_name,
-                    "stage": "resume_text_extraction",
+                    "stage": current_stage,
                     "error_type": exc.__class__.__name__,
                     "message": str(exc),
                 }
@@ -373,7 +383,7 @@ def main() -> None:
                 {
                     "dropbox_path": dropbox_path,
                     "file_name": file_name,
-                    "stage": "structured_resume_extraction_or_persistence",
+                    "stage": current_stage,
                     "error_type": exc.__class__.__name__,
                     "message": str(exc),
                 }
@@ -405,6 +415,7 @@ def main() -> None:
         file_timing_preview=file_timing_preview,
         persisted_resumes=persisted_resumes,
         skipped_items=skipped_items,
+        unsupported_items=unsupported_items,
         failed_items=failed_items,
     )
     artifact_path.write_text(
@@ -428,6 +439,12 @@ def main() -> None:
     print(f"skipped resumes: {summary['skipped_count']}")
     print(f"unsupported files: {summary['unsupported_count']}")
     print(f"failed files: {summary['failed_count']}")
+    if summary["unsupported_count"] > 0:
+        print(f"unsupported stages: {summary['unsupported_stage_counts']}")
+        print(f"unsupported error types: {summary['unsupported_error_type_counts']}")
+    if summary["failed_count"] > 0:
+        print(f"failed stages: {summary['failed_stage_counts']}")
+        print(f"failed error types: {summary['failed_error_type_counts']}")
 
 
 def _build_run_summary(
@@ -449,6 +466,7 @@ def _build_run_summary(
     file_timing_preview: list[dict[str, Any]],
     persisted_resumes: list[dict[str, Any]],
     skipped_items: list[dict[str, Any]],
+    unsupported_items: list[dict[str, Any]],
     failed_items: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """
@@ -463,6 +481,22 @@ def _build_run_summary(
     rounded_timing_totals_seconds = {
         key: round(value, 4) for key, value in timing_totals_seconds.items()
     }
+    unsupported_stage_counts = _count_item_values(
+        unsupported_items,
+        key="stage",
+    )
+    unsupported_error_type_counts = _count_item_values(
+        unsupported_items,
+        key="error_type",
+    )
+    failed_stage_counts = _count_item_values(
+        failed_items,
+        key="stage",
+    )
+    failed_error_type_counts = _count_item_values(
+        failed_items,
+        key="error_type",
+    )
 
     return {
         "persisted_at": datetime.now(timezone.utc).isoformat(),
@@ -498,11 +532,16 @@ def _build_run_summary(
         "skipped_count": status_counts["skipped"],
         "unsupported_count": status_counts["unsupported"],
         "failed_count": status_counts["failed"],
+        "unsupported_stage_counts": unsupported_stage_counts,
+        "unsupported_error_type_counts": unsupported_error_type_counts,
+        "failed_stage_counts": failed_stage_counts,
+        "failed_error_type_counts": failed_error_type_counts,
         "timing_totals_seconds": rounded_timing_totals_seconds,
         "timing_averages_seconds": timing_averages_seconds,
         "file_timing_preview": file_timing_preview[:20],
         "persisted_resume_preview": persisted_resumes[:10],
         "skipped_items_preview": skipped_items[:10],
+        "unsupported_items_preview": unsupported_items[:10],
         "failed_items_preview": failed_items[:10],
     }
 
@@ -697,6 +736,26 @@ def _finalize_file_timing(
 
     if len(file_timing_preview) < 20:
         file_timing_preview.append(dict(file_timing))
+
+
+def _count_item_values(
+    items: list[dict[str, Any]],
+    *,
+    key: str,
+) -> dict[str, int]:
+    """
+    Return deterministic counts for one string-like field across item rows.
+    """
+
+    counter: Counter[str] = Counter()
+    for item in items:
+        raw_value = item.get(key)
+        if raw_value is None:
+            counter["<missing>"] += 1
+            continue
+        cleaned_value = str(raw_value).strip() or "<blank>"
+        counter[cleaned_value] += 1
+    return dict(sorted(counter.items()))
 
 
 def _clean_string(value: Any) -> str | None:

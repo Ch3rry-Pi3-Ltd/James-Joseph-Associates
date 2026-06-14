@@ -173,6 +173,138 @@ def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     return dict(row)
 
 
+def search_candidates_by_resume_text(
+    *,
+    query: str,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """
+    Return ranked candidates whose current resume matches one free-text query.
+
+    Parameters
+    ----------
+    query : str
+        User-supplied free-text query used to search canonical current resumes.
+
+    limit : int, default=20
+        Maximum number of ranked candidate matches to return.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Ranked candidate matches with the linked current resume metadata and a
+        highlighted resume-text excerpt.
+
+    Notes
+    -----
+    - This helper searches the canonical `documents.extracted_text` field that
+      the ingestion pipeline already persists for resume documents.
+    - Only documents linked as `relationship_type = 'current_resume'` are
+      searched so the endpoint reflects the latest preferred CV per candidate.
+    - Postgres full-text search is used directly because it is already
+      available in Supabase and gives a clean MVP without introducing a new
+      retrieval stack yet.
+    """
+
+    normalized_query = query.strip()
+    if normalized_query == "":
+        return []
+
+    bounded_limit = max(1, min(int(limit), 100))
+
+    search_sql = """
+        with search_input as (
+            select websearch_to_tsquery('simple', %(query)s) as search_query
+        ),
+        candidate_resume_search as (
+            select
+                c.id as candidate_id,
+                p.id as person_id,
+                p.full_name,
+                c.current_title,
+                c.candidate_status,
+                c.resume_updated_at,
+                co.name as current_company_name,
+                d.id as document_id,
+                d.title as document_title,
+                d.source_uri as document_source_uri,
+                d.resume_updated_at as document_resume_updated_at,
+                d.extracted_text,
+                setweight(to_tsvector('simple', coalesce(p.full_name, '')), 'A')
+                || setweight(to_tsvector('simple', coalesce(c.current_title, '')), 'B')
+                || setweight(
+                    to_tsvector('simple', coalesce(co.name, '')),
+                    'C'
+                )
+                || setweight(
+                    to_tsvector('simple', coalesce(d.title, '')),
+                    'C'
+                )
+                || setweight(
+                    to_tsvector('simple', coalesce(d.extracted_text, '')),
+                    'D'
+                ) as search_vector
+            from candidates c
+            join people p
+              on p.id = c.person_id
+            left join companies co
+              on co.id = c.current_company_id
+            join document_links dl
+              on dl.candidate_id = c.id
+             and dl.relationship_type = 'current_resume'
+            join documents d
+              on d.id = dl.document_id
+             and d.document_type = 'resume'
+        )
+        select
+            crs.candidate_id,
+            crs.person_id,
+            crs.full_name,
+            crs.current_title,
+            crs.candidate_status,
+            crs.current_company_name,
+            coalesce(
+                crs.document_resume_updated_at,
+                crs.resume_updated_at
+            ) as resume_updated_at,
+            crs.document_id,
+            crs.document_title,
+            crs.document_source_uri,
+            round(
+                ts_rank_cd(crs.search_vector, si.search_query)::numeric,
+                6
+            ) as match_score,
+            ts_headline(
+                'simple',
+                coalesce(crs.extracted_text, ''),
+                si.search_query,
+                'MaxFragments=2, MinWords=5, MaxWords=18, StartSel=<mark>, StopSel=</mark>'
+            ) as match_excerpt
+        from candidate_resume_search crs
+        cross join search_input si
+        where crs.search_vector @@ si.search_query
+        order by
+            ts_rank_cd(crs.search_vector, si.search_query) desc,
+            coalesce(crs.document_resume_updated_at, crs.resume_updated_at) desc nulls last,
+            crs.candidate_id desc
+        limit %(limit)s
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                search_sql,
+                {
+                    "query": normalized_query,
+                    "limit": bounded_limit,
+                },
+            )
+            rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
+
+
 __all__ = [
     "get_candidate_profile",
+    "search_candidates_by_resume_text",
 ]

@@ -191,3 +191,68 @@ def test_candidate_profile_route_returns_not_found_error_when_missing() -> None:
     # This proves the route still passed the candidate ID from the URL into the
     # service layer, even in the not-found case
     mock_build_candidate_profile.assert_called_once_with(candidate_id)
+
+
+def test_candidate_resume_search_route_returns_ranked_results() -> None:
+    """
+    Verify that the resume-search route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "query": "python data engineer",
+        "limit": 5,
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "match_score": 0.812345,
+                "match_excerpt": "<mark>python</mark> data engineer",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.search_candidate_resumes",
+        return_value=service_result,
+    ) as mock_search_candidate_resumes:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/search-resumes?query=python%20data%20engineer&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_search_candidate_resumes.assert_called_once_with(
+        query="python data engineer",
+        limit=5,
+    )
+
+
+def test_candidate_resume_search_route_rejects_blank_query() -> None:
+    """
+    Verify that the resume-search route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.search_candidate_resumes",
+    ) as mock_search_candidate_resumes:
+        client = make_client()
+        response = client.get("/api/v1/candidates/search-resumes?query=%20%20%20")
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Resume search query must not be blank.",
+            "details": [{"query": "   "}],
+        }
+    }
+    mock_search_candidate_resumes.assert_not_called()

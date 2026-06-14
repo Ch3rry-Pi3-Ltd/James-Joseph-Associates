@@ -115,4 +115,48 @@ class CandidateProfileResponse(BaseModel):
     )
 
 
-__all__ = ["CandidateProfileResponse"]
+class CandidateResumeSearchResult(BaseModel):
+    """
+    One ranked current-resume match returned by the candidate search endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    person_id: str
+    full_name: str | None = None
+    current_title: str | None = None
+    candidate_status: str | None = None
+    current_company_name: str | None = None
+    resume_updated_at: str | None = None
+    document_id: str
+    document_title: str | None = None
+    document_source_uri: str | None = None
+    match_score: float
+    match_excerpt: str | None = None
+
+
+class CandidateResumeSearchResponse(BaseModel):
+    """
+    Response envelope for canonical current-resume search results.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(
+        description="Normalized free-text query used for the resume search.",
+    )
+    limit: int = Field(
+        description="Maximum number of ranked results requested.",
+    )
+    results: list[CandidateResumeSearchResult] = Field(
+        default_factory=list,
+        description="Ranked candidate matches from canonical current resumes.",
+    )
+
+
+__all__ = [
+    "CandidateProfileResponse",
+    "CandidateResumeSearchResponse",
+    "CandidateResumeSearchResult",
+]

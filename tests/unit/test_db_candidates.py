@@ -49,7 +49,10 @@ In this module, that means:
 
 from unittest.mock import MagicMock, patch
 
-from backend.db.candidates import get_candidate_profile
+from backend.db.candidates import (
+    get_candidate_profile,
+    search_candidates_by_resume_text,
+)
 
 
 def test_get_candidate_profile_returns_none_when_row_is_missing() -> None:
@@ -246,4 +249,80 @@ def test_get_candidate_profile_executes_query_with_candidate_id() -> None:
     assert execute_kwargs == {}
     assert execute_call_args.args[1] == {
         "candidate_id": candidate_id,
+    }
+
+
+def test_search_candidates_by_resume_text_returns_ranked_rows() -> None:
+    """
+    Verify that the resume-search helper returns plain dictionaries.
+    """
+
+    mock_rows = [
+        {
+            "candidate_id": "33333333-3333-3333-3333-333333333331",
+            "person_id": "22222222-2222-2222-2222-222222222221",
+            "full_name": "Sarah Jones",
+            "current_title": "Senior Data Engineer",
+            "candidate_status": "active",
+            "current_company_name": "Acme Hiring Ltd",
+            "resume_updated_at": "2026-04-20T12:00:00+00:00",
+            "document_id": "11111111-1111-1111-1111-111111111111",
+            "document_title": "Sarah-Jones-CV.pdf",
+            "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+            "match_score": 0.812345,
+            "match_excerpt": "<mark>python</mark> and data engineering",
+        }
+    ]
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = mock_rows
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        result = search_candidates_by_resume_text(
+            query="python data engineer",
+            limit=5,
+        )
+
+    assert result == mock_rows
+    assert isinstance(result, list)
+    assert result[0]["full_name"] == "Sarah Jones"
+
+
+def test_search_candidates_by_resume_text_executes_query_with_normalized_params() -> None:
+    """
+    Verify that the resume-search helper passes the normalized query and limit.
+    """
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = []
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        search_candidates_by_resume_text(
+            query="  java low latency  ",
+            limit=500,
+        )
+
+    mock_cursor.execute.assert_called_once()
+    execute_call_args = mock_cursor.execute.call_args
+    assert execute_call_args.args[1] == {
+        "query": "java low latency",
+        "limit": 100,
     }

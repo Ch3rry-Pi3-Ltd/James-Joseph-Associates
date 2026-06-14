@@ -32,12 +32,18 @@ In plain language:
 
 from typing import Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 
-from backend.schemas.candidates import CandidateProfileResponse
+from backend.schemas.candidates import (
+    CandidateProfileResponse,
+    CandidateResumeSearchResponse,
+)
 from backend.schemas.errors import ApiError, ApiErrorResponse
-from backend.services.candidate_profiles import build_candidate_profile
+from backend.services.candidate_profiles import (
+    build_candidate_profile,
+    search_candidate_resumes,
+)
 
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
@@ -223,6 +229,47 @@ def get_candidate_profile_route(
         )
 
     return CandidateProfileResponse(**profile)
+
+
+@router.get(
+    "/search-resumes",
+    response_model=CandidateResumeSearchResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Resume search query was invalid.",
+        }
+    },
+)
+def search_candidate_resumes_route(
+    query: str = Query(
+        description="Free-text query used to search canonical current resumes.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of ranked candidate matches to return.",
+    ),
+) -> CandidateResumeSearchResponse | JSONResponse:
+    """
+    Search the canonical current-resume corpus using one free-text query.
+    """
+
+    normalized_query = query.strip()
+    if normalized_query == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Resume search query must not be blank.",
+            details=[{"query": query}],
+        )
+
+    result = search_candidate_resumes(
+        query=normalized_query,
+        limit=limit,
+    )
+    return CandidateResumeSearchResponse(**result)
 
 
 __all__ = ["router"]
