@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, ReactNode, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useMemo, useRef, useState } from "react";
 
 type CandidateResumeSearchResult = {
   candidate_id: string;
@@ -124,6 +124,8 @@ function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
 }
 
 export function CandidateMatchWorkspace() {
+  const shortlistSectionRef = useRef<HTMLElement | null>(null);
+  const searchResultsSectionRef = useRef<HTMLElement | null>(null);
   const [jobDescription, setJobDescription] = useState(DEFAULT_JOB_DESCRIPTION);
   const [searchResultLimit, setSearchResultLimit] = useState("10");
   const [retrievalLimit, setRetrievalLimit] = useState("25");
@@ -141,6 +143,10 @@ export function CandidateMatchWorkspace() {
   const [retrievedCandidateCount, setRetrievedCandidateCount] = useState(0);
 
   const searchResultCountLabel = useMemo(() => {
+    if (submittedQuery && searchResults.length === 0) {
+      return "0 search results returned.";
+    }
+
     if (searchResults.length === 0) {
       return "No candidates returned yet.";
     }
@@ -153,6 +159,14 @@ export function CandidateMatchWorkspace() {
   }, [searchResults.length]);
 
   const shortlistCountLabel = useMemo(() => {
+    if (submittedQuery && retrievedCandidateCount === 0) {
+      return "0 shortlisted candidates. First-pass retrieval returned no CVs.";
+    }
+
+    if (submittedQuery && retrievedCandidateCount > 0 && shortlistResults.length === 0) {
+      return "0 shortlisted candidates returned.";
+    }
+
     if (shortlistResults.length === 0) {
       return "No shortlist returned yet.";
     }
@@ -162,7 +176,7 @@ export function CandidateMatchWorkspace() {
     }
 
     return `${shortlistResults.length} shortlisted candidates.`;
-  }, [shortlistResults.length]);
+  }, [retrievedCandidateCount, shortlistResults.length, submittedQuery]);
 
   async function runSearch(): Promise<void> {
     const trimmedDescription = jobDescription.trim();
@@ -206,7 +220,13 @@ export function CandidateMatchWorkspace() {
 
       const searchResponse = payload as CandidateResumeSearchResponse;
       setSearchResults(searchResponse.results);
+      setShortlistResults([]);
+      setRetrievedCandidateCount(0);
       setSubmittedQuery(searchResponse.query);
+      searchResultsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     } catch (error) {
       setSearchResults([]);
       setSubmittedQuery(trimmedDescription);
@@ -261,6 +281,10 @@ export function CandidateMatchWorkspace() {
       setShortlistResults(shortlistResponse.shortlisted_candidates);
       setRetrievedCandidateCount(shortlistResponse.retrieved_candidate_count);
       setSubmittedQuery(shortlistResponse.job_description);
+      shortlistSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     } catch (error) {
       setShortlistResults([]);
       setSubmittedQuery(trimmedDescription);
@@ -409,7 +433,7 @@ export function CandidateMatchWorkspace() {
         </form>
       </section>
 
-      <section className="grid gap-6">
+      <section ref={shortlistSectionRef} className="grid gap-6">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
@@ -430,6 +454,13 @@ export function CandidateMatchWorkspace() {
           <p className="text-sm leading-6 text-zinc-600">
             Retrieved {retrievedCandidateCount} candidates for reranking.
           </p>
+        ) : null}
+
+        {submittedQuery && retrievedCandidateCount === 0 && !errorMessage ? (
+          <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            First-pass retrieval found no matching CVs for that brief. Try a
+            shorter keyword query such as <span className="font-semibold">python sql etl data engineer</span>.
+          </div>
         ) : null}
 
         {errorMessage ? (
@@ -561,7 +592,7 @@ export function CandidateMatchWorkspace() {
         </div>
       </section>
 
-      <section className="grid gap-6">
+      <section ref={searchResultsSectionRef} className="grid gap-6">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
@@ -581,6 +612,13 @@ export function CandidateMatchWorkspace() {
           <p className="text-sm leading-6 text-zinc-600">
             Query: <span className="font-medium text-zinc-900">{submittedQuery}</span>
           </p>
+        ) : null}
+
+        {submittedQuery && searchResults.length === 0 && !errorMessage ? (
+          <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            The current keyword search returned no CV matches for that query.
+            Try a tighter role phrase or a shorter keyword query.
+          </div>
         ) : null}
 
         {searchResults.length === 0 && !errorMessage ? (
