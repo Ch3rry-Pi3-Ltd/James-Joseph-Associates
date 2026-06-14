@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { CandidateMatchWorkspace } from "./candidate-match-workspace";
 
 export default function MatchPage() {
@@ -20,20 +18,6 @@ export default function MatchPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-            >
-              Back to home
-            </Link>
-            <Link
-              href="/review"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-            >
-              Review database
-            </Link>
-          </div>
         </header>
 
         <CandidateMatchWorkspace />

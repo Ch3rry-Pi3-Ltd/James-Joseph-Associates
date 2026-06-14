@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 
 type ReviewCounts = {
@@ -255,18 +254,6 @@ export default async function ReviewPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-            >
-              Back to home
-            </Link>
-            <Link
-              href="/match"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-            >
-              Match candidates
-            </Link>
             <a
               href="/api/v1/review/overview?limit=10"
               className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"

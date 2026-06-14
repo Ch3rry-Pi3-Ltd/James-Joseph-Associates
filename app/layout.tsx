@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { WorkspaceNav } from "./workspace-nav";
 
 /**
  * Root layout for the James Joseph Associates intelligence app.
@@ -99,7 +100,10 @@ export default function RootLayout({
         - `min-h-full` lets pages fill the available browser height.
         - `flex flex-col` gives page layouts a stable vertical structure.
       */}
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <WorkspaceNav />
+        <div className="flex-1">{children}</div>
+      </body>
     </html>
   );
 }

@@ -258,18 +258,6 @@ export default function Home() {
             >
               Check API health
             </a>
-            <Link
-              href="/review"
-              className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-            >
-              Review database
-            </Link>
-            <Link
-              href="/match"
-              className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
-            >
-              Match candidates
-            </Link>
           </div>
         </header>
 

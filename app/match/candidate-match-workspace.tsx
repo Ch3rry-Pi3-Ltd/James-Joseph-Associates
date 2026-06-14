@@ -31,6 +31,14 @@ type ApiErrorResponse = {
   };
 };
 
+function isApiErrorResponse(payload: unknown): payload is ApiErrorResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  return "error" in payload;
+}
+
 const DEFAULT_JOB_DESCRIPTION = `Senior data engineer with strong Python, SQL, cloud platform, and ETL experience. Ideally someone who has worked with large datasets, modern data pipelines, and production analytics systems.`;
 
 function formatTimestamp(value: string | null): string {
@@ -137,22 +145,21 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const payload = (await response.json()) as
-        | CandidateResumeSearchResponse
-        | ApiErrorResponse;
+      const payload = (await response.json()) as unknown;
 
       if (!response.ok) {
         setResults([]);
         setSubmittedQuery(trimmedDescription);
         setErrorMessage(
-          payload.error?.message ??
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
             `Search request failed with ${response.status}.`,
         );
         return;
       }
 
-      setResults(payload.results);
-      setSubmittedQuery(payload.query);
+      const searchResponse = payload as CandidateResumeSearchResponse;
+      setResults(searchResponse.results);
+      setSubmittedQuery(searchResponse.query);
     } catch (error) {
       setResults([]);
       setSubmittedQuery(trimmedDescription);
