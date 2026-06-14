@@ -155,8 +155,86 @@ class CandidateResumeSearchResponse(BaseModel):
     )
 
 
+class CandidateJobDescriptionMatchRequest(BaseModel):
+    """
+    Request body for shortlist matching against one free-text job description.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    job_description: str = Field(
+        min_length=1,
+        description="Free-text role brief used to retrieve and rank candidates.",
+    )
+    retrieval_limit: int = Field(
+        default=25,
+        ge=1,
+        le=100,
+        description="Maximum number of retrieved candidates to pass into reranking.",
+    )
+    shortlist_limit: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum number of final shortlisted candidates to return.",
+    )
+
+
+class CandidateJobDescriptionShortlistItem(BaseModel):
+    """
+    One shortlisted candidate returned by the match endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    person_id: str
+    full_name: str | None = None
+    current_title: str | None = None
+    candidate_status: str | None = None
+    current_company_name: str | None = None
+    resume_updated_at: str | None = None
+    document_id: str
+    document_title: str | None = None
+    document_source_uri: str | None = None
+    retrieval_score: float
+    fit_score: int
+    fit_summary: str
+    strengths: list[str] = Field(default_factory=list)
+    gaps: list[str] = Field(default_factory=list)
+    match_excerpt: str | None = None
+
+
+class CandidateJobDescriptionMatchResponse(BaseModel):
+    """
+    Response envelope for the top-candidate shortlist against a role brief.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    job_description: str = Field(
+        description="Normalized job description used for retrieval and ranking.",
+    )
+    retrieval_limit: int = Field(
+        description="Number of candidates considered for reranking.",
+    )
+    shortlist_limit: int = Field(
+        description="Target maximum number of final shortlisted candidates.",
+    )
+    retrieved_candidate_count: int = Field(
+        description="Number of candidates retrieved before reranking.",
+    )
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem] = Field(
+        default_factory=list,
+        description="Final ranked shortlist for the supplied job description.",
+    )
+
+
 __all__ = [
     "CandidateProfileResponse",
+    "CandidateJobDescriptionMatchRequest",
+    "CandidateJobDescriptionMatchResponse",
+    "CandidateJobDescriptionShortlistItem",
     "CandidateResumeSearchResponse",
     "CandidateResumeSearchResult",
 ]

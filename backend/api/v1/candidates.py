@@ -36,10 +36,16 @@ from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 
 from backend.schemas.candidates import (
+    CandidateJobDescriptionMatchRequest,
+    CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
 )
 from backend.schemas.errors import ApiError, ApiErrorResponse
+from backend.services.candidate_matching import (
+    CandidateMatchingError,
+    build_candidate_job_description_shortlist,
+)
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     search_candidate_resumes,
@@ -270,6 +276,53 @@ def search_candidate_resumes_route(
         limit=limit,
     )
     return CandidateResumeSearchResponse(**result)
+
+
+@router.post(
+    "/match-job-description",
+    response_model=CandidateJobDescriptionMatchResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Job description request was invalid.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Candidate shortlisting failed.",
+        },
+    },
+)
+def match_job_description_route(
+    request: CandidateJobDescriptionMatchRequest,
+) -> CandidateJobDescriptionMatchResponse | JSONResponse:
+    """
+    Retrieve and shortlist the strongest candidates for one job description.
+    """
+
+    normalized_job_description = request.job_description.strip()
+    if normalized_job_description == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Job description must not be blank.",
+            details=[{"field": "job_description"}],
+        )
+
+    try:
+        result = build_candidate_job_description_shortlist(
+            job_description=normalized_job_description,
+            retrieval_limit=request.retrieval_limit,
+            shortlist_limit=request.shortlist_limit,
+        )
+    except CandidateMatchingError as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="matching_failed",
+            message=exc.message,
+            details=[{"stage": exc.stage}, *exc.details],
+        )
+
+    return CandidateJobDescriptionMatchResponse(**result)
 
 
 __all__ = ["router"]

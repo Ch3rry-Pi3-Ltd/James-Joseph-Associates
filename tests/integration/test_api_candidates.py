@@ -256,3 +256,87 @@ def test_candidate_resume_search_route_rejects_blank_query() -> None:
         }
     }
     mock_search_candidate_resumes.assert_not_called()
+
+
+def test_match_job_description_route_returns_shortlist() -> None:
+    """
+    Verify that the match route returns the shortlist payload unchanged.
+    """
+
+    service_result = {
+        "job_description": "python data engineer",
+        "retrieval_limit": 25,
+        "shortlist_limit": 3,
+        "retrieved_candidate_count": 2,
+        "shortlisted_candidates": [
+            {
+                "candidate_id": "cand-1",
+                "person_id": "person-1",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "doc-1",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "retrieval_score": 0.812345,
+                "fit_score": 92,
+                "fit_summary": "Excellent match for the role.",
+                "strengths": ["Python", "Cloud data pipelines"],
+                "gaps": ["Leadership scope not explicit"],
+                "match_excerpt": "<mark>python</mark> pipelines cloud",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.build_candidate_job_description_shortlist",
+        return_value=service_result,
+    ) as mock_build_candidate_job_description_shortlist:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/match-job-description",
+            json={
+                "job_description": "python data engineer",
+                "retrieval_limit": 25,
+                "shortlist_limit": 3,
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_build_candidate_job_description_shortlist.assert_called_once_with(
+        job_description="python data engineer",
+        retrieval_limit=25,
+        shortlist_limit=3,
+    )
+
+
+def test_match_job_description_route_rejects_blank_description() -> None:
+    """
+    Verify that the match route rejects blank job descriptions cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.build_candidate_job_description_shortlist",
+    ) as mock_build_candidate_job_description_shortlist:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/match-job-description",
+            json={
+                "job_description": "   ",
+                "retrieval_limit": 25,
+                "shortlist_limit": 3,
+            },
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Job description must not be blank.",
+            "details": [{"field": "job_description"}],
+        }
+    }
+    mock_build_candidate_job_description_shortlist.assert_not_called()
