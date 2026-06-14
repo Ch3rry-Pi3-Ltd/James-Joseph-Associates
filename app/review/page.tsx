@@ -261,6 +261,12 @@ export default async function ReviewPage() {
             >
               Back to home
             </Link>
+            <Link
+              href="/match"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+            >
+              Match candidates
+            </Link>
             <a
               href="/api/v1/review/overview?limit=10"
               className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"

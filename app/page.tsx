@@ -73,6 +73,16 @@ type WorkspaceSection = {
    * already active.
    */
   state: "Foundation ready" | "Planned" | "Waiting for data";
+
+  /**
+   * Optional route for sections that already have a usable product surface.
+   */
+  href?: string;
+
+  /**
+   * Optional action text shown when a route exists.
+   */
+  actionLabel?: string;
 };
 
 const foundationItems: FoundationItem[] = [
@@ -113,7 +123,9 @@ const workspaceSections: WorkspaceSection[] = [
     title: "Job Matching",
     description:
       "Prepare evidence-backed candidate recommendations for open roles.",
-    state: "Planned",
+    state: "Foundation ready",
+    href: "/match",
+    actionLabel: "Open matching",
   },
   {
     title: "Proposed Actions",
@@ -252,6 +264,12 @@ export default function Home() {
             >
               Review database
             </Link>
+            <Link
+              href="/match"
+              className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-950 bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800"
+            >
+              Match candidates
+            </Link>
           </div>
         </header>
 
@@ -379,6 +397,17 @@ export default function Home() {
                 <p className="mt-4 text-base leading-7 text-zinc-700">
                   {section.description}
                 </p>
+
+                {section.href && section.actionLabel ? (
+                  <div className="mt-5">
+                    <Link
+                      href={section.href}
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      {section.actionLabel}
+                    </Link>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
