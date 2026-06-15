@@ -18,9 +18,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.db.candidates import search_candidates_by_resume_text
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
+from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
 class CandidateMatchingError(RuntimeError):
@@ -88,7 +88,7 @@ def build_candidate_job_description_shortlist(
     bounded_retrieval_limit = max(1, min(int(retrieval_limit), 100))
     bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
 
-    retrieved_candidates = search_candidates_by_resume_text(
+    retrieved_candidates = search_candidates_hybrid(
         query=normalized_job_description,
         limit=bounded_retrieval_limit,
     )

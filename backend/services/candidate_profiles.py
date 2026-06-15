@@ -32,11 +32,9 @@ In plain language:
 
 from typing import Any
 
-from backend.db.candidates import (
-    get_candidate_profile,
-    search_candidates_by_resume_text,
-)
+from backend.db.candidates import get_candidate_profile
 from backend.db.skills import get_candidate_skills
+from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
 def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
@@ -122,19 +120,15 @@ def search_candidate_resumes(
 
     Notes
     -----
-    This is the first MVP search layer for Tom's "search all CVs in Supabase"
-    request. It intentionally keeps the first pass simple:
+    This service now uses a hybrid first pass:
 
-    - use canonical current resumes only
-    - use Postgres full-text search directly
-    - return ranked candidate hits with a resume excerpt
-
-    That gives the project a usable retrieval primitive before adding any
-    OpenAI ranking or job-spec-specific orchestration on top.
+    - current resume full-text search
+    - structured semantic block search
+    - fused ranking in one result list
     """
 
     normalized_query = query.strip()
-    results = search_candidates_by_resume_text(
+    results = search_candidates_hybrid(
         query=normalized_query,
         limit=limit,
     )

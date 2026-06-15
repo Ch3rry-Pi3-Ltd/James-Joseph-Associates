@@ -13,6 +13,8 @@ It gives the rest of the repository a stable way to talk about:
 - the Postgres connection string used for Supabase-backed database reads and writes
 - the Make.com API token used by protected Make.com endpoints
 - the OpenAI API key used by the shared LLM provider layer
+- the OpenAI embedding model used by semantic retrieval backfill
+- the OpenAI embedding dimensions used by semantic retrieval backfill
 - the OpenRouter API key used by the shared LLM provider layer
 - the OpenRouter base URL used for OpenAI-compatible routing
 - the default timeout used for backend LLM provider calls
@@ -251,6 +253,8 @@ class Settings(BaseSettings):
         MICROSOFT_TENANT_ID="organizations"
         MICROSOFT_REDIRECT_URI=""
         OPENAI_API_KEY=""
+        OPENAI_EMBEDDING_MODEL="text-embedding-3-large"
+        OPENAI_EMBEDDING_DIMENSIONS="1536"
         OPENROUTER_API_KEY=""
         OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
         LLM_TIMEOUT_SECONDS="60"
@@ -428,6 +432,22 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(
         default="",
         validation_alias="OPENAI_API_KEY",
+    )
+
+    # Shared OpenAI embedding model for semantic retrieval.
+    #   - Default to the stronger large model, while allowing the runtime to
+    #     shorten dimensions to fit the existing pgvector column.
+    openai_embedding_model: str = Field(
+        default="text-embedding-3-large",
+        validation_alias="OPENAI_EMBEDDING_MODEL",
+    )
+
+    # Embedding dimensions written into `document_chunks.embedding`.
+    #   - The current schema stores `vector(1536)`, so the default keeps the
+    #     large embedding model aligned with that storage shape.
+    openai_embedding_dimensions: int = Field(
+        default=1536,
+        validation_alias="OPENAI_EMBEDDING_DIMENSIONS",
     )
 
     # Shared OpenRouter API key for the backend LLM provider layer.

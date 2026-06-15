@@ -20,7 +20,7 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
 
     monkeypatch.setattr(
         candidate_matching,
-        "search_candidates_by_resume_text",
+        "search_candidates_hybrid",
         lambda **kwargs: [],
     )
 
@@ -88,7 +88,7 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
 
     monkeypatch.setattr(
         candidate_matching,
-        "search_candidates_by_resume_text",
+        "search_candidates_hybrid",
         lambda **kwargs: retrieved_candidates,
     )
     monkeypatch.setattr(
