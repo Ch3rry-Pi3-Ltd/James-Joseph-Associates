@@ -30,7 +30,9 @@ def list_candidates_for_semantic_block_backfill(
     Return canonical candidates eligible for structured semantic indexing.
     """
 
-    bounded_limit = max(1, min(int(limit), 1000))
+    # Allow large controlled backfills in one run.
+    # The caller still has to opt into the requested size explicitly.
+    bounded_limit = max(1, int(limit))
     normalized_candidate_ids = [candidate_id.strip() for candidate_id in (candidate_ids or []) if candidate_id.strip()]
 
     query = """
