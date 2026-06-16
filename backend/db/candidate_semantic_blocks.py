@@ -264,7 +264,29 @@ def search_candidates_by_semantic_blocks(
     query_vector_literal = vector_to_pgvector_literal(query_vector)
 
     search_sql = """
-        with ranked_blocks as (
+        with scored_blocks as (
+            select
+                csb.id,
+                csb.candidate_id,
+                csb.person_id,
+                csb.document_id,
+                csb.block_type,
+                csb.block_label,
+                csb.block_text,
+                case
+                    when csb.block_type = 'summary' then 1
+                    when csb.block_type = 'profile' then 2
+                    else 3
+                end as block_priority,
+                case
+                    when csb.block_type = 'summary' then (csb.embedding <=> %(query_vector)s::vector) * 0.96
+                    when csb.block_type = 'profile' then (csb.embedding <=> %(query_vector)s::vector) * 0.985
+                    else (csb.embedding <=> %(query_vector)s::vector) * 1.03
+                end as adjusted_distance
+            from candidate_semantic_blocks csb
+            where csb.embedding is not null
+        ),
+        ranked_blocks as (
             select
                 c.id as candidate_id,
                 p.id as person_id,
@@ -276,28 +298,27 @@ def search_candidates_by_semantic_blocks(
                 d.id as document_id,
                 d.title as document_title,
                 d.source_uri as document_source_uri,
-                csb.id as block_id,
-                csb.block_type,
-                csb.block_label,
-                csb.block_text,
-                (csb.embedding <=> %(query_vector)s::vector) as cosine_distance,
+                sb.id as block_id,
+                sb.block_type,
+                sb.block_label,
+                sb.block_text,
+                sb.adjusted_distance as cosine_distance,
                 row_number() over (
                     partition by c.id
                     order by
-                        csb.embedding <=> %(query_vector)s::vector asc,
-                        csb.block_type asc,
-                        csb.block_index asc
+                        sb.adjusted_distance asc,
+                        sb.block_priority asc,
+                        sb.id asc
                 ) as candidate_block_rank
-            from candidate_semantic_blocks csb
+            from scored_blocks sb
             join candidates c
-              on c.id = csb.candidate_id
+              on c.id = sb.candidate_id
             join people p
-              on p.id = csb.person_id
+              on p.id = sb.person_id
             left join companies co
               on co.id = c.current_company_id
             join documents d
-              on d.id = csb.document_id
-            where csb.embedding is not null
+              on d.id = sb.document_id
         )
         select
             candidate_id,

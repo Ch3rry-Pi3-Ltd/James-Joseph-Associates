@@ -84,22 +84,10 @@ def build_candidate_semantic_blocks(
         _string_value(skill.get("canonical_name")) or _string_value(skill.get("skill_name"))
         for skill in skills
     ]
-    skill_names = [name for name in skill_names if name]
-    skill_evidence = [
-        _line(
-            _string_value(skill.get("canonical_name"))
-            or _string_value(skill.get("skill_name"))
-            or "Skill",
-            skill.get("evidence_text"),
-        )
-        for skill in skills
-        if _string_value(skill.get("evidence_text"))
-    ]
+    skill_names = _ordered_unique_values([name for name in skill_names if name])[:24]
     skill_parts: list[str] = []
     if skill_names:
-        skill_parts.append("Primary skills: " + "; ".join(skill_names[:40]))
-    if skill_evidence:
-        skill_parts.append("Evidence: " + " | ".join(skill_evidence[:12]))
+        skill_parts.append("Primary skills: " + "; ".join(skill_names))
     _append_block(
         blocks,
         block_type="skills",
@@ -164,6 +152,18 @@ def _string_value(value: Any) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+def _ordered_unique_values(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        key = value.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(value)
+    return ordered
 
 
 __all__ = [

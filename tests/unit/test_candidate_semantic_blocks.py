@@ -43,3 +43,22 @@ def test_build_candidate_semantic_blocks_returns_profile_skills_and_summary() ->
     assert "Sarah Jones" in blocks[0].block_text
     assert "python; sql" in blocks[1].block_text.lower()
     assert "Built cloud ETL pipelines" in blocks[2].block_text
+
+
+def test_build_candidate_semantic_blocks_deduplicates_and_trims_skill_block() -> None:
+    blocks = build_candidate_semantic_blocks(
+        candidate={
+            "full_name": "Test Person",
+            "summary": "Example summary",
+        },
+        skills=[
+            {"skill_name": "Python", "canonical_name": "python"},
+            {"skill_name": "PYTHON", "canonical_name": "python"},
+            {"skill_name": "SQL", "canonical_name": "sql"},
+        ],
+    )
+
+    skills_block = next(block for block in blocks if block.block_type == "skills")
+    assert skills_block.block_text.count("python") == 1
+    assert "sql" in skills_block.block_text.lower()
+    assert "Evidence:" not in skills_block.block_text
