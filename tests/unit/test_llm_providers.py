@@ -399,6 +399,29 @@ def test_build_openai_chat_model_uses_settings_fallbacks_when_arguments_are_omit
     }
 
 
+def test_build_openai_chat_model_strips_whitespace_from_settings_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = _build_openai_test_profile()
+    captured_kwargs: dict[str, Any] = {}
+
+    class FakeSettings:
+        openai_api_key = "  sk-from-settings\r\n"
+        llm_timeout_seconds = 33.0
+
+    class FakeChatOpenAI:
+        def __init__(self, **kwargs: Any) -> None:
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "ChatOpenAI", FakeChatOpenAI)
+
+    result = build_openai_chat_model(profile=profile)
+
+    assert isinstance(result, FakeChatOpenAI)
+    assert captured_kwargs["api_key"] == "sk-from-settings"
+
+
 def test_build_openai_chat_model_prefers_explicit_arguments_over_settings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

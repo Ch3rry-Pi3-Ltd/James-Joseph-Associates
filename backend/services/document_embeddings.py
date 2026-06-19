@@ -26,8 +26,8 @@ def get_openai_embedding_client(api_key: str | None = None) -> OpenAI:
     """
 
     settings = get_settings()
-    resolved_api_key = api_key or settings.openai_api_key
-    if not isinstance(resolved_api_key, str) or resolved_api_key.strip() == "":
+    resolved_api_key = _normalize_optional_secret(api_key or settings.openai_api_key)
+    if not isinstance(resolved_api_key, str) or resolved_api_key == "":
         raise RuntimeError(
             "OpenAI API key is required before generating document embeddings."
         )
@@ -87,6 +87,13 @@ def summarize_embedding_configuration() -> dict[str, Any]:
         "model": settings.openai_embedding_model,
         "dimensions": settings.openai_embedding_dimensions,
     }
+
+
+def _normalize_optional_secret(value: str | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
 
 
 __all__ = [

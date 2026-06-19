@@ -435,19 +435,18 @@ def build_openai_chat_model(
         # A blank explicit key is a real configuration mistake and should raise
         # clearly. It should not be silently reinterpreted as "just try the
         # environment instead", because that would hide a bad call site.
-        resolved_api_key = api_key
+        resolved_api_key = _normalize_optional_secret(api_key)
+        if resolved_api_key is None:
+            raise LLMProviderConfigurationError(
+                "The supplied OpenAI API key must be a non-empty string.",
+                stage="provider_configuration",
+                details=[
+                    {"provider": profile.provider},
+                    {"model_name": profile.model_name},
+                ],
+            )
     else:
-        resolved_api_key = settings.openai_api_key
-
-        # Empty strings from settings are not useful explicit API keys.
-        # Converting them to `None` preserves the documented fallback
-        # behaviour: if settings do not provide a key, the underlying SDK may
-        # still resolve one from environment variables.
-        if (
-            isinstance(resolved_api_key, str)
-            and resolved_api_key.strip() == ""
-        ):
-            resolved_api_key = None
+        resolved_api_key = _normalize_optional_secret(settings.openai_api_key)
 
     if resolved_timeout_seconds <= 0:
         raise LLMProviderConfigurationError(
@@ -595,14 +594,18 @@ def build_openrouter_chat_model(
     )
 
     if api_key is not None:
-        resolved_api_key = api_key
+        resolved_api_key = _normalize_optional_secret(api_key)
+        if resolved_api_key is None:
+            raise LLMProviderConfigurationError(
+                "The supplied OpenRouter API key must be a non-empty string.",
+                stage="provider_configuration",
+                details=[
+                    {"provider": profile.provider},
+                    {"model_name": profile.model_name},
+                ],
+            )
     else:
-        resolved_api_key = settings.openrouter_api_key
-        if (
-            isinstance(resolved_api_key, str)
-            and resolved_api_key.strip() == ""
-        ):
-            resolved_api_key = None
+        resolved_api_key = _normalize_optional_secret(settings.openrouter_api_key)
 
     if resolved_timeout_seconds <= 0:
         raise LLMProviderConfigurationError(
@@ -810,6 +813,13 @@ def _is_non_empty_string(value: Any) -> bool:
     """
 
     return isinstance(value, str) and value.strip() != ""
+
+
+def _normalize_optional_secret(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
 
 
 __all__ = [
