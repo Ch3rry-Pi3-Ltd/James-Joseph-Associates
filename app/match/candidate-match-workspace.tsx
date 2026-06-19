@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, ReactNode, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 type CandidateResumeSearchResult = {
   candidate_id: string;
@@ -58,7 +65,79 @@ type ApiErrorResponse = {
   };
 };
 
+type RunMode = "search" | "shortlist" | null;
+
 const DEFAULT_JOB_DESCRIPTION = `Senior data engineer with strong Python, SQL, cloud platform, and ETL experience. Ideally someone who has worked with large datasets, modern data pipelines, and production analytics systems.`;
+
+const RETRIEVAL_STOP_WORDS = new Set([
+  "a",
+  "about",
+  "across",
+  "also",
+  "an",
+  "and",
+  "any",
+  "are",
+  "as",
+  "at",
+  "be",
+  "been",
+  "before",
+  "between",
+  "brief",
+  "build",
+  "by",
+  "can",
+  "closer",
+  "current",
+  "description",
+  "do",
+  "for",
+  "from",
+  "has",
+  "have",
+  "how",
+  "i",
+  "ideally",
+  "in",
+  "into",
+  "is",
+  "it",
+  "just",
+  "looking",
+  "modern",
+  "more",
+  "most",
+  "need",
+  "of",
+  "on",
+  "or",
+  "production",
+  "role",
+  "search",
+  "should",
+  "show",
+  "someone",
+  "strong",
+  "such",
+  "systems",
+  "that",
+  "the",
+  "their",
+  "them",
+  "there",
+  "this",
+  "to",
+  "use",
+  "we",
+  "what",
+  "when",
+  "where",
+  "who",
+  "with",
+  "worked",
+  "workflow",
+]);
 
 function isApiErrorResponse(payload: unknown): payload is ApiErrorResponse {
   if (typeof payload !== "object" || payload === null) {
@@ -123,32 +202,105 @@ function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
     });
 }
 
+function deriveRetrievalFocusTerms(jobDescription: string): string {
+  const normalizedTerms =
+    jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
+
+  const seenTerms = new Set<string>();
+  const selectedTerms: string[] = [];
+
+  for (const originalTerm of normalizedTerms) {
+    const canonicalTerm = originalTerm
+      .toLowerCase()
+      .replace(/^[^a-z0-9+#]+|[^a-z0-9+#]+$/g, "");
+
+    if (canonicalTerm.length < 2) {
+      continue;
+    }
+
+    if (RETRIEVAL_STOP_WORDS.has(canonicalTerm)) {
+      continue;
+    }
+
+    if (seenTerms.has(canonicalTerm)) {
+      continue;
+    }
+
+    seenTerms.add(canonicalTerm);
+    selectedTerms.push(canonicalTerm);
+
+    if (selectedTerms.length >= 14) {
+      break;
+    }
+  }
+
+  return selectedTerms.join(" ");
+}
+
+function buildLoadingMessage(mode: RunMode): string {
+  if (mode === "search") {
+    return "Running hybrid retrieval across the CV corpus.";
+  }
+
+  if (mode === "shortlist") {
+    return "Retrieving the candidate pool, then asking the reasoning model to rerank it.";
+  }
+
+  return "";
+}
+
 export function CandidateMatchWorkspace() {
   const shortlistSectionRef = useRef<HTMLElement | null>(null);
   const searchResultsSectionRef = useRef<HTMLElement | null>(null);
   const [jobDescription, setJobDescription] = useState(DEFAULT_JOB_DESCRIPTION);
+  const [retrievalFocusTerms, setRetrievalFocusTerms] = useState(() =>
+    deriveRetrievalFocusTerms(DEFAULT_JOB_DESCRIPTION),
+  );
+  const [isFocusTermsAuto, setIsFocusTermsAuto] = useState(true);
   const [searchResultLimit, setSearchResultLimit] = useState("10");
   const [retrievalLimit, setRetrievalLimit] = useState("25");
   const [shortlistLimit, setShortlistLimit] = useState("3");
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isShortlistLoading, setIsShortlistLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeRunMode, setActiveRunMode] = useState<RunMode>(null);
+  const [searchErrorMessage, setSearchErrorMessage] = useState<string | null>(null);
+  const [shortlistErrorMessage, setShortlistErrorMessage] = useState<string | null>(
+    null,
+  );
   const [searchResults, setSearchResults] = useState<CandidateResumeSearchResult[]>(
     [],
   );
   const [shortlistResults, setShortlistResults] = useState<
     CandidateJobDescriptionShortlistItem[]
   >([]);
-  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState<string | null>(
+    null,
+  );
+  const [submittedJobDescription, setSubmittedJobDescription] = useState<
+    string | null
+  >(null);
   const [retrievedCandidateCount, setRetrievedCandidateCount] = useState(0);
 
+  useEffect(() => {
+    if (!isFocusTermsAuto) {
+      return;
+    }
+
+    setRetrievalFocusTerms(deriveRetrievalFocusTerms(jobDescription));
+  }, [isFocusTermsAuto, jobDescription]);
+
+  const loadingMessage = useMemo(
+    () => buildLoadingMessage(activeRunMode),
+    [activeRunMode],
+  );
+
   const searchResultCountLabel = useMemo(() => {
-    if (submittedQuery && searchResults.length === 0) {
+    if (submittedSearchQuery && searchResults.length === 0) {
       return "0 search results returned.";
     }
 
     if (searchResults.length === 0) {
-      return "No candidates returned yet.";
+      return "No search results returned yet.";
     }
 
     if (searchResults.length === 1) {
@@ -156,14 +308,18 @@ export function CandidateMatchWorkspace() {
     }
 
     return `${searchResults.length} search results returned.`;
-  }, [searchResults.length]);
+  }, [searchResults.length, submittedSearchQuery]);
 
   const shortlistCountLabel = useMemo(() => {
-    if (submittedQuery && retrievedCandidateCount === 0) {
-      return "0 shortlisted candidates. First-pass retrieval returned no CVs.";
+    if (submittedJobDescription && retrievedCandidateCount === 0) {
+      return "0 shortlisted candidates. Retrieval returned no usable CVs.";
     }
 
-    if (submittedQuery && retrievedCandidateCount > 0 && shortlistResults.length === 0) {
+    if (
+      submittedJobDescription &&
+      retrievedCandidateCount > 0 &&
+      shortlistResults.length === 0
+    ) {
       return "0 shortlisted candidates returned.";
     }
 
@@ -176,23 +332,29 @@ export function CandidateMatchWorkspace() {
     }
 
     return `${shortlistResults.length} shortlisted candidates.`;
-  }, [retrievedCandidateCount, shortlistResults.length, submittedQuery]);
+  }, [retrievedCandidateCount, shortlistResults.length, submittedJobDescription]);
 
-  async function runSearch(): Promise<void> {
+  async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
+    const trimmedFocusQuery = (
+      options?.focusQueryOverride ?? retrievalFocusTerms
+    ).trim();
+
     if (trimmedDescription === "") {
-      setErrorMessage("Paste a job description before running the search.");
+      setSearchErrorMessage("Paste a role brief before running corpus search.");
       setSearchResults([]);
-      setShortlistResults([]);
       return;
     }
 
+    const resolvedQuery = trimmedFocusQuery || trimmedDescription;
+
     setIsSearchLoading(true);
-    setErrorMessage(null);
+    setActiveRunMode("search");
+    setSearchErrorMessage(null);
 
     try {
       const searchParams = new URLSearchParams({
-        query: trimmedDescription,
+        query: resolvedQuery,
         limit: searchResultLimit,
       });
 
@@ -210,8 +372,8 @@ export function CandidateMatchWorkspace() {
 
       if (!response.ok) {
         setSearchResults([]);
-        setSubmittedQuery(trimmedDescription);
-        setErrorMessage(
+        setSubmittedSearchQuery(resolvedQuery);
+        setSearchErrorMessage(
           (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
             `Search request failed with ${response.status}.`,
         );
@@ -220,36 +382,38 @@ export function CandidateMatchWorkspace() {
 
       const searchResponse = payload as CandidateResumeSearchResponse;
       setSearchResults(searchResponse.results);
-      setShortlistResults([]);
-      setRetrievedCandidateCount(0);
-      setSubmittedQuery(searchResponse.query);
+      setSubmittedSearchQuery(searchResponse.query);
       searchResultsSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     } catch (error) {
       setSearchResults([]);
-      setSubmittedQuery(trimmedDescription);
-      setErrorMessage(
+      setSubmittedSearchQuery(resolvedQuery);
+      setSearchErrorMessage(
         error instanceof Error
           ? error.message
           : "Search request failed unexpectedly.",
       );
     } finally {
       setIsSearchLoading(false);
+      setActiveRunMode(null);
     }
   }
 
   async function runShortlist(): Promise<void> {
     const trimmedDescription = jobDescription.trim();
     if (trimmedDescription === "") {
-      setErrorMessage("Paste a job description before requesting a shortlist.");
+      setShortlistErrorMessage(
+        "Paste a role brief before requesting a recruiter shortlist.",
+      );
       setShortlistResults([]);
       return;
     }
 
     setIsShortlistLoading(true);
-    setErrorMessage(null);
+    setActiveRunMode("shortlist");
+    setShortlistErrorMessage(null);
 
     try {
       const response = await fetch("/api/v1/candidates/match-job-description", {
@@ -269,8 +433,8 @@ export function CandidateMatchWorkspace() {
 
       if (!response.ok) {
         setShortlistResults([]);
-        setSubmittedQuery(trimmedDescription);
-        setErrorMessage(
+        setSubmittedJobDescription(trimmedDescription);
+        setShortlistErrorMessage(
           (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
             `Shortlist request failed with ${response.status}.`,
         );
@@ -280,21 +444,22 @@ export function CandidateMatchWorkspace() {
       const shortlistResponse = payload as CandidateJobDescriptionMatchResponse;
       setShortlistResults(shortlistResponse.shortlisted_candidates);
       setRetrievedCandidateCount(shortlistResponse.retrieved_candidate_count);
-      setSubmittedQuery(shortlistResponse.job_description);
+      setSubmittedJobDescription(shortlistResponse.job_description);
       shortlistSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     } catch (error) {
       setShortlistResults([]);
-      setSubmittedQuery(trimmedDescription);
-      setErrorMessage(
+      setSubmittedJobDescription(trimmedDescription);
+      setShortlistErrorMessage(
         error instanceof Error
           ? error.message
           : "Shortlist request failed unexpectedly.",
       );
     } finally {
       setIsShortlistLoading(false);
+      setActiveRunMode(null);
     }
   }
 
@@ -303,17 +468,97 @@ export function CandidateMatchWorkspace() {
     await runSearch();
   }
 
+  function resetToExampleBrief(): void {
+    setJobDescription(DEFAULT_JOB_DESCRIPTION);
+    setIsFocusTermsAuto(true);
+    setRetrievalFocusTerms(deriveRetrievalFocusTerms(DEFAULT_JOB_DESCRIPTION));
+  }
+
+  function clearWorkspace(): void {
+    setJobDescription("");
+    setRetrievalFocusTerms("");
+    setIsFocusTermsAuto(true);
+    setSearchResults([]);
+    setShortlistResults([]);
+    setSearchErrorMessage(null);
+    setShortlistErrorMessage(null);
+    setSubmittedSearchQuery(null);
+    setSubmittedJobDescription(null);
+    setRetrievedCandidateCount(0);
+  }
+
   return (
     <div className="grid gap-8">
+      <section className="grid gap-4 border border-zinc-200 bg-white p-6 sm:p-8">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="border border-zinc-200 p-4">
+            <p className="text-xs font-semibold uppercase text-zinc-500">
+              Stage 1
+            </p>
+            <p className="mt-2 text-lg font-semibold text-zinc-950">
+              Hybrid retrieval
+            </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-700">
+              Search uses compact retrieval terms against the current CV corpus.
+            </p>
+          </div>
+
+          <div className="border border-zinc-200 p-4">
+            <p className="text-xs font-semibold uppercase text-zinc-500">
+              Stage 2
+            </p>
+            <p className="mt-2 text-lg font-semibold text-zinc-950">
+              LLM reranking
+            </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-700">
+              Shortlisting keeps the full role brief, then asks the reasoning
+              model to rank the strongest retrieved candidates.
+            </p>
+          </div>
+
+          <div className="border border-zinc-200 p-4">
+            <p className="text-xs font-semibold uppercase text-zinc-500">
+              Current goal
+            </p>
+            <p className="mt-2 text-lg font-semibold text-zinc-950">
+              Recruiter-usable demo
+            </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-700">
+              The page should make the retrieval engine legible, not just return
+              a black-box shortlist after a long wait.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="border border-zinc-200 bg-white p-6 sm:p-8">
         <form className="grid gap-6" onSubmit={handleSubmit}>
           <div className="grid gap-3">
-            <label
-              className="text-sm font-semibold uppercase text-zinc-500"
-              htmlFor="job-description"
-            >
-              Job description
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label
+                className="text-sm font-semibold uppercase text-zinc-500"
+                htmlFor="job-description"
+              >
+                Role brief
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={resetToExampleBrief}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                >
+                  Use example
+                </button>
+                <button
+                  type="button"
+                  onClick={clearWorkspace}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
 
             <textarea
               id="job-description"
@@ -322,6 +567,59 @@ export function CandidateMatchWorkspace() {
               className="min-h-72 rounded-md border border-zinc-300 bg-white px-4 py-3 text-base leading-7 text-zinc-950 outline-none transition focus:border-zinc-500"
               placeholder="Paste the role brief here."
             />
+            <p className="text-sm leading-6 text-zinc-600">
+              Keep the full brief here. The shortlist step uses this full text
+              for reranking.
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label
+                className="text-sm font-semibold uppercase text-zinc-500"
+                htmlFor="retrieval-focus-terms"
+              >
+                Retrieval focus terms
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFocusTermsAuto(true);
+                    setRetrievalFocusTerms(deriveRetrievalFocusTerms(jobDescription));
+                  }}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                >
+                  Regenerate terms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFocusTermsAuto(false);
+                    setRetrievalFocusTerms(jobDescription.trim());
+                  }}
+                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                >
+                  Use full brief
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              id="retrieval-focus-terms"
+              value={retrievalFocusTerms}
+              onChange={(event) => {
+                setIsFocusTermsAuto(false);
+                setRetrievalFocusTerms(event.target.value);
+              }}
+              className="min-h-24 rounded-md border border-zinc-300 bg-white px-4 py-3 text-base leading-7 text-zinc-950 outline-none transition focus:border-zinc-500"
+              placeholder="python sql aws data engineer etl"
+            />
+            <p className="text-sm leading-6 text-zinc-600">
+              Corpus search uses this compact query first. You can edit it if the
+              generated terms miss the real signal.
+            </p>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
@@ -433,6 +731,12 @@ export function CandidateMatchWorkspace() {
         </form>
       </section>
 
+      {loadingMessage ? (
+        <section className="border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+          {loadingMessage}
+        </section>
+      ) : null}
+
       <section ref={shortlistSectionRef} className="grid gap-6">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -440,39 +744,46 @@ export function CandidateMatchWorkspace() {
               Recruiter shortlist
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Top candidates selected after retrieval plus LLM reranking against
-              the supplied role brief.
+              Full role brief plus LLM reranking over the retrieved candidate
+              pool.
             </p>
           </div>
 
           <div className="text-sm text-zinc-600">
-            {submittedQuery ? shortlistCountLabel : "Run shortlist to see the top fit."}
+            {submittedJobDescription
+              ? shortlistCountLabel
+              : "Run shortlist to see the top fit."}
           </div>
         </div>
 
-        {submittedQuery && retrievedCandidateCount > 0 ? (
+        {submittedJobDescription && retrievedCandidateCount > 0 ? (
           <p className="text-sm leading-6 text-zinc-600">
-            Retrieved {retrievedCandidateCount} candidates for reranking.
+            Candidate pool sent to reranking:{" "}
+            <span className="font-medium text-zinc-900">
+              {retrievedCandidateCount}
+            </span>
           </p>
         ) : null}
 
-        {submittedQuery && retrievedCandidateCount === 0 && !errorMessage ? (
+        {submittedJobDescription && retrievedCandidateCount === 0 && !shortlistErrorMessage ? (
           <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            First-pass retrieval found no matching CVs for that brief. Try a
-            shorter keyword query such as <span className="font-semibold">python sql etl data engineer</span>.
+            Retrieval did not find a useful candidate pool for that brief. Try
+            running corpus search first with tighter focus terms, then shortlist
+            again.
           </div>
         ) : null}
 
-        {errorMessage ? (
+        {shortlistErrorMessage ? (
           <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
-            {errorMessage}
+            {shortlistErrorMessage}
           </div>
         ) : null}
 
-        {shortlistResults.length === 0 && !errorMessage ? (
+        {shortlistResults.length === 0 && !shortlistErrorMessage ? (
           <div className="border border-dashed border-zinc-300 p-6 text-sm leading-7 text-zinc-600">
-            Paste a role brief and use the shortlist action to produce the top
-            candidates, not just raw search results.
+            Use the shortlist action when you want the reasoning model to turn
+            retrieval output into a recruiter-style top list with strengths,
+            gaps, and fit summaries.
           </div>
         ) : null}
 
@@ -559,7 +870,7 @@ export function CandidateMatchWorkspace() {
               </dl>
 
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <div className="border border-zinc-200 bg-zinc-50 p-4">
+                <div className="border border-zinc-200 p-4">
                   <p className="text-xs font-semibold uppercase text-zinc-500">
                     Strengths
                   </p>
@@ -574,7 +885,7 @@ export function CandidateMatchWorkspace() {
                   </ul>
                 </div>
 
-                <div className="border border-zinc-200 bg-zinc-50 p-4">
+                <div className="border border-zinc-200 p-4">
                   <p className="text-xs font-semibold uppercase text-zinc-500">
                     Gaps
                   </p>
@@ -587,6 +898,15 @@ export function CandidateMatchWorkspace() {
                   </ul>
                 </div>
               </div>
+
+              <div className="mt-6 border border-zinc-200 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Resume evidence
+                </p>
+                <p className="mt-3 text-sm leading-7 text-zinc-900">
+                  {renderHighlightedExcerpt(result.match_excerpt)}
+                </p>
+              </div>
             </article>
           ))}
         </div>
@@ -596,35 +916,86 @@ export function CandidateMatchWorkspace() {
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
-              Search results
+              Corpus search
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Direct retrieval results from the canonical current-resume corpus.
+              Hybrid retrieval results from the canonical current-resume corpus.
             </p>
           </div>
 
           <div className="text-sm text-zinc-600">
-            {submittedQuery ? searchResultCountLabel : "Run a search to see matches."}
+            {submittedSearchQuery
+              ? searchResultCountLabel
+              : "Run corpus search to inspect the candidate pool."}
           </div>
         </div>
 
-        {submittedQuery ? (
-          <p className="text-sm leading-6 text-zinc-600">
-            Query: <span className="font-medium text-zinc-900">{submittedQuery}</span>
-          </p>
-        ) : null}
-
-        {submittedQuery && searchResults.length === 0 && !errorMessage ? (
-          <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-            The current keyword search returned no CV matches for that query.
-            Try a tighter role phrase or a shorter keyword query.
+        {submittedSearchQuery ? (
+          <div className="grid gap-1 text-sm leading-6 text-zinc-600">
+            <p>
+              Retrieval terms:{" "}
+              <span className="font-medium text-zinc-900">
+                {submittedSearchQuery}
+              </span>
+            </p>
+            {submittedJobDescription ? (
+              <p>Shortlist reasoning still uses the full brief above.</p>
+            ) : null}
           </div>
         ) : null}
 
-        {searchResults.length === 0 && !errorMessage ? (
+        {submittedSearchQuery && searchResults.length === 0 && !searchErrorMessage ? (
+          <div className="grid gap-3 border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <p>
+              Corpus search returned no CV matches for that retrieval query.
+            </p>
+            {jobDescription.trim() !== retrievalFocusTerms.trim() ? (
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFocusTermsAuto(false);
+                    setRetrievalFocusTerms(jobDescription.trim());
+                    void runSearch({
+                      focusQueryOverride: jobDescription.trim(),
+                    });
+                  }}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-950 transition hover:border-amber-500"
+                >
+                  Retry with full brief
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFocusTermsAuto(true);
+                    const regeneratedTerms = deriveRetrievalFocusTerms(
+                      jobDescription,
+                    );
+                    setRetrievalFocusTerms(regeneratedTerms);
+                    void runSearch({
+                      focusQueryOverride: regeneratedTerms,
+                    });
+                  }}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-950 transition hover:border-amber-500"
+                >
+                  Retry with regenerated terms
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {searchErrorMessage ? (
+          <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+            {searchErrorMessage}
+          </div>
+        ) : null}
+
+        {searchResults.length === 0 && !searchErrorMessage ? (
           <div className="border border-dashed border-zinc-300 p-6 text-sm leading-7 text-zinc-600">
-            Paste a role brief, run the search, and this page will return the
-            strongest current-resume matches.
+            Start here when you want to inspect the raw candidate pool before
+            running the LLM shortlist. This helps you sanity-check whether the
+            retrieval layer is seeing the right CVs.
           </div>
         ) : null}
 
@@ -703,9 +1074,9 @@ export function CandidateMatchWorkspace() {
                 </div>
               </dl>
 
-              <div className="mt-6 border border-zinc-200 bg-zinc-50 p-4">
+              <div className="mt-6 border border-zinc-200 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  Resume match excerpt
+                  Resume evidence
                 </p>
                 <p className="mt-3 text-sm leading-7 text-zinc-900">
                   {renderHighlightedExcerpt(result.match_excerpt)}

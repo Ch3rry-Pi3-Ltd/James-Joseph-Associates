@@ -10,11 +10,12 @@ export default function MatchPage() {
               Candidate matching
             </p>
             <h1 className="mt-3 text-4xl font-semibold leading-tight text-zinc-950 sm:text-5xl">
-              Search the CV corpus against a role brief
+              Turn a role brief into a recruiter shortlist
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-700">
-              Paste a job description and review the strongest current-resume
-              matches already stored in the canonical database.
+              Search the current CV corpus, inspect the retrieved candidate
+              pool, and then ask the reasoning model to rerank the strongest
+              fits already stored in the canonical database.
             </p>
           </div>
 
