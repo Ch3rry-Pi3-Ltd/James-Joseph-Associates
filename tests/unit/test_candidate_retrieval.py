@@ -1,4 +1,9 @@
-from backend.services.candidate_retrieval import fuse_candidate_rankings
+from backend.services import candidate_retrieval
+from backend.services.candidate_retrieval import (
+    derive_text_retrieval_query,
+    fuse_candidate_rankings,
+    search_candidates_hybrid,
+)
 
 
 def test_fuse_candidate_rankings_prefers_candidates_seen_in_both_sources() -> None:
@@ -34,3 +39,59 @@ def test_fuse_candidate_rankings_prefers_candidates_seen_in_both_sources() -> No
     assert [row["candidate_id"] for row in fused] == ["cand-2", "cand-1"]
     assert fused[0]["match_excerpt"] == "platform data engineering"
     assert fused[0]["match_score"] > fused[1]["match_score"]
+
+
+def test_derive_text_retrieval_query_compacts_role_brief_into_keywords() -> None:
+    query = (
+        "Senior data engineer with strong Python, SQL, cloud platform, and ETL "
+        "experience. Ideally someone who has worked with large datasets."
+    )
+
+    result = derive_text_retrieval_query(query)
+
+    assert result == (
+        "senior data engineer python sql cloud platform etl experience large datasets"
+    )
+
+
+def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_query(
+    monkeypatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_text_search(*, query: str, limit: int) -> list[dict[str, object]]:
+        captured["text_query"] = query
+        captured["text_limit"] = limit
+        return []
+
+    def fake_semantic_search(*, query: str, limit: int) -> list[dict[str, object]]:
+        captured["semantic_query"] = query
+        captured["semantic_limit"] = limit
+        return []
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        fake_text_search,
+    )
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_semantic_blocks",
+        fake_semantic_search,
+    )
+
+    result = search_candidates_hybrid(
+        query=(
+            "Senior data engineer with strong Python, SQL, cloud platform, "
+            "and ETL experience."
+        ),
+        limit=10,
+    )
+
+    assert result == []
+    assert captured["text_query"] == (
+        "senior data engineer python sql cloud platform etl experience"
+    )
+    assert captured["semantic_query"] == (
+        "Senior data engineer with strong Python, SQL, cloud platform, and ETL experience."
+    )

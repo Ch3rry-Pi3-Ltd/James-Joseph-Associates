@@ -80,21 +80,35 @@ def build_candidate_semantic_blocks(
         parts=profile_lines,
     )
 
-    skill_names = [
-        _string_value(skill.get("canonical_name")) or _string_value(skill.get("skill_name"))
-        for skill in skills
+    focus_parts = [
+        _line("Current title", candidate.get("current_title")),
+        _line("Headline", candidate.get("headline")),
+        _line("Current company", candidate.get("current_company_name")),
+        _line("Summary", candidate.get("summary")),
     ]
-    skill_names = _ordered_unique_values([name for name in skill_names if name])[:24]
-    skill_parts: list[str] = []
-    if skill_names:
-        skill_parts.append("Primary skills: " + "; ".join(skill_names))
     _append_block(
         blocks,
-        block_type="skills",
+        block_type="focus",
         block_index=0,
-        block_label="Candidate skills",
-        parts=skill_parts,
+        block_label="Role focus",
+        parts=focus_parts,
     )
+
+    skill_entries = [
+        _skill_entry_text(skill)
+        for skill in skills
+    ]
+    skill_entries = _ordered_unique_values([entry for entry in skill_entries if entry])[:24]
+    for skill_block_index, skill_chunk in enumerate(
+        _chunk_values(skill_entries, chunk_size=8)
+    ):
+        _append_block(
+            blocks,
+            block_type="skills",
+            block_index=skill_block_index,
+            block_label=f"Candidate skills {skill_block_index + 1}",
+            parts=["Primary skills: " + "; ".join(skill_chunk)],
+        )
 
     summary_parts = [
         _line("Summary", candidate.get("summary")),
@@ -164,6 +178,31 @@ def _ordered_unique_values(values: list[str]) -> list[str]:
         seen.add(key)
         ordered.append(value)
     return ordered
+
+
+def _chunk_values(values: list[str], *, chunk_size: int) -> list[list[str]]:
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive.")
+
+    return [
+        values[index : index + chunk_size]
+        for index in range(0, len(values), chunk_size)
+    ]
+
+
+def _skill_entry_text(skill: dict[str, Any]) -> str:
+    skill_name = (
+        _string_value(skill.get("canonical_name"))
+        or _string_value(skill.get("skill_name"))
+    )
+    evidence_text = normalize_semantic_block_text(
+        _string_value(skill.get("evidence_text"))
+    )
+    if skill_name == "":
+        return ""
+    if evidence_text == "":
+        return skill_name
+    return f"{skill_name}: {evidence_text}"
 
 
 __all__ = [

@@ -12,10 +12,122 @@ layer is backfilled and validated.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from backend.db.candidate_semantic_blocks import search_candidates_by_semantic_blocks
 from backend.db.candidates import search_candidates_by_resume_text
+
+
+_TEXT_QUERY_STOP_WORDS = {
+    "a",
+    "about",
+    "across",
+    "also",
+    "an",
+    "and",
+    "any",
+    "are",
+    "as",
+    "at",
+    "be",
+    "been",
+    "before",
+    "between",
+    "brief",
+    "build",
+    "by",
+    "can",
+    "current",
+    "description",
+    "do",
+    "for",
+    "from",
+    "has",
+    "have",
+    "how",
+    "i",
+    "ideally",
+    "in",
+    "into",
+    "is",
+    "it",
+    "its",
+    "just",
+    "looking",
+    "modern",
+    "more",
+    "most",
+    "need",
+    "of",
+    "on",
+    "or",
+    "production",
+    "role",
+    "search",
+    "should",
+    "show",
+    "someone",
+    "strong",
+    "such",
+    "systems",
+    "that",
+    "the",
+    "their",
+    "them",
+    "there",
+    "this",
+    "to",
+    "use",
+    "we",
+    "what",
+    "when",
+    "where",
+    "who",
+    "with",
+    "worked",
+    "workflow",
+}
+_TEXT_QUERY_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9+#./-]+")
+
+
+def derive_text_retrieval_query(
+    query: str,
+    *,
+    max_terms: int = 16,
+) -> str:
+    """
+    Return a tighter keyword-oriented query for the FTS side of hybrid search.
+    """
+
+    normalized_query = query.strip()
+    if normalized_query == "":
+        return ""
+
+    selected_terms: list[str] = []
+    seen_terms: set[str] = set()
+
+    for original_term in _TEXT_QUERY_TOKEN_PATTERN.findall(normalized_query):
+        canonical_term = (
+            original_term.lower().strip().strip(".,;:!?()[]{}<>\"'")
+        )
+        if len(canonical_term) < 2:
+            continue
+        if canonical_term in _TEXT_QUERY_STOP_WORDS:
+            continue
+        if canonical_term in seen_terms:
+            continue
+
+        seen_terms.add(canonical_term)
+        selected_terms.append(canonical_term)
+
+        if len(selected_terms) >= max(1, min(int(max_terms), 32)):
+            break
+
+    if selected_terms:
+        return " ".join(selected_terms)
+
+    return normalized_query
 
 
 def search_candidates_hybrid(
@@ -33,6 +145,7 @@ def search_candidates_hybrid(
     normalized_query = query.strip()
     if normalized_query == "":
         return []
+    text_query = derive_text_retrieval_query(normalized_query)
 
     bounded_limit = max(1, min(int(limit), 100))
     resolved_text_limit = max(bounded_limit, min(int(text_limit or bounded_limit * 3), 100))
@@ -42,7 +155,7 @@ def search_candidates_hybrid(
     )
 
     text_results = search_candidates_by_resume_text(
-        query=normalized_query,
+        query=text_query,
         limit=resolved_text_limit,
     )
 
@@ -150,6 +263,7 @@ def _merge_candidate_payload(
 
 
 __all__ = [
+    "derive_text_retrieval_query",
     "fuse_candidate_rankings",
     "search_candidates_hybrid",
 ]

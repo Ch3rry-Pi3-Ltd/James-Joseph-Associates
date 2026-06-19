@@ -276,13 +276,17 @@ def search_candidates_by_semantic_blocks(
                 csb.block_label,
                 csb.block_text,
                 case
-                    when csb.block_type = 'summary' then 1
-                    when csb.block_type = 'profile' then 2
-                    else 3
+                    when csb.block_type = 'focus' then 1
+                    when csb.block_type = 'summary' then 2
+                    when csb.block_type = 'skills' then 3
+                    when csb.block_type = 'profile' then 4
+                    else 5
                 end as block_priority,
                 case
-                    when csb.block_type = 'summary' then (csb.embedding <=> %(query_vector)s::vector) * 0.96
-                    when csb.block_type = 'profile' then (csb.embedding <=> %(query_vector)s::vector) * 0.985
+                    when csb.block_type = 'focus' then (csb.embedding <=> %(query_vector)s::vector) * 0.94
+                    when csb.block_type = 'summary' then (csb.embedding <=> %(query_vector)s::vector) * 0.97
+                    when csb.block_type = 'skills' then (csb.embedding <=> %(query_vector)s::vector) * 0.995
+                    when csb.block_type = 'profile' then (csb.embedding <=> %(query_vector)s::vector) * 1.02
                     else (csb.embedding <=> %(query_vector)s::vector) * 1.03
                 end as adjusted_distance
             from candidate_semantic_blocks csb

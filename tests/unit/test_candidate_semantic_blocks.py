@@ -39,10 +39,16 @@ def test_build_candidate_semantic_blocks_returns_profile_skills_and_summary() ->
         ],
     )
 
-    assert [block.block_type for block in blocks] == ["profile", "skills", "summary"]
+    assert [block.block_type for block in blocks] == [
+        "profile",
+        "focus",
+        "skills",
+        "summary",
+    ]
     assert "Sarah Jones" in blocks[0].block_text
-    assert "python; sql" in blocks[1].block_text.lower()
-    assert "Built cloud ETL pipelines" in blocks[2].block_text
+    assert "Built cloud ETL pipelines" in blocks[1].block_text
+    assert "python: Python and Airflow pipelines".lower() in blocks[2].block_text.lower()
+    assert "Built cloud ETL pipelines" in blocks[3].block_text
 
 
 def test_build_candidate_semantic_blocks_deduplicates_and_trims_skill_block() -> None:
@@ -61,4 +67,21 @@ def test_build_candidate_semantic_blocks_deduplicates_and_trims_skill_block() ->
     skills_block = next(block for block in blocks if block.block_type == "skills")
     assert skills_block.block_text.count("python") == 1
     assert "sql" in skills_block.block_text.lower()
-    assert "Evidence:" not in skills_block.block_text
+
+
+def test_build_candidate_semantic_blocks_splits_large_skill_sets_into_multiple_blocks() -> None:
+    blocks = build_candidate_semantic_blocks(
+        candidate={
+            "full_name": "Test Person",
+            "summary": "Example summary",
+        },
+        skills=[
+            {"skill_name": f"Skill {index}", "canonical_name": f"skill-{index}"}
+            for index in range(1, 11)
+        ],
+    )
+
+    skill_blocks = [block for block in blocks if block.block_type == "skills"]
+    assert len(skill_blocks) == 2
+    assert "skill-1" in skill_blocks[0].block_text.lower()
+    assert "skill-9" in skill_blocks[1].block_text.lower()

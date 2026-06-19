@@ -173,6 +173,7 @@ def _rank_retrieved_candidates_for_job_description(
         "candidate resume matches. Choose only the strongest candidates for the role. "
         "Base your decision on the provided candidate data only. "
         "Do not invent missing experience. "
+        "Prefer concrete evidence over generic recruiter language. "
         "Return no more than the requested shortlist limit."
     )
 
@@ -199,9 +200,10 @@ def _rank_retrieved_candidates_for_job_description(
         "For each shortlisted candidate:\n"
         "- use the exact candidate_id from the supplied list\n"
         "- assign a fit_score from 0 to 100\n"
-        "- write one brief fit_summary\n"
-        "- list concrete strengths\n"
-        "- list any obvious gaps\n"
+        "- write one brief fit_summary grounded in the retrieved evidence\n"
+        "- list concrete strengths as short evidence-backed bullet phrases\n"
+        "- list any obvious gaps only when they are genuinely missing or unclear from the evidence\n"
+        "- avoid generic filler such as 'strong background' unless you name the actual area\n"
     )
 
     prompt = ChatPromptTemplate.from_messages(
