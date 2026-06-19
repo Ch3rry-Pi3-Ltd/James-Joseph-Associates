@@ -12,11 +12,14 @@ layer is backfilled and validated.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
 
 from backend.db.candidate_semantic_blocks import search_candidates_by_semantic_blocks
 from backend.db.candidates import search_candidates_by_resume_text
+
+logger = logging.getLogger(__name__)
 
 
 _TEXT_QUERY_STOP_WORDS = {
@@ -172,6 +175,14 @@ def search_candidates_hybrid(
                 limit=resolved_semantic_limit,
             )
         except Exception:
+            logger.exception(
+                "Candidate semantic retrieval failed.",
+                extra={
+                    "query_preview": normalized_query[:120],
+                    "limit": bounded_limit,
+                    "semantic_limit": resolved_semantic_limit,
+                },
+            )
             semantic_results = []
 
     return fuse_candidate_rankings(
