@@ -65,6 +65,44 @@ type ApiErrorResponse = {
   };
 };
 
+type CandidateProfileSkill = {
+  candidate_id: string;
+  skill_id: string;
+  skill_name: string | null;
+  canonical_name: string | null;
+  skill_type: string | null;
+  confidence: number | null;
+  evidence_text: string | null;
+};
+
+type CandidateProfileCandidate = {
+  candidate_id: string;
+  person_id: string;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  primary_email: string | null;
+  primary_phone: string | null;
+  linkedin_url: string | null;
+  location: string | null;
+  headline: string | null;
+  summary: string | null;
+  current_title: string | null;
+  candidate_status: string | null;
+  availability_status: string | null;
+  salary_expectation: string | null;
+  notice_period: string | null;
+  last_contacted_at: string | null;
+  resume_updated_at: string | null;
+  current_company_id: string | null;
+  current_company_name: string | null;
+};
+
+type CandidateProfileResponse = {
+  candidate: CandidateProfileCandidate;
+  skills: CandidateProfileSkill[];
+};
+
 type RunMode = "search" | "shortlist" | null;
 
 const DEFAULT_JOB_DESCRIPTION = `Senior data engineer with strong Python, SQL, cloud platform, and ETL experience. Ideally someone who has worked with large datasets, modern data pipelines, and production analytics systems.`;
@@ -280,6 +318,14 @@ export function CandidateMatchWorkspace() {
     string | null
   >(null);
   const [retrievedCandidateCount, setRetrievedCandidateCount] = useState(0);
+  const [previewCandidateId, setPreviewCandidateId] = useState<string | null>(null);
+  const [previewProfile, setPreviewProfile] = useState<CandidateProfileResponse | null>(
+    null,
+  );
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewErrorMessage, setPreviewErrorMessage] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isFocusTermsAuto) {
@@ -293,6 +339,17 @@ export function CandidateMatchWorkspace() {
     () => buildLoadingMessage(activeRunMode),
     [activeRunMode],
   );
+  const previewSkillNames = useMemo(() => {
+    if (!previewProfile) {
+      return [];
+    }
+
+    const values = previewProfile.skills
+      .map((skill) => skill.canonical_name ?? skill.skill_name)
+      .filter((value): value is string => Boolean(value && value.trim()));
+
+    return [...new Set(values)];
+  }, [previewProfile]);
 
   const searchResultCountLabel = useMemo(() => {
     if (submittedSearchQuery && searchResults.length === 0) {
@@ -485,6 +542,46 @@ export function CandidateMatchWorkspace() {
     setSubmittedSearchQuery(null);
     setSubmittedJobDescription(null);
     setRetrievedCandidateCount(0);
+    setPreviewCandidateId(null);
+    setPreviewProfile(null);
+    setPreviewErrorMessage(null);
+  }
+
+  async function openCandidatePreview(candidateId: string): Promise<void> {
+    setPreviewCandidateId(candidateId);
+    setPreviewLoading(true);
+    setPreviewErrorMessage(null);
+
+    try {
+      const response = await fetch(`/api/v1/candidates/${candidateId}/profile`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const payload = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        setPreviewProfile(null);
+        setPreviewErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Candidate preview request failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      setPreviewProfile(payload as CandidateProfileResponse);
+    } catch (error) {
+      setPreviewProfile(null);
+      setPreviewErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Candidate preview request failed unexpectedly.",
+      );
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   return (
@@ -737,6 +834,189 @@ export function CandidateMatchWorkspace() {
         </section>
       ) : null}
 
+      <section className="grid gap-4 border border-zinc-200 bg-white p-6 sm:p-8">
+        <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold text-zinc-950">
+              Candidate preview
+            </h2>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
+              Inspect the selected candidate in-page instead of jumping straight
+              to raw JSON.
+            </p>
+          </div>
+
+          <div className="text-sm text-zinc-600">
+            {previewCandidateId
+              ? `Selected: ${previewCandidateId}`
+              : "Choose a candidate from search or shortlist."}
+          </div>
+        </div>
+
+        {previewLoading ? (
+          <div className="border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+            Loading candidate profile preview.
+          </div>
+        ) : null}
+
+        {previewErrorMessage ? (
+          <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+            {previewErrorMessage}
+          </div>
+        ) : null}
+
+        {!previewLoading && !previewProfile && !previewErrorMessage ? (
+          <div className="border border-dashed border-zinc-300 p-6 text-sm leading-7 text-zinc-600">
+            Use any result card to preview the candidate profile, skills, and
+            contact details here.
+          </div>
+        ) : null}
+
+        {previewProfile ? (
+          <article className="grid gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  {previewProfile.candidate.full_name ?? "Unnamed candidate"}
+                </h3>
+                <p className="mt-2 text-base leading-7 text-zinc-700">
+                  {previewProfile.candidate.current_title ?? "Title not available"}
+                  {previewProfile.candidate.current_company_name
+                    ? ` at ${previewProfile.candidate.current_company_name}`
+                    : ""}
+                </p>
+                {previewProfile.candidate.headline ? (
+                  <p className="mt-3 text-sm leading-6 text-zinc-900">
+                    {previewProfile.candidate.headline}
+                  </p>
+                ) : null}
+              </div>
+
+              <a
+                href={`/api/v1/candidates/${previewProfile.candidate.candidate_id}/profile`}
+                className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+              >
+                Open profile JSON
+              </a>
+            </div>
+
+            <dl className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Candidate status
+                </dt>
+                <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.candidate_status ?? "Unknown"}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Availability
+                </dt>
+                <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.availability_status ?? "Unknown"}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Resume updated
+                </dt>
+                <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                  {formatTimestamp(previewProfile.candidate.resume_updated_at)}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Last contacted
+                </dt>
+                <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                  {formatTimestamp(previewProfile.candidate.last_contacted_at)}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Email
+                </dt>
+                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.primary_email ?? "Not available"}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Phone
+                </dt>
+                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.primary_phone ?? "Not available"}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  LinkedIn
+                </dt>
+                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.linkedin_url ? (
+                    <a
+                      href={previewProfile.candidate.linkedin_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-zinc-400 underline-offset-2"
+                    >
+                      {previewProfile.candidate.linkedin_url}
+                    </a>
+                  ) : (
+                    "Not available"
+                  )}
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase text-zinc-500">
+                  Location
+                </dt>
+                <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                  {previewProfile.candidate.location ?? "Unknown"}
+                </dd>
+              </div>
+            </dl>
+
+            {previewSkillNames.length > 0 ? (
+              <div className="border border-zinc-200 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Skills
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {previewSkillNames.map((skillName) => (
+                    <span
+                      key={skillName}
+                      className="rounded-md border border-zinc-200 px-3 py-1 text-sm text-zinc-900"
+                    >
+                      {skillName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {previewProfile.candidate.summary ? (
+              <div className="border border-zinc-200 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Summary
+                </p>
+                <p className="mt-3 text-sm leading-7 text-zinc-900">
+                  {previewProfile.candidate.summary}
+                </p>
+              </div>
+            ) : null}
+          </article>
+        ) : null}
+      </section>
+
       <section ref={shortlistSectionRef} className="grid gap-6">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -823,12 +1103,24 @@ export function CandidateMatchWorkspace() {
                   </p>
                 </div>
 
-                <a
-                  href={`/api/v1/candidates/${result.candidate_id}/profile`}
-                  className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                >
-                  Open profile JSON
-                </a>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void openCandidatePreview(result.candidate_id);
+                    }}
+                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Preview candidate
+                  </button>
+
+                  <a
+                    href={`/api/v1/candidates/${result.candidate_id}/profile`}
+                    className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Open JSON
+                  </a>
+                </div>
               </div>
 
               <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -1028,12 +1320,24 @@ export function CandidateMatchWorkspace() {
                   </p>
                 </div>
 
-                <a
-                  href={`/api/v1/candidates/${result.candidate_id}/profile`}
-                  className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                >
-                  Open profile JSON
-                </a>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void openCandidatePreview(result.candidate_id);
+                    }}
+                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Preview candidate
+                  </button>
+
+                  <a
+                    href={`/api/v1/candidates/${result.candidate_id}/profile`}
+                    className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Open JSON
+                  </a>
+                </div>
               </div>
 
               <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
