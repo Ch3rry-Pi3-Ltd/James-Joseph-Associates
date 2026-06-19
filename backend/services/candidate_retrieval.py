@@ -137,6 +137,8 @@ def search_candidates_hybrid(
     text_limit: int | None = None,
     semantic_limit: int | None = None,
     fusion_constant: int = 60,
+    include_text: bool = True,
+    include_semantic: bool = True,
 ) -> list[dict[str, Any]]:
     """
     Return hybrid candidate retrieval results for one free-text query.
@@ -154,18 +156,23 @@ def search_candidates_hybrid(
         min(int(semantic_limit or bounded_limit * 3), 100),
     )
 
-    text_results = search_candidates_by_resume_text(
-        query=text_query,
-        limit=resolved_text_limit,
-    )
+    text_results: list[dict[str, Any]] = []
+    semantic_results: list[dict[str, Any]] = []
 
-    try:
-        semantic_results = search_candidates_by_semantic_blocks(
-            query=normalized_query,
-            limit=resolved_semantic_limit,
+    if include_text:
+        text_results = search_candidates_by_resume_text(
+            query=text_query,
+            limit=resolved_text_limit,
         )
-    except Exception:
-        semantic_results = []
+
+    if include_semantic:
+        try:
+            semantic_results = search_candidates_by_semantic_blocks(
+                query=normalized_query,
+                limit=resolved_semantic_limit,
+            )
+        except Exception:
+            semantic_results = []
 
     return fuse_candidate_rankings(
         text_results=text_results,

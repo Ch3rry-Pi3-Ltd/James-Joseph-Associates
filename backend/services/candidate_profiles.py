@@ -30,6 +30,7 @@ In plain language:
 - it only coordinates existing read helpers
 """
 
+from datetime import date, datetime
 from typing import Any
 
 from backend.db.candidates import get_candidate_profile
@@ -131,12 +132,73 @@ def search_candidate_resumes(
     results = search_candidates_hybrid(
         query=normalized_query,
         limit=limit,
+        include_text=False,
+        include_semantic=True,
     )
     return {
         "query": normalized_query,
         "limit": limit,
-        "results": results,
+        "results": [
+            _normalize_candidate_resume_search_result(result) for result in results
+        ],
     }
+
+
+def _normalize_candidate_resume_search_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Return one public API-safe resume-search row.
+    """
+
+    return {
+        "candidate_id": _normalize_string_value(result.get("candidate_id")),
+        "person_id": _normalize_string_value(result.get("person_id")),
+        "full_name": _normalize_optional_string_value(result.get("full_name")),
+        "current_title": _normalize_optional_string_value(
+            result.get("current_title")
+        ),
+        "candidate_status": _normalize_optional_string_value(
+            result.get("candidate_status")
+        ),
+        "current_company_name": _normalize_optional_string_value(
+            result.get("current_company_name")
+        ),
+        "resume_updated_at": _normalize_optional_datetime_value(
+            result.get("resume_updated_at")
+        ),
+        "document_id": _normalize_string_value(result.get("document_id")),
+        "document_title": _normalize_optional_string_value(
+            result.get("document_title")
+        ),
+        "document_source_uri": _normalize_optional_string_value(
+            result.get("document_source_uri")
+        ),
+        "match_score": float(result.get("match_score") or 0.0),
+        "match_excerpt": _normalize_optional_string_value(
+            result.get("match_excerpt")
+        ),
+    }
+
+
+def _normalize_string_value(value: Any) -> str:
+    return "" if value is None else str(value)
+
+
+def _normalize_optional_string_value(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
+def _normalize_optional_datetime_value(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    return str(value)
 
 
 __all__ = [

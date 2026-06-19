@@ -47,9 +47,14 @@ In this module, that means:
 - we inspect whether they were called correctly
 """
 
+from datetime import UTC, datetime
 from unittest.mock import patch
+from uuid import UUID
 
-from backend.services.candidate_profiles import build_candidate_profile
+from backend.services.candidate_profiles import (
+    build_candidate_profile,
+    search_candidate_resumes,
+)
 
 
 def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> None:
@@ -228,3 +233,63 @@ def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
 
     mock_get_candidate_profile.assert_called_once_with(candidate_id)
     mock_get_candidate_skills.assert_called_once_with(candidate_id)
+
+
+def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
+    """
+    Verify that resume-search results are normalized into the public API shape.
+    """
+
+    raw_result = {
+        "candidate_id": UUID("33333333-3333-3333-3333-333333333331"),
+        "person_id": UUID("22222222-2222-2222-2222-222222222221"),
+        "full_name": "Sarah Jones",
+        "current_title": "Senior Data Engineer",
+        "candidate_status": "active",
+        "current_company_name": "Acme Hiring Ltd",
+        "resume_updated_at": datetime(2026, 4, 20, 12, 0, tzinfo=UTC),
+        "document_id": UUID("11111111-1111-1111-1111-111111111111"),
+        "document_title": "Sarah-Jones-CV.pdf",
+        "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+        "match_score": 0.812345,
+        "match_excerpt": "<mark>python</mark> data engineer",
+        "block_id": UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+        "block_type": "skills",
+        "block_label": "Core skills",
+    }
+
+    with patch(
+        "backend.services.candidate_profiles.search_candidates_hybrid",
+        return_value=[raw_result],
+    ) as mock_search_candidates_hybrid:
+        result = search_candidate_resumes(
+            query=" python data engineer ",
+            limit=5,
+        )
+
+    assert result == {
+        "query": "python data engineer",
+        "limit": 5,
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "match_score": 0.812345,
+                "match_excerpt": "<mark>python</mark> data engineer",
+            }
+        ],
+    }
+    mock_search_candidates_hybrid.assert_called_once_with(
+        query="python data engineer",
+        limit=5,
+        include_text=False,
+        include_semantic=True,
+    )

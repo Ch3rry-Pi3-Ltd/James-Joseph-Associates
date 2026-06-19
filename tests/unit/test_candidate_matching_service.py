@@ -18,10 +18,16 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
     Verify that no LLM call is made when retrieval returns no candidates.
     """
 
+    captured: dict[str, object] = {}
+
+    def fake_search_candidates_hybrid(**kwargs: object) -> list[dict[str, object]]:
+        captured.update(kwargs)
+        return []
+
     monkeypatch.setattr(
         candidate_matching,
         "search_candidates_hybrid",
-        lambda **kwargs: [],
+        fake_search_candidates_hybrid,
     )
 
     def fail_if_called(**kwargs: object) -> None:
@@ -45,6 +51,12 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
         "shortlist_limit": 3,
         "retrieved_candidate_count": 0,
         "shortlisted_candidates": [],
+    }
+    assert captured == {
+        "query": "python data engineer",
+        "limit": 25,
+        "include_text": False,
+        "include_semantic": True,
     }
 
 

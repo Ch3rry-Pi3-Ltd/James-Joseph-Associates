@@ -262,11 +262,12 @@ def search_candidates_by_semantic_blocks(
         return []
 
     bounded_limit = max(1, min(int(limit), 100))
+    block_candidate_pool_limit = max(200, min(bounded_limit * 20, 5000))
     query_vector = embed_texts([normalized_query])[0]
     query_vector_literal = vector_to_pgvector_literal(query_vector)
 
     search_sql = """
-        with scored_blocks as (
+        with nearest_blocks as (
             select
                 csb.id,
                 csb.candidate_id,
@@ -275,22 +276,36 @@ def search_candidates_by_semantic_blocks(
                 csb.block_type,
                 csb.block_label,
                 csb.block_text,
+                (csb.embedding <=> %(query_vector)s::vector) as cosine_distance
+            from candidate_semantic_blocks csb
+            where csb.embedding is not null
+            order by csb.embedding <=> %(query_vector)s::vector asc, csb.id asc
+            limit %(block_candidate_pool_limit)s
+        ),
+        scored_blocks as (
+            select
+                nb.id,
+                nb.candidate_id,
+                nb.person_id,
+                nb.document_id,
+                nb.block_type,
+                nb.block_label,
+                nb.block_text,
                 case
-                    when csb.block_type = 'focus' then 1
-                    when csb.block_type = 'summary' then 2
-                    when csb.block_type = 'skills' then 3
-                    when csb.block_type = 'profile' then 4
+                    when nb.block_type = 'focus' then 1
+                    when nb.block_type = 'summary' then 2
+                    when nb.block_type = 'skills' then 3
+                    when nb.block_type = 'profile' then 4
                     else 5
                 end as block_priority,
                 case
-                    when csb.block_type = 'focus' then (csb.embedding <=> %(query_vector)s::vector) * 0.94
-                    when csb.block_type = 'summary' then (csb.embedding <=> %(query_vector)s::vector) * 0.97
-                    when csb.block_type = 'skills' then (csb.embedding <=> %(query_vector)s::vector) * 0.995
-                    when csb.block_type = 'profile' then (csb.embedding <=> %(query_vector)s::vector) * 1.02
-                    else (csb.embedding <=> %(query_vector)s::vector) * 1.03
+                    when nb.block_type = 'focus' then nb.cosine_distance * 0.94
+                    when nb.block_type = 'summary' then nb.cosine_distance * 0.97
+                    when nb.block_type = 'skills' then nb.cosine_distance * 0.995
+                    when nb.block_type = 'profile' then nb.cosine_distance * 1.02
+                    else nb.cosine_distance * 1.03
                 end as adjusted_distance
-            from candidate_semantic_blocks csb
-            where csb.embedding is not null
+            from nearest_blocks nb
         ),
         ranked_blocks as (
             select
@@ -354,6 +369,7 @@ def search_candidates_by_semantic_blocks(
                 search_sql,
                 {
                     "query_vector": query_vector_literal,
+                    "block_candidate_pool_limit": block_candidate_pool_limit,
                     "limit": bounded_limit,
                 },
             )
