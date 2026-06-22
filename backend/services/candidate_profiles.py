@@ -132,7 +132,7 @@ def search_candidate_resumes(
     results = search_candidates_hybrid(
         query=normalized_query,
         limit=limit,
-        include_text=False,
+        include_text=True,
         include_semantic=True,
     )
     return {

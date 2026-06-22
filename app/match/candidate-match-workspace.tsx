@@ -267,7 +267,7 @@ function deriveRetrievalFocusTerms(jobDescription: string): string {
     seenTerms.add(canonicalTerm);
     selectedTerms.push(canonicalTerm);
 
-    if (selectedTerms.length >= 14) {
+    if (selectedTerms.length >= 8) {
       break;
     }
   }
@@ -626,6 +626,16 @@ export function CandidateMatchWorkspace() {
             </p>
           </div>
         </div>
+
+        <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+          <p className="font-semibold">Recommended flow</p>
+          <ol className="mt-2 grid gap-1 pl-5 list-decimal">
+            <li>Paste the full role brief.</li>
+            <li>Click <span className="font-semibold">Search corpus</span> to inspect the candidate pool.</li>
+            <li>Open any candidate preview to sanity-check the retrieval.</li>
+            <li>Click <span className="font-semibold">Shortlist top {shortlistLimit}</span> when the search pool looks sensible.</li>
+          </ol>
+        </div>
       </section>
 
       <section className="border border-zinc-200 bg-white p-6 sm:p-8">
@@ -714,8 +724,8 @@ export function CandidateMatchWorkspace() {
               placeholder="python sql aws data engineer etl"
             />
             <p className="text-sm leading-6 text-zinc-600">
-              Corpus search uses this compact query first. You can edit it if the
-              generated terms miss the real signal.
+              Corpus search starts with a short keyword query. If needed, the
+              backend automatically retries broader fallbacks before giving up.
             </p>
           </div>
 

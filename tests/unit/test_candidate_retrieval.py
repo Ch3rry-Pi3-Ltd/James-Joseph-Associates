@@ -1,5 +1,6 @@
 from backend.services import candidate_retrieval
 from backend.services.candidate_retrieval import (
+    build_text_retrieval_query_variants,
     derive_text_retrieval_query,
     fuse_candidate_rankings,
     search_candidates_hybrid,
@@ -49,9 +50,23 @@ def test_derive_text_retrieval_query_compacts_role_brief_into_keywords() -> None
 
     result = derive_text_retrieval_query(query)
 
-    assert result == (
-        "senior data engineer python sql cloud platform etl experience large datasets"
+    assert result == "senior data engineer python sql cloud platform etl"
+
+
+def test_build_text_retrieval_query_variants_returns_progressive_backoff() -> None:
+    query = (
+        "Senior data engineer with strong Python, SQL, cloud platform, and ETL "
+        "experience. Ideally someone who has worked with large datasets."
     )
+
+    result = build_text_retrieval_query_variants(query)
+
+    assert result == [
+        "senior data engineer python sql cloud platform etl",
+        "senior data engineer python sql cloud",
+        "senior data engineer python",
+        "senior data engineer",
+    ]
 
 
 def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_query(
@@ -89,9 +104,54 @@ def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_quer
     )
 
     assert result == []
-    assert captured["text_query"] == (
-        "senior data engineer python sql cloud platform etl experience"
-    )
+    assert captured["text_query"] == "senior data engineer"
     assert captured["semantic_query"] == (
         "Senior data engineer with strong Python, SQL, cloud platform, and ETL experience."
     )
+
+
+def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
+    monkeypatch,
+) -> None:
+    attempted_queries: list[str] = []
+
+    def fake_text_search(*, query: str, limit: int) -> list[dict[str, object]]:
+        attempted_queries.append(query)
+        if query == "senior data engineer python sql cloud":
+            return [
+                {
+                    "candidate_id": "cand-1",
+                    "person_id": "person-1",
+                    "document_id": "doc-1",
+                    "match_score": 0.9,
+                    "match_excerpt": "python sql cloud",
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        fake_text_search,
+    )
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_semantic_blocks",
+        lambda **kwargs: [],
+    )
+
+    result = search_candidates_hybrid(
+        query=(
+            "Senior data engineer with strong Python, SQL, cloud platform, "
+            "and ETL experience."
+        ),
+        limit=10,
+        include_text=True,
+        include_semantic=False,
+    )
+
+    assert [row["candidate_id"] for row in result] == ["cand-1"]
+    assert attempted_queries == [
+        "senior data engineer python sql cloud platform etl",
+        "senior data engineer python sql cloud",
+    ]

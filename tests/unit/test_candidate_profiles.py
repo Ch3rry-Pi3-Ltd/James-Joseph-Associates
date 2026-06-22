@@ -290,6 +290,6 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
     mock_search_candidates_hybrid.assert_called_once_with(
         query="python data engineer",
         limit=5,
-        include_text=False,
+        include_text=True,
         include_semantic=True,
     )

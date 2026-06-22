@@ -97,7 +97,7 @@ _TEXT_QUERY_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9+#./-]+")
 def derive_text_retrieval_query(
     query: str,
     *,
-    max_terms: int = 16,
+    max_terms: int = 8,
 ) -> str:
     """
     Return a tighter keyword-oriented query for the FTS side of hybrid search.
@@ -133,6 +133,36 @@ def derive_text_retrieval_query(
     return normalized_query
 
 
+def build_text_retrieval_query_variants(
+    query: str,
+    *,
+    max_terms: int = 8,
+) -> list[str]:
+    """
+    Return progressively broader keyword queries for the FTS side.
+
+    The FTS query path uses `websearch_to_tsquery`, so a long keyword string can
+    become too strict when many terms are implicitly AND-ed together. For pasted
+    role briefs we therefore try a short, high-signal query first, then back off
+    to smaller subsets before giving up.
+    """
+
+    primary_query = derive_text_retrieval_query(query, max_terms=max_terms)
+    if primary_query == "":
+        return []
+
+    tokens = primary_query.split()
+    candidate_lengths: list[int] = []
+
+    for length in (len(tokens), 6, 4, 3):
+        bounded_length = max(1, min(length, len(tokens)))
+        if bounded_length not in candidate_lengths:
+            candidate_lengths.append(bounded_length)
+
+    variants = [" ".join(tokens[:length]) for length in candidate_lengths]
+    return [variant for variant in variants if variant.strip()]
+
+
 def search_candidates_hybrid(
     *,
     query: str,
@@ -150,7 +180,7 @@ def search_candidates_hybrid(
     normalized_query = query.strip()
     if normalized_query == "":
         return []
-    text_query = derive_text_retrieval_query(normalized_query)
+    text_queries = build_text_retrieval_query_variants(normalized_query)
 
     bounded_limit = max(1, min(int(limit), 100))
     resolved_text_limit = max(bounded_limit, min(int(text_limit or bounded_limit * 3), 100))
@@ -163,10 +193,13 @@ def search_candidates_hybrid(
     semantic_results: list[dict[str, Any]] = []
 
     if include_text:
-        text_results = search_candidates_by_resume_text(
-            query=text_query,
-            limit=resolved_text_limit,
-        )
+        for text_query in text_queries:
+            text_results = search_candidates_by_resume_text(
+                query=text_query,
+                limit=resolved_text_limit,
+            )
+            if text_results:
+                break
 
     if include_semantic:
         try:
@@ -281,6 +314,7 @@ def _merge_candidate_payload(
 
 
 __all__ = [
+    "build_text_retrieval_query_variants",
     "derive_text_retrieval_query",
     "fuse_candidate_rankings",
     "search_candidates_hybrid",

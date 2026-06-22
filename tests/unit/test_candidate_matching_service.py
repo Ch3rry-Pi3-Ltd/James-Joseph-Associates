@@ -55,7 +55,7 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
     assert captured == {
         "query": "python data engineer",
         "limit": 25,
-        "include_text": False,
+        "include_text": True,
         "include_semantic": True,
     }
 

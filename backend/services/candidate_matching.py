@@ -91,7 +91,7 @@ def build_candidate_job_description_shortlist(
     retrieved_candidates = search_candidates_hybrid(
         query=normalized_job_description,
         limit=bounded_retrieval_limit,
-        include_text=False,
+        include_text=True,
         include_semantic=True,
     )
     if not retrieved_candidates:
