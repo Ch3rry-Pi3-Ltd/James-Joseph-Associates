@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from uuid import uuid4
+
 import pytest
 
 from backend.services import candidate_matching
@@ -232,3 +235,64 @@ def test_rank_retrieved_candidates_for_job_description_accepts_dict_result(
     assert len(result) == 1
     assert result[0].candidate_id == "cand-1"
     assert result[0].fit_score == 91
+
+
+def test_rank_retrieved_candidates_for_job_description_serializes_uuid_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that retrieval rows with UUID/datetime fields are prompt-serializable.
+    """
+
+    captured: dict[str, object] = {}
+
+    class FakeStructuredModel:
+        def __call__(self, prompt_value: object) -> dict[str, object]:
+            captured["prompt_value"] = prompt_value
+            return {
+                "shortlisted_candidates": [
+                    {
+                        "candidate_id": str(candidate_id),
+                        "fit_score": 90,
+                        "fit_summary": "Good fit.",
+                        "strengths": ["Python"],
+                        "gaps": [],
+                    }
+                ]
+            }
+
+    class FakeChatModel:
+        def with_structured_output(
+            self,
+            schema: type[CandidateShortlistSelection],
+        ) -> FakeStructuredModel:
+            return FakeStructuredModel()
+
+    candidate_id = uuid4()
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "build_langchain_chat_model",
+        lambda **kwargs: FakeChatModel(),
+    )
+
+    result = candidate_matching._rank_retrieved_candidates_for_job_description(
+        job_description="python data engineer",
+        retrieved_candidates=[
+            {
+                "candidate_id": candidate_id,
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": datetime(2026, 4, 20, 12, 0, tzinfo=timezone.utc),
+                "document_title": "Sarah-Jones-CV.pdf",
+                "match_score": 0.812345,
+                "match_excerpt": "python pipelines cloud",
+            }
+        ],
+        shortlist_limit=3,
+    )
+
+    assert len(result) == 1
+    assert result[0].candidate_id == str(candidate_id)

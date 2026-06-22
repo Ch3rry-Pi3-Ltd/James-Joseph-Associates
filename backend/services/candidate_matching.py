@@ -12,7 +12,9 @@ shortlist workflow:
 from __future__ import annotations
 
 import json
+from datetime import date, datetime
 from typing import Any
+from uuid import UUID
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -181,15 +183,21 @@ def _rank_retrieved_candidates_for_job_description(
 
     candidate_payload = [
         {
-            "candidate_id": candidate["candidate_id"],
-            "full_name": candidate.get("full_name"),
-            "current_title": candidate.get("current_title"),
-            "candidate_status": candidate.get("candidate_status"),
-            "current_company_name": candidate.get("current_company_name"),
-            "resume_updated_at": candidate.get("resume_updated_at"),
-            "document_title": candidate.get("document_title"),
-            "retrieval_score": candidate.get("match_score"),
-            "match_excerpt": candidate.get("match_excerpt"),
+            "candidate_id": _json_safe_value(candidate["candidate_id"]),
+            "full_name": _json_safe_value(candidate.get("full_name")),
+            "current_title": _json_safe_value(candidate.get("current_title")),
+            "candidate_status": _json_safe_value(
+                candidate.get("candidate_status")
+            ),
+            "current_company_name": _json_safe_value(
+                candidate.get("current_company_name")
+            ),
+            "resume_updated_at": _json_safe_value(
+                candidate.get("resume_updated_at")
+            ),
+            "document_title": _json_safe_value(candidate.get("document_title")),
+            "retrieval_score": _json_safe_value(candidate.get("match_score")),
+            "match_excerpt": _json_safe_value(candidate.get("match_excerpt")),
         }
         for candidate in retrieved_candidates
     ]
@@ -242,6 +250,16 @@ def _rank_retrieved_candidates_for_job_description(
         stage="llm_ranking",
         details=[{"result_type": raw_result.__class__.__name__}],
     )
+
+
+def _json_safe_value(value: Any) -> Any:
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    return value
 
 
 __all__ = [
