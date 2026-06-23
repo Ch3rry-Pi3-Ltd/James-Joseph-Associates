@@ -90,7 +90,23 @@ def fetch_candidate_current_resume_file(
             ],
         )
 
-    downloaded_file = _download_current_resume_source(source_uri.strip())
+    try:
+        downloaded_file = _download_current_resume_source(source_uri.strip())
+    except CandidateResumeFileAccessError:
+        raise
+    except Exception as exc:
+        raise CandidateResumeFileAccessError(
+            "Current resume download failed.",
+            code="resume_download_failed",
+            status_code=502,
+            details=[
+                {"candidate_id": candidate_id},
+                {"document_id": str(current_resume["document_id"])},
+                {"source_uri": source_uri.strip()},
+                {"error_type": exc.__class__.__name__},
+                {"message": str(exc)},
+            ],
+        ) from exc
 
     return {
         "candidate_id": str(current_resume["candidate_id"]),

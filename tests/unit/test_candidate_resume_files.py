@@ -108,3 +108,35 @@ def test_fetch_candidate_current_resume_file_raises_not_found_when_missing(
         assert exc.status_code == 404
     else:
         raise AssertionError("Expected missing current resume error.")
+
+
+def test_fetch_candidate_current_resume_file_wraps_provider_failure(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "get_candidate_current_resume_document",
+        lambda candidate_id: {
+            "candidate_id": candidate_id,
+            "document_id": "doc-1",
+            "document_title": "Sarah-Jones-CV.pdf",
+            "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+            "document_mime_type": "application/pdf",
+        },
+    )
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "_download_current_resume_source",
+        lambda source_uri: (_ for _ in ()).throw(RuntimeError("token expired")),
+    )
+
+    try:
+        fetch_candidate_current_resume_file(
+            "33333333-3333-3333-3333-333333333331",
+        )
+    except CandidateResumeFileAccessError as exc:
+        assert exc.code == "resume_download_failed"
+        assert exc.status_code == 502
+        assert {"error_type": "RuntimeError"} in exc.details
+    else:
+        raise AssertionError("Expected wrapped provider failure.")
