@@ -33,7 +33,7 @@ In plain language:
 from typing import Any
 
 from fastapi import APIRouter, Query, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from backend.schemas.candidates import (
     CandidateJobDescriptionMatchRequest,
@@ -49,6 +49,10 @@ from backend.services.candidate_matching import (
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     search_candidate_resumes,
+)
+from backend.services.candidate_resume_files import (
+    CandidateResumeFileAccessError,
+    fetch_candidate_current_resume_file,
 )
 
 
@@ -235,6 +239,61 @@ def get_candidate_profile_route(
         )
 
     return CandidateProfileResponse(**profile)
+
+
+@router.get(
+    "/{candidate_id}/current-resume",
+    response_model=None,
+    responses={
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Current resume was not found for this candidate.",
+        },
+        501: {
+            "model": ApiErrorResponse,
+            "description": "Current resume source is not downloadable yet.",
+        },
+        502: {
+            "model": ApiErrorResponse,
+            "description": "Current resume download failed.",
+        },
+    },
+)
+def get_candidate_current_resume_route(
+    candidate_id: str,
+    download: bool = Query(
+        default=False,
+        description="Set to true to force attachment download instead of inline display.",
+    ),
+) -> Response:
+    """
+    Stream the candidate's linked current resume file when the source is resolvable.
+    """
+
+    try:
+        result = fetch_candidate_current_resume_file(candidate_id)
+    except CandidateResumeFileAccessError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
+
+    file_name = result["file_name"]
+    content_type = result["content_type"]
+    disposition_type = "attachment" if download else "inline"
+
+    headers = {
+        "Content-Disposition": f'{disposition_type}; filename="{file_name}"',
+        "X-Document-Id": result["document_id"],
+    }
+
+    return Response(
+        content=result["content_bytes"],
+        media_type=content_type,
+        headers=headers,
+    )
 
 
 @router.get(

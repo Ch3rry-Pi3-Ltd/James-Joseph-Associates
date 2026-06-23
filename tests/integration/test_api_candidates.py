@@ -21,6 +21,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.main import app
+from backend.services.candidate_resume_files import CandidateResumeFileAccessError
 
 
 def make_client() -> TestClient:
@@ -191,6 +192,73 @@ def test_candidate_profile_route_returns_not_found_error_when_missing() -> None:
     # This proves the route still passed the candidate ID from the URL into the
     # service layer, even in the not-found case
     mock_build_candidate_profile.assert_called_once_with(candidate_id)
+
+
+def test_candidate_current_resume_route_streams_file_bytes() -> None:
+    """
+    Verify that the current-resume route streams the fetched file payload.
+    """
+
+    candidate_id = "33333333-3333-3333-3333-333333333331"
+
+    with patch(
+        "backend.api.v1.candidates.fetch_candidate_current_resume_file",
+        return_value={
+            "candidate_id": candidate_id,
+            "document_id": "11111111-1111-1111-1111-111111111111",
+            "document_title": "Sarah-Jones-CV.pdf",
+            "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+            "document_mime_type": "application/pdf",
+            "file_name": "Sarah-Jones-CV.pdf",
+            "content_type": "application/pdf",
+            "content_bytes": b"%PDF-test%",
+        },
+    ) as mock_fetch_candidate_current_resume_file:
+        client = make_client()
+        response = client.get(f"/api/v1/candidates/{candidate_id}/current-resume")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.content == b"%PDF-test%"
+    assert response.headers["content-type"] == "application/pdf"
+    assert (
+        response.headers["content-disposition"]
+        == 'inline; filename="Sarah-Jones-CV.pdf"'
+    )
+    assert (
+        response.headers["x-document-id"]
+        == "11111111-1111-1111-1111-111111111111"
+    )
+    mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
+
+
+def test_candidate_current_resume_route_returns_standard_error_shape() -> None:
+    """
+    Verify that the current-resume route returns standard API errors.
+    """
+
+    candidate_id = "33333333-3333-3333-3333-333333333331"
+
+    with patch(
+        "backend.api.v1.candidates.fetch_candidate_current_resume_file",
+        side_effect=CandidateResumeFileAccessError(
+            "Current resume was not found for this candidate.",
+            code="not_found",
+            status_code=404,
+            details=[{"candidate_id": candidate_id}],
+        ),
+    ) as mock_fetch_candidate_current_resume_file:
+        client = make_client()
+        response = client.get(f"/api/v1/candidates/{candidate_id}/current-resume")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+        "error": {
+            "code": "not_found",
+            "message": "Current resume was not found for this candidate.",
+            "details": [{"candidate_id": candidate_id}],
+        }
+    }
+    mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
 
 
 def test_candidate_resume_search_route_returns_ranked_results() -> None:

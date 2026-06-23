@@ -50,6 +50,7 @@ In this module, that means:
 from unittest.mock import MagicMock, patch
 
 from backend.db.candidates import (
+    get_candidate_current_resume_document,
     get_candidate_profile,
     search_candidates_by_resume_text,
 )
@@ -326,3 +327,61 @@ def test_search_candidates_by_resume_text_executes_query_with_normalized_params(
         "query": "java low latency",
         "limit": 100,
     }
+
+
+def test_get_candidate_current_resume_document_returns_dictionary_when_row_exists() -> None:
+    """
+    Verify that the current-resume helper returns a plain dictionary.
+    """
+
+    mock_row = {
+        "candidate_id": "33333333-3333-3333-3333-333333333331",
+        "document_id": "11111111-1111-1111-1111-111111111111",
+        "document_title": "Sarah-Jones-CV.pdf",
+        "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+        "document_mime_type": "application/pdf",
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = mock_row
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        result = get_candidate_current_resume_document(
+            "33333333-3333-3333-3333-333333333331",
+        )
+
+    assert result == mock_row
+
+
+def test_get_candidate_current_resume_document_returns_none_when_missing() -> None:
+    """
+    Verify that the current-resume helper returns None when no row exists.
+    """
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = None
+
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+
+        result = get_candidate_current_resume_document(
+            "33333333-3333-3333-3333-333333333331",
+        )
+
+    assert result is None

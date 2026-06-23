@@ -173,6 +173,52 @@ def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     return dict(row)
 
 
+def get_candidate_current_resume_document(
+    candidate_id: str,
+) -> dict[str, Any] | None:
+    """
+    Return the linked current-resume document metadata for one candidate.
+
+    Notes
+    -----
+    - This helper reads the canonical `document_links` relationship rather than
+      guessing from candidate fields.
+    - Only `relationship_type = 'current_resume'` rows are considered.
+    """
+
+    query = """
+        select
+            c.id as candidate_id,
+            d.id as document_id,
+            d.title as document_title,
+            d.source_uri as document_source_uri,
+            d.mime_type as document_mime_type
+        from candidates c
+        join document_links dl
+          on dl.candidate_id = c.id
+         and dl.relationship_type = 'current_resume'
+        join documents d
+          on d.id = dl.document_id
+         and d.document_type = 'resume'
+        where c.id = %(candidate_id)s
+        order by dl.created_at desc nulls last, d.updated_at desc nulls last
+        limit 1
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {"candidate_id": candidate_id},
+            )
+            row = cursor.fetchone()
+
+    if row is None:
+        return None
+
+    return dict(row)
+
+
 def search_candidates_by_resume_text(
     *,
     query: str,
@@ -305,6 +351,7 @@ def search_candidates_by_resume_text(
 
 
 __all__ = [
+    "get_candidate_current_resume_document",
     "get_candidate_profile",
     "search_candidates_by_resume_text",
 ]

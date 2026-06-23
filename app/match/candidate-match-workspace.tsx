@@ -1114,6 +1114,15 @@ export function CandidateMatchWorkspace() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  <a
+                    href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Open CV
+                  </a>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -1331,6 +1340,15 @@ export function CandidateMatchWorkspace() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  <a
+                    href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Open CV
+                  </a>
+
                   <button
                     type="button"
                     onClick={() => {
