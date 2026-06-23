@@ -54,6 +54,12 @@ ApiErrorCode = Literal[
     "unsupported_source_system",
     "matching_failed",
     "approval_required",
+    "resume_source_unavailable",
+    "resume_source_not_supported",
+    "resume_source_invalid",
+    "resume_download_failed",
+    "integration_connection_missing",
+    "integration_connection_invalid",
     "internal_error",
 ]
 

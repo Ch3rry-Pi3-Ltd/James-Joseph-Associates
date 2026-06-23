@@ -261,6 +261,42 @@ def test_candidate_current_resume_route_returns_standard_error_shape() -> None:
     mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
 
 
+def test_candidate_current_resume_route_returns_non_legacy_resume_error_code() -> None:
+    """
+    Verify that newer resume-download error codes serialize through the standard API shape.
+    """
+
+    candidate_id = "33333333-3333-3333-3333-333333333331"
+
+    with patch(
+        "backend.api.v1.candidates.fetch_candidate_current_resume_file",
+        side_effect=CandidateResumeFileAccessError(
+            "Current resume does not have a downloadable source reference.",
+            code="resume_source_unavailable",
+            status_code=501,
+            details=[
+                {"candidate_id": candidate_id},
+                {"document_id": "11111111-1111-1111-1111-111111111111"},
+            ],
+        ),
+    ) as mock_fetch_candidate_current_resume_file:
+        client = make_client()
+        response = client.get(f"/api/v1/candidates/{candidate_id}/current-resume")
+
+    assert response.status_code == status.HTTP_501_NOT_IMPLEMENTED
+    assert response.json() == {
+        "error": {
+            "code": "resume_source_unavailable",
+            "message": "Current resume does not have a downloadable source reference.",
+            "details": [
+                {"candidate_id": candidate_id},
+                {"document_id": "11111111-1111-1111-1111-111111111111"},
+            ],
+        }
+    }
+    mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
+
+
 def test_candidate_resume_search_route_returns_ranked_results() -> None:
     """
     Verify that the resume-search route returns the service payload unchanged.
