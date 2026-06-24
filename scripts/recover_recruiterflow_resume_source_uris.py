@@ -21,6 +21,7 @@ import json
 import re
 from dataclasses import dataclass
 from hashlib import md5
+from pathlib import Path
 from typing import Iterable
 
 from backend.db.connection import postgres_connection
@@ -98,6 +99,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="Optional limit on missing Recruiterflow current resumes to inspect.",
+    )
+    parser.add_argument(
+        "--report-path",
+        type=str,
+        default=None,
+        help="Optional path to write a JSON review report.",
     )
     return parser
 
@@ -180,6 +187,20 @@ def main() -> None:
             "unmatched": recovery_plan["unmatched"][:5],
         },
     }
+    if args.report_path:
+        report = build_review_report(recovery_plan=recovery_plan)
+        report["summary"] = {
+            "missing_recruiterflow_current_resumes": len(missing_rows),
+            "review_candidates": len(report["review_candidates"]),
+            "unmatched_candidates": len(report["unmatched_candidates"]),
+        }
+        report_path = Path(args.report_path)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
+            json.dumps(report, indent=2, default=str),
+            encoding="utf-8",
+        )
+        summary["report_path"] = str(report_path)
     print(json.dumps(summary, indent=2, default=str))
 
 
@@ -512,6 +533,96 @@ def _missing_row_summary(
     }
 
 
+def build_review_report(
+    *,
+    recovery_plan: dict[str, list[dict[str, object]]],
+) -> dict[str, list[dict[str, object]]]:
+    review_candidates = []
+    for group_name in (
+        "title_name_review_matches",
+        "filename_name_review_matches",
+        "title_name_ambiguous",
+        "filename_name_ambiguous",
+        "exact_hash_ambiguous",
+        "exact_text_ambiguous",
+    ):
+        for candidate in recovery_plan.get(group_name, []):
+            if str(candidate.get("strategy", "")).endswith("_same_candidate"):
+                continue
+            review_candidates.append(_decorate_review_candidate(candidate))
+
+    unmatched_candidates = [
+        _decorate_unmatched_candidate(candidate)
+        for candidate in recovery_plan.get("unmatched", [])
+    ]
+
+    review_candidates.sort(
+        key=lambda item: (
+            -int(item["confidence_score"]),
+            str(item.get("full_name") or ""),
+            str(item.get("candidate_id") or ""),
+        )
+    )
+    unmatched_candidates.sort(
+        key=lambda item: (
+            -int(item["priority_score"]),
+            str(item.get("full_name") or ""),
+            str(item.get("candidate_id") or ""),
+        )
+    )
+
+    return {
+        "review_candidates": review_candidates,
+        "unmatched_candidates": unmatched_candidates,
+    }
+
+
+def _decorate_review_candidate(candidate: dict[str, object]) -> dict[str, object]:
+    confidence_score = 0
+    strategy = str(candidate.get("strategy") or "")
+    document_title_key = _document_title_key(candidate.get("document_title"))
+    if strategy == "filename_name_review":
+        confidence_score += 60
+    elif strategy == "title_name_review":
+        confidence_score += 55
+    elif "ambiguous" in strategy:
+        confidence_score += 40
+    if document_title_key and document_title_key not in _GENERIC_TITLE_KEYS:
+        confidence_score += 15
+    if _full_name_token_count(candidate.get("full_name")) >= 2:
+        confidence_score += 10
+    if isinstance(candidate.get("current_title"), str) and candidate["current_title"].strip():
+        confidence_score += 5
+
+    confidence_label = "low"
+    if confidence_score >= 75:
+        confidence_label = "high"
+    elif confidence_score >= 55:
+        confidence_label = "medium"
+
+    return {
+        **candidate,
+        "confidence_score": confidence_score,
+        "confidence_label": confidence_label,
+    }
+
+
+def _decorate_unmatched_candidate(candidate: dict[str, object]) -> dict[str, object]:
+    priority_score = 0
+    document_title_key = _document_title_key(candidate.get("document_title"))
+    if document_title_key and document_title_key not in _GENERIC_TITLE_KEYS:
+        priority_score += 20
+    if _full_name_token_count(candidate.get("full_name")) >= 2:
+        priority_score += 10
+    if isinstance(candidate.get("current_title"), str) and candidate["current_title"].strip():
+        priority_score += 5
+
+    return {
+        **candidate,
+        "priority_score": priority_score,
+    }
+
+
 def _normalized_text_hash(text: str | None) -> str | None:
     if not isinstance(text, str):
         return None
@@ -559,6 +670,13 @@ def _full_name_token_key(
         return None
 
     return normalized_parts
+
+
+def _full_name_token_count(full_name: object) -> int:
+    if not isinstance(full_name, str):
+        return 0
+    parts = [part for part in re.split(r"[^a-z0-9]+", full_name.casefold()) if part]
+    return sum(1 for part in parts if len(part) >= 3 and part not in {"cv", "resume", "profile"})
 
 
 def _title_name_key(

@@ -1,6 +1,7 @@
 from scripts.recover_recruiterflow_resume_source_uris import (
     ResumeRow,
     _normalized_text_hash,
+    build_review_report,
     build_recovery_plan,
 )
 
@@ -181,3 +182,38 @@ def test_build_recovery_plan_reports_filename_name_review_match() -> None:
     review_match = plan["filename_name_review_matches"][0]
     assert review_match["matched_source_uri"] == "dropbox:///mina-patel.pdf"
     assert review_match["strategy"] == "filename_name_review"
+
+
+def test_build_review_report_orders_review_candidates_by_confidence() -> None:
+    report = build_review_report(
+        recovery_plan={
+            "title_name_review_matches": [],
+            "filename_name_review_matches": [
+                {
+                    "candidate_id": "cand-2",
+                    "full_name": "A Person",
+                    "current_title": None,
+                    "document_title": "Profile.pdf",
+                    "strategy": "filename_name_review",
+                },
+                {
+                    "candidate_id": "cand-1",
+                    "full_name": "Alex Morgan",
+                    "current_title": "Engineer",
+                    "document_title": "Alex Morgan CV.pdf",
+                    "strategy": "filename_name_review",
+                },
+            ],
+            "title_name_ambiguous": [],
+            "filename_name_ambiguous": [],
+            "exact_hash_ambiguous": [],
+            "exact_text_ambiguous": [],
+            "unmatched": [],
+        }
+    )
+
+    assert [item["candidate_id"] for item in report["review_candidates"]] == [
+        "cand-1",
+        "cand-2",
+    ]
+    assert report["review_candidates"][0]["confidence_label"] == "high"
