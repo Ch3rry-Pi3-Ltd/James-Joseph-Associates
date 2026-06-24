@@ -431,7 +431,13 @@ def _extract_dropbox_source_path(source_uri: str) -> str:
     if not source_uri.startswith("dropbox://"):
         return decoded_path
 
-    raw_path = source_uri[len("dropbox://") :].split("#", 1)[0]
+    raw_body = source_uri[len("dropbox://") :]
+    if "#candidate=" in raw_body:
+        raw_path = raw_body.split("#candidate=", 1)[0]
+    elif "#attachment=" in raw_body:
+        raw_path = raw_body.split("#attachment=", 1)[0]
+    else:
+        raw_path = raw_body.split("#", 1)[0]
     if raw_path == "":
         return ""
     return unquote(raw_path)
