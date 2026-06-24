@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import unicodedata
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
@@ -30,6 +31,8 @@ DEFAULT_BATCH_SIZE = 100
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _IDENTITY_RE = re.compile(r"[^a-z0-9]+")
+_EMAIL_RE = re.compile(r"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}")
+_LINKEDIN_SLUG_RE = re.compile(r"linkedin\.com/in/([a-z0-9-]{3,})")
 _GENERIC_TITLE_KEYS = {
     "profilepdf",
     "profiledoc",
@@ -170,6 +173,8 @@ def main() -> None:
                 same_candidate_review_recoveries = [
                     recovery
                     for group_name in (
+                        "email_identity_review_matches",
+                        "linkedin_identity_review_matches",
                         "title_name_review_matches",
                         "profile_identity_review_matches",
                         "filename_name_review_matches",
@@ -194,6 +199,10 @@ def main() -> None:
         "exact_hash_ambiguous": len(recovery_plan["exact_hash_ambiguous"]),
         "exact_text_recoveries": len(recovery_plan["exact_text_recoveries"]),
         "exact_text_ambiguous": len(recovery_plan["exact_text_ambiguous"]),
+        "email_identity_review_matches": len(recovery_plan["email_identity_review_matches"]),
+        "email_identity_ambiguous": len(recovery_plan["email_identity_ambiguous"]),
+        "linkedin_identity_review_matches": len(recovery_plan["linkedin_identity_review_matches"]),
+        "linkedin_identity_ambiguous": len(recovery_plan["linkedin_identity_ambiguous"]),
         "title_name_review_matches": len(recovery_plan["title_name_review_matches"]),
         "title_name_ambiguous": len(recovery_plan["title_name_ambiguous"]),
         "profile_identity_review_matches": len(recovery_plan["profile_identity_review_matches"]),
@@ -211,6 +220,8 @@ def main() -> None:
         "examples": {
             "exact_hash_recoveries": recovery_plan["exact_hash_recoveries"][:5],
             "exact_text_recoveries": recovery_plan["exact_text_recoveries"][:5],
+            "email_identity_review_matches": recovery_plan["email_identity_review_matches"][:5],
+            "linkedin_identity_review_matches": recovery_plan["linkedin_identity_review_matches"][:5],
             "title_name_review_matches": recovery_plan["title_name_review_matches"][:5],
             "profile_identity_review_matches": recovery_plan["profile_identity_review_matches"][:5],
             "filename_name_review_matches": recovery_plan["filename_name_review_matches"][:5],
@@ -382,6 +393,8 @@ def build_recovery_plan(
     dropbox_by_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
     dropbox_by_source_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
     dropbox_by_extracted_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
+    dropbox_by_email: dict[str, list[ResumeRow]] = {}
+    dropbox_by_linkedin_slug: dict[str, list[ResumeRow]] = {}
     dropbox_by_full_name: dict[str, list[ResumeRow]] = {}
 
     for row in dropbox_rows:
@@ -420,6 +433,12 @@ def build_recovery_plan(
         for extracted_name_key in _name_keys_from_extracted_text(row.extracted_text):
             dropbox_by_extracted_name_key.setdefault(extracted_name_key, []).append(row)
 
+        for email in _emails_from_extracted_text(row.extracted_text):
+            dropbox_by_email.setdefault(email, []).append(row)
+
+        for linkedin_slug in _linkedin_slugs_from_extracted_text(row.extracted_text):
+            dropbox_by_linkedin_slug.setdefault(linkedin_slug, []).append(row)
+
     exact_hash_recoveries: list[dict[str, object]] = []
     exact_hash_ambiguous: list[dict[str, object]] = []
     exact_text_recoveries: list[dict[str, object]] = []
@@ -434,6 +453,10 @@ def build_recovery_plan(
     source_uri_filename_ambiguous: list[dict[str, object]] = []
     extracted_text_name_review_matches: list[dict[str, object]] = []
     extracted_text_name_ambiguous: list[dict[str, object]] = []
+    email_identity_review_matches: list[dict[str, object]] = []
+    email_identity_ambiguous: list[dict[str, object]] = []
+    linkedin_identity_review_matches: list[dict[str, object]] = []
+    linkedin_identity_ambiguous: list[dict[str, object]] = []
     unmatched: list[dict[str, object]] = []
 
     for missing in missing_rows:
@@ -464,6 +487,44 @@ def build_recovery_plan(
                 continue
             if exact_result["status"] == "ambiguous":
                 exact_text_ambiguous.append(exact_result)
+                continue
+
+        missing_emails = _emails_from_extracted_text(missing.extracted_text)
+        if missing_emails:
+            email_matches = [
+                row
+                for email in missing_emails
+                for row in dropbox_by_email.get(email, [])
+            ]
+            email_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=email_matches,
+                strategy="email_identity_review",
+            )
+            if email_result["status"] == "recovered":
+                email_identity_review_matches.append(email_result)
+                continue
+            if email_result["status"] == "ambiguous":
+                email_identity_ambiguous.append(email_result)
+                continue
+
+        missing_linkedin_slugs = _linkedin_slugs_from_extracted_text(missing.extracted_text)
+        if missing_linkedin_slugs:
+            linkedin_matches = [
+                row
+                for linkedin_slug in missing_linkedin_slugs
+                for row in dropbox_by_linkedin_slug.get(linkedin_slug, [])
+            ]
+            linkedin_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=linkedin_matches,
+                strategy="linkedin_identity_review",
+            )
+            if linkedin_result["status"] == "recovered":
+                linkedin_identity_review_matches.append(linkedin_result)
+                continue
+            if linkedin_result["status"] == "ambiguous":
+                linkedin_identity_ambiguous.append(linkedin_result)
                 continue
 
         title_key = _title_name_key(
@@ -572,6 +633,10 @@ def build_recovery_plan(
         "source_uri_filename_ambiguous": source_uri_filename_ambiguous,
         "extracted_text_name_review_matches": extracted_text_name_review_matches,
         "extracted_text_name_ambiguous": extracted_text_name_ambiguous,
+        "email_identity_review_matches": email_identity_review_matches,
+        "email_identity_ambiguous": email_identity_ambiguous,
+        "linkedin_identity_review_matches": linkedin_identity_review_matches,
+        "linkedin_identity_ambiguous": linkedin_identity_ambiguous,
         "unmatched": unmatched,
     }
 
@@ -662,11 +727,15 @@ def build_review_report(
 ) -> dict[str, list[dict[str, object]]]:
     review_candidates = []
     for group_name in (
+        "email_identity_review_matches",
+        "linkedin_identity_review_matches",
         "title_name_review_matches",
         "profile_identity_review_matches",
         "filename_name_review_matches",
         "source_uri_filename_review_matches",
         "extracted_text_name_review_matches",
+        "email_identity_ambiguous",
+        "linkedin_identity_ambiguous",
         "title_name_ambiguous",
         "profile_identity_ambiguous",
         "filename_name_ambiguous",
@@ -716,6 +785,10 @@ def _decorate_review_candidate(candidate: dict[str, object]) -> dict[str, object
         confidence_score += 65
     elif strategy == "extracted_text_name_review":
         confidence_score += 70
+    elif strategy == "email_identity_review":
+        confidence_score += 95
+    elif strategy == "linkedin_identity_review":
+        confidence_score += 90
     elif strategy == "title_name_review":
         confidence_score += 55
     elif "ambiguous" in strategy:
@@ -763,6 +836,44 @@ def _normalized_text_hash(text: str | None) -> str | None:
     if normalized == "":
         return None
     return md5(normalized.encode("utf-8")).hexdigest()
+
+
+def _emails_from_extracted_text(text: str | None) -> list[str]:
+    emails: set[str] = set()
+    for segment in _contact_scan_segments(text, join_adjacent=False):
+        emails.update(_EMAIL_RE.findall(segment))
+    return sorted(emails)
+
+
+def _linkedin_slugs_from_extracted_text(text: str | None) -> list[str]:
+    slugs: set[str] = set()
+    for segment in _contact_scan_segments(text, join_adjacent=True):
+        for slug in _LINKEDIN_SLUG_RE.findall(segment):
+            if _is_plausible_linkedin_slug(slug):
+                slugs.add(slug)
+    return sorted(slugs)
+
+
+def _contact_scan_segments(text: str | None, *, join_adjacent: bool) -> list[str]:
+    if not isinstance(text, str):
+        return []
+    normalized = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    raw_lines = [line for line in normalized.splitlines() if line.strip()]
+    compact_lines = [re.sub(r"\s+", "", line.casefold()) for line in raw_lines]
+    compact_lines = [line for line in compact_lines if line]
+
+    segments: list[str] = []
+    seen: set[str] = set()
+    for index, line in enumerate(compact_lines):
+        if line not in seen:
+            seen.add(line)
+            segments.append(line)
+        if join_adjacent and index + 1 < len(compact_lines):
+            joined = line + compact_lines[index + 1]
+            if joined not in seen:
+                seen.add(joined)
+                segments.append(joined)
+    return segments
 
 
 def _normalize_identity_token(value: str | None) -> str | None:
@@ -903,6 +1014,15 @@ def _name_key_from_text_line(line: str) -> tuple[str, ...] | None:
     if len(token_key) < 2:
         return None
     return token_key
+
+
+def _is_plausible_linkedin_slug(slug: str) -> bool:
+    if len(slug) < 6 or slug.startswith("-") or slug.endswith("-"):
+        return False
+    tokens = [token for token in slug.split("-") if token]
+    if len(tokens) >= 2:
+        return True
+    return any(char.isdigit() for char in slug)
 
 
 def _source_uri_attachment_name(source_uri: str | None) -> str | None:
