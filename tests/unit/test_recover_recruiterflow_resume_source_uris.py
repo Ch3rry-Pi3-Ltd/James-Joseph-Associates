@@ -24,6 +24,7 @@ def _row(
         document_title=document_title,
         resume_updated_at=None,
         source_uri=source_uri,
+        content_hash=None,
         extracted_text=extracted_text,
     )
 
@@ -106,3 +107,77 @@ def test_build_recovery_plan_reports_review_match_on_title_and_name() -> None:
     review_match = plan["title_name_review_matches"][0]
     assert review_match["matched_source_uri"] == "dropbox:///priya.docx"
     assert review_match["strategy"] == "title_name_review"
+
+
+def test_build_recovery_plan_recovers_exact_content_hash_match() -> None:
+    missing = ResumeRow(
+        source_system="recruiterflow",
+        candidate_id="cand-rf",
+        document_id="doc-rf-3",
+        full_name="Jordan Lee",
+        current_title=None,
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri=None,
+        content_hash="same-hash",
+        extracted_text=None,
+    )
+    dropbox = ResumeRow(
+        source_system="dropbox",
+        candidate_id="cand-db",
+        document_id="doc-db-4",
+        full_name="Jordan Lee",
+        current_title=None,
+        document_title="Jordan Lee CV.pdf",
+        resume_updated_at=None,
+        source_uri="dropbox:///jordan.pdf",
+        content_hash="same-hash",
+        extracted_text="Different normalized text",
+    )
+
+    plan = build_recovery_plan(
+        missing_rows=[missing],
+        dropbox_rows=[dropbox],
+    )
+
+    assert len(plan["exact_hash_recoveries"]) == 1
+    recovery = plan["exact_hash_recoveries"][0]
+    assert recovery["matched_source_uri"] == "dropbox:///jordan.pdf"
+    assert recovery["strategy"] == "exact_content_hash"
+
+
+def test_build_recovery_plan_reports_filename_name_review_match() -> None:
+    missing = ResumeRow(
+        source_system="recruiterflow",
+        candidate_id="cand-rf-4",
+        document_id="doc-rf-4",
+        full_name="Mina Patel",
+        current_title=None,
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri=None,
+        content_hash=None,
+        extracted_text=None,
+    )
+    dropbox = ResumeRow(
+        source_system="dropbox",
+        candidate_id="cand-db-4",
+        document_id="doc-db-5",
+        full_name="Mina Patel",
+        current_title=None,
+        document_title="Mina Patel CV.pdf",
+        resume_updated_at=None,
+        source_uri="dropbox:///mina-patel.pdf",
+        content_hash=None,
+        extracted_text=None,
+    )
+
+    plan = build_recovery_plan(
+        missing_rows=[missing],
+        dropbox_rows=[dropbox],
+    )
+
+    assert len(plan["filename_name_review_matches"]) == 1
+    review_match = plan["filename_name_review_matches"][0]
+    assert review_match["matched_source_uri"] == "dropbox:///mina-patel.pdf"
+    assert review_match["strategy"] == "filename_name_review"

@@ -29,6 +29,20 @@ DEFAULT_BATCH_SIZE = 100
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _IDENTITY_RE = re.compile(r"[^a-z0-9]+")
+_GENERIC_TITLE_KEYS = {
+    "profilepdf",
+    "profiledoc",
+    "profiledocx",
+    "cvpdf",
+    "cvdoc",
+    "cvdocx",
+    "resumepdf",
+    "resumedoc",
+    "resumedocx",
+    "sourcewhaleresumepdf",
+    "sourcewhaleresumedoc",
+    "sourcewhaleresumedocx",
+}
 
 
 @dataclass(frozen=True)
@@ -41,6 +55,7 @@ class ResumeRow:
     document_title: str | None
     resume_updated_at: str | None
     source_uri: str | None
+    content_hash: str | None
     extracted_text: str | None
 
 
@@ -62,6 +77,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Also persist unique title/name review matches. Use only after "
             "reviewing the dry-run output."
+        ),
+    )
+    parser.add_argument(
+        "--apply-same-candidate-review-matches",
+        action="store_true",
+        help=(
+            "Persist only review matches where the recovered Dropbox document "
+            "already belongs to the same canonical candidate."
         ),
     )
     parser.add_argument(
@@ -115,19 +138,45 @@ def main() -> None:
                     label="Review-match source_uri",
                 )
 
+            applied_same_candidate_review_count = 0
+            if args.apply_same_candidate_review_matches:
+                same_candidate_review_recoveries = [
+                    recovery
+                    for group_name in (
+                        "title_name_review_matches",
+                        "filename_name_review_matches",
+                    )
+                    for recovery in recovery_plan[group_name]
+                    if str(recovery.get("strategy", "")).endswith("_same_candidate")
+                ]
+                applied_same_candidate_review_count = _apply_recoveries(
+                    cursor,
+                    connection=connection,
+                    recoveries=same_candidate_review_recoveries,
+                    batch_size=args.batch_size,
+                    label="Same-candidate review-match source_uri",
+                )
+
     summary = {
         "missing_recruiterflow_current_resumes": len(missing_rows),
         "dropbox_resume_documents_scanned": len(dropbox_rows),
+        "exact_hash_recoveries": len(recovery_plan["exact_hash_recoveries"]),
+        "exact_hash_ambiguous": len(recovery_plan["exact_hash_ambiguous"]),
         "exact_text_recoveries": len(recovery_plan["exact_text_recoveries"]),
         "exact_text_ambiguous": len(recovery_plan["exact_text_ambiguous"]),
         "title_name_review_matches": len(recovery_plan["title_name_review_matches"]),
         "title_name_ambiguous": len(recovery_plan["title_name_ambiguous"]),
+        "filename_name_review_matches": len(recovery_plan["filename_name_review_matches"]),
+        "filename_name_ambiguous": len(recovery_plan["filename_name_ambiguous"]),
         "unmatched": len(recovery_plan["unmatched"]),
         "applied_exact_text_recoveries": applied_count,
         "applied_title_name_review_matches": applied_review_count,
+        "applied_same_candidate_review_matches": applied_same_candidate_review_count,
         "examples": {
+            "exact_hash_recoveries": recovery_plan["exact_hash_recoveries"][:5],
             "exact_text_recoveries": recovery_plan["exact_text_recoveries"][:5],
             "title_name_review_matches": recovery_plan["title_name_review_matches"][:5],
+            "filename_name_review_matches": recovery_plan["filename_name_review_matches"][:5],
             "unmatched": recovery_plan["unmatched"][:5],
         },
     }
@@ -157,6 +206,7 @@ def _load_missing_recruiterflow_rows(
                 d.title as document_title,
                 coalesce(d.resume_updated_at, c.resume_updated_at)::text as resume_updated_at,
                 d.source_uri,
+                d.content_hash,
                 d.extracted_text
             from documents d
             join document_links dl
@@ -216,6 +266,7 @@ def _load_dropbox_resume_rows(cursor) -> list[ResumeRow]:
                 d.title as document_title,
                 coalesce(d.resume_updated_at, c.resume_updated_at)::text as resume_updated_at,
                 d.source_uri,
+                d.content_hash,
                 d.extracted_text
             from documents d
             join document_links dl
@@ -266,10 +317,15 @@ def build_recovery_plan(
     dropbox_rows: Iterable[ResumeRow],
 ) -> dict[str, list[dict[str, object]]]:
     dropbox_rows = list(dropbox_rows)
+    dropbox_by_content_hash: dict[str, list[ResumeRow]] = {}
     dropbox_by_text_hash: dict[str, list[ResumeRow]] = {}
     dropbox_by_title_name: dict[tuple[str, str], list[ResumeRow]] = {}
+    dropbox_by_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
 
     for row in dropbox_rows:
+        if isinstance(row.content_hash, str) and row.content_hash.strip() != "":
+            dropbox_by_content_hash.setdefault(row.content_hash.strip(), []).append(row)
+
         text_hash = _normalized_text_hash(row.extracted_text)
         if text_hash is not None:
             dropbox_by_text_hash.setdefault(text_hash, []).append(row)
@@ -278,13 +334,38 @@ def build_recovery_plan(
         if title_key is not None:
             dropbox_by_title_name.setdefault(title_key, []).append(row)
 
+        filename_name_key = _full_name_token_key(
+            full_name=row.full_name,
+            fallback_value=row.document_title,
+        )
+        if filename_name_key is not None and _document_title_key(row.document_title) not in _GENERIC_TITLE_KEYS:
+            dropbox_by_filename_name_key.setdefault(filename_name_key, []).append(row)
+
+    exact_hash_recoveries: list[dict[str, object]] = []
+    exact_hash_ambiguous: list[dict[str, object]] = []
     exact_text_recoveries: list[dict[str, object]] = []
     exact_text_ambiguous: list[dict[str, object]] = []
     title_name_review_matches: list[dict[str, object]] = []
     title_name_ambiguous: list[dict[str, object]] = []
+    filename_name_review_matches: list[dict[str, object]] = []
+    filename_name_ambiguous: list[dict[str, object]] = []
     unmatched: list[dict[str, object]] = []
 
     for missing in missing_rows:
+        if isinstance(missing.content_hash, str) and missing.content_hash.strip() != "":
+            hash_matches = dropbox_by_content_hash.get(missing.content_hash.strip(), [])
+            hash_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=hash_matches,
+                strategy="exact_content_hash",
+            )
+            if hash_result["status"] == "recovered":
+                exact_hash_recoveries.append(hash_result)
+                continue
+            if hash_result["status"] == "ambiguous":
+                exact_hash_ambiguous.append(hash_result)
+                continue
+
         text_hash = _normalized_text_hash(missing.extracted_text)
         if text_hash is not None:
             text_matches = dropbox_by_text_hash.get(text_hash, [])
@@ -318,13 +399,35 @@ def build_recovery_plan(
                 title_name_ambiguous.append(title_result)
                 continue
 
+        filename_name_key = _full_name_token_key(
+            full_name=missing.full_name,
+            fallback_value=missing.full_name,
+        )
+        if filename_name_key is not None:
+            filename_name_matches = dropbox_by_filename_name_key.get(filename_name_key, [])
+            filename_name_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=filename_name_matches,
+                strategy="filename_name_review",
+            )
+            if filename_name_result["status"] == "recovered":
+                filename_name_review_matches.append(filename_name_result)
+                continue
+            if filename_name_result["status"] == "ambiguous":
+                filename_name_ambiguous.append(filename_name_result)
+                continue
+
         unmatched.append(_missing_row_summary(missing, strategy="unmatched"))
 
     return {
+        "exact_hash_recoveries": exact_hash_recoveries,
+        "exact_hash_ambiguous": exact_hash_ambiguous,
         "exact_text_recoveries": exact_text_recoveries,
         "exact_text_ambiguous": exact_text_ambiguous,
         "title_name_review_matches": title_name_review_matches,
         "title_name_ambiguous": title_name_ambiguous,
+        "filename_name_review_matches": filename_name_review_matches,
+        "filename_name_ambiguous": filename_name_ambiguous,
         "unmatched": unmatched,
     }
 
@@ -423,6 +526,39 @@ def _normalize_identity_token(value: str | None) -> str | None:
         return None
     normalized = _IDENTITY_RE.sub("", value.casefold())
     return normalized or None
+
+
+def _document_title_key(document_title: str | None) -> str | None:
+    return _normalize_identity_token(document_title)
+
+
+def _full_name_token_key(
+    *,
+    full_name: str | None,
+    fallback_value: str | None,
+) -> tuple[str, ...] | None:
+    normalized_name = _normalize_identity_token(full_name)
+    normalized_value = _normalize_identity_token(fallback_value)
+    if normalized_name is None or normalized_value is None:
+        return None
+
+    parts = [part for part in re.split(r"[^a-z0-9]+", full_name.casefold()) if part]
+    cleaned_parts = tuple(
+        part
+        for part in parts
+        if len(part) >= 3 and part not in {"cv", "resume", "profile"}
+    )
+    if len(cleaned_parts) < 2:
+        return None
+
+    normalized_parts = tuple(sorted(_normalize_identity_token(part) for part in cleaned_parts if _normalize_identity_token(part)))
+    if not normalized_parts:
+        return None
+
+    if not all(part in normalized_value for part in normalized_parts):
+        return None
+
+    return normalized_parts
 
 
 def _title_name_key(
