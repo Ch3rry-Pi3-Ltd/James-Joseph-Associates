@@ -423,12 +423,9 @@ def _build_dropbox_resume_source_uri(dropbox_path: str) -> str:
 
 
 def _extract_dropbox_source_path(source_uri: str) -> str:
-    parsed = urlparse(source_uri)
-    decoded_path = unquote(parsed.path or "")
-    if decoded_path not in {"", "/"}:
-        return decoded_path
-
     if not source_uri.startswith("dropbox://"):
+        parsed = urlparse(source_uri)
+        decoded_path = unquote(parsed.path or "")
         return decoded_path
 
     raw_body = source_uri[len("dropbox://") :]
@@ -439,7 +436,8 @@ def _extract_dropbox_source_path(source_uri: str) -> str:
     else:
         raw_path = raw_body.split("#", 1)[0]
     if raw_path == "":
-        return ""
+        parsed = urlparse(source_uri)
+        return unquote(parsed.path or "")
     return unquote(raw_path)
 
 
