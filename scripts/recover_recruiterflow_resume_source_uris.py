@@ -52,6 +52,7 @@ class ResumeRow:
     candidate_id: str
     document_id: str
     full_name: str | None
+    current_company_name: str | None
     current_title: str | None
     document_title: str | None
     resume_updated_at: str | None
@@ -151,6 +152,7 @@ def main() -> None:
                     recovery
                     for group_name in (
                         "title_name_review_matches",
+                        "profile_identity_review_matches",
                         "filename_name_review_matches",
                     )
                     for recovery in recovery_plan[group_name]
@@ -173,6 +175,8 @@ def main() -> None:
         "exact_text_ambiguous": len(recovery_plan["exact_text_ambiguous"]),
         "title_name_review_matches": len(recovery_plan["title_name_review_matches"]),
         "title_name_ambiguous": len(recovery_plan["title_name_ambiguous"]),
+        "profile_identity_review_matches": len(recovery_plan["profile_identity_review_matches"]),
+        "profile_identity_ambiguous": len(recovery_plan["profile_identity_ambiguous"]),
         "filename_name_review_matches": len(recovery_plan["filename_name_review_matches"]),
         "filename_name_ambiguous": len(recovery_plan["filename_name_ambiguous"]),
         "unmatched": len(recovery_plan["unmatched"]),
@@ -183,6 +187,7 @@ def main() -> None:
             "exact_hash_recoveries": recovery_plan["exact_hash_recoveries"][:5],
             "exact_text_recoveries": recovery_plan["exact_text_recoveries"][:5],
             "title_name_review_matches": recovery_plan["title_name_review_matches"][:5],
+            "profile_identity_review_matches": recovery_plan["profile_identity_review_matches"][:5],
             "filename_name_review_matches": recovery_plan["filename_name_review_matches"][:5],
             "unmatched": recovery_plan["unmatched"][:5],
         },
@@ -223,6 +228,7 @@ def _load_missing_recruiterflow_rows(
                 c.id as candidate_id,
                 d.id as document_id,
                 p.full_name,
+                coalesce(comp.name, '') as current_company_name,
                 c.current_title,
                 d.title as document_title,
                 coalesce(d.resume_updated_at, c.resume_updated_at)::text as resume_updated_at,
@@ -237,6 +243,8 @@ def _load_missing_recruiterflow_rows(
               on c.id = dl.candidate_id
             join people p
               on p.id = c.person_id
+            left join companies comp
+              on comp.id = c.current_company_id
             left join lateral (
                 select
                     sr.source_system,
@@ -283,6 +291,7 @@ def _load_dropbox_resume_rows(cursor) -> list[ResumeRow]:
                 dl.candidate_id,
                 d.id as document_id,
                 p.full_name,
+                coalesce(comp.name, '') as current_company_name,
                 c.current_title,
                 d.title as document_title,
                 coalesce(d.resume_updated_at, c.resume_updated_at)::text as resume_updated_at,
@@ -297,6 +306,8 @@ def _load_dropbox_resume_rows(cursor) -> list[ResumeRow]:
               on c.id = dl.candidate_id
             join people p
               on p.id = c.person_id
+            left join companies comp
+              on comp.id = c.current_company_id
             left join lateral (
                 select
                     sr.source_system,
@@ -342,6 +353,7 @@ def build_recovery_plan(
     dropbox_by_text_hash: dict[str, list[ResumeRow]] = {}
     dropbox_by_title_name: dict[tuple[str, str], list[ResumeRow]] = {}
     dropbox_by_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
+    dropbox_by_full_name: dict[str, list[ResumeRow]] = {}
 
     for row in dropbox_rows:
         if isinstance(row.content_hash, str) and row.content_hash.strip() != "":
@@ -354,6 +366,10 @@ def build_recovery_plan(
         title_key = _title_name_key(full_name=row.full_name, document_title=row.document_title)
         if title_key is not None:
             dropbox_by_title_name.setdefault(title_key, []).append(row)
+
+        normalized_full_name = _normalize_identity_token(row.full_name)
+        if normalized_full_name is not None:
+            dropbox_by_full_name.setdefault(normalized_full_name, []).append(row)
 
         filename_name_key = _full_name_token_key(
             full_name=row.full_name,
@@ -368,6 +384,8 @@ def build_recovery_plan(
     exact_text_ambiguous: list[dict[str, object]] = []
     title_name_review_matches: list[dict[str, object]] = []
     title_name_ambiguous: list[dict[str, object]] = []
+    profile_identity_review_matches: list[dict[str, object]] = []
+    profile_identity_ambiguous: list[dict[str, object]] = []
     filename_name_review_matches: list[dict[str, object]] = []
     filename_name_ambiguous: list[dict[str, object]] = []
     unmatched: list[dict[str, object]] = []
@@ -420,6 +438,27 @@ def build_recovery_plan(
                 title_name_ambiguous.append(title_result)
                 continue
 
+        normalized_missing_name = _normalize_identity_token(missing.full_name)
+        if normalized_missing_name is not None:
+            full_name_matches = dropbox_by_full_name.get(normalized_missing_name, [])
+            aligned_matches = [
+                row
+                for row in full_name_matches
+                if _company_match(missing.current_company_name, row.current_company_name)
+                or bool(_title_overlap(missing.current_title, row.current_title))
+            ]
+            profile_identity_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=aligned_matches,
+                strategy="profile_identity_review",
+            )
+            if profile_identity_result["status"] == "recovered":
+                profile_identity_review_matches.append(profile_identity_result)
+                continue
+            if profile_identity_result["status"] == "ambiguous":
+                profile_identity_ambiguous.append(profile_identity_result)
+                continue
+
         filename_name_key = _full_name_token_key(
             full_name=missing.full_name,
             fallback_value=missing.full_name,
@@ -447,6 +486,8 @@ def build_recovery_plan(
         "exact_text_ambiguous": exact_text_ambiguous,
         "title_name_review_matches": title_name_review_matches,
         "title_name_ambiguous": title_name_ambiguous,
+        "profile_identity_review_matches": profile_identity_review_matches,
+        "profile_identity_ambiguous": profile_identity_ambiguous,
         "filename_name_review_matches": filename_name_review_matches,
         "filename_name_ambiguous": filename_name_ambiguous,
         "unmatched": unmatched,
@@ -540,8 +581,10 @@ def build_review_report(
     review_candidates = []
     for group_name in (
         "title_name_review_matches",
+        "profile_identity_review_matches",
         "filename_name_review_matches",
         "title_name_ambiguous",
+        "profile_identity_ambiguous",
         "filename_name_ambiguous",
         "exact_hash_ambiguous",
         "exact_text_ambiguous",
@@ -641,6 +684,60 @@ def _normalize_identity_token(value: str | None) -> str | None:
 
 def _document_title_key(document_title: str | None) -> str | None:
     return _normalize_identity_token(document_title)
+
+
+def _company_match(left: object, right: object) -> bool:
+    normalized_left = _normalize_free_text(left)
+    normalized_right = _normalize_free_text(right)
+    if normalized_left == "" or normalized_right == "":
+        return False
+    if normalized_left == normalized_right:
+        return True
+    if normalized_left in normalized_right or normalized_right in normalized_left:
+        return True
+
+    compact_left = normalized_left.replace(" ", "")
+    compact_right = normalized_right.replace(" ", "")
+    if compact_left == compact_right:
+        return True
+    return compact_left in compact_right or compact_right in compact_left
+
+
+def _title_overlap(left: object, right: object) -> list[str]:
+    stop_words = {
+        "senior",
+        "lead",
+        "principal",
+        "vice",
+        "president",
+        "director",
+        "associate",
+        "manager",
+        "software",
+        "engineer",
+        "developer",
+        "head",
+        "of",
+        "and",
+        "the",
+    }
+    left_tokens = {
+        token
+        for token in _normalize_free_text(left).split()
+        if len(token) >= 4 and token not in stop_words
+    }
+    right_tokens = {
+        token
+        for token in _normalize_free_text(right).split()
+        if len(token) >= 4 and token not in stop_words
+    }
+    return sorted(left_tokens & right_tokens)
+
+
+def _normalize_free_text(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
 
 
 def _full_name_token_key(

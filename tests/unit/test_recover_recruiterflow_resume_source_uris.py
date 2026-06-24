@@ -21,6 +21,7 @@ def _row(
         candidate_id=candidate_id,
         document_id=document_id,
         full_name=full_name,
+        current_company_name=None,
         current_title=None,
         document_title=document_title,
         resume_updated_at=None,
@@ -116,6 +117,7 @@ def test_build_recovery_plan_recovers_exact_content_hash_match() -> None:
         candidate_id="cand-rf",
         document_id="doc-rf-3",
         full_name="Jordan Lee",
+        current_company_name=None,
         current_title=None,
         document_title="Profile.pdf",
         resume_updated_at=None,
@@ -128,6 +130,7 @@ def test_build_recovery_plan_recovers_exact_content_hash_match() -> None:
         candidate_id="cand-db",
         document_id="doc-db-4",
         full_name="Jordan Lee",
+        current_company_name=None,
         current_title=None,
         document_title="Jordan Lee CV.pdf",
         resume_updated_at=None,
@@ -153,6 +156,7 @@ def test_build_recovery_plan_reports_filename_name_review_match() -> None:
         candidate_id="cand-rf-4",
         document_id="doc-rf-4",
         full_name="Mina Patel",
+        current_company_name=None,
         current_title=None,
         document_title="Profile.pdf",
         resume_updated_at=None,
@@ -165,6 +169,7 @@ def test_build_recovery_plan_reports_filename_name_review_match() -> None:
         candidate_id="cand-db-4",
         document_id="doc-db-5",
         full_name="Mina Patel",
+        current_company_name=None,
         current_title=None,
         document_title="Mina Patel CV.pdf",
         resume_updated_at=None,
@@ -217,3 +222,42 @@ def test_build_review_report_orders_review_candidates_by_confidence() -> None:
         "cand-2",
     ]
     assert report["review_candidates"][0]["confidence_label"] == "high"
+
+
+def test_build_recovery_plan_reports_profile_identity_review_match() -> None:
+    missing = ResumeRow(
+        source_system="recruiterflow",
+        candidate_id="cand-rf-5",
+        document_id="doc-rf-5",
+        full_name="Alex Morgan",
+        current_company_name="Deutsche Bank",
+        current_title="Quant Developer",
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri=None,
+        content_hash=None,
+        extracted_text=None,
+    )
+    dropbox = ResumeRow(
+        source_system="dropbox",
+        candidate_id="cand-db-5",
+        document_id="doc-db-6",
+        full_name="Alex Morgan",
+        current_company_name="Deutsche Bank",
+        current_title="Quant Engineer",
+        document_title="Some generic.pdf",
+        resume_updated_at=None,
+        source_uri="dropbox:///alex-morgan.pdf",
+        content_hash=None,
+        extracted_text=None,
+    )
+
+    plan = build_recovery_plan(
+        missing_rows=[missing],
+        dropbox_rows=[dropbox],
+    )
+
+    assert len(plan["profile_identity_review_matches"]) == 1
+    review_match = plan["profile_identity_review_matches"][0]
+    assert review_match["matched_source_uri"] == "dropbox:///alex-morgan.pdf"
+    assert review_match["strategy"] == "profile_identity_review"
