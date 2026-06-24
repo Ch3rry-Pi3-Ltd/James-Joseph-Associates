@@ -57,6 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Persist exact-text recoveries onto Recruiterflow documents.",
     )
     parser.add_argument(
+        "--apply-review-matches",
+        action="store_true",
+        help=(
+            "Also persist unique title/name review matches. Use only after "
+            "reviewing the dry-run output."
+        ),
+    )
+    parser.add_argument(
         "--batch-size",
         type=int,
         default=DEFAULT_BATCH_SIZE,
@@ -97,6 +105,16 @@ def main() -> None:
                     batch_size=args.batch_size,
                 )
 
+            applied_review_count = 0
+            if args.apply_review_matches:
+                applied_review_count = _apply_recoveries(
+                    cursor,
+                    connection=connection,
+                    recoveries=recovery_plan["title_name_review_matches"],
+                    batch_size=args.batch_size,
+                    label="Review-match source_uri",
+                )
+
     summary = {
         "missing_recruiterflow_current_resumes": len(missing_rows),
         "dropbox_resume_documents_scanned": len(dropbox_rows),
@@ -106,6 +124,7 @@ def main() -> None:
         "title_name_ambiguous": len(recovery_plan["title_name_ambiguous"]),
         "unmatched": len(recovery_plan["unmatched"]),
         "applied_exact_text_recoveries": applied_count,
+        "applied_title_name_review_matches": applied_review_count,
         "examples": {
             "exact_text_recoveries": recovery_plan["exact_text_recoveries"][:5],
             "title_name_review_matches": recovery_plan["title_name_review_matches"][:5],
@@ -425,12 +444,29 @@ def _apply_exact_text_recoveries(
     exact_recoveries: list[dict[str, object]],
     batch_size: int,
 ) -> int:
+    return _apply_recoveries(
+        cursor,
+        connection=connection,
+        recoveries=exact_recoveries,
+        batch_size=batch_size,
+        label="Recovered source_uri",
+    )
+
+
+def _apply_recoveries(
+    cursor,
+    *,
+    connection,
+    recoveries: list[dict[str, object]],
+    batch_size: int,
+    label: str,
+) -> int:
     update_rows = [
         {
             "document_id": recovery["document_id"],
             "source_uri": recovery["matched_source_uri"],
         }
-        for recovery in exact_recoveries
+        for recovery in recoveries
         if isinstance(recovery.get("matched_source_uri"), str)
     ]
     processed = 0
@@ -446,7 +482,7 @@ def _apply_exact_text_recoveries(
         )
         connection.commit()
         processed += len(batch)
-        print(f"Recovered source_uri batch committed: {processed}/{len(update_rows)}")
+        print(f"{label} batch committed: {processed}/{len(update_rows)}")
     return processed
 
 
