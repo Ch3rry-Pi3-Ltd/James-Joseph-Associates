@@ -140,3 +140,72 @@ def test_fetch_candidate_current_resume_file_wraps_provider_failure(
         assert {"error_type": "RuntimeError"} in exc.details
     else:
         raise AssertionError("Expected wrapped provider failure.")
+
+
+def test_fetch_candidate_current_resume_file_derives_dropbox_source_uri_from_provenance(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "get_candidate_current_resume_document",
+        lambda candidate_id: {
+            "candidate_id": candidate_id,
+            "document_id": "doc-1",
+            "document_title": "Sarah-Jones-CV.pdf",
+            "document_source_uri": None,
+            "document_mime_type": "application/pdf",
+            "provenance_source_system": "dropbox",
+            "provenance_source_record_type": "dropbox_resume_attachment",
+            "provenance_source_record_id": "/cv/Sarah-Jones-CV.pdf",
+            "provenance_source_payload": {
+                "latest_resume": {
+                    "attachment_id": "/cv/Sarah-Jones-CV.pdf",
+                }
+            },
+        },
+    )
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "get_latest_dropbox_oauth_connection",
+        lambda: {
+            "access_token": "dropbox-token",
+            "refresh_token": "dropbox-refresh",
+            "obtained_at": "2026-06-23T18:00:00+00:00",
+            "expires_in_seconds": 14400,
+        },
+    )
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "is_dropbox_access_token_expired",
+        lambda **kwargs: False,
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_download_dropbox_file(*, access_token: str, path: str) -> dict[str, object]:
+        captured["access_token"] = access_token
+        captured["path"] = path
+        return {
+            "file_name": "Sarah-Jones-CV.pdf",
+            "content_type": "application/pdf",
+            "content_bytes": b"%PDF%",
+        }
+
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "download_dropbox_file",
+        fake_download_dropbox_file,
+    )
+
+    result = fetch_candidate_current_resume_file(
+        "33333333-3333-3333-3333-333333333331",
+    )
+
+    assert (
+        result["document_source_uri"]
+        == "dropbox:///cv/Sarah-Jones-CV.pdf#candidate=/cv/Sarah-Jones-CV.pdf&attachment=/cv/Sarah-Jones-CV.pdf"
+    )
+    assert captured == {
+        "access_token": "dropbox-token",
+        "path": "/cv/Sarah-Jones-CV.pdf",
+    }

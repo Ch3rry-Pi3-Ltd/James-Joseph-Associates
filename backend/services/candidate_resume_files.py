@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import unquote, urlparse
 
 from backend.db.candidates import get_candidate_current_resume_document
 from backend.db.dropbox_oauth import get_dropbox_oauth_connection
@@ -80,6 +80,8 @@ def fetch_candidate_current_resume_file(
 
     source_uri = current_resume.get("document_source_uri")
     if not isinstance(source_uri, str) or source_uri.strip() == "":
+        source_uri = _derive_missing_source_uri(current_resume)
+    if not isinstance(source_uri, str) or source_uri.strip() == "":
         raise CandidateResumeFileAccessError(
             "Current resume does not have a downloadable source reference.",
             code="resume_source_unavailable",
@@ -124,6 +126,54 @@ def fetch_candidate_current_resume_file(
     }
 
 
+def _derive_missing_source_uri(current_resume: dict[str, Any]) -> str | None:
+    """
+    Reconstruct a missing document source URI from linked provenance where possible.
+    """
+
+    source_system = current_resume.get("provenance_source_system")
+    source_record_id = current_resume.get("provenance_source_record_id")
+    source_payload = current_resume.get("provenance_source_payload")
+    if not isinstance(source_payload, dict):
+        source_payload = {}
+
+    if source_system == "dropbox":
+        attachment_path = _clean_optional_string(
+            _nested_value(source_payload, "latest_resume", "attachment_id")
+        ) or _clean_optional_string(source_record_id)
+        if attachment_path is None:
+            return None
+        return _build_dropbox_resume_source_uri(attachment_path)
+
+    if source_system == "outlook":
+        microsoft_user_id = _clean_optional_string(
+            source_payload.get("microsoft_user_id")
+        )
+        mailbox = _clean_optional_string(source_payload.get("mailbox")) or "me"
+        message_id = _clean_optional_string(source_payload.get("message_id"))
+        attachment_id = _clean_optional_string(source_payload.get("attachment_id"))
+        if (
+            microsoft_user_id is None
+            or message_id is None
+            or attachment_id is None
+        ):
+            return None
+        return (
+            f"outlook://users/{microsoft_user_id}/mailboxes/{mailbox}/messages/"
+            f"{message_id}/attachments/{attachment_id}"
+        )
+
+    if source_system == "recruiterflow":
+        for candidate_key in ("source_uri", "url", "link"):
+            direct_source_uri = _clean_optional_string(
+                _nested_value(source_payload, "latest_resume", candidate_key)
+            ) or _clean_optional_string(source_payload.get(candidate_key))
+            if direct_source_uri is not None:
+                return direct_source_uri
+
+    return None
+
+
 def _download_current_resume_source(source_uri: str) -> dict[str, Any]:
     if source_uri.startswith("dropbox://"):
         return _download_dropbox_resume_source(source_uri)
@@ -154,8 +204,7 @@ def _download_current_resume_source(source_uri: str) -> dict[str, Any]:
 
 
 def _download_dropbox_resume_source(source_uri: str) -> dict[str, Any]:
-    parsed = urlparse(source_uri)
-    dropbox_path = parsed.path
+    dropbox_path = _extract_dropbox_source_path(source_uri)
     if dropbox_path.strip() == "":
         raise CandidateResumeFileAccessError(
             "Dropbox resume source URI is malformed.",
@@ -341,6 +390,51 @@ def _download_outlook_resume_source(source_uri: str) -> dict[str, Any]:
         attachment_id=attachment_id,
         mailbox=resolved_mailbox,
     )
+
+
+def _nested_value(payload: dict[str, Any], *keys: str) -> Any:
+    current_value: Any = payload
+    for key in keys:
+        if not isinstance(current_value, dict):
+            return None
+        current_value = current_value.get(key)
+    return current_value
+
+
+def _clean_optional_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    cleaned_value = value.strip()
+    return cleaned_value or None
+
+
+def _build_dropbox_resume_source_uri(dropbox_path: str) -> str:
+    encoded_path = (
+        dropbox_path
+        .replace("%", "%25")
+        .replace("#", "%23")
+        .replace("&", "%26")
+        .replace(" ", "%20")
+    )
+    return (
+        f"dropbox://{encoded_path}"
+        f"#candidate={encoded_path}&attachment={encoded_path}"
+    )
+
+
+def _extract_dropbox_source_path(source_uri: str) -> str:
+    parsed = urlparse(source_uri)
+    decoded_path = unquote(parsed.path or "")
+    if decoded_path not in {"", "/"}:
+        return decoded_path
+
+    if not source_uri.startswith("dropbox://"):
+        return decoded_path
+
+    raw_path = source_uri[len("dropbox://") :].split("#", 1)[0]
+    if raw_path == "":
+        return ""
+    return unquote(raw_path)
 
 
 __all__ = [

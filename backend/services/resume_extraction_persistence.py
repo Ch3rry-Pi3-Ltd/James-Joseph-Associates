@@ -49,6 +49,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 from typing import Any
+from urllib.parse import quote
 
 from backend.db.resume_extraction_persistence import (
     find_existing_resume_content_match,
@@ -943,9 +944,11 @@ def _build_resume_source_uri(
     if source_system == "dropbox":
         if not isinstance(export_source_uri, str) or export_source_uri.strip() == "":
             return None
+        encoded_path = quote(export_source_uri, safe="/")
         return (
-            f"dropbox://{export_source_uri}#candidate={source_candidate_id}"
-            f"&attachment={attachment_id}"
+            f"dropbox://{encoded_path}"
+            f"#candidate={quote(str(source_candidate_id), safe='/')}"
+            f"&attachment={quote(str(attachment_id), safe='/')}"
         )
 
     if source_system == "outlook":

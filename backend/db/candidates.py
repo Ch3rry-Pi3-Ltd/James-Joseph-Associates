@@ -192,7 +192,11 @@ def get_candidate_current_resume_document(
             d.id as document_id,
             d.title as document_title,
             d.source_uri as document_source_uri,
-            d.mime_type as document_mime_type
+            d.mime_type as document_mime_type,
+            provenance.source_system as provenance_source_system,
+            provenance.source_record_type as provenance_source_record_type,
+            provenance.source_record_id as provenance_source_record_id,
+            provenance.source_payload as provenance_source_payload
         from candidates c
         join document_links dl
           on dl.candidate_id = c.id
@@ -200,6 +204,32 @@ def get_candidate_current_resume_document(
         join documents d
           on d.id = dl.document_id
          and d.document_type = 'resume'
+        left join lateral (
+            select
+                sr.source_system,
+                sr.source_record_type,
+                sr.source_record_id,
+                sr.source_payload
+            from source_record_links srl
+            join source_records sr
+              on sr.id = srl.source_record_id
+            where srl.document_id = d.id
+            order by
+                case
+                    when sr.source_record_type in (
+                        'dropbox_resume_attachment',
+                        'recruiterflow_resume_attachment',
+                        'outlook_message_attachment'
+                    ) then 0
+                    when sr.source_record_type like '%%resume_attachment' then 1
+                    when sr.source_record_type like '%%resume_extraction' then 2
+                    else 3
+                end,
+                sr.processed_at desc nulls last,
+                sr.created_at desc nulls last,
+                sr.id desc
+            limit 1
+        ) provenance on true
         where c.id = %(candidate_id)s
         order by dl.created_at desc nulls last, d.updated_at desc nulls last
         limit 1
