@@ -189,6 +189,91 @@ def test_build_recovery_plan_reports_filename_name_review_match() -> None:
     assert review_match["strategy"] == "filename_name_review"
 
 
+def test_build_recovery_plan_reports_source_uri_filename_review_match() -> None:
+    missing = ResumeRow(
+        source_system="recruiterflow",
+        candidate_id="cand-rf-4b",
+        document_id="doc-rf-4b",
+        full_name="Mina Patel",
+        current_company_name=None,
+        current_title=None,
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri=None,
+        content_hash=None,
+        extracted_text=None,
+    )
+    dropbox = ResumeRow(
+        source_system="dropbox",
+        candidate_id="cand-db-4b",
+        document_id="doc-db-5b",
+        full_name="Mina Patel",
+        current_company_name=None,
+        current_title=None,
+        document_title="Upload.pdf",
+        resume_updated_at=None,
+        source_uri=(
+            "dropbox:///### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/"
+            "Mina Patel (123456 - Totaljobs).pdf"
+            "#candidate=/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/"
+            "Mina Patel (123456 - Totaljobs).pdf"
+            "&attachment=/### BIG BAD CV ARCHIVE inc. RFL/### CV Archive/"
+            "Mina Patel (123456 - Totaljobs).pdf"
+        ),
+        content_hash=None,
+        extracted_text=None,
+    )
+
+    plan = build_recovery_plan(
+        missing_rows=[missing],
+        dropbox_rows=[dropbox],
+    )
+
+    assert len(plan["source_uri_filename_review_matches"]) == 1
+    review_match = plan["source_uri_filename_review_matches"][0]
+    assert review_match["matched_source_uri"] == dropbox.source_uri
+    assert review_match["strategy"] == "source_uri_filename_review"
+
+
+def test_build_recovery_plan_reports_extracted_text_name_review_match() -> None:
+    missing = ResumeRow(
+        source_system="recruiterflow",
+        candidate_id="cand-rf-4c",
+        document_id="doc-rf-4c",
+        full_name="Mina Patel",
+        current_company_name=None,
+        current_title=None,
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri=None,
+        content_hash=None,
+        extracted_text=None,
+    )
+    dropbox = ResumeRow(
+        source_system="dropbox",
+        candidate_id="cand-db-4c",
+        document_id="doc-db-5c",
+        full_name="Candidate Upload",
+        current_company_name=None,
+        current_title=None,
+        document_title="Profile.pdf",
+        resume_updated_at=None,
+        source_uri="dropbox:///folder/weird-guid-name.pdf#candidate=/folder/weird-guid-name.pdf&attachment=/folder/weird-guid-name.pdf",
+        content_hash=None,
+        extracted_text="MINA PATEL\nSenior Data Engineer\nLondon",
+    )
+
+    plan = build_recovery_plan(
+        missing_rows=[missing],
+        dropbox_rows=[dropbox],
+    )
+
+    assert len(plan["extracted_text_name_review_matches"]) == 1
+    review_match = plan["extracted_text_name_review_matches"][0]
+    assert review_match["matched_source_uri"] == dropbox.source_uri
+    assert review_match["strategy"] == "extracted_text_name_review"
+
+
 def test_build_review_report_orders_review_candidates_by_confidence() -> None:
     report = build_review_report(
         recovery_plan={
@@ -209,8 +294,12 @@ def test_build_review_report_orders_review_candidates_by_confidence() -> None:
                     "strategy": "filename_name_review",
                 },
             ],
+            "source_uri_filename_review_matches": [],
+            "extracted_text_name_review_matches": [],
             "title_name_ambiguous": [],
             "filename_name_ambiguous": [],
+            "source_uri_filename_ambiguous": [],
+            "extracted_text_name_ambiguous": [],
             "exact_hash_ambiguous": [],
             "exact_text_ambiguous": [],
             "unmatched": [],

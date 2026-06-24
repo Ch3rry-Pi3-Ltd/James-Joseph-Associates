@@ -44,6 +44,25 @@ _GENERIC_TITLE_KEYS = {
     "sourcewhaleresumedoc",
     "sourcewhaleresumedocx",
 }
+_NAME_LINE_EXCLUDE_TERMS = {
+    "address",
+    "contact",
+    "curriculum",
+    "email",
+    "experience",
+    "linkedin",
+    "mobile",
+    "objective",
+    "personal",
+    "profile",
+    "skills",
+    "summary",
+    "telephone",
+    "tel",
+    "top",
+    "work",
+    "www",
+}
 
 
 @dataclass(frozen=True)
@@ -154,6 +173,8 @@ def main() -> None:
                         "title_name_review_matches",
                         "profile_identity_review_matches",
                         "filename_name_review_matches",
+                        "source_uri_filename_review_matches",
+                        "extracted_text_name_review_matches",
                     )
                     for recovery in recovery_plan[group_name]
                     if str(recovery.get("strategy", "")).endswith("_same_candidate")
@@ -179,6 +200,10 @@ def main() -> None:
         "profile_identity_ambiguous": len(recovery_plan["profile_identity_ambiguous"]),
         "filename_name_review_matches": len(recovery_plan["filename_name_review_matches"]),
         "filename_name_ambiguous": len(recovery_plan["filename_name_ambiguous"]),
+        "source_uri_filename_review_matches": len(recovery_plan["source_uri_filename_review_matches"]),
+        "source_uri_filename_ambiguous": len(recovery_plan["source_uri_filename_ambiguous"]),
+        "extracted_text_name_review_matches": len(recovery_plan["extracted_text_name_review_matches"]),
+        "extracted_text_name_ambiguous": len(recovery_plan["extracted_text_name_ambiguous"]),
         "unmatched": len(recovery_plan["unmatched"]),
         "applied_exact_text_recoveries": applied_count,
         "applied_title_name_review_matches": applied_review_count,
@@ -189,6 +214,8 @@ def main() -> None:
             "title_name_review_matches": recovery_plan["title_name_review_matches"][:5],
             "profile_identity_review_matches": recovery_plan["profile_identity_review_matches"][:5],
             "filename_name_review_matches": recovery_plan["filename_name_review_matches"][:5],
+            "source_uri_filename_review_matches": recovery_plan["source_uri_filename_review_matches"][:5],
+            "extracted_text_name_review_matches": recovery_plan["extracted_text_name_review_matches"][:5],
             "unmatched": recovery_plan["unmatched"][:5],
         },
     }
@@ -353,6 +380,8 @@ def build_recovery_plan(
     dropbox_by_text_hash: dict[str, list[ResumeRow]] = {}
     dropbox_by_title_name: dict[tuple[str, str], list[ResumeRow]] = {}
     dropbox_by_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
+    dropbox_by_source_filename_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
+    dropbox_by_extracted_name_key: dict[tuple[str, ...], list[ResumeRow]] = {}
     dropbox_by_full_name: dict[str, list[ResumeRow]] = {}
 
     for row in dropbox_rows:
@@ -378,6 +407,19 @@ def build_recovery_plan(
         if filename_name_key is not None and _document_title_key(row.document_title) not in _GENERIC_TITLE_KEYS:
             dropbox_by_filename_name_key.setdefault(filename_name_key, []).append(row)
 
+        source_filename_name_key = _full_name_token_key(
+            full_name=row.full_name,
+            fallback_value=_source_uri_attachment_name(row.source_uri),
+        )
+        if source_filename_name_key is not None:
+            dropbox_by_source_filename_name_key.setdefault(
+                source_filename_name_key,
+                [],
+            ).append(row)
+
+        for extracted_name_key in _name_keys_from_extracted_text(row.extracted_text):
+            dropbox_by_extracted_name_key.setdefault(extracted_name_key, []).append(row)
+
     exact_hash_recoveries: list[dict[str, object]] = []
     exact_hash_ambiguous: list[dict[str, object]] = []
     exact_text_recoveries: list[dict[str, object]] = []
@@ -388,6 +430,10 @@ def build_recovery_plan(
     profile_identity_ambiguous: list[dict[str, object]] = []
     filename_name_review_matches: list[dict[str, object]] = []
     filename_name_ambiguous: list[dict[str, object]] = []
+    source_uri_filename_review_matches: list[dict[str, object]] = []
+    source_uri_filename_ambiguous: list[dict[str, object]] = []
+    extracted_text_name_review_matches: list[dict[str, object]] = []
+    extracted_text_name_ambiguous: list[dict[str, object]] = []
     unmatched: list[dict[str, object]] = []
 
     for missing in missing_rows:
@@ -477,6 +523,38 @@ def build_recovery_plan(
                 filename_name_ambiguous.append(filename_name_result)
                 continue
 
+            source_uri_filename_matches = dropbox_by_source_filename_name_key.get(
+                filename_name_key,
+                [],
+            )
+            source_uri_filename_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=source_uri_filename_matches,
+                strategy="source_uri_filename_review",
+            )
+            if source_uri_filename_result["status"] == "recovered":
+                source_uri_filename_review_matches.append(source_uri_filename_result)
+                continue
+            if source_uri_filename_result["status"] == "ambiguous":
+                source_uri_filename_ambiguous.append(source_uri_filename_result)
+                continue
+
+            extracted_text_name_matches = dropbox_by_extracted_name_key.get(
+                filename_name_key,
+                [],
+            )
+            extracted_text_name_result = _choose_unique_match(
+                missing_row=missing,
+                matched_rows=extracted_text_name_matches,
+                strategy="extracted_text_name_review",
+            )
+            if extracted_text_name_result["status"] == "recovered":
+                extracted_text_name_review_matches.append(extracted_text_name_result)
+                continue
+            if extracted_text_name_result["status"] == "ambiguous":
+                extracted_text_name_ambiguous.append(extracted_text_name_result)
+                continue
+
         unmatched.append(_missing_row_summary(missing, strategy="unmatched"))
 
     return {
@@ -490,6 +568,10 @@ def build_recovery_plan(
         "profile_identity_ambiguous": profile_identity_ambiguous,
         "filename_name_review_matches": filename_name_review_matches,
         "filename_name_ambiguous": filename_name_ambiguous,
+        "source_uri_filename_review_matches": source_uri_filename_review_matches,
+        "source_uri_filename_ambiguous": source_uri_filename_ambiguous,
+        "extracted_text_name_review_matches": extracted_text_name_review_matches,
+        "extracted_text_name_ambiguous": extracted_text_name_ambiguous,
         "unmatched": unmatched,
     }
 
@@ -583,9 +665,13 @@ def build_review_report(
         "title_name_review_matches",
         "profile_identity_review_matches",
         "filename_name_review_matches",
+        "source_uri_filename_review_matches",
+        "extracted_text_name_review_matches",
         "title_name_ambiguous",
         "profile_identity_ambiguous",
         "filename_name_ambiguous",
+        "source_uri_filename_ambiguous",
+        "extracted_text_name_ambiguous",
         "exact_hash_ambiguous",
         "exact_text_ambiguous",
     ):
@@ -626,6 +712,10 @@ def _decorate_review_candidate(candidate: dict[str, object]) -> dict[str, object
     document_title_key = _document_title_key(candidate.get("document_title"))
     if strategy == "filename_name_review":
         confidence_score += 60
+    elif strategy == "source_uri_filename_review":
+        confidence_score += 65
+    elif strategy == "extracted_text_name_review":
+        confidence_score += 70
     elif strategy == "title_name_review":
         confidence_score += 55
     elif "ambiguous" in strategy:
@@ -774,6 +864,63 @@ def _full_name_token_count(full_name: object) -> int:
         return 0
     parts = [part for part in re.split(r"[^a-z0-9]+", full_name.casefold()) if part]
     return sum(1 for part in parts if len(part) >= 3 and part not in {"cv", "resume", "profile"})
+
+
+def _name_keys_from_extracted_text(text: str | None) -> list[tuple[str, ...]]:
+    if not isinstance(text, str):
+        return []
+
+    keys: list[tuple[str, ...]] = []
+    seen: set[tuple[str, ...]] = set()
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    for line in lines[:12]:
+        key = _name_key_from_text_line(line)
+        if key is None or key in seen:
+            continue
+        seen.add(key)
+        keys.append(key)
+    return keys
+
+
+def _name_key_from_text_line(line: str) -> tuple[str, ...] | None:
+    normalized_line = _normalize_free_text(line)
+    if normalized_line == "":
+        return None
+    if any(char.isdigit() for char in line):
+        return None
+    if any(term in normalized_line.split() for term in _NAME_LINE_EXCLUDE_TERMS):
+        return None
+
+    parts = [
+        part
+        for part in re.split(r"[^a-z]+", line.casefold())
+        if len(part) >= 2 and part not in {"cv", "resume", "profile"}
+    ]
+    if len(parts) < 2 or len(parts) > 5:
+        return None
+
+    token_key = tuple(sorted(_normalize_identity_token(part) for part in parts if _normalize_identity_token(part)))
+    if len(token_key) < 2:
+        return None
+    return token_key
+
+
+def _source_uri_attachment_name(source_uri: str | None) -> str | None:
+    if not isinstance(source_uri, str) or source_uri.strip() == "":
+        return None
+
+    candidate_marker = "#candidate="
+    attachment_marker = "&attachment="
+    if attachment_marker in source_uri:
+        attachment_value = source_uri.split(attachment_marker, 1)[1]
+        attachment_name = re.split(r"[\\/]", attachment_value)[-1].strip()
+        return attachment_name or None
+
+    source_path = source_uri.removeprefix("dropbox:///")
+    if candidate_marker in source_path:
+        source_path = source_path.split(candidate_marker, 1)[0]
+    source_name = re.split(r"[\\/]", source_path)[-1].strip()
+    return source_name or None
 
 
 def _title_name_key(
