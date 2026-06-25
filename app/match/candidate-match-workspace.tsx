@@ -30,6 +30,17 @@ type CandidateResumeSearchResponse = {
   results: CandidateResumeSearchResult[];
 };
 
+type UploadedResumeSearchResponse = {
+  file_name: string | null;
+  content_type: string | null;
+  extractor: string | null;
+  page_count: number | null;
+  character_count: number;
+  cleaned_text_preview: string;
+  limit: number;
+  results: CandidateResumeSearchResult[];
+};
+
 type CandidateJobDescriptionShortlistItem = {
   candidate_id: string;
   person_id: string;
@@ -287,9 +298,22 @@ function buildLoadingMessage(mode: RunMode): string {
   return "";
 }
 
+async function encodeFileAsBase64(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = "";
+
+  for (const value of bytes) {
+    binary += String.fromCharCode(value);
+  }
+
+  return btoa(binary);
+}
+
 export function CandidateMatchWorkspace() {
   const shortlistSectionRef = useRef<HTMLElement | null>(null);
   const searchResultsSectionRef = useRef<HTMLElement | null>(null);
+  const uploadedResumeInputRef = useRef<HTMLInputElement | null>(null);
   const [jobDescription, setJobDescription] = useState(DEFAULT_JOB_DESCRIPTION);
   const [retrievalFocusTerms, setRetrievalFocusTerms] = useState(() =>
     deriveRetrievalFocusTerms(DEFAULT_JOB_DESCRIPTION),
@@ -324,6 +348,12 @@ export function CandidateMatchWorkspace() {
   );
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewErrorMessage, setPreviewErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [uploadedResumeFile, setUploadedResumeFile] = useState<File | null>(null);
+  const [uploadedResumeResult, setUploadedResumeResult] =
+    useState<UploadedResumeSearchResponse | null>(null);
+  const [searchMode, setSearchMode] = useState<"job_brief" | "uploaded_resume" | null>(
     null,
   );
 
@@ -408,6 +438,8 @@ export function CandidateMatchWorkspace() {
     setIsSearchLoading(true);
     setActiveRunMode("search");
     setSearchErrorMessage(null);
+    setSearchMode("job_brief");
+    setUploadedResumeResult(null);
 
     try {
       const searchParams = new URLSearchParams({
@@ -451,6 +483,74 @@ export function CandidateMatchWorkspace() {
         error instanceof Error
           ? error.message
           : "Search request failed unexpectedly.",
+      );
+    } finally {
+      setIsSearchLoading(false);
+      setActiveRunMode(null);
+    }
+  }
+
+  async function runUploadedResumeSearch(): Promise<void> {
+    if (!uploadedResumeFile) {
+      setSearchErrorMessage("Choose one PDF, DOCX, or DOC CV before searching.");
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearchLoading(true);
+    setActiveRunMode("search");
+    setSearchErrorMessage(null);
+    setSearchMode("uploaded_resume");
+
+    try {
+      const contentBase64 = await encodeFileAsBase64(uploadedResumeFile);
+
+      const response = await fetch(
+        "/api/v1/candidates/search-uploaded-resume",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            file_name: uploadedResumeFile.name,
+            content_type: uploadedResumeFile.type || null,
+            content_base64: contentBase64,
+            limit: Number(searchResultLimit),
+          }),
+        },
+      );
+
+      const payload = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        setSearchResults([]);
+        setSubmittedSearchQuery(uploadedResumeFile.name);
+        setUploadedResumeResult(null);
+        setSearchErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Uploaded CV search failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      const uploadResponse = payload as UploadedResumeSearchResponse;
+      setSearchResults(uploadResponse.results);
+      setSubmittedSearchQuery(uploadResponse.file_name ?? uploadedResumeFile.name);
+      setUploadedResumeResult(uploadResponse);
+      searchResultsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    } catch (error) {
+      setSearchResults([]);
+      setSubmittedSearchQuery(uploadedResumeFile.name);
+      setUploadedResumeResult(null);
+      setSearchErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Uploaded CV search failed unexpectedly.",
       );
     } finally {
       setIsSearchLoading(false);
@@ -545,6 +645,12 @@ export function CandidateMatchWorkspace() {
     setPreviewCandidateId(null);
     setPreviewProfile(null);
     setPreviewErrorMessage(null);
+    setUploadedResumeFile(null);
+    setUploadedResumeResult(null);
+    setSearchMode(null);
+    if (uploadedResumeInputRef.current) {
+      uploadedResumeInputRef.current.value = "";
+    }
   }
 
   async function openCandidatePreview(candidateId: string): Promise<void> {
@@ -677,6 +783,56 @@ export function CandidateMatchWorkspace() {
             <p className="text-sm leading-6 text-zinc-600">
               Keep the full brief here. The shortlist step uses this full text
               for reranking.
+            </p>
+          </div>
+
+          <div className="grid gap-3 border border-zinc-200 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <label
+                  className="text-sm font-semibold uppercase text-zinc-500"
+                  htmlFor="uploaded-resume"
+                >
+                  Reference CV upload
+                </label>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">
+                  Upload one CV to extract its text and use it as a transient
+                  semantic query against the stored corpus. This first pass does
+                  not persist the uploaded file.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={isSearchLoading || isShortlistLoading || !uploadedResumeFile}
+                onClick={() => {
+                  void runUploadedResumeSearch();
+                }}
+                className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-200"
+              >
+                {isSearchLoading && searchMode === "uploaded_resume"
+                  ? "Searching from CV..."
+                  : "Search from uploaded CV"}
+              </button>
+            </div>
+
+            <input
+              id="uploaded-resume"
+              ref={uploadedResumeInputRef}
+              type="file"
+              accept=".pdf,.docx,.doc,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0] ?? null;
+                setUploadedResumeFile(selectedFile);
+                setUploadedResumeResult(null);
+              }}
+              className="block w-full text-sm text-zinc-900 file:mr-4 file:rounded-md file:border file:border-zinc-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold file:text-zinc-950 hover:file:border-zinc-500"
+            />
+
+            <p className="text-sm leading-6 text-zinc-600">
+              {uploadedResumeFile
+                ? `Selected file: ${uploadedResumeFile.name}`
+                : "Supported formats: PDF, DOCX, DOC."}
             </p>
           </div>
 
@@ -1244,11 +1400,31 @@ export function CandidateMatchWorkspace() {
         {submittedSearchQuery ? (
           <div className="grid gap-1 text-sm leading-6 text-zinc-600">
             <p>
-              Retrieval terms:{" "}
+              {searchMode === "uploaded_resume" ? "Uploaded CV query: " : "Retrieval terms: "}
               <span className="font-medium text-zinc-900">
                 {submittedSearchQuery}
               </span>
             </p>
+            {uploadedResumeResult ? (
+              <>
+                <p>
+                  Extractor:{" "}
+                  <span className="font-medium text-zinc-900">
+                    {uploadedResumeResult.extractor ?? "Unknown"}
+                  </span>
+                  {uploadedResumeResult.page_count
+                    ? `, pages: ${uploadedResumeResult.page_count}`
+                    : ""}
+                  {`, cleaned characters: ${uploadedResumeResult.character_count}`}
+                </p>
+                <p>
+                  Extracted preview:{" "}
+                  <span className="font-medium text-zinc-900">
+                    {uploadedResumeResult.cleaned_text_preview}
+                  </span>
+                </p>
+              </>
+            ) : null}
             {submittedJobDescription ? (
               <p>Shortlist reasoning still uses the full brief above.</p>
             ) : null}
@@ -1260,7 +1436,8 @@ export function CandidateMatchWorkspace() {
             <p>
               Corpus search returned no CV matches for that retrieval query.
             </p>
-            {jobDescription.trim() !== retrievalFocusTerms.trim() ? (
+            {searchMode !== "uploaded_resume" &&
+            jobDescription.trim() !== retrievalFocusTerms.trim() ? (
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"

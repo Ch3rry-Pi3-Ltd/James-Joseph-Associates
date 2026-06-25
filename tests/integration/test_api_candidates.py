@@ -16,12 +16,14 @@ The expected route is:
 """
 
 from unittest.mock import patch
+import base64
 
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.main import app
 from backend.services.candidate_resume_files import CandidateResumeFileAccessError
+from backend.services.uploaded_resume_matching import UploadedResumeSearchError
 
 
 def make_client() -> TestClient:
@@ -338,6 +340,139 @@ def test_candidate_resume_search_route_returns_ranked_results() -> None:
         query="python data engineer",
         limit=5,
     )
+
+
+def test_uploaded_resume_search_route_returns_ranked_results() -> None:
+    """
+    Verify that the uploaded-resume search route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "file_name": "sample-cv.pdf",
+        "content_type": "application/pdf",
+        "extractor": "pypdf",
+        "page_count": 2,
+        "character_count": 4123,
+        "cleaned_text_preview": "Sarah Jones Senior data engineer Python SQL AWS",
+        "limit": 5,
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "match_score": 0.812345,
+                "match_excerpt": "Python, SQL, AWS, and ETL delivery.",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.search_candidates_by_uploaded_resume",
+        return_value=service_result,
+    ) as mock_search_candidates_by_uploaded_resume:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/search-uploaded-resume",
+            json={
+                "file_name": "sample-cv.pdf",
+                "content_type": "application/pdf",
+                "content_base64": base64.b64encode(b"%PDF-test%").decode("ascii"),
+                "limit": 5,
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_search_candidates_by_uploaded_resume.assert_called_once_with(
+        content_bytes=b"%PDF-test%",
+        file_name="sample-cv.pdf",
+        content_type="application/pdf",
+        limit=5,
+    )
+
+
+def test_uploaded_resume_search_route_returns_standard_error_shape() -> None:
+    """
+    Verify that uploaded-resume processing failures use the standard API error shape.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.search_candidates_by_uploaded_resume",
+        side_effect=UploadedResumeSearchError(
+            "The resume file format is not supported for text extraction.",
+            stage="input_validation",
+            details=[
+                {"file_name": "sample.txt"},
+                {"content_type": "text/plain"},
+            ],
+        ),
+    ) as mock_search_candidates_by_uploaded_resume:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/search-uploaded-resume",
+            json={
+                "file_name": "sample.txt",
+                "content_type": "text/plain",
+                "content_base64": base64.b64encode(b"plain text").decode("ascii"),
+                "limit": 5,
+            },
+        )
+
+    assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    assert response.json() == {
+        "error": {
+            "code": "resume_source_not_supported",
+            "message": "The resume file format is not supported for text extraction.",
+            "details": [
+                {"stage": "input_validation"},
+                {"file_name": "sample.txt"},
+                {"content_type": "text/plain"},
+            ],
+        }
+    }
+    mock_search_candidates_by_uploaded_resume.assert_called_once_with(
+        content_bytes=b"plain text",
+        file_name="sample.txt",
+        content_type="text/plain",
+        limit=5,
+    )
+
+
+def test_uploaded_resume_search_route_rejects_invalid_base64() -> None:
+    """
+    Verify that invalid base64 payloads fail cleanly before service execution.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.search_candidates_by_uploaded_resume",
+    ) as mock_search_candidates_by_uploaded_resume:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/search-uploaded-resume",
+            json={
+                "file_name": "sample.pdf",
+                "content_type": "application/pdf",
+                "content_base64": "!!!not-base64!!!",
+                "limit": 5,
+            },
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Uploaded CV payload must contain valid base64 content.",
+            "details": [{"field": "content_base64"}],
+        }
+    }
+    mock_search_candidates_by_uploaded_resume.assert_not_called()
 
 
 def test_candidate_resume_search_route_rejects_blank_query() -> None:

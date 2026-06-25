@@ -30,6 +30,7 @@ In plain language:
 - it only turns service-layer results into HTTP responses
 """
 
+import base64
 from typing import Any
 
 from fastapi import APIRouter, Query, status
@@ -40,6 +41,8 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    UploadedResumeSearchRequest,
+    UploadedResumeSearchResponse,
 )
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.services.candidate_matching import (
@@ -53,6 +56,10 @@ from backend.services.candidate_profiles import (
 from backend.services.candidate_resume_files import (
     CandidateResumeFileAccessError,
     fetch_candidate_current_resume_file,
+)
+from backend.services.uploaded_resume_matching import (
+    UploadedResumeSearchError,
+    search_candidates_by_uploaded_resume,
 )
 
 
@@ -335,6 +342,62 @@ def search_candidate_resumes_route(
         limit=limit,
     )
     return CandidateResumeSearchResponse(**result)
+
+
+@router.post(
+    "/search-uploaded-resume",
+    response_model=UploadedResumeSearchResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Uploaded CV could not be processed.",
+        },
+        415: {
+            "model": ApiErrorResponse,
+            "description": "Uploaded CV format is not supported.",
+        },
+    },
+)
+async def search_uploaded_resume_route(
+    request: UploadedResumeSearchRequest,
+) -> UploadedResumeSearchResponse | JSONResponse:
+    """
+    Extract one uploaded CV and use it as a transient query against the corpus.
+    """
+
+    try:
+        content_bytes = base64.b64decode(request.content_base64, validate=True)
+    except Exception:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Uploaded CV payload must contain valid base64 content.",
+            details=[{"field": "content_base64"}],
+        )
+
+    try:
+        result = search_candidates_by_uploaded_resume(
+            content_bytes=content_bytes,
+            file_name=request.file_name,
+            content_type=request.content_type,
+            limit=request.limit,
+        )
+    except UploadedResumeSearchError as exc:
+        normalized_message = exc.message.lower()
+        status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+        error_code = "resume_source_not_supported"
+        if "supported" not in normalized_message and "format" not in normalized_message:
+            status_code = status.HTTP_400_BAD_REQUEST
+            error_code = "validation_error"
+
+        return build_error_response(
+            status_code=status_code,
+            code=error_code,
+            message=exc.message,
+            details=[{"stage": exc.stage}, *exc.details],
+        )
+
+    return UploadedResumeSearchResponse(**result)
 
 
 @router.post(

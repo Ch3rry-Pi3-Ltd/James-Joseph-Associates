@@ -155,6 +155,53 @@ class CandidateResumeSearchResponse(BaseModel):
     )
 
 
+class UploadedResumeSearchResponse(BaseModel):
+    """
+    Response envelope for transient uploaded-resume semantic search.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    file_name: str | None = None
+    content_type: str | None = None
+    extractor: str | None = None
+    page_count: int | None = None
+    character_count: int = Field(
+        description="Character count of the cleaned extracted text used for search.",
+    )
+    cleaned_text_preview: str = Field(
+        description="Short preview of the cleaned extracted text used for retrieval.",
+    )
+    limit: int = Field(
+        description="Maximum number of ranked results requested.",
+    )
+    results: list[CandidateResumeSearchResult] = Field(
+        default_factory=list,
+        description="Ranked candidate matches from the uploaded CV query.",
+    )
+
+
+class UploadedResumeSearchRequest(BaseModel):
+    """
+    Request body for transient uploaded-resume semantic search.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    file_name: str | None = None
+    content_type: str | None = None
+    content_base64: str = Field(
+        min_length=1,
+        description="Base64-encoded uploaded CV file content.",
+    )
+    limit: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of ranked candidate matches to return.",
+    )
+
+
 class CandidateJobDescriptionMatchRequest(BaseModel):
     """
     Request body for shortlist matching against one free-text job description.
@@ -235,6 +282,8 @@ __all__ = [
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",
     "CandidateJobDescriptionShortlistItem",
+    "UploadedResumeSearchRequest",
     "CandidateResumeSearchResponse",
     "CandidateResumeSearchResult",
+    "UploadedResumeSearchResponse",
 ]
