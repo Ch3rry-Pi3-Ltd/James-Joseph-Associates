@@ -186,6 +186,89 @@ class OutlookFolderIngestRunResponse(BaseModel):
     )
 
 
+class OutlookCvAttachmentExportRequest(BaseModel):
+    """
+    Request body for one bounded heuristic Outlook CV attachment export run.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    microsoft_user_id: str = Field(
+        default="b4dd6a5f-8e27-4745-9369-e117121382ed",
+        min_length=1,
+        description="Microsoft user identifier used to load the stored Outlook OAuth connection.",
+    )
+
+    folder_segments: list[str] = Field(
+        default_factory=lambda: ["Inbox"],
+        min_length=1,
+        description="Human-readable Outlook folder path segments in order.",
+    )
+
+    mailbox: str | None = Field(
+        default=None,
+        description="Optional delegated mailbox identifier such as a shared mailbox email address.",
+    )
+
+    message_limit: int = Field(
+        default=10,
+        ge=1,
+        le=25,
+        description="Maximum number of Outlook messages to scan in this bounded run.",
+    )
+
+    attachment_limit: int = Field(
+        default=10,
+        ge=1,
+        le=25,
+        description="Maximum number of CV-like attachments to export in this bounded run.",
+    )
+
+    dropbox_account_id: str = Field(
+        default="dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+        min_length=1,
+        description="Dropbox account ID used for CV export.",
+    )
+
+    dropbox_export_folder: str = Field(
+        default="/+++ Outlook CV Export",
+        min_length=1,
+        description="Dropbox base folder that receives exported Outlook CV files.",
+    )
+
+    dry_run: bool = Field(
+        default=False,
+        description="When true, classify attachments but do not upload any files to Dropbox.",
+    )
+
+
+class OutlookCvAttachmentExportResponse(BaseModel):
+    """
+    Response returned after one bounded heuristic Outlook CV attachment export run.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["completed"] = Field(
+        description="Fixed status confirming that the bounded export run completed.",
+    )
+
+    message: str = Field(
+        min_length=1,
+        description="Short human-readable summary of the export run.",
+    )
+
+    resolved_folder: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Resolved Outlook folder metadata used for the run.",
+    )
+
+    export_report: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Operator-facing report covering exported, non-resume, skipped, and failed items.",
+    )
+
+
 class JobAdderOAuthConnectionSavedResponse(BaseModel):
     """
     Response returned when the JobAdder OAuth callback completes successfully.

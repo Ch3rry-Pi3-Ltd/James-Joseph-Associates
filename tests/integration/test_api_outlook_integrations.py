@@ -46,6 +46,7 @@ OUTLOOK_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE = (
     "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof"
 )
 OUTLOOK_ADMIN_FOLDER_INGEST_PATH = "/api/v1/integrations/outlook/admin/folder-ingest"
+OUTLOOK_ADMIN_CV_EXPORT_PATH = "/api/v1/integrations/outlook/admin/export-cv-attachments"
 
 
 @pytest.fixture(autouse=True)
@@ -351,6 +352,90 @@ def test_outlook_admin_folder_ingest_runs_bounded_slice_successfully(
         attachment_limit=2,
         dropbox_access_token="dropbox-access-token",
         dropbox_export_folder="/+++ Outlook CV Export",
+    )
+
+
+def test_outlook_admin_cv_export_runs_bounded_slice_successfully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify that the protected Outlook CV export route delegates to the heuristic scanner."""
+
+    monkeypatch.setenv("MAKE_API_TOKEN", "test-admin-token")
+    client = create_test_client(monkeypatch)
+
+    fake_stored_connection = {"access_token": "microsoft-access-token"}
+    fake_dropbox_connection = {"access_token": "dropbox-access-token"}
+    fake_resolved_folder = {
+        "folder_id": "folder-123",
+        "folder": {"id": "folder-123", "displayName": "Inbox"},
+        "resolved_path": ["Inbox"],
+        "resolved_folders": [],
+    }
+    fake_export_report = {
+        "message_count_scanned": 10,
+        "exported_count": 2,
+        "non_resume_count": 3,
+        "skipped_count": 1,
+        "failed_count": 0,
+        "exported_items": [],
+        "non_resume_items": [],
+        "skipped_items": [],
+        "failed_items": [],
+    }
+
+    with patch(
+        "backend.api.v1.integrations.load_ready_outlook_connection",
+        return_value=fake_stored_connection,
+    ) as mock_load_connection:
+        with patch(
+            "backend.api.v1.integrations._load_dropbox_connection",
+            return_value=fake_dropbox_connection,
+        ) as mock_load_dropbox:
+            with patch(
+                "backend.api.v1.integrations.resolve_outlook_folder_path",
+                return_value=fake_resolved_folder,
+            ) as mock_resolve_folder:
+                with patch(
+                    "backend.api.v1.integrations.run_outlook_cv_attachment_export",
+                    return_value=fake_export_report,
+                ) as mock_run_export:
+                    response = client.post(
+                        OUTLOOK_ADMIN_CV_EXPORT_PATH,
+                        headers={"Authorization": "Bearer test-admin-token"},
+                        json={
+                            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                            "folder_segments": ["Inbox"],
+                            "message_limit": 10,
+                            "attachment_limit": 10,
+                            "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                            "dropbox_export_folder": "/+++ Outlook CV Export",
+                            "dry_run": True,
+                        },
+                    )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    assert payload["status"] == "completed"
+    assert payload["export_report"]["exported_count"] == 2
+    mock_load_connection.assert_called_once_with(
+        microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    )
+    mock_load_dropbox.assert_not_called()
+    mock_resolve_folder.assert_called_once_with(
+        access_token="microsoft-access-token",
+        mailbox=None,
+        folder_segments=["Inbox"],
+    )
+    mock_run_export.assert_called_once_with(
+        access_token="microsoft-access-token",
+        mailbox=None,
+        folder_id="folder-123",
+        folder_path=["Inbox"],
+        message_limit=10,
+        attachment_limit=10,
+        dropbox_access_token=None,
+        dropbox_export_folder="/+++ Outlook CV Export",
+        dry_run=True,
     )
 
 

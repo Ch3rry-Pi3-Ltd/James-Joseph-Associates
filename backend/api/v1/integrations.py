@@ -114,6 +114,8 @@ from backend.schemas.integrations import (
     JobAdderJobAdsPreviewResponse,
     JobAdderOAuthConnectionSavedResponse,
     OutlookAuthorizationUrlResponse,
+    OutlookCvAttachmentExportRequest,
+    OutlookCvAttachmentExportResponse,
     OutlookCurrentUserResponse,
     OutlookFolderIngestRunRequest,
     OutlookFolderIngestRunResponse,
@@ -150,6 +152,9 @@ from backend.services.outlook_api import (
     fetch_outlook_mail_folders,
     fetch_outlook_message_attachments,
     fetch_outlook_messages,
+)
+from backend.services.outlook_cv_attachment_export import (
+    run_outlook_cv_attachment_export,
 )
 from backend.services.outlook_oauth import (
     OutlookOAuthExchangeError,
@@ -4623,6 +4628,90 @@ def run_outlook_folder_ingest_route(
         ),
         resolved_folder=resolved_folder,
         ingest_report=ingest_report,
+    )
+
+
+@router.post(
+    "/outlook/admin/export-cv-attachments",
+    response_model=OutlookCvAttachmentExportResponse,
+    responses={
+        400: {"model": ApiErrorResponse, "description": "Request validation failed."},
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Outlook or Dropbox integration call failed."},
+    },
+)
+def run_outlook_cv_attachment_export_route(
+    request: Request,
+    payload: OutlookCvAttachmentExportRequest,
+) -> OutlookCvAttachmentExportResponse | JSONResponse:
+    """
+    Run one tightly bounded non-LLM Outlook attachment scan and Dropbox export.
+
+    Notes
+    -----
+    - This route scans messages and attachments only.
+    - It uses local text extraction and heuristic CV detection.
+    - It does not call the LLM or persist candidate data into Supabase.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    try:
+        folder_segments = _normalize_outlook_folder_segments(payload.folder_segments)
+    except ValueError as exc:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message=str(exc),
+        )
+
+    try:
+        stored_connection = load_ready_outlook_connection(
+            microsoft_user_id=payload.microsoft_user_id,
+        )
+        access_token = stored_connection["access_token"]
+        assert isinstance(access_token, str)
+        dropbox_access_token: str | None = None
+        if not payload.dry_run:
+            dropbox_connection = _load_dropbox_connection(payload.dropbox_account_id)
+            raw_dropbox_access_token = dropbox_connection["access_token"]
+            assert isinstance(raw_dropbox_access_token, str)
+            dropbox_access_token = raw_dropbox_access_token
+
+        resolved_folder = resolve_outlook_folder_path(
+            access_token=access_token,
+            mailbox=payload.mailbox,
+            folder_segments=folder_segments,
+        )
+        export_report = run_outlook_cv_attachment_export(
+            access_token=access_token,
+            mailbox=payload.mailbox,
+            folder_id=resolved_folder["folder_id"],
+            folder_path=folder_segments,
+            message_limit=payload.message_limit,
+            attachment_limit=payload.attachment_limit,
+            dropbox_access_token=dropbox_access_token,
+            dropbox_export_folder=payload.dropbox_export_folder,
+            dry_run=payload.dry_run,
+        )
+    except (DropboxApiError, OutlookApiError, RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Protected Outlook CV attachment export failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return OutlookCvAttachmentExportResponse(
+        status="completed",
+        message=(
+            "Protected Outlook CV attachment export completed. Review the "
+            "heuristic export report before widening the batch."
+        ),
+        resolved_folder=resolved_folder,
+        export_report=export_report,
     )
 
 
