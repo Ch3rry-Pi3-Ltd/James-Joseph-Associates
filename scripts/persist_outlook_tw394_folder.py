@@ -1,5 +1,5 @@
 """
-Persist the first narrow Outlook advert-response folder slice into Supabase.
+Persist one bounded Outlook advert-response folder slice into Supabase.
 
 Why this script exists
 ----------------------
@@ -14,9 +14,17 @@ steps:
 The next concrete question is narrower:
 
     "Can we move from one-off proof reads into a bounded repeatable mailbox
-    ingestion slice for `# ADV-CVR > ### DOMINIQUE FOLDER > tw394`?"
+    ingestion slice for a real Outlook advert-response folder?"
 
 This script answers that question.
+
+Compatibility note
+------------------
+This file remains as the original `tw394` operator entrypoint for backward
+compatibility. The generic entrypoint for arbitrary Outlook folder paths now
+lives at:
+
+    scripts/persist_outlook_folder_resume_chunk.py
 
 What this script does
 ---------------------
@@ -43,15 +51,15 @@ It does not:
 
 Examples
 --------
-Run the first narrow `tw394` mailbox-ingestion slice:
+Run one mailbox-ingestion slice:
 
-    uv run python scripts/persist_outlook_tw394_folder.py ^
+    uv run python scripts/persist_outlook_folder_resume_chunk.py ^
         --microsoft-user-id "b4dd6a5f-8e27-4745-9369-e117121382ed" ^
         --output-json temp\\outlook_tw394_ingest.json
 
 Target a delegated mailbox explicitly:
 
-    uv run python scripts/persist_outlook_tw394_folder.py ^
+    uv run python scripts/persist_outlook_folder_resume_chunk.py ^
         --microsoft-user-id "b4dd6a5f-8e27-4745-9369-e117121382ed" ^
         --mailbox "recruitment@example.com"
 """
@@ -109,7 +117,7 @@ DEFAULT_DROPBOX_EXPORT_FOLDER = "/+++ Outlook Email CV Export"
 
 def build_argument_parser() -> argparse.ArgumentParser:
     """
-    Build the CLI argument parser for the first Outlook folder-ingest slice.
+    Build the CLI argument parser for one Outlook folder-ingest slice.
 
     Example
     -------
@@ -701,16 +709,16 @@ def _make_json_safe_value(value: Any) -> Any:
 
 def main() -> int:
     """
-    Run the first narrow Outlook folder-ingest slice.
+    Run one bounded Outlook folder-ingest slice.
 
     Example
     -------
     Running:
 
-        uv run python scripts/persist_outlook_tw394_folder.py ^
+        uv run python scripts/persist_outlook_folder_resume_chunk.py ^
             --output-json temp\\outlook_tw394_ingest.json
 
-    resolves the `tw394` folder path, ingests a bounded set of supported
+    resolves the requested folder path, ingests a bounded set of supported
     attachments, and writes a JSON summary report.
     """
 

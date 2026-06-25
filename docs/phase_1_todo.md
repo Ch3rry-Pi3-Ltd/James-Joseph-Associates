@@ -182,6 +182,16 @@ Checkpoint note:
             `5cc458b8-e02e-4418-962c-fabaf5faeb66`
           - [x] `resolved_job_id = 8279afc7-6525-4fc7-bb3a-e6e8ffb82b35`
           - [x] advert-response job linking by `tw...` is now proven live for `tw394`
+      - [x] generalize the narrow Outlook folder ingestor into a reusable operator entrypoint:
+        - [x] add a generic script entrypoint for arbitrary Outlook folder paths
+        - [x] keep the older `tw394` operator entrypoint as a compatibility wrapper
+      - [ ] add the next Outlook mailbox-ingest automation layer:
+        - [ ] derive Dropbox export subfolders from Outlook `receivedDateTime`
+          such as `year / quarter`
+        - [ ] add rolling date-window mailbox backfill so older advert-response
+          CVs can be stepped through in controlled batches
+        - [ ] decide whether Outlook CVs should land directly in Supabase only,
+          or be mirrored into Dropbox first and then ingested from there
   - [ ] LinkedHelper / LinkedIn-derived refresh data.
   - [ ] Recruiterflow JSON.
   - [ ] Pipedrive hiring-manager data.
