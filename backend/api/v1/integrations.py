@@ -4523,7 +4523,7 @@ def run_outlook_folder_ingest_route(
     except ValueError as exc:
         return build_error_response(
             status_code=status.HTTP_400_BAD_REQUEST,
-            code="bad_request",
+            code="validation_error",
             message=str(exc),
         )
 
@@ -4556,7 +4556,7 @@ def run_outlook_folder_ingest_route(
     except (DropboxApiError, OutlookApiError, RuntimeError, ValueError) as exc:
         return build_error_response(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            code="integration_failed",
+            code="integration_connection_invalid",
             message="Protected Outlook folder ingest failed.",
             details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
         )
