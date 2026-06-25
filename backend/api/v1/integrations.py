@@ -145,6 +145,7 @@ from backend.services.dropbox_oauth import (
 from backend.services.outlook_api import (
     OutlookApiError,
     download_outlook_message_file_attachment,
+    fetch_outlook_child_mail_folders,
     fetch_outlook_current_user,
     fetch_outlook_mail_folders,
     fetch_outlook_message_attachments,
@@ -4273,6 +4274,59 @@ def get_outlook_mail_folders_route(
             limit=limit,
         ),
         provider_failure_message="Outlook mail-folder read failed.",
+    )
+    if isinstance(folder_result, JSONResponse):
+        return folder_result
+
+    return OutlookMailFoldersResponse(
+        microsoft_user_id=microsoft_user_id,
+        mailbox=mailbox,
+        folder_count=folder_result["folder_count"],
+        folders=folder_result["folders"],
+    )
+
+
+@router.get(
+    "/outlook/accounts/{microsoft_user_id}/mail-folders/{parent_folder_id}/child-folders",
+    response_model=OutlookMailFoldersResponse,
+)
+def get_outlook_child_mail_folders_route(
+    microsoft_user_id: str,
+    parent_folder_id: str,
+    mailbox: str | None = Query(
+        default=None,
+        description=(
+            "Optional delegated mailbox identifier such as a user principal "
+            "name or mailbox email."
+        ),
+    ),
+    limit: int = Query(
+        default=200,
+        ge=1,
+        le=200,
+        description="Maximum number of child folders to request in the first page.",
+    ),
+) -> OutlookMailFoldersResponse | JSONResponse:
+    """
+    Return a first-page preview of child folders under one Outlook parent folder.
+    """
+
+    stored_connection = _prepare_outlook_connection_for_api_read(
+        microsoft_user_id=microsoft_user_id
+    )
+    if isinstance(stored_connection, JSONResponse):
+        return stored_connection
+
+    folder_result = _perform_outlook_read_with_refresh_retry(
+        microsoft_user_id=microsoft_user_id,
+        stored_connection=stored_connection,
+        read_callable=lambda *, access_token: fetch_outlook_child_mail_folders(
+            access_token=access_token,
+            parent_folder_id=parent_folder_id,
+            mailbox=mailbox,
+            limit=limit,
+        ),
+        provider_failure_message="Outlook child mail-folder read failed.",
     )
     if isinstance(folder_result, JSONResponse):
         return folder_result

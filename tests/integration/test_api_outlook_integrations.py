@@ -33,6 +33,9 @@ OUTLOOK_CURRENT_USER_PATH_TEMPLATE = (
 OUTLOOK_MAIL_FOLDERS_PATH_TEMPLATE = (
     "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders"
 )
+OUTLOOK_CHILD_MAIL_FOLDERS_PATH_TEMPLATE = (
+    "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/mail-folders/{parent_folder_id}/child-folders"
+)
 OUTLOOK_MESSAGES_PATH_TEMPLATE = (
     "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages"
 )
@@ -488,6 +491,59 @@ def test_outlook_messages_returns_preview_successfully() -> None:
         folder_id="Inbox",
         mailbox=None,
         limit=25,
+    )
+
+
+def test_outlook_child_mail_folders_returns_preview_successfully() -> None:
+    """Verify that the child-mail-folders route returns a first-page folder preview."""
+
+    client = TestClient(create_app())
+
+    fake_connection = {
+        "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "access_token": "microsoft-access-token",
+        "refresh_token": "microsoft-refresh-token",
+        "obtained_at": datetime.now(timezone.utc),
+        "expires_in_seconds": 3600,
+    }
+    fake_child_folders = {
+        "mailbox": None,
+        "folder_count": 1,
+        "folders": [
+            {
+                "id": "child-1",
+                "displayName": "### DOMINIQUE FOLDER",
+                "childFolderCount": 4,
+            }
+        ],
+        "raw_payload": {},
+        "endpoint_url": "https://graph.microsoft.com/v1.0/me/mailFolders/parent-1/childFolders?$top=200",
+    }
+
+    with patch(
+        "backend.api.v1.integrations.get_outlook_oauth_connection",
+        return_value=fake_connection,
+    ):
+        with patch(
+            "backend.api.v1.integrations.fetch_outlook_child_mail_folders",
+            return_value=fake_child_folders,
+        ) as mock_fetch_child_folders:
+            response = client.get(
+                OUTLOOK_CHILD_MAIL_FOLDERS_PATH_TEMPLATE.format(
+                    microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    parent_folder_id="parent-1",
+                )
+            )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    assert payload["folder_count"] == 1
+    assert payload["folders"][0]["displayName"] == "### DOMINIQUE FOLDER"
+    mock_fetch_child_folders.assert_called_once_with(
+        access_token="microsoft-access-token",
+        parent_folder_id="parent-1",
+        mailbox=None,
+        limit=200,
     )
 
 
