@@ -143,6 +143,7 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
         "postgresql://ignored:ignored@localhost:5432/ignored",
     )
     monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
+    monkeypatch.setenv("ADMIN_API_TOKEN", "fake-admin-token")
     monkeypatch.setenv("JOBADDER_CLIENT_ID", "fake-jobadder-client-id")
     monkeypatch.setenv("JOBADDER_CLIENT_SECRET", "fake-jobadder-client-secret")
     monkeypatch.setenv(
@@ -166,6 +167,7 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.debug is True
     assert settings.postgres_url == "postgresql://user:pass@localhost:5432/jja"
     assert settings.make_api_token == "fake-make-token"
+    assert settings.admin_api_token == "fake-admin-token"
     assert settings.openai_api_key == "sk-test-openai-key"
     assert settings.openrouter_api_key == "sk-test-openrouter-key"
     assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"
@@ -223,6 +225,22 @@ def test_make_api_token_defaults_to_empty_string(monkeypatch) -> None:
     settings = get_settings()
 
     assert settings.make_api_token == ""
+
+    get_settings.cache_clear()
+
+
+def test_admin_api_token_defaults_to_empty_string(monkeypatch) -> None:
+    """Verify that the dedicated admin token can safely remain unset."""
+
+    get_settings.cache_clear()
+
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
+    monkeypatch.setenv("INTERNAL_ADMIN_API_TOKEN", "")
+    monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
+
+    settings = get_settings()
+
+    assert settings.admin_api_token == ""
 
     get_settings.cache_clear()
 

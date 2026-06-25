@@ -215,6 +215,8 @@ class Settings(BaseSettings):
         POSTGRES_URL_NON_POOLING
         POSTGRES_URL
         MAKE_API_TOKEN
+        ADMIN_API_TOKEN
+        INTERNAL_ADMIN_API_TOKEN
         JOBADDER_CLIENT_ID
         JOBADDER_CLIENT_SECRET
         JOBADDER_REDIRECT_URI
@@ -332,6 +334,19 @@ class Settings(BaseSettings):
     make_api_token: str = Field(
         default="",
         validation_alias="MAKE_API_TOKEN",
+    )
+
+    # Shared token for protected internal/admin backend actions.
+    #   - Prefer a dedicated admin token when present.
+    #   - Fall back to `MAKE_API_TOKEN` so existing protected environments can
+    #     exercise the narrow admin routes without requiring an immediate second
+    #     secret rollout.
+    admin_api_token: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "ADMIN_API_TOKEN",
+            "INTERNAL_ADMIN_API_TOKEN",
+        ),
     )
 
     # OAuth client ID for the JobAdder developer application.

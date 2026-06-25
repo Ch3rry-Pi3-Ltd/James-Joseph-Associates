@@ -68,7 +68,9 @@ Target a delegated mailbox explicitly:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
+from pathlib import PurePosixPath
 from pathlib import Path
 import sys
 from typing import Any
@@ -112,7 +114,7 @@ DEFAULT_MICROSOFT_USER_ID = "b4dd6a5f-8e27-4745-9369-e117121382ed"
 DEFAULT_FOLDER_PATH = ["Inbox", "# ADV-CVR", "### DOMINIQUE FOLDER", "tw394"]
 DEFAULT_MESSAGE_LIMIT = 10
 DEFAULT_ATTACHMENT_LIMIT = 10
-DEFAULT_DROPBOX_EXPORT_FOLDER = "/+++ Outlook Email CV Export"
+DEFAULT_DROPBOX_EXPORT_FOLDER = "/+++ Outlook CV Export"
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -180,7 +182,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dropbox-export-folder",
         default=DEFAULT_DROPBOX_EXPORT_FOLDER,
-        help="Optional Dropbox folder path to receive exported email CV files.",
+        help=(
+            "Optional Dropbox base folder path to receive exported Outlook CV "
+            "files. Year and quarter subfolders are appended automatically."
+        ),
     )
     return parser
 
@@ -564,12 +569,14 @@ def run_outlook_folder_ingest(
                     and isinstance(dropbox_export_folder, str)
                     and dropbox_export_folder.strip() != ""
                 ):
+                    dropbox_export_path = _build_outlook_dropbox_export_path(
+                        base_folder=dropbox_export_folder,
+                        received_at=message.get("receivedDateTime"),
+                        file_name=attachment_download.get("file_name"),
+                    )
                     dropbox_export_result = upload_dropbox_file(
                         access_token=dropbox_access_token,
-                        path=(
-                            f"{dropbox_export_folder.rstrip('/')}/"
-                            f"{attachment_download.get('file_name')}"
-                        ),
+                        path=dropbox_export_path,
                         content_bytes=attachment_download["content_bytes"],
                         timeout_seconds=120.0,
                         autorename=True,
@@ -680,6 +687,49 @@ def _match_folder_by_display_name(
         ):
             return folder
     return None
+
+
+def _build_outlook_dropbox_export_path(
+    *,
+    base_folder: str,
+    received_at: Any,
+    file_name: Any,
+) -> str:
+    """
+    Build the Dropbox export path for one Outlook CV using year/quarter buckets.
+    """
+
+    cleaned_base_folder = str(base_folder).strip().rstrip("/")
+    if cleaned_base_folder == "":
+        raise RuntimeError("Dropbox export base folder cannot be empty.")
+
+    cleaned_file_name = str(file_name).strip() if isinstance(file_name, str) else ""
+    if cleaned_file_name == "":
+        raise RuntimeError("Dropbox export file name cannot be empty.")
+
+    dated_subfolder = _derive_outlook_export_date_subfolder(received_at)
+    return str(PurePosixPath(cleaned_base_folder) / dated_subfolder / cleaned_file_name)
+
+
+def _derive_outlook_export_date_subfolder(received_at: Any) -> str:
+    """
+    Return `YYYY/QN` from one Outlook `receivedDateTime` value when possible.
+    """
+
+    if not isinstance(received_at, str) or received_at.strip() == "":
+        return "unknown-date"
+
+    normalized_value = received_at.strip()
+    if normalized_value.endswith("Z"):
+        normalized_value = normalized_value[:-1] + "+00:00"
+
+    try:
+        parsed_value = datetime.fromisoformat(normalized_value)
+    except ValueError:
+        return "unknown-date"
+
+    quarter = ((parsed_value.month - 1) // 3) + 1
+    return f"{parsed_value.year}/Q{quarter}"
 
 
 def _make_json_safe_value(value: Any) -> Any:

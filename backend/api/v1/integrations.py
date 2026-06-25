@@ -75,7 +75,7 @@ from zipfile import BadZipFile, ZipFile
 from dataclasses import replace
 from typing import Any
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, Request, status
 from fastapi.responses import JSONResponse
 
 from backend.db.jobadder_oauth import (
@@ -115,12 +115,16 @@ from backend.schemas.integrations import (
     JobAdderOAuthConnectionSavedResponse,
     OutlookAuthorizationUrlResponse,
     OutlookCurrentUserResponse,
+    OutlookFolderIngestRunRequest,
+    OutlookFolderIngestRunResponse,
     OutlookMailFoldersResponse,
     OutlookMessageAttachmentDownloadProofResponse,
     OutlookMessageAttachmentsResponse,
     OutlookMessagesResponse,
     OutlookOAuthConnectionSavedResponse,
 )
+from backend.core.security import check_request_bearer_token
+from backend.settings import get_settings
 from backend.services.dropbox_api import (
     DropboxApiError,
     download_dropbox_file,
@@ -180,6 +184,14 @@ from backend.services.jobadder_oauth import (
     has_jobadder_token_exchange_configuration,
     is_jobadder_access_token_expired,
     refresh_jobadder_access_token,
+)
+from scripts.persist_outlook_tw394_folder import (
+    load_ready_outlook_connection,
+    resolve_outlook_folder_path,
+    run_outlook_folder_ingest,
+)
+from scripts.persist_recruiterflow_initial_chunks import (
+    _load_dropbox_connection,
 )
 
 
@@ -274,6 +286,58 @@ def build_error_response(
         status_code=status_code,
         content=error_response.model_dump(),
     )
+
+
+def _authorize_admin_request(request: Request) -> JSONResponse | None:
+    """
+    Validate the shared bearer token for narrow protected admin routes.
+
+    Notes
+    -----
+    - Prefer `ADMIN_API_TOKEN` / `INTERNAL_ADMIN_API_TOKEN`.
+    - Fall back to `MAKE_API_TOKEN` through settings so already-configured
+      environments can exercise the route immediately.
+    """
+
+    settings = get_settings()
+    expected_token = getattr(settings, "admin_api_token", "")
+    if not isinstance(expected_token, str) or expected_token.strip() == "":
+        expected_token = getattr(settings, "make_api_token", "")
+
+    if not isinstance(expected_token, str) or expected_token.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Admin API bearer token is not configured.",
+        )
+
+    auth_result = check_request_bearer_token(
+        request=request,
+        expected_token=expected_token,
+    )
+    if auth_result.is_authorised:
+        return None
+
+    return build_error_response(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        code="unauthorized",
+        message="Valid admin bearer credentials were not provided.",
+    )
+
+
+def _normalize_outlook_folder_segments(folder_segments: list[str]) -> list[str]:
+    """
+    Normalize one Outlook folder path list from the protected ingest request.
+    """
+
+    normalized_segments = [
+        segment.strip()
+        for segment in folder_segments
+        if isinstance(segment, str) and segment.strip() != ""
+    ]
+    if not normalized_segments:
+        raise ValueError("At least one non-empty Outlook folder segment is required.")
+    return normalized_segments
 
 
 def _refresh_jobadder_stored_connection(
@@ -4424,6 +4488,87 @@ def get_outlook_message_attachments_route(
         message_id=message_id,
         attachment_count=attachment_result["attachment_count"],
         attachments=attachment_result["attachments"],
+    )
+
+
+@router.post(
+    "/outlook/admin/folder-ingest",
+    response_model=OutlookFolderIngestRunResponse,
+    responses={
+        400: {"model": ApiErrorResponse, "description": "Request validation failed."},
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Outlook or Dropbox integration call failed."},
+    },
+)
+def run_outlook_folder_ingest_route(
+    request: Request,
+    payload: OutlookFolderIngestRunRequest,
+) -> OutlookFolderIngestRunResponse | JSONResponse:
+    """
+    Run one tightly bounded protected Outlook folder-ingest slice.
+
+    Notes
+    -----
+    - This route is intended for controlled operator/admin use.
+    - It is deliberately capped for small production test batches.
+    - It is not the final mailbox-scale backfill worker.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    try:
+        folder_segments = _normalize_outlook_folder_segments(payload.folder_segments)
+    except ValueError as exc:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="bad_request",
+            message=str(exc),
+        )
+
+    try:
+        stored_connection = load_ready_outlook_connection(
+            microsoft_user_id=payload.microsoft_user_id,
+        )
+        dropbox_connection = _load_dropbox_connection(payload.dropbox_account_id)
+        access_token = stored_connection["access_token"]
+        dropbox_access_token = dropbox_connection["access_token"]
+        assert isinstance(access_token, str)
+        assert isinstance(dropbox_access_token, str)
+
+        resolved_folder = resolve_outlook_folder_path(
+            access_token=access_token,
+            mailbox=payload.mailbox,
+            folder_segments=folder_segments,
+        )
+        ingest_report = run_outlook_folder_ingest(
+            access_token=access_token,
+            microsoft_user_id=payload.microsoft_user_id,
+            mailbox=payload.mailbox,
+            folder_path=folder_segments,
+            folder_id=resolved_folder["folder_id"],
+            message_limit=payload.message_limit,
+            attachment_limit=payload.attachment_limit,
+            dropbox_access_token=dropbox_access_token,
+            dropbox_export_folder=payload.dropbox_export_folder,
+        )
+    except (DropboxApiError, OutlookApiError, RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_failed",
+            message="Protected Outlook folder ingest failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return OutlookFolderIngestRunResponse(
+        status="completed",
+        message=(
+            "Protected Outlook folder ingest completed. Review the bounded "
+            "run report before widening the batch."
+        ),
+        resolved_folder=resolved_folder,
+        ingest_report=ingest_report,
     )
 
 

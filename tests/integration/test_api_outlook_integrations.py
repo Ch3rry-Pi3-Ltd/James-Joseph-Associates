@@ -42,6 +42,7 @@ OUTLOOK_ATTACHMENTS_PATH_TEMPLATE = (
 OUTLOOK_ATTACHMENT_DOWNLOAD_PROOF_PATH_TEMPLATE = (
     "/api/v1/integrations/outlook/accounts/{microsoft_user_id}/messages/{message_id}/attachments/{attachment_id}/download-proof"
 )
+OUTLOOK_ADMIN_FOLDER_INGEST_PATH = "/api/v1/integrations/outlook/admin/folder-ingest"
 
 
 @pytest.fixture(autouse=True)
@@ -245,6 +246,109 @@ def test_outlook_callback_returns_bad_gateway_when_token_exchange_fails(
     payload = response.json()
     assert payload["error"]["code"] == "approval_required"
     assert payload["error"]["message"] == "Outlook token exchange failed."
+
+
+def test_outlook_admin_folder_ingest_requires_valid_bearer_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify that the protected Outlook folder-ingest route rejects missing auth."""
+
+    monkeypatch.setenv("MAKE_API_TOKEN", "test-admin-token")
+    client = create_test_client(monkeypatch)
+
+    response = client.post(
+        OUTLOOK_ADMIN_FOLDER_INGEST_PATH,
+        json={
+            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "folder_segments": ["Inbox", "CVs"],
+        },
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    payload = response.json()
+    assert payload["error"]["code"] == "unauthorized"
+
+
+def test_outlook_admin_folder_ingest_runs_bounded_slice_successfully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify that the protected Outlook folder-ingest route delegates to the bounded runner."""
+
+    monkeypatch.setenv("MAKE_API_TOKEN", "test-admin-token")
+    client = create_test_client(monkeypatch)
+
+    fake_stored_connection = {"access_token": "microsoft-access-token"}
+    fake_dropbox_connection = {"access_token": "dropbox-access-token"}
+    fake_resolved_folder = {
+        "folder_id": "folder-123",
+        "folder": {"id": "folder-123", "displayName": "tw396"},
+        "resolved_path": ["Inbox", "CVs", "tw396"],
+        "resolved_folders": [],
+    }
+    fake_ingest_report = {
+        "message_count_scanned": 5,
+        "ingested_count": 2,
+        "skipped_count": 1,
+        "failed_count": 0,
+        "ingested_items": [],
+        "skipped_items": [],
+        "failed_items": [],
+    }
+
+    with patch(
+        "backend.api.v1.integrations.load_ready_outlook_connection",
+        return_value=fake_stored_connection,
+    ) as mock_load_connection:
+        with patch(
+            "backend.api.v1.integrations._load_dropbox_connection",
+            return_value=fake_dropbox_connection,
+        ) as mock_load_dropbox:
+            with patch(
+                "backend.api.v1.integrations.resolve_outlook_folder_path",
+                return_value=fake_resolved_folder,
+            ) as mock_resolve_folder:
+                with patch(
+                    "backend.api.v1.integrations.run_outlook_folder_ingest",
+                    return_value=fake_ingest_report,
+                ) as mock_run_ingest:
+                    response = client.post(
+                        OUTLOOK_ADMIN_FOLDER_INGEST_PATH,
+                        headers={"Authorization": "Bearer test-admin-token"},
+                        json={
+                            "microsoft_user_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                            "folder_segments": ["Inbox", "CVs", "tw396"],
+                            "mailbox": "recruitment@example.com",
+                            "message_limit": 5,
+                            "attachment_limit": 2,
+                            "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
+                            "dropbox_export_folder": "/+++ Outlook CV Export",
+                        },
+                    )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    assert payload["status"] == "completed"
+    assert payload["ingest_report"]["ingested_count"] == 2
+    mock_load_connection.assert_called_once_with(
+        microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    )
+    mock_load_dropbox.assert_called_once_with("dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0")
+    mock_resolve_folder.assert_called_once_with(
+        access_token="microsoft-access-token",
+        mailbox="recruitment@example.com",
+        folder_segments=["Inbox", "CVs", "tw396"],
+    )
+    mock_run_ingest.assert_called_once_with(
+        access_token="microsoft-access-token",
+        microsoft_user_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        mailbox="recruitment@example.com",
+        folder_path=["Inbox", "CVs", "tw396"],
+        folder_id="folder-123",
+        message_limit=5,
+        attachment_limit=2,
+        dropbox_access_token="dropbox-access-token",
+        dropbox_export_folder="/+++ Outlook CV Export",
+    )
 
 
 def test_outlook_current_user_returns_user_successfully() -> None:
