@@ -249,56 +249,85 @@ def run_outlook_cv_attachment_export(
                     }
                 )
                 continue
-
-            detection_result = score_resume_likeness(
-                file_name=attachment_download.get("file_name"),
-                content_type=attachment_download.get("content_type"),
-                cleaned_text=cleaned_text,
-            )
-            base_item = {
-                "message_id": message_id,
-                "attachment_id": attachment_id,
-                "message_subject": message.get("subject"),
-                "file_name": attachment_download.get("file_name"),
-                "content_type": attachment_download.get("content_type"),
-                "byte_count": len(attachment_download["content_bytes"]),
-                "character_count": len(cleaned_text),
-                "heuristic": detection_result,
-            }
-
-            if not detection_result["is_resume_like"]:
-                non_resume_items.append(base_item)
+            except Exception as exc:
+                failed_items.append(
+                    {
+                        "stage": "attachment_processing",
+                        "message_id": message_id,
+                        "attachment_id": attachment_id,
+                        "message_subject": message.get("subject"),
+                        "file_name": attachment.get("name"),
+                        "content_type": attachment.get("contentType"),
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    }
+                )
                 continue
 
-            detected_resume_count += 1
-
-            dropbox_export_path = None
-            if (
-                not dry_run
-                and isinstance(dropbox_access_token, str)
-                and dropbox_access_token.strip() != ""
-                and isinstance(dropbox_export_folder, str)
-                and dropbox_export_folder.strip() != ""
-            ):
-                dropbox_export_path = _build_outlook_dropbox_export_path(
-                    base_folder=dropbox_export_folder,
-                    received_at=message.get("receivedDateTime"),
+            try:
+                detection_result = score_resume_likeness(
                     file_name=attachment_download.get("file_name"),
+                    content_type=attachment_download.get("content_type"),
+                    cleaned_text=cleaned_text,
                 )
-                upload_dropbox_file(
-                    access_token=dropbox_access_token,
-                    path=dropbox_export_path,
-                    content_bytes=attachment_download["content_bytes"],
-                    timeout_seconds=120.0,
-                    autorename=True,
-                )
-
-            exported_items.append(
-                {
-                    **base_item,
-                    "dropbox_export_path": dropbox_export_path,
+                base_item = {
+                    "message_id": message_id,
+                    "attachment_id": attachment_id,
+                    "message_subject": message.get("subject"),
+                    "file_name": attachment_download.get("file_name"),
+                    "content_type": attachment_download.get("content_type"),
+                    "byte_count": len(attachment_download["content_bytes"]),
+                    "character_count": len(cleaned_text),
+                    "heuristic": detection_result,
                 }
-            )
+
+                if not detection_result["is_resume_like"]:
+                    non_resume_items.append(base_item)
+                    continue
+
+                detected_resume_count += 1
+
+                dropbox_export_path = None
+                if (
+                    not dry_run
+                    and isinstance(dropbox_access_token, str)
+                    and dropbox_access_token.strip() != ""
+                    and isinstance(dropbox_export_folder, str)
+                    and dropbox_export_folder.strip() != ""
+                ):
+                    dropbox_export_path = _build_outlook_dropbox_export_path(
+                        base_folder=dropbox_export_folder,
+                        received_at=message.get("receivedDateTime"),
+                        file_name=attachment_download.get("file_name"),
+                    )
+                    upload_dropbox_file(
+                        access_token=dropbox_access_token,
+                        path=dropbox_export_path,
+                        content_bytes=attachment_download["content_bytes"],
+                        timeout_seconds=120.0,
+                        autorename=True,
+                    )
+
+                exported_items.append(
+                    {
+                        **base_item,
+                        "dropbox_export_path": dropbox_export_path,
+                    }
+                )
+            except Exception as exc:
+                failed_items.append(
+                    {
+                        "stage": "attachment_classification_or_export",
+                        "message_id": message_id,
+                        "attachment_id": attachment_id,
+                        "message_subject": message.get("subject"),
+                        "file_name": attachment_download.get("file_name"),
+                        "content_type": attachment_download.get("content_type"),
+                        "error_type": exc.__class__.__name__,
+                        "message": str(exc),
+                    }
+                )
+                continue
 
     return {
         "mailbox": mailbox,
