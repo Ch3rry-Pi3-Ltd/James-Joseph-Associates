@@ -73,6 +73,7 @@ import json
 from io import BytesIO
 from zipfile import BadZipFile, ZipFile
 from dataclasses import replace
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Query, Request, status
@@ -4367,6 +4368,14 @@ def get_outlook_messages_route(
         le=200,
         description="Maximum number of messages to request in the first page.",
     ),
+    received_from: datetime | None = Query(
+        default=None,
+        description="Optional lower bound for Outlook receivedDateTime filtering.",
+    ),
+    received_to: datetime | None = Query(
+        default=None,
+        description="Optional upper bound for Outlook receivedDateTime filtering.",
+    ),
 ) -> OutlookMessagesResponse | JSONResponse:
     """
     Return a first-page preview of messages in one Outlook mail folder.
@@ -4392,6 +4401,8 @@ def get_outlook_messages_route(
             folder_id=folder_id,
             mailbox=mailbox,
             limit=limit,
+            received_from=received_from,
+            received_to=received_to,
         ),
         provider_failure_message="Outlook message-list read failed.",
     )
@@ -4694,6 +4705,8 @@ def run_outlook_cv_attachment_export_route(
             attachment_limit=payload.attachment_limit,
             dropbox_access_token=dropbox_access_token,
             dropbox_export_folder=payload.dropbox_export_folder,
+            received_from=payload.received_from,
+            received_to=payload.received_to,
             dry_run=payload.dry_run,
         )
     except (DropboxApiError, OutlookApiError, RuntimeError, ValueError) as exc:

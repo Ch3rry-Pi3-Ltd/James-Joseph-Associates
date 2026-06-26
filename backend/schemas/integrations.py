@@ -45,6 +45,7 @@ In plain language:
 - it only defines typed response shapes
 """
 
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -213,15 +214,25 @@ class OutlookCvAttachmentExportRequest(BaseModel):
     message_limit: int = Field(
         default=10,
         ge=1,
-        le=25,
+        le=100,
         description="Maximum number of Outlook messages to scan in this bounded run.",
     )
 
     attachment_limit: int = Field(
         default=10,
         ge=1,
-        le=25,
+        le=100,
         description="Maximum number of CV-like attachments to export in this bounded run.",
+    )
+
+    received_from: datetime | None = Field(
+        default=None,
+        description="Optional lower bound for Outlook receivedDateTime filtering.",
+    )
+
+    received_to: datetime | None = Field(
+        default=None,
+        description="Optional upper bound for Outlook receivedDateTime filtering.",
     )
 
     dropbox_account_id: str = Field(

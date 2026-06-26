@@ -41,6 +41,7 @@ In plain language:
 - it only performs authenticated Microsoft Graph reads
 """
 
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 import base64
@@ -242,6 +243,8 @@ def fetch_outlook_messages(
     folder_id: str,
     mailbox: str | None = None,
     limit: int = 25,
+    received_from: datetime | None = None,
+    received_to: datetime | None = None,
 ) -> dict[str, Any]:
     """
     Fetch a first-page preview of messages in one Outlook mail folder.
@@ -262,18 +265,38 @@ def fetch_outlook_messages(
     if not isinstance(folder_id, str) or folder_id.strip() == "":
         raise OutlookApiError("Outlook folder_id cannot be empty.")
 
+    if (
+        isinstance(received_from, datetime)
+        and isinstance(received_to, datetime)
+        and received_from > received_to
+    ):
+        raise OutlookApiError(
+            "Outlook received_from cannot be later than received_to."
+        )
+
     # Request only the message fields needed for early CV-ingestion discovery.
     # That keeps preview reads small while still exposing the identifiers and
     # attachment signal we need for follow-on attachment fetches.
-    query = urlencode(
-        {
-            "$top": limit,
-            "$select": (
-                "id,subject,receivedDateTime,from,hasAttachments,"
-                "internetMessageId,conversationId"
-            ),
-        }
-    )
+    query_params: dict[str, Any] = {
+        "$top": limit,
+        "$select": (
+            "id,subject,receivedDateTime,from,hasAttachments,"
+            "internetMessageId,conversationId"
+        ),
+        "$orderby": "receivedDateTime desc",
+    }
+    filter_parts: list[str] = []
+    if isinstance(received_from, datetime):
+        filter_parts.append(
+            f"receivedDateTime ge {_format_graph_datetime(received_from)}"
+        )
+    if isinstance(received_to, datetime):
+        filter_parts.append(
+            f"receivedDateTime le {_format_graph_datetime(received_to)}"
+        )
+    if filter_parts:
+        query_params["$filter"] = " and ".join(filter_parts)
+    query = urlencode(query_params)
     endpoint_url = (
         f"{_mailbox_base_path(mailbox=mailbox)}/mailFolders/{folder_id}/messages?{query}"
     )
@@ -291,11 +314,29 @@ def fetch_outlook_messages(
     return {
         "mailbox": mailbox,
         "folder_id": folder_id,
+        "received_from": _format_graph_datetime(received_from)
+        if isinstance(received_from, datetime)
+        else None,
+        "received_to": _format_graph_datetime(received_to)
+        if isinstance(received_to, datetime)
+        else None,
         "message_count": len(messages),
         "messages": messages,
         "raw_payload": payload,
         "endpoint_url": endpoint_url,
     }
+
+
+def _format_graph_datetime(value: datetime) -> str:
+    """
+    Format one Python datetime into a Graph-safe ISO-8601 timestamp.
+    """
+
+    if value.tzinfo is None:
+        return value.isoformat(timespec="seconds") + "Z"
+
+    normalized_value = value.astimezone(timezone.utc)
+    return normalized_value.isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def fetch_outlook_message_attachments(

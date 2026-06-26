@@ -407,6 +407,8 @@ def test_outlook_admin_cv_export_runs_bounded_slice_successfully(
                             "folder_segments": ["Inbox"],
                             "message_limit": 10,
                             "attachment_limit": 10,
+                            "received_from": "2026-05-25T00:00:00Z",
+                            "received_to": "2026-06-25T23:59:59Z",
                             "dropbox_account_id": "dbid:AAD6tG3lvKRz-MJoBoYeedYkauD7t5D4IB0",
                             "dropbox_export_folder": "/+++ Outlook CV Export",
                             "dry_run": True,
@@ -435,6 +437,8 @@ def test_outlook_admin_cv_export_runs_bounded_slice_successfully(
         attachment_limit=10,
         dropbox_access_token=None,
         dropbox_export_folder="/+++ Outlook CV Export",
+        received_from=datetime(2026, 5, 25, 0, 0, tzinfo=timezone.utc),
+        received_to=datetime(2026, 6, 25, 23, 59, 59, tzinfo=timezone.utc),
         dry_run=True,
     )
 
@@ -576,6 +580,8 @@ def test_outlook_messages_returns_preview_successfully() -> None:
         folder_id="Inbox",
         mailbox=None,
         limit=25,
+        received_from=None,
+        received_to=None,
     )
 
 

@@ -18,6 +18,7 @@ Instead it uses:
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any
 
 from backend.services.dropbox_api import upload_dropbox_file
@@ -51,12 +52,35 @@ POSITIVE_SECTION_TERMS = (
     "profile",
 )
 NEGATIVE_DOCUMENT_TERMS = (
+    "agreement",
+    "services agreement",
+    "recruitment services agreement",
+    "agency terms",
+    "countersigned",
     "invoice",
     "receipt",
+    "statement",
+    "energy statement",
+    "billing statement",
+    "account statement",
+    "bank statement",
     "quote",
     "proposal",
     "purchase order",
     "timesheet",
+    "account number",
+    "balance",
+    "payment due",
+    "payment date",
+    "meter reading",
+    "meter number",
+    "tariff",
+    "direct debit",
+    "opening balance",
+    "closing balance",
+    "unit rate",
+    "standing charge",
+    "usage summary",
     "job description",
     "job spec",
     "brochure",
@@ -79,6 +103,8 @@ def run_outlook_cv_attachment_export(
     attachment_limit: int,
     dropbox_access_token: str | None,
     dropbox_export_folder: str | None,
+    received_from: datetime | None = None,
+    received_to: datetime | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """
@@ -90,6 +116,8 @@ def run_outlook_cv_attachment_export(
         folder_id=folder_id,
         mailbox=mailbox,
         limit=message_limit,
+        received_from=received_from,
+        received_to=received_to,
     )
     messages = messages_result.get("messages", [])
 
@@ -278,6 +306,8 @@ def run_outlook_cv_attachment_export(
         "folder_path": folder_path,
         "message_limit": message_limit,
         "attachment_limit": attachment_limit,
+        "received_from": messages_result.get("received_from"),
+        "received_to": messages_result.get("received_to"),
         "dry_run": dry_run,
         "message_count_scanned": len(messages),
         "messages_with_attachments": messages_with_attachments,
@@ -382,7 +412,8 @@ def score_resume_likeness(
         score += 2
         positive_signals.append("phone_present")
 
-    if LINKEDIN_REGEX.search(normalized_text):
+    linkedin_present = LINKEDIN_REGEX.search(normalized_text) is not None
+    if linkedin_present:
         score += 1
         positive_signals.append("linkedin_present")
 
@@ -399,12 +430,32 @@ def score_resume_likeness(
         score -= min(len(negative_hits) * 2, 6)
         negative_signals.extend(negative_hits)
 
-    strong_structure_signal = (
+    personal_identity_signal = (
         email_count >= 1
         or phone_count >= 1
-        or len(section_hits) >= 2
+        or linkedin_present
+        or "resume_like_filename" in positive_signals
     )
-    is_resume_like = score >= 5 and strong_structure_signal
+    career_structure_signal = len(section_hits) >= 2 or year_count >= 2
+    strong_negative_document_signal = (
+        len(negative_hits) >= 3
+        and not linkedin_present
+        and "resume_like_filename" not in positive_signals
+    )
+    transactional_document_signal = (
+        (
+            len(negative_hits) >= 2
+            and len(section_hits) == 0
+            and "resume_like_filename" not in positive_signals
+        )
+        or strong_negative_document_signal
+    )
+    is_resume_like = (
+        score >= 5
+        and personal_identity_signal
+        and career_structure_signal
+        and not transactional_document_signal
+    )
 
     return {
         "score": score,
@@ -413,6 +464,9 @@ def score_resume_likeness(
         "phone_count": phone_count,
         "year_count": year_count,
         "section_hits": section_hits,
+        "personal_identity_signal": personal_identity_signal,
+        "career_structure_signal": career_structure_signal,
+        "transactional_document_signal": transactional_document_signal,
         "positive_signals": positive_signals,
         "negative_signals": negative_signals,
     }

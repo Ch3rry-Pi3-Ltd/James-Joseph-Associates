@@ -95,3 +95,94 @@ def test_score_resume_likeness_rejects_non_cv_business_document() -> None:
 
     assert result["is_resume_like"] is False
     assert len(result["negative_signals"]) >= 1
+
+
+def test_score_resume_likeness_rejects_generic_long_pdf_without_personal_signals() -> None:
+    """Verify that handbook-like PDFs do not pass purely on structure and length."""
+
+    cleaned_text = """
+    Asana Help Articles
+
+    Education
+    Certifications
+    Projects
+
+    2021 Product updates
+    2022 Workflow changes
+    2023 Admin improvements
+    2024 Enterprise rollout
+
+    This document explains how teams should use tasks, projects, and reporting
+    workflows across the business. It contains a large amount of descriptive
+    platform guidance but no candidate contact details or personal profile.
+    """ * 20
+
+    result = score_resume_likeness(
+        file_name="asana help articles.pdf",
+        content_type="application/pdf",
+        cleaned_text=cleaned_text,
+    )
+
+    assert result["is_resume_like"] is False
+    assert result["career_structure_signal"] is True
+    assert result["personal_identity_signal"] is False
+
+
+def test_score_resume_likeness_rejects_energy_statement() -> None:
+    """Verify that transactional household PDFs do not pass as resumes."""
+
+    cleaned_text = """
+    Octopus Energy Statement
+    Account number: 12345678
+    Opening balance: 120.44
+    Closing balance: 95.10
+    Payment due: 2026-06-23
+    Meter reading
+    Tariff
+    Standing charge
+    Unit rate
+    Direct debit
+    Usage summary
+    Contact us at support@example.com
+    020 7000 1234
+    2024 2025 2026
+    """ * 8
+
+    result = score_resume_likeness(
+        file_name="octopus-energy-statement-2026-06-23.pdf",
+        content_type="application/pdf",
+        cleaned_text=cleaned_text,
+    )
+
+    assert result["is_resume_like"] is False
+    assert "statement" in result["negative_signals"]
+
+
+def test_score_resume_likeness_rejects_recruitment_services_agreement() -> None:
+    """Verify that agency terms paperwork does not pass as a CV."""
+
+    cleaned_text = """
+    James Joseph Associates
+    Recruitment Services Agreement in respect of Fixed Term and Permanent Staff
+    Agency Terms
+    This agreement sets out the services, fees, notice periods, and
+    responsibilities of both parties.
+    Contact: operations@example.com
+    Telephone: 020 7000 1234
+    Employment business regulations 2023
+    Candidate experience requirements and skills definitions may be referenced
+    in the agreement text, but this is not a resume.
+    Terms and conditions apply.
+    """ * 10
+
+    result = score_resume_likeness(
+        file_name=(
+            "James Joseph Associates - IQUW Recruitment Services Agreement in "
+            "respect of Fixed Term and Permanent Staff.pdf"
+        ),
+        content_type="application/pdf",
+        cleaned_text=cleaned_text,
+    )
+
+    assert result["is_resume_like"] is False
+    assert "agreement" in result["negative_signals"]
