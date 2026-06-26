@@ -26,6 +26,7 @@ from backend.services.outlook_api import (
     OutlookApiError,
     download_outlook_message_file_attachment,
     fetch_outlook_child_mail_folders,
+    fetch_outlook_messages,
 )
 
 
@@ -171,3 +172,68 @@ def test_fetch_outlook_child_mail_folders_uses_child_folders_endpoint() -> None:
     assert result["parent_folder_id"] == "parent-123"
     assert result["folder_count"] == 2
     assert result["folders"][0]["displayName"] == "### DOMINIQUE FOLDER"
+
+
+def test_fetch_outlook_messages_follows_graph_next_link_until_window_exhausted() -> None:
+    """
+    Verify that message reads paginate through the full bounded window.
+
+    Example
+    -------
+    A successful request should:
+
+    - hit the initial folder messages endpoint
+    - follow `@odata.nextLink`
+    - return one combined message list
+    """
+
+    captured_urls: list[str] = []
+
+    def fake_get(url, **kwargs):
+        captured_urls.append(url)
+        if len(captured_urls) == 1:
+            return httpx.Response(
+                200,
+                json={
+                    "value": [
+                        {"id": "msg-1", "subject": "First", "hasAttachments": False},
+                        {"id": "msg-2", "subject": "Second", "hasAttachments": True},
+                    ],
+                    "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/messages?page=2",
+                },
+            )
+
+        return httpx.Response(
+            200,
+            json={
+                "value": [
+                    {"id": "msg-3", "subject": "Third", "hasAttachments": False},
+                ]
+            },
+        )
+
+    original_get = httpx.get
+    httpx.get = fake_get
+    try:
+        result = fetch_outlook_messages(
+            access_token="test-token",
+            folder_id="inbox-folder",
+            mailbox=None,
+            limit=100,
+        )
+    finally:
+        httpx.get = original_get
+
+    assert captured_urls[0] == (
+        f"{GRAPH_ME_URL}/mailFolders/inbox-folder/messages?"
+        "%24top=100&%24select=id%2Csubject%2CreceivedDateTime%2Cfrom%2ChasAttachments%2CinternetMessageId%2CconversationId&%24orderby=receivedDateTime+desc"
+    )
+    assert captured_urls[1] == "https://graph.microsoft.com/v1.0/me/messages?page=2"
+    assert result["message_page_size"] == 100
+    assert result["page_count"] == 2
+    assert result["message_count"] == 3
+    assert [message["id"] for message in result["messages"]] == [
+        "msg-1",
+        "msg-2",
+        "msg-3",
+    ]

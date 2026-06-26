@@ -215,7 +215,10 @@ class OutlookCvAttachmentExportRequest(BaseModel):
         default=10,
         ge=1,
         le=100,
-        description="Maximum number of Outlook messages to scan in this bounded run.",
+        description=(
+            "Per-page Outlook message batch size used while scanning the full "
+            "bounded date window."
+        ),
     )
 
     attachment_limit: int = Field(

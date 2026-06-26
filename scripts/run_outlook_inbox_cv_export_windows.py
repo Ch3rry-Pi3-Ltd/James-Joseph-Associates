@@ -93,7 +93,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--message-limit",
         type=int,
         default=100,
-        help="Maximum messages to scan per window.",
+        help="Per-page Outlook message batch size while scanning the full window.",
     )
     parser.add_argument(
         "--attachment-limit",

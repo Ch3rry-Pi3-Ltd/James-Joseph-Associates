@@ -247,7 +247,7 @@ def fetch_outlook_messages(
     received_to: datetime | None = None,
 ) -> dict[str, Any]:
     """
-    Fetch a first-page preview of messages in one Outlook mail folder.
+    Fetch the full bounded message slice from one Outlook mail folder.
 
     Example
     -------
@@ -265,6 +265,9 @@ def fetch_outlook_messages(
     if not isinstance(folder_id, str) or folder_id.strip() == "":
         raise OutlookApiError("Outlook folder_id cannot be empty.")
 
+    if limit <= 0:
+        raise OutlookApiError("Outlook message page size must be positive.")
+
     if (
         isinstance(received_from, datetime)
         and isinstance(received_to, datetime)
@@ -275,8 +278,8 @@ def fetch_outlook_messages(
         )
 
     # Request only the message fields needed for early CV-ingestion discovery.
-    # That keeps preview reads small while still exposing the identifiers and
-    # attachment signal we need for follow-on attachment fetches.
+    # `limit` here is the Graph page size, not the total number of messages we
+    # are willing to inspect in the bounded date window.
     query_params: dict[str, Any] = {
         "$top": limit,
         "$select": (
@@ -301,19 +304,46 @@ def fetch_outlook_messages(
         f"{_mailbox_base_path(mailbox=mailbox)}/mailFolders/{folder_id}/messages?{query}"
     )
 
-    payload = _get_from_graph(
-        endpoint_url=endpoint_url,
-        access_token=access_token,
-        provider_failure_message="Outlook message-list read failed.",
-    )
+    messages: list[dict[str, Any]] = []
+    page_count = 0
+    next_endpoint_url: str | None = endpoint_url
+    seen_next_links: set[str] = set()
+    last_payload: dict[str, Any] = {}
 
-    messages = payload.get("value")
-    if not isinstance(messages, list):
-        messages = []
+    while isinstance(next_endpoint_url, str) and next_endpoint_url.strip() != "":
+        if next_endpoint_url in seen_next_links:
+            raise OutlookApiError(
+                "Outlook message-list pagination returned a repeated nextLink.",
+                endpoint_url=next_endpoint_url,
+            )
+
+        seen_next_links.add(next_endpoint_url)
+        payload = _get_from_graph(
+            endpoint_url=next_endpoint_url,
+            access_token=access_token,
+            provider_failure_message="Outlook message-list read failed.",
+        )
+        last_payload = payload
+        page_count += 1
+
+        page_messages = payload.get("value")
+        if isinstance(page_messages, list):
+            messages.extend(
+                message for message in page_messages if isinstance(message, dict)
+            )
+
+        raw_next_link = payload.get("@odata.nextLink")
+        next_endpoint_url = (
+            raw_next_link.strip()
+            if isinstance(raw_next_link, str) and raw_next_link.strip() != ""
+            else None
+        )
 
     return {
         "mailbox": mailbox,
         "folder_id": folder_id,
+        "message_page_size": limit,
+        "page_count": page_count,
         "received_from": _format_graph_datetime(received_from)
         if isinstance(received_from, datetime)
         else None,
@@ -322,7 +352,7 @@ def fetch_outlook_messages(
         else None,
         "message_count": len(messages),
         "messages": messages,
-        "raw_payload": payload,
+        "raw_payload": last_payload,
         "endpoint_url": endpoint_url,
     }
 
