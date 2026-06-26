@@ -19,9 +19,14 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from pathlib import PurePosixPath
 from typing import Any
 
-from backend.services.dropbox_api import upload_dropbox_file
+from backend.services.dropbox_api import (
+    download_dropbox_file,
+    fetch_dropbox_file_metadata,
+    upload_dropbox_file,
+)
 from backend.services.outlook_api import (
     OutlookApiError,
     download_outlook_message_file_attachment,
@@ -300,12 +305,72 @@ def run_outlook_cv_attachment_export(
                         received_at=message.get("receivedDateTime"),
                         file_name=attachment_download.get("file_name"),
                     )
+                    existing_metadata = fetch_dropbox_file_metadata(
+                        access_token=dropbox_access_token,
+                        path=dropbox_export_path,
+                        timeout_seconds=60.0,
+                    )
+                    if existing_metadata is not None:
+                        existing_file = download_dropbox_file(
+                            access_token=dropbox_access_token,
+                            path=dropbox_export_path,
+                            timeout_seconds=120.0,
+                        )
+                        if (
+                            existing_file.get("content_bytes")
+                            == attachment_download["content_bytes"]
+                        ):
+                            skipped_items.append(
+                                {
+                                    "reason": "dropbox_export_path_already_contains_same_file",
+                                    "message_id": message_id,
+                                    "attachment_id": attachment_id,
+                                    "message_subject": message.get("subject"),
+                                    "file_name": attachment_download.get("file_name"),
+                                    "dropbox_export_path": dropbox_export_path,
+                                }
+                            )
+                            continue
+
+                        dropbox_export_path = _build_outlook_dropbox_collision_path(
+                            path=dropbox_export_path,
+                            message_id=message_id,
+                            attachment_id=attachment_id,
+                        )
+
+                        collision_metadata = fetch_dropbox_file_metadata(
+                            access_token=dropbox_access_token,
+                            path=dropbox_export_path,
+                            timeout_seconds=60.0,
+                        )
+                        if collision_metadata is not None:
+                            collision_file = download_dropbox_file(
+                                access_token=dropbox_access_token,
+                                path=dropbox_export_path,
+                                timeout_seconds=120.0,
+                            )
+                            if (
+                                collision_file.get("content_bytes")
+                                == attachment_download["content_bytes"]
+                            ):
+                                skipped_items.append(
+                                    {
+                                        "reason": "dropbox_collision_path_already_contains_same_file",
+                                        "message_id": message_id,
+                                        "attachment_id": attachment_id,
+                                        "message_subject": message.get("subject"),
+                                        "file_name": attachment_download.get("file_name"),
+                                        "dropbox_export_path": dropbox_export_path,
+                                    }
+                                )
+                                continue
+
                     upload_dropbox_file(
                         access_token=dropbox_access_token,
                         path=dropbox_export_path,
                         content_bytes=attachment_download["content_bytes"],
                         timeout_seconds=120.0,
-                        autorename=True,
+                        autorename=False,
                     )
 
                 exported_items.append(
@@ -386,6 +451,25 @@ def assess_outlook_attachment_support(attachment: dict[str, Any]) -> dict[str, A
         return {"is_supported": True, "reason": "supported_content_type"}
 
     return {"is_supported": False, "reason": "unsupported_file_suffix"}
+
+
+def _build_outlook_dropbox_collision_path(
+    *,
+    path: str,
+    message_id: str,
+    attachment_id: str,
+) -> str:
+    """
+    Build a deterministic alternate Dropbox path for same-name Outlook files.
+    """
+
+    base_path = PurePosixPath(path)
+    suffix = base_path.suffix
+    stem = base_path.stem
+    message_key = message_id.strip()[:8]
+    attachment_key = attachment_id.strip()[:8]
+    collision_name = f"{stem}__{message_key}_{attachment_key}{suffix}"
+    return str(base_path.with_name(collision_name))
 
 
 def score_resume_likeness(

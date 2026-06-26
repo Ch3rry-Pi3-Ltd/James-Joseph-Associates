@@ -3,6 +3,7 @@ Unit tests for heuristic Outlook CV attachment export helpers.
 """
 
 from backend.services.outlook_cv_attachment_export import (
+    _build_outlook_dropbox_collision_path,
     assess_outlook_attachment_support,
     run_outlook_cv_attachment_export,
     score_resume_likeness,
@@ -244,6 +245,10 @@ def test_run_outlook_cv_attachment_export_records_unexpected_export_error(
         "backend.services.outlook_cv_attachment_export.clean_resume_text",
         lambda text: text,
     )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.fetch_dropbox_file_metadata",
+        lambda **kwargs: None,
+    )
 
     def _raise_upload_error(**kwargs):
         raise RuntimeError("simulated upload failure")
@@ -269,3 +274,114 @@ def test_run_outlook_cv_attachment_export_records_unexpected_export_error(
     assert result["failed_count"] == 1
     assert result["failed_items"][0]["stage"] == "attachment_classification_or_export"
     assert result["failed_items"][0]["error_type"] == "RuntimeError"
+
+
+def test_build_outlook_dropbox_collision_path_appends_deterministic_suffix() -> None:
+    """Verify that same-name Outlook collisions get a stable alternate path."""
+
+    result = _build_outlook_dropbox_collision_path(
+        path="/+++ Outlook CV Export/2021/Q2/Jane Doe CV.pdf",
+        message_id="message-abcdef123456",
+        attachment_id="attachment-123456abcdef",
+    )
+
+    assert (
+        result
+        == "/+++ Outlook CV Export/2021/Q2/Jane Doe CV__message-_attachme.pdf"
+    )
+
+
+def test_run_outlook_cv_attachment_export_skips_existing_same_bytes_duplicate(
+    monkeypatch,
+) -> None:
+    """Verify a rerun skips when Dropbox already holds the exact same file."""
+
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.fetch_outlook_messages",
+        lambda **kwargs: {
+            "messages": [
+                {
+                    "id": "message-1",
+                    "subject": "Candidate CV",
+                    "hasAttachments": True,
+                    "receivedDateTime": "2022-01-18T20:15:47Z",
+                }
+            ],
+            "received_from": None,
+            "received_to": None,
+            "page_count": 1,
+        },
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.fetch_outlook_message_attachments",
+        lambda **kwargs: {
+            "attachments": [
+                {
+                    "id": "attachment-1",
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": "Jane Doe CV.pdf",
+                    "contentType": "application/pdf",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.download_outlook_message_file_attachment",
+        lambda **kwargs: {
+            "content_bytes": b"same-bytes",
+            "file_name": "Jane Doe CV.pdf",
+            "content_type": "application/pdf",
+        },
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.extract_text_from_resume_bytes",
+        lambda **kwargs: {
+            "text": (
+                "Jane Doe jane.doe@example.com +44 7700 900123 "
+                "linkedin.com/in/janedoe Experience 2022 2021 "
+                "Skills Python SQL AWS " * 40
+            )
+        },
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.clean_resume_text",
+        lambda text: text,
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.fetch_dropbox_file_metadata",
+        lambda **kwargs: {"name": "Jane Doe CV.pdf"},
+    )
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.download_dropbox_file",
+        lambda **kwargs: {"content_bytes": b"same-bytes"},
+    )
+
+    upload_calls: list[dict[str, object]] = []
+
+    def _record_upload(**kwargs):
+        upload_calls.append(kwargs)
+        return {"path": kwargs["path"], "metadata": {}}
+
+    monkeypatch.setattr(
+        "backend.services.outlook_cv_attachment_export.upload_dropbox_file",
+        _record_upload,
+    )
+
+    result = run_outlook_cv_attachment_export(
+        access_token="token",
+        mailbox=None,
+        folder_id="folder-1",
+        folder_path=["Inbox"],
+        message_limit=10,
+        attachment_limit=10,
+        dropbox_access_token="dropbox-token",
+        dropbox_export_folder="/+++ Outlook CV Export",
+        dry_run=False,
+    )
+
+    assert result["exported_count"] == 0
+    assert result["skipped_count"] == 1
+    assert result["skipped_items"][0]["reason"] == (
+        "dropbox_export_path_already_contains_same_file"
+    )
+    assert upload_calls == []

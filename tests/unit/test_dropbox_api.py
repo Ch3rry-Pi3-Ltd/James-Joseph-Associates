@@ -28,6 +28,7 @@ import pytest
 from backend.services.dropbox_api import (
     DROPBOX_CREATE_FOLDER_URL,
     DROPBOX_DOWNLOAD_FILE_URL,
+    DROPBOX_GET_METADATA_URL,
     DROPBOX_GET_CURRENT_ACCOUNT_URL,
     DROPBOX_LIST_FOLDER_URL,
     DROPBOX_LIST_FOLDER_CONTINUE_URL,
@@ -35,6 +36,7 @@ from backend.services.dropbox_api import (
     DropboxApiError,
     ensure_dropbox_folder,
     download_dropbox_file,
+    fetch_dropbox_file_metadata,
     fetch_dropbox_current_account,
     fetch_dropbox_list_folder_continue,
     fetch_dropbox_list_folder,
@@ -378,3 +380,59 @@ def test_upload_dropbox_file_sends_content_api_request() -> None:
     assert headers["Authorization"] == "Bearer test-token"
     assert headers["Content-Type"] == "application/octet-stream"
     assert upload_kwargs["content"] == b"%PDF-test%"
+
+
+def test_fetch_dropbox_file_metadata_returns_none_for_missing_path() -> None:
+    """
+    Verify that a missing Dropbox path becomes `None` instead of an exception.
+    """
+
+    captured_request: dict[str, object] = {}
+
+    def fake_post(url, **kwargs):
+        captured_request["url"] = url
+        captured_request["kwargs"] = kwargs
+        return httpx.Response(
+            409,
+            json={"error_summary": "path/not_found/.."},
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = fetch_dropbox_file_metadata(
+            access_token="test-token",
+            path="/Exports/resume.pdf",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert result is None
+    assert captured_request["url"] == DROPBOX_GET_METADATA_URL
+
+
+def test_fetch_dropbox_file_metadata_returns_metadata_when_path_exists() -> None:
+    """
+    Verify that Dropbox metadata reads return the decoded file payload.
+    """
+
+    def fake_post(url, **kwargs):
+        return httpx.Response(
+            200,
+            json={"name": "resume.pdf", "path_display": "/Exports/resume.pdf"},
+        )
+
+    original_post = httpx.post
+    httpx.post = fake_post
+    try:
+        result = fetch_dropbox_file_metadata(
+            access_token="test-token",
+            path="/Exports/resume.pdf",
+        )
+    finally:
+        httpx.post = original_post
+
+    assert result == {
+        "name": "resume.pdf",
+        "path_display": "/Exports/resume.pdf",
+    }

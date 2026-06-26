@@ -56,6 +56,7 @@ DROPBOX_GET_CURRENT_ACCOUNT_URL = "https://api.dropboxapi.com/2/users/get_curren
 DROPBOX_LIST_FOLDER_URL = "https://api.dropboxapi.com/2/files/list_folder"
 DROPBOX_LIST_FOLDER_CONTINUE_URL = "https://api.dropboxapi.com/2/files/list_folder/continue"
 DROPBOX_CREATE_FOLDER_URL = "https://api.dropboxapi.com/2/files/create_folder_v2"
+DROPBOX_GET_METADATA_URL = "https://api.dropboxapi.com/2/files/get_metadata"
 DROPBOX_DOWNLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/download"
 DROPBOX_UPLOAD_FILE_URL = "https://content.dropboxapi.com/2/files/upload"
 
@@ -557,6 +558,74 @@ def ensure_dropbox_folder(
         "metadata": metadata,
         "endpoint_url": DROPBOX_CREATE_FOLDER_URL,
     }
+
+
+def fetch_dropbox_file_metadata(
+    *,
+    access_token: str,
+    path: str,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any] | None:
+    """
+    Fetch Dropbox file metadata for one exact path when it exists.
+
+    Returns `None` when Dropbox reports that the path does not exist.
+    """
+
+    cleaned_access_token = access_token.strip()
+    cleaned_path = path.strip()
+    request_payload = {
+        "path": cleaned_path,
+        "include_deleted": False,
+        "include_has_explicit_shared_members": False,
+        "include_media_info": False,
+    }
+
+    if cleaned_access_token == "":
+        raise DropboxApiError(
+            "Dropbox API access token cannot be empty.",
+            endpoint_url=DROPBOX_GET_METADATA_URL,
+            request_payload=request_payload,
+        )
+    if cleaned_path == "":
+        raise DropboxApiError(
+            "Dropbox metadata path cannot be empty.",
+            endpoint_url=DROPBOX_GET_METADATA_URL,
+            request_payload=request_payload,
+        )
+
+    try:
+        response = httpx.post(
+            DROPBOX_GET_METADATA_URL,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {cleaned_access_token}",
+                "Content-Type": "application/json",
+            },
+            json=request_payload,
+            timeout=timeout_seconds,
+        )
+    except httpx.HTTPError as exc:
+        raise DropboxApiError(
+            "Could not reach the Dropbox API endpoint.",
+            endpoint_url=DROPBOX_GET_METADATA_URL,
+            request_payload=request_payload,
+        ) from exc
+
+    response_payload = _decode_dropbox_json_response(response)
+    if response.status_code == 409:
+        return None
+
+    if response.status_code >= 400:
+        raise DropboxApiError(
+            "Dropbox metadata read failed.",
+            status_code=response.status_code,
+            endpoint_url=DROPBOX_GET_METADATA_URL,
+            response_body=response_payload,
+            request_payload=request_payload,
+        )
+
+    return response_payload if isinstance(response_payload, dict) else {}
 
 
 def upload_dropbox_file(
