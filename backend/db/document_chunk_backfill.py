@@ -24,6 +24,7 @@ from backend.services.document_chunking import (
 def list_documents_for_chunk_backfill(
     *,
     document_types: tuple[str, ...] = ("resume", "job_spec"),
+    linked_source_record_id_prefixes: tuple[str, ...] | None = None,
     include_already_chunked: bool = False,
     limit: int = 100,
 ) -> list[dict[str, Any]]:
@@ -48,6 +49,36 @@ def list_documents_for_chunk_backfill(
           on dc.document_id = d.id
         where d.document_type = any(%(document_types)s)
           and coalesce(nullif(trim(d.extracted_text), ''), '') <> ''
+    """
+
+    query_parameters: dict[str, Any] = {
+        "document_types": list(document_types),
+        "limit": bounded_limit,
+    }
+
+    if linked_source_record_id_prefixes:
+        normalized_prefixes = [
+            prefix.strip()
+            for prefix in linked_source_record_id_prefixes
+            if isinstance(prefix, str) and prefix.strip() != ""
+        ]
+        if normalized_prefixes:
+            query += """
+              and exists (
+                    select 1
+                    from source_record_links srl
+                    join source_records sr
+                      on sr.id = srl.source_record_id
+                    where srl.document_id = d.id
+                      and sr.source_record_id like any(%(source_record_id_patterns)s)
+              )
+            """
+            query_parameters["source_record_id_patterns"] = [
+                f"{prefix}%"
+                for prefix in normalized_prefixes
+            ]
+
+    query += """
         group by
             d.id,
             d.document_type,
@@ -70,10 +101,7 @@ def list_documents_for_chunk_backfill(
         with connection.cursor() as cursor:
             cursor.execute(
                 query,
-                {
-                    "document_types": list(document_types),
-                    "limit": bounded_limit,
-                },
+                query_parameters,
             )
             rows = cursor.fetchall()
 
@@ -83,6 +111,7 @@ def list_documents_for_chunk_backfill(
 def backfill_document_chunks(
     *,
     document_types: tuple[str, ...] = ("resume", "job_spec"),
+    linked_source_record_id_prefixes: tuple[str, ...] | None = None,
     include_already_chunked: bool = False,
     limit: int = 100,
     max_chars: int = 1200,
@@ -95,6 +124,7 @@ def backfill_document_chunks(
 
     documents = list_documents_for_chunk_backfill(
         document_types=document_types,
+        linked_source_record_id_prefixes=linked_source_record_id_prefixes,
         include_already_chunked=include_already_chunked,
         limit=limit,
     )

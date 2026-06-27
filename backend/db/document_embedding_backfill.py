@@ -24,6 +24,7 @@ from backend.services.document_embeddings import (
 def list_chunks_missing_embeddings(
     *,
     document_types: tuple[str, ...] = ("resume", "job_spec"),
+    linked_source_record_id_prefixes: tuple[str, ...] | None = None,
     limit: int = 100,
 ) -> list[dict[str, Any]]:
     """
@@ -48,6 +49,36 @@ def list_chunks_missing_embeddings(
           on d.id = dc.document_id
         where d.document_type = any(%(document_types)s)
           and dc.embedding is null
+    """
+
+    query_parameters: dict[str, Any] = {
+        "document_types": list(document_types),
+        "limit": bounded_limit,
+    }
+
+    if linked_source_record_id_prefixes:
+        normalized_prefixes = [
+            prefix.strip()
+            for prefix in linked_source_record_id_prefixes
+            if isinstance(prefix, str) and prefix.strip() != ""
+        ]
+        if normalized_prefixes:
+            query += """
+              and exists (
+                    select 1
+                    from source_record_links srl
+                    join source_records sr
+                      on sr.id = srl.source_record_id
+                    where srl.document_id = d.id
+                      and sr.source_record_id like any(%(source_record_id_patterns)s)
+              )
+            """
+            query_parameters["source_record_id_patterns"] = [
+                f"{prefix}%"
+                for prefix in normalized_prefixes
+            ]
+
+    query += """
         order by d.updated_at desc nulls last, dc.document_id desc, dc.chunk_index asc
         limit %(limit)s
     """
@@ -56,10 +87,7 @@ def list_chunks_missing_embeddings(
         with connection.cursor() as cursor:
             cursor.execute(
                 query,
-                {
-                    "document_types": list(document_types),
-                    "limit": bounded_limit,
-                },
+                query_parameters,
             )
             rows = cursor.fetchall()
 
@@ -69,6 +97,7 @@ def list_chunks_missing_embeddings(
 def backfill_chunk_embeddings(
     *,
     document_types: tuple[str, ...] = ("resume", "job_spec"),
+    linked_source_record_id_prefixes: tuple[str, ...] | None = None,
     limit: int = 100,
     batch_size: int = 25,
     dry_run: bool = False,
@@ -79,6 +108,7 @@ def backfill_chunk_embeddings(
 
     chunks = list_chunks_missing_embeddings(
         document_types=document_types,
+        linked_source_record_id_prefixes=linked_source_record_id_prefixes,
         limit=limit,
     )
 

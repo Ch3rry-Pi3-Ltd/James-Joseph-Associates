@@ -132,27 +132,21 @@ def build_artifact_path(folder_path: str, *, resume_file_offset: int) -> Path:
     )
 
 
-def main() -> None:
+def run_dropbox_folder_resume_persistence(
+    *,
+    access_token: str,
+    folder_path: str,
+    file_limit: int,
+    dropbox_list_limit: int,
+    resume_file_offset: int,
+    force_reprocess: bool = False,
+    process_entire_folder: bool = False,
+) -> dict[str, Any]:
     """
-    Persist a bounded Dropbox folder slice through canonical resume extraction.
+    Persist one Dropbox folder slice and return the run summary.
     """
 
-    args = parse_args()
-    folder_path = str(args.folder_path)
-    file_limit = max(1, int(args.file_limit))
-    dropbox_list_limit = max(file_limit, int(args.dropbox_list_limit))
-    resume_file_offset = max(0, int(args.resume_file_offset))
-    force_reprocess = bool(args.force_reprocess)
-    process_entire_folder = bool(args.process_entire_folder)
-    artifact_path = build_artifact_path(
-        folder_path,
-        resume_file_offset=resume_file_offset,
-    )
     run_started_at = datetime.now(timezone.utc)
-
-    stored_connection = _load_dropbox_connection(DROPBOX_ACCOUNT_ID)
-    access_token = stored_connection["access_token"]
-    assert isinstance(access_token, str)
 
     folder_preview, entries = _list_folder_entries(
         access_token=access_token,
@@ -201,8 +195,6 @@ def main() -> None:
         "total_file_seconds": 0.0,
     }
     processed_file_count = 0
-
-    artifact_path.parent.mkdir(parents=True, exist_ok=True)
 
     for file_index, entry in enumerate(selected_entries, start=1):
         file_started_at = perf_counter()
@@ -418,6 +410,40 @@ def main() -> None:
         unsupported_items=unsupported_items,
         failed_items=failed_items,
     )
+    return summary
+
+
+def main() -> None:
+    """
+    Persist a bounded Dropbox folder slice through canonical resume extraction.
+    """
+
+    args = parse_args()
+    folder_path = str(args.folder_path)
+    file_limit = max(1, int(args.file_limit))
+    dropbox_list_limit = max(file_limit, int(args.dropbox_list_limit))
+    resume_file_offset = max(0, int(args.resume_file_offset))
+    force_reprocess = bool(args.force_reprocess)
+    process_entire_folder = bool(args.process_entire_folder)
+    artifact_path = build_artifact_path(
+        folder_path,
+        resume_file_offset=resume_file_offset,
+    )
+
+    stored_connection = _load_dropbox_connection(DROPBOX_ACCOUNT_ID)
+    access_token = stored_connection["access_token"]
+    assert isinstance(access_token, str)
+
+    summary = run_dropbox_folder_resume_persistence(
+        access_token=access_token,
+        folder_path=folder_path,
+        file_limit=file_limit,
+        dropbox_list_limit=dropbox_list_limit,
+        resume_file_offset=resume_file_offset,
+        force_reprocess=force_reprocess,
+        process_entire_folder=process_entire_folder,
+    )
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
     artifact_path.write_text(
         json.dumps(summary, indent=2, default=str),
         encoding="utf-8",

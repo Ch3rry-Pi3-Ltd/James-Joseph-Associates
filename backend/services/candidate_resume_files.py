@@ -78,9 +78,7 @@ def fetch_candidate_current_resume_file(
             details=[{"candidate_id": candidate_id}],
         )
 
-    source_uri = current_resume.get("document_source_uri")
-    if not isinstance(source_uri, str) or source_uri.strip() == "":
-        source_uri = _derive_missing_source_uri(current_resume)
+    source_uri = _resolve_preferred_resume_source_uri(current_resume)
     if not isinstance(source_uri, str) or source_uri.strip() == "":
         raise CandidateResumeFileAccessError(
             "Current resume does not have a downloadable source reference.",
@@ -124,6 +122,35 @@ def fetch_candidate_current_resume_file(
         or "application/octet-stream",
         "content_bytes": downloaded_file["content_bytes"],
     }
+
+
+def _resolve_preferred_resume_source_uri(current_resume: dict[str, Any]) -> str | None:
+    """
+    Return the best available source URI for one current-resume document.
+
+    Notes
+    -----
+    A canonical document may already carry an older non-Dropbox source URI even
+    after a newer Dropbox provenance row has been linked to the same resume.
+    When that happens, prefer the Dropbox-derived URI because it is the most
+    stable downloadable copy for the UI.
+    """
+
+    direct_source_uri = current_resume.get("document_source_uri")
+    cleaned_direct_source_uri = _clean_optional_string(direct_source_uri)
+    derived_source_uri = _derive_missing_source_uri(current_resume)
+
+    if (
+        isinstance(derived_source_uri, str)
+        and derived_source_uri.startswith("dropbox://")
+        and not (
+            isinstance(cleaned_direct_source_uri, str)
+            and cleaned_direct_source_uri.startswith("dropbox://")
+        )
+    ):
+        return derived_source_uri
+
+    return cleaned_direct_source_uri or derived_source_uri
 
 
 def _derive_missing_source_uri(current_resume: dict[str, Any]) -> str | None:
