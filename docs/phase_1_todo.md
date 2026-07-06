@@ -570,7 +570,7 @@ Current status:
 Phase 1 should prove one useful GraphRAG workflow rather than trying to solve every recruitment workflow.
 
 - [ ] Choose the first matching use case:
-  - [ ] Job-to-candidate matching.
+  - [x] Job-to-candidate matching.
   - [ ] Candidate-to-company matching.
   - [ ] Skill-to-hiring-manager discovery.
   - [ ] Company lead discovery.
@@ -586,6 +586,13 @@ Phase 1 should prove one useful GraphRAG workflow rather than trying to solve ev
   - [x] first-pass retrieval over canonical current resumes
   - [x] shortlist output through `/match`
   - [x] next upgrade path = hybrid retrieval plus reranking, before wider graph expansion
+- [x] Canonical current resumes are now downloadable through the backend/UI route.
+- [x] Outlook CV archive is ingested into the canonical Dropbox-backed resume path.
+- [x] Resume chunks and embeddings are backfilled across the current searchable corpus.
+- [ ] Add structured candidate semantic blocks for retrieval beyond raw resume text.
+- [ ] Add the first company-to-candidate discovery slice.
+- [ ] Add the first "who works there / who has spoken to them before" lookup slice.
+- [ ] Add the first relationship-context evidence surface for outreach support.
 
 </details>
 

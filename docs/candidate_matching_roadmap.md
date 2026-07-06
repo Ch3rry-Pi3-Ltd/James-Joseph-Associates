@@ -16,6 +16,9 @@ The immediate milestone is simple:
 - [x] Canonical CV ingestion pipeline in place across major sources
 - [x] Canonical resume text persisted on `documents.extracted_text`
 - [x] Direct Dropbox ingestion largely blitzed
+- [x] Outlook CV archive ingested into the canonical Dropbox-backed resume path
+- [x] Current resumes are downloadable through the candidate UI/backend route
+- [x] Resume chunks and embeddings backfilled across the current searchable corpus
 - [x] Resume search API added:
   - `GET /api/v1/candidates/search-resumes`
 - [x] Candidate shortlist API added:
@@ -24,6 +27,145 @@ The immediate milestone is simple:
   - `/match`
 - [x] LLM shortlist/reranking flow added on top of first-pass retrieval
 - [x] Dropbox ingestor failure diagnostics improved
+
+## Tom Idea Buckets
+
+Tom's handwritten notes imply three practical buckets.
+
+### Bucket 1: Clearly Buildable
+
+These are strong product requirements that we can build directly.
+
+- Vacancy-to-candidate matching.
+- Company-to-candidate discovery.
+- Candidate/company/hiring-manager cross-search.
+- Surfacing who currently works somewhere.
+- Surfacing prior notes, emails, dates, and interaction history.
+- LLM shortlist generation on top of grounded retrieval.
+- Chatbot/agent UI on top of the unified data layer.
+
+### Bucket 2: Buildable, But Dependent On Source Access And Data Quality
+
+These are feasible, but only if we have real source coverage, stable IDs, and
+enough usable context.
+
+- Keeping profiles fresh automatically across sources.
+- Syncing CRM, CV, email, and LinkedIn-derived data together.
+- Hiring-manager discovery from company/vacancy signals.
+- Relationship warmth scoring.
+- "Who is best connected to this company?" style answers.
+
+### Bucket 3: Possible In Principle, But Risky Or Weak As A Dependency
+
+These are not impossible, but they are poor foundations if they depend on
+fragile vendor behaviour, scraping, or limited control.
+
+- Heavy LinkedIn scraping workflows.
+- Anything dependent on third-party tools without stable API support.
+- MCP-only vendor tools where reliability/control is unclear.
+- Fully autonomous high-impact actions without review.
+
+## Tom Trigger Workflows
+
+The matching system should be designed around Tom's shorthand recruiter
+triggers, not just around a generic "search resumes" box.
+
+Working interpretation from the handwritten `Typical Workflows & Triggers`
+notes:
+
+- A candidate gives a lead.
+- A company is hiring and Tom wants to know what candidate, hiring-manager, and
+  company information already exists in the database.
+- Tom sees a company advertising for a role and already has a strong candidate.
+- Tom wants to know who has spoken to a target company before and whether there
+  are other similar candidates/CVs.
+- A new vacancy appears and candidates need to be found quickly.
+- Tom wants to pitch to a current hiring manager/company and needs to know who
+  in the database is currently working there.
+- Tom sees a company advertising and wants to send strong candidates there.
+
+Implication for product scope:
+
+- `/match` is only the first narrow UI surface.
+- The real product direction is trigger-led recruiter workflows:
+  - vacancy to shortlist
+  - candidate to company lead discovery
+  - company to candidate/hiring-manager discovery
+  - relationship/history lookup before outreach
+- Retrieval should eventually combine:
+  - CV evidence
+  - company evidence
+  - hiring-manager evidence
+  - prior interaction evidence
+  - recruiter relationship history
+
+## Tom Problems and Solutions Notes
+
+Working interpretation from the handwritten `Problems & Solutions` section:
+
+- CV and hiring-manager data goes stale.
+  - Tom does not reliably know the latest skills people have or where they are
+    currently working.
+  - This means missed opportunities.
+- Relationship visibility is weak.
+  - Tom does not reliably know who has already spoken to a target person or
+    company.
+  - He also cannot easily tell which relationships are warmer/stronger.
+- LinkedIn data and CRM data are not connected tightly enough.
+  - There is useful LinkedIn, CV, and hiring-manager data, but it is not
+    staying in sync as one usable operating picture.
+
+Working solution ideas captured from the same notes:
+
+- Keep profiles fresh by linking database people to stable LinkedIn identities
+  where possible, then refreshing updates back into the platform.
+- Use notes, dates, and email context to infer or surface relationship warmth
+  and prior-contact history.
+- Connect CRM, LinkedIn-derived data, and CV data into one unified recruiter
+  view rather than leaving them in separate tools.
+- Treat profile-refresh and relationship-context features as core workflow
+  value, not as optional extras after matching.
+
+Interpretation note:
+
+- The handwriting reads like compressed recruiter shorthand rather than precise
+  product copy.
+- The exact vendor/tool names in the notes are less important than the product
+  requirements they imply:
+  - identity linkage
+  - profile refresh
+  - relationship context
+  - cross-source synchronisation
+
+### Additional Notes From The Same Problems & Solutions Section
+
+Working interpretation from the next handwritten note block:
+
+- Tom's current workflow for finding good candidates for a live vacancy is too
+  manual and too slow.
+- He wants an LLM to work from:
+  - his recruiter instructions
+  - the job spec
+  - the already-ingested data platform
+  so that suitable candidates can be found quickly.
+- Another recurring workflow is:
+  - Tom sees a company advertising
+  - he believes he already has a strong candidate
+  - but finding the hiring manager is still a manual LinkedIn-style process
+- There may already be candidates, hiring managers, or related contacts in the
+  internal CV/database estate who work at that company.
+- Direct contact paths such as mobile numbers are materially more valuable than
+  generic cold outreach.
+
+Architecture implication captured from the same notes:
+
+- Tom expects the useful end-state to combine:
+  - up-to-date source data
+  - graph/vector retrieval infrastructure
+  - an MCP/LLM layer on top
+  - chatbot or agent-style interaction patterns
+- The data platform therefore needs to support not just candidate ranking, but
+  also company-to-person and vacancy-to-hiring-manager discovery workflows.
 
 ## Milestone 1: Searchable CV Corpus
 
@@ -139,6 +281,35 @@ Goal: turn the demo into something closer to a working internal tool.
 - [ ] Add “why this candidate” explanations
 - [ ] Add export/share of shortlist output
 - [ ] Add feedback loop for good/bad matches
+
+## What Is Already Underway
+
+These are the ideas from Tom's notes that are already materially underway:
+
+- [x] Vacancy-to-candidate matching foundation.
+- [x] Unified CV data layer across Recruiterflow, Dropbox, and Outlook-exported
+  Dropbox CVs.
+- [x] Resume retrieval/download path for current resumes.
+- [x] Resume chunking and embeddings across the searchable corpus.
+- [x] Initial `/match` UI with shortlist/reranking flow.
+- [ ] Company-to-candidate discovery workflow.
+- [ ] Hiring-manager discovery workflow.
+- [ ] Relationship warmth/context workflow.
+- [ ] Profile refresh/sync workflow across external systems.
+
+## Definite Next Slices
+
+These are the most defensible next build steps given the current platform
+state.
+
+- [ ] Add dedicated `candidate_semantic_blocks` retrieval data.
+- [ ] Backfill structured semantic blocks from canonical candidate/profile/skill
+  fields.
+- [ ] Embed those semantic blocks and add hybrid retrieval to `/match`.
+- [ ] Add explainable evidence blocks to shortlist results.
+- [ ] Add a first company-to-candidate discovery API/UI slice.
+- [ ] Add a first "who currently works there / who has spoken to them before"
+  lookup slice.
 
 ## Immediate Next Slice
 
