@@ -51,8 +51,13 @@ def list_candidates_for_semantic_block_backfill(
             d.id as document_id,
             d.title as document_title,
             d.source_uri as document_source_uri,
+            d.extracted_text as resume_extracted_text,
             coalesce(d.resume_updated_at, c.resume_updated_at) as resume_updated_at,
-            count(csb.id) as existing_block_count
+            (
+                select count(*)
+                from candidate_semantic_blocks csb
+                where csb.candidate_id = c.id
+            ) as existing_block_count
         from candidates c
         join people p
           on p.id = c.person_id
@@ -63,7 +68,8 @@ def list_candidates_for_semantic_block_backfill(
                 d.id,
                 d.title,
                 d.source_uri,
-                d.resume_updated_at
+                d.resume_updated_at,
+                d.extracted_text
             from document_links dl
             join documents d
               on d.id = dl.document_id
@@ -75,30 +81,16 @@ def list_candidates_for_semantic_block_backfill(
                 d.id desc
             limit 1
         ) d on true
-        left join candidate_semantic_blocks csb
-          on csb.candidate_id = c.id
         where (%(candidate_ids)s::text[] is null or c.id::text = any(%(candidate_ids)s))
-        group by
-            c.id,
-            p.id,
-            p.full_name,
-            p.location,
-            p.headline,
-            p.summary,
-            c.current_title,
-            c.candidate_status,
-            c.availability_status,
-            c.notice_period,
-            co.name,
-            d.id,
-            d.title,
-            d.source_uri,
-            coalesce(d.resume_updated_at, c.resume_updated_at)
     """
 
     if not include_already_indexed:
         query += """
-        having count(csb.id) = 0
+          and not exists (
+              select 1
+              from candidate_semantic_blocks csb
+              where csb.candidate_id = c.id
+          )
         """
 
     query += """
@@ -228,6 +220,16 @@ def backfill_candidate_semantic_blocks(
                         %(embedding)s::vector,
                         %(token_count)s
                     )
+                    on conflict (candidate_id, block_type, block_index)
+                    do update
+                    set
+                        person_id = excluded.person_id,
+                        document_id = excluded.document_id,
+                        block_label = excluded.block_label,
+                        block_text = excluded.block_text,
+                        embedding = excluded.embedding,
+                        token_count = excluded.token_count,
+                        updated_at = now()
                     """,
                     {
                         **row,
@@ -259,6 +261,8 @@ def search_candidates_by_semantic_blocks(
 
     normalized_query = query.strip()
     if normalized_query == "":
+        return []
+    if not semantic_block_index_has_embeddings():
         return []
 
     bounded_limit = max(1, min(int(limit), 100))
@@ -293,13 +297,15 @@ def search_candidates_by_semantic_blocks(
                 nb.block_text,
                 case
                     when nb.block_type = 'focus' then 1
-                    when nb.block_type = 'summary' then 2
-                    when nb.block_type = 'skills' then 3
-                    when nb.block_type = 'profile' then 4
-                    else 5
+                    when nb.block_type = 'resume_context' then 2
+                    when nb.block_type = 'summary' then 3
+                    when nb.block_type = 'skills' then 4
+                    when nb.block_type = 'profile' then 5
+                    else 6
                 end as block_priority,
                 case
                     when nb.block_type = 'focus' then nb.cosine_distance * 0.94
+                    when nb.block_type = 'resume_context' then nb.cosine_distance * 0.955
                     when nb.block_type = 'summary' then nb.cosine_distance * 0.97
                     when nb.block_type = 'skills' then nb.cosine_distance * 0.995
                     when nb.block_type = 'profile' then nb.cosine_distance * 1.02
@@ -378,6 +384,28 @@ def search_candidates_by_semantic_blocks(
     return [dict(row) for row in rows]
 
 
+def semantic_block_index_has_embeddings() -> bool:
+    """
+    Return whether the candidate semantic block index has any embedded rows.
+    """
+
+    query = """
+        select exists(
+            select 1
+            from candidate_semantic_blocks
+            where embedding is not null
+            limit 1
+        ) as has_embeddings
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            row = cursor.fetchone()
+
+    return bool(row and row["has_embeddings"])
+
+
 def _get_skills_by_candidate_ids(
     candidate_ids: list[str],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -432,4 +460,5 @@ __all__ = [
     "backfill_candidate_semantic_blocks",
     "list_candidates_for_semantic_block_backfill",
     "search_candidates_by_semantic_blocks",
+    "semantic_block_index_has_embeddings",
 ]

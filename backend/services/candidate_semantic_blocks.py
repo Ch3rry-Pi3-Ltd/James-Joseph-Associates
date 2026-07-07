@@ -25,6 +25,7 @@ from backend.services.document_chunking import estimate_token_count
 
 
 _WHITESPACE_PATTERN = re.compile(r"\s+")
+_DEFAULT_RESUME_CONTEXT_CHARACTER_LIMIT = 1800
 
 
 @dataclass(frozen=True)
@@ -123,6 +124,17 @@ def build_candidate_semantic_blocks(
         parts=summary_parts,
     )
 
+    resume_context = _resume_context_text(candidate.get("resume_extracted_text"))
+    _append_block(
+        blocks,
+        block_type="resume_context",
+        block_index=0,
+        block_label="Resume context",
+        parts=[
+            _line("Resume excerpt", resume_context),
+        ],
+    )
+
     return blocks
 
 
@@ -203,6 +215,17 @@ def _skill_entry_text(skill: dict[str, Any]) -> str:
     if evidence_text == "":
         return skill_name
     return f"{skill_name}: {evidence_text}"
+
+
+def _resume_context_text(value: Any) -> str:
+    normalized_value = normalize_semantic_block_text(_string_value(value))
+    if normalized_value == "":
+        return ""
+
+    clipped_value = normalized_value[:_DEFAULT_RESUME_CONTEXT_CHARACTER_LIMIT].strip()
+    if len(clipped_value) < len(normalized_value):
+        clipped_value = clipped_value.rstrip(" .,;:") + " ..."
+    return clipped_value
 
 
 __all__ = [

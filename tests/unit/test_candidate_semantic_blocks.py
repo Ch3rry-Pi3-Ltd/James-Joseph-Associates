@@ -24,6 +24,7 @@ def test_build_candidate_semantic_blocks_returns_profile_skills_and_summary() ->
             "summary": "Built cloud ETL pipelines and analytics platforms.",
             "document_title": "Sarah-Jones-CV.pdf",
             "document_source_uri": "dropbox:///Sarah-Jones-CV.pdf",
+            "resume_extracted_text": "Led Python ETL delivery for cloud analytics programmes.",
         },
         skills=[
             {
@@ -44,11 +45,13 @@ def test_build_candidate_semantic_blocks_returns_profile_skills_and_summary() ->
         "focus",
         "skills",
         "summary",
+        "resume_context",
     ]
     assert "Sarah Jones" in blocks[0].block_text
     assert "Built cloud ETL pipelines" in blocks[1].block_text
     assert "python: Python and Airflow pipelines".lower() in blocks[2].block_text.lower()
     assert "Built cloud ETL pipelines" in blocks[3].block_text
+    assert "Led Python ETL delivery" in blocks[4].block_text
 
 
 def test_build_candidate_semantic_blocks_deduplicates_and_trims_skill_block() -> None:
@@ -85,3 +88,20 @@ def test_build_candidate_semantic_blocks_splits_large_skill_sets_into_multiple_b
     assert len(skill_blocks) == 2
     assert "skill-1" in skill_blocks[0].block_text.lower()
     assert "skill-9" in skill_blocks[1].block_text.lower()
+
+
+def test_build_candidate_semantic_blocks_clips_resume_context() -> None:
+    long_resume_text = "Python data engineer " * 300
+
+    blocks = build_candidate_semantic_blocks(
+        candidate={
+            "full_name": "Test Person",
+            "resume_extracted_text": long_resume_text,
+        },
+    )
+
+    resume_context_block = next(
+        block for block in blocks if block.block_type == "resume_context"
+    )
+    assert resume_context_block.block_text.endswith("...")
+    assert len(resume_context_block.block_text) < len(long_resume_text)
