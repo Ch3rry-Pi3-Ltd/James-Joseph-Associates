@@ -53,6 +53,7 @@ from uuid import UUID
 
 from backend.services.candidate_profiles import (
     build_candidate_profile,
+    discover_candidates_by_company,
     search_candidate_resumes,
 )
 
@@ -304,4 +305,61 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
         limit=5,
         include_text=True,
         include_semantic=True,
+    )
+
+
+def test_discover_candidates_by_company_normalizes_raw_rows() -> None:
+    """
+    Verify that company-discovery results are normalized into the public API shape.
+    """
+
+    raw_result = {
+        "candidate_id": UUID("33333333-3333-3333-3333-333333333331"),
+        "person_id": UUID("22222222-2222-2222-2222-222222222221"),
+        "full_name": "Sarah Jones",
+        "current_title": "Senior Data Engineer",
+        "candidate_status": "active",
+        "current_company_name": "Acme Hiring Ltd",
+        "resume_updated_at": datetime(2026, 4, 20, 12, 0, tzinfo=UTC),
+        "document_id": UUID("11111111-1111-1111-1111-111111111111"),
+        "document_title": "Sarah-Jones-CV.pdf",
+        "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+        "company_match_source": "current_company_exact",
+        "company_match_score": 1.0,
+        "match_excerpt": "Current company exactly matches Acme Hiring Ltd",
+    }
+
+    with patch(
+        "backend.services.candidate_profiles.search_candidates_by_company_name",
+        return_value=[raw_result],
+    ) as mock_search_candidates_by_company_name:
+        result = discover_candidates_by_company(
+            company_name=" Acme Hiring Ltd ",
+            limit=5,
+        )
+
+    assert result == {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "company_match_source": "current_company_exact",
+                "company_match_score": 1.0,
+                "match_excerpt": "Current company exactly matches Acme Hiring Ltd",
+            }
+        ],
+    }
+    mock_search_candidates_by_company_name.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
     )

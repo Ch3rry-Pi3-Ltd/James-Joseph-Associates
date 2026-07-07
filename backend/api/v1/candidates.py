@@ -37,6 +37,7 @@ from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse, Response
 
 from backend.schemas.candidates import (
+    CandidateCompanyDiscoveryResponse,
     CandidateJobDescriptionMatchRequest,
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
@@ -51,6 +52,7 @@ from backend.services.candidate_matching import (
 )
 from backend.services.candidate_profiles import (
     build_candidate_profile,
+    discover_candidates_by_company,
     search_candidate_resumes,
 )
 from backend.services.candidate_resume_files import (
@@ -301,6 +303,47 @@ def get_candidate_current_resume_route(
         media_type=content_type,
         headers=headers,
     )
+
+
+@router.get(
+    "/discover-by-company",
+    response_model=CandidateCompanyDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company discovery query was invalid.",
+        }
+    },
+)
+def discover_candidates_by_company_route(
+    company_name: str = Query(
+        description="Company name used to find linked candidate records.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of ranked candidate matches to return.",
+    ),
+) -> CandidateCompanyDiscoveryResponse | JSONResponse:
+    """
+    Find candidates already linked to one company name.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company discovery query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_candidates_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return CandidateCompanyDiscoveryResponse(**result)
 
 
 @router.get(

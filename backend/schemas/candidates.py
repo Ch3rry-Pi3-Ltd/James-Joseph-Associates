@@ -162,6 +162,47 @@ class CandidateResumeSearchResponse(BaseModel):
     )
 
 
+class CandidateCompanyDiscoveryResult(BaseModel):
+    """
+    One ranked candidate returned by the company discovery endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    person_id: str
+    full_name: str | None = None
+    current_title: str | None = None
+    candidate_status: str | None = None
+    current_company_name: str | None = None
+    resume_updated_at: str | None = None
+    document_id: str
+    document_title: str | None = None
+    document_source_uri: str | None = None
+    company_match_source: str
+    company_match_score: float
+    match_excerpt: str | None = None
+
+
+class CandidateCompanyDiscoveryResponse(BaseModel):
+    """
+    Response envelope for one company-to-candidate discovery query.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for the discovery query.",
+    )
+    limit: int = Field(
+        description="Maximum number of ranked candidate matches requested.",
+    )
+    results: list[CandidateCompanyDiscoveryResult] = Field(
+        default_factory=list,
+        description="Ranked candidates already linked to or mentioning the company.",
+    )
+
+
 class UploadedResumeSearchResponse(BaseModel):
     """
     Response envelope for transient uploaded-resume semantic search.
@@ -292,6 +333,8 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
 
 
 __all__ = [
+    "CandidateCompanyDiscoveryResponse",
+    "CandidateCompanyDiscoveryResult",
     "CandidateProfileResponse",
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",

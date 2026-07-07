@@ -47,6 +47,28 @@ type CandidateResumeSearchResponse = {
   results: CandidateResumeSearchResult[];
 };
 
+type CandidateCompanyDiscoveryResult = {
+  candidate_id: string;
+  person_id: string;
+  full_name: string | null;
+  current_title: string | null;
+  candidate_status: string | null;
+  current_company_name: string | null;
+  resume_updated_at: string | null;
+  document_id: string;
+  document_title: string | null;
+  document_source_uri: string | null;
+  company_match_source: string;
+  company_match_score: number;
+  match_excerpt: string | null;
+};
+
+type CandidateCompanyDiscoveryResponse = {
+  company_name: string;
+  limit: number;
+  results: CandidateCompanyDiscoveryResult[];
+};
+
 type UploadedResumeSearchResponse = {
   file_name: string | null;
   content_type: string | null;
@@ -295,6 +317,22 @@ function formatSemanticBlockType(value: string | null): string | null {
   return value.replaceAll("_", " ");
 }
 
+function formatCompanyMatchSourceLabel(source: string): string {
+  if (source === "current_company_exact") {
+    return "Current company exact";
+  }
+
+  if (source === "current_company_partial") {
+    return "Current company partial";
+  }
+
+  if (source === "resume_text") {
+    return "CV text mention";
+  }
+
+  return source.replaceAll("_", " ");
+}
+
 function deriveRetrievalFocusTerms(jobDescription: string): string {
   const normalizedTerms =
     jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
@@ -498,6 +536,18 @@ export function CandidateMatchWorkspace() {
   const [previewErrorMessage, setPreviewErrorMessage] = useState<string | null>(
     null,
   );
+  const [companyNameQuery, setCompanyNameQuery] = useState("");
+  const [companySearchLimit, setCompanySearchLimit] = useState("10");
+  const [companyDiscoveryLoading, setCompanyDiscoveryLoading] = useState(false);
+  const [companyDiscoveryErrorMessage, setCompanyDiscoveryErrorMessage] = useState<
+    string | null
+  >(null);
+  const [companyDiscoveryResults, setCompanyDiscoveryResults] = useState<
+    CandidateCompanyDiscoveryResult[]
+  >([]);
+  const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
+    null,
+  );
   const [uploadedResumeFile, setUploadedResumeFile] = useState<File | null>(null);
   const [uploadedResumeResult, setUploadedResumeResult] =
     useState<UploadedResumeSearchResponse | null>(null);
@@ -568,6 +618,22 @@ export function CandidateMatchWorkspace() {
 
     return `${shortlistResults.length} shortlisted candidates.`;
   }, [retrievedCandidateCount, shortlistResults.length, submittedJobDescription]);
+
+  const companyDiscoveryCountLabel = useMemo(() => {
+    if (submittedCompanyName && companyDiscoveryResults.length === 0) {
+      return "0 company matches returned.";
+    }
+
+    if (companyDiscoveryResults.length === 0) {
+      return "No company matches returned yet.";
+    }
+
+    if (companyDiscoveryResults.length === 1) {
+      return "1 company match returned.";
+    }
+
+    return `${companyDiscoveryResults.length} company matches returned.`;
+  }, [companyDiscoveryResults.length, submittedCompanyName]);
 
   async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
@@ -768,6 +834,61 @@ export function CandidateMatchWorkspace() {
     }
   }
 
+  async function runCompanyDiscovery(): Promise<void> {
+    const trimmedCompanyName = companyNameQuery.trim();
+    if (trimmedCompanyName === "") {
+      setCompanyDiscoveryErrorMessage("Enter a company name before searching.");
+      setCompanyDiscoveryResults([]);
+      return;
+    }
+
+    setCompanyDiscoveryLoading(true);
+    setCompanyDiscoveryErrorMessage(null);
+
+    try {
+      const searchParams = new URLSearchParams({
+        company_name: trimmedCompanyName,
+        limit: companySearchLimit,
+      });
+
+      const response = await fetch(
+        `/api/v1/candidates/discover-by-company?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const payload = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        setCompanyDiscoveryResults([]);
+        setSubmittedCompanyName(trimmedCompanyName);
+        setCompanyDiscoveryErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Company discovery request failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      const companyDiscoveryResponse = payload as CandidateCompanyDiscoveryResponse;
+      setCompanyDiscoveryResults(companyDiscoveryResponse.results);
+      setSubmittedCompanyName(companyDiscoveryResponse.company_name);
+    } catch (error) {
+      setCompanyDiscoveryResults([]);
+      setSubmittedCompanyName(trimmedCompanyName);
+      setCompanyDiscoveryErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Company discovery request failed unexpectedly.",
+      );
+    } finally {
+      setCompanyDiscoveryLoading(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     await runSearch();
@@ -793,6 +914,10 @@ export function CandidateMatchWorkspace() {
     setPreviewCandidateId(null);
     setPreviewProfile(null);
     setPreviewErrorMessage(null);
+    setCompanyNameQuery("");
+    setCompanyDiscoveryResults([]);
+    setCompanyDiscoveryErrorMessage(null);
+    setSubmittedCompanyName(null);
     setUploadedResumeFile(null);
     setUploadedResumeResult(null);
     setSearchMode(null);
@@ -1329,6 +1454,219 @@ export function CandidateMatchWorkspace() {
             ) : null}
           </article>
         ) : null}
+      </section>
+
+      <section className="grid gap-6 border-t border-zinc-200 pt-8">
+        <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold text-zinc-950">
+              Company discovery
+            </h2>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
+              Find candidates already linked to a company, then inspect the CV
+              evidence before outreach.
+            </p>
+          </div>
+
+          <div className="text-sm text-zinc-600">
+            {submittedCompanyName
+              ? companyDiscoveryCountLabel
+              : "Search a company to find linked candidates."}
+          </div>
+        </div>
+
+        <div className="grid gap-6 border border-zinc-200 bg-white p-6">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_120px_auto] lg:items-end">
+            <div className="grid gap-2">
+              <label
+                className="text-sm font-semibold uppercase text-zinc-500"
+                htmlFor="company-name-query"
+              >
+                Company name
+              </label>
+              <input
+                id="company-name-query"
+                type="text"
+                value={companyNameQuery}
+                onChange={(event) => setCompanyNameQuery(event.target.value)}
+                placeholder="Goldman Sachs"
+                className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label
+                className="text-sm font-semibold uppercase text-zinc-500"
+                htmlFor="company-search-limit"
+              >
+                Results
+              </label>
+              <select
+                id="company-search-limit"
+                value={companySearchLimit}
+                onChange={(event) => setCompanySearchLimit(event.target.value)}
+                className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+              >
+                <option value="5">Top 5</option>
+                <option value="10">Top 10</option>
+                <option value="20">Top 20</option>
+                <option value="25">Top 25</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                void runCompanyDiscovery();
+              }}
+              disabled={companyDiscoveryLoading}
+              className="inline-flex h-12 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+            >
+              {companyDiscoveryLoading ? "Searching..." : "Search company"}
+            </button>
+          </div>
+
+          {submittedCompanyName ? (
+            <p className="text-sm leading-6 text-zinc-600">
+              Company query:{" "}
+              <span className="font-medium text-zinc-900">
+                {submittedCompanyName}
+              </span>
+            </p>
+          ) : null}
+
+          {companyDiscoveryErrorMessage ? (
+            <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+              {companyDiscoveryErrorMessage}
+            </div>
+          ) : null}
+
+          {submittedCompanyName &&
+          companyDiscoveryResults.length === 0 &&
+          !companyDiscoveryErrorMessage ? (
+            <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              No linked candidates were returned for that company query.
+            </div>
+          ) : null}
+
+          {companyDiscoveryResults.length === 0 && !companyDiscoveryErrorMessage ? (
+            <div className="border border-dashed border-zinc-300 p-6 text-sm leading-7 text-zinc-600">
+              Use this when you know the target company first and want to see
+              who in the canonical CV corpus is already there.
+            </div>
+          ) : null}
+
+          <div className="grid gap-5">
+            {companyDiscoveryResults.map((result, index) => (
+              <article
+                key={`${result.candidate_id}-${result.document_id}-company`}
+                className="border border-zinc-200 bg-white p-6"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                        Rank {index + 1}
+                      </span>
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                        Evidence {result.company_match_score.toFixed(3)}
+                      </span>
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                        {formatCompanyMatchSourceLabel(result.company_match_source)}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
+                      {result.full_name ?? "Unnamed candidate"}
+                    </h3>
+
+                    <p className="mt-2 text-base leading-7 text-zinc-700">
+                      {result.current_title ?? "Title not available"}
+                      {result.current_company_name
+                        ? ` at ${result.current_company_name}`
+                        : ""}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <a
+                      href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      Open CV
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void openCandidatePreview(result.candidate_id);
+                      }}
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      Preview candidate
+                    </button>
+
+                    <a
+                      href={`/api/v1/candidates/${result.candidate_id}/profile`}
+                      className="inline-flex h-11 w-fit items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      Open JSON
+                    </a>
+                  </div>
+                </div>
+
+                <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-zinc-500">
+                      Match source
+                    </dt>
+                    <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                      {formatCompanyMatchSourceLabel(result.company_match_source)}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-zinc-500">
+                      Candidate status
+                    </dt>
+                    <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                      {result.candidate_status ?? "Unknown"}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-zinc-500">
+                      Resume updated
+                    </dt>
+                    <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                      {formatTimestamp(result.resume_updated_at)}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-xs font-semibold uppercase text-zinc-500">
+                      Resume document
+                    </dt>
+                    <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
+                      {result.document_title ?? result.document_id}
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="mt-6 border border-zinc-200 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Evidence
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-zinc-900">
+                    {renderHighlightedExcerpt(result.match_excerpt)}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section ref={shortlistSectionRef} className="grid gap-6">

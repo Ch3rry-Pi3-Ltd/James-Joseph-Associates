@@ -349,6 +349,74 @@ def test_candidate_resume_search_route_returns_ranked_results() -> None:
     )
 
 
+def test_candidate_company_discovery_route_returns_ranked_results() -> None:
+    """
+    Verify that the company-discovery route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Senior Data Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "company_match_source": "current_company_exact",
+                "company_match_score": 1.0,
+                "match_excerpt": "Current company exactly matches Acme Hiring Ltd",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_candidates_by_company",
+        return_value=service_result,
+    ) as mock_discover_candidates_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-by-company?company_name=Acme%20Hiring%20Ltd&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_candidates_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_candidate_company_discovery_route_rejects_blank_company_name() -> None:
+    """
+    Verify that the company-discovery route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.discover_candidates_by_company",
+    ) as mock_discover_candidates_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-by-company?company_name=%20%20%20"
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Company discovery query must not be blank.",
+            "details": [{"company_name": "   "}],
+        }
+    }
+    mock_discover_candidates_by_company.assert_not_called()
+
+
 def test_uploaded_resume_search_route_returns_ranked_results() -> None:
     """
     Verify that the uploaded-resume search route returns the service payload unchanged.

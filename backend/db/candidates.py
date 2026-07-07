@@ -380,8 +380,161 @@ def search_candidates_by_resume_text(
     return [dict(row) for row in rows]
 
 
+def search_candidates_by_company_name(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """
+    Return ranked candidates connected to one company name.
+
+    Notes
+    -----
+    This helper is intentionally evidence-first for recruiter workflows:
+
+    - exact current-company matches rank highest
+    - partial current-company matches rank next
+    - current-resume text mentions are included as a fallback signal
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return []
+
+    bounded_limit = max(1, min(int(limit), 100))
+
+    search_sql = """
+        with search_input as (
+            select
+                lower(%(company_name)s) as normalized_company_name,
+                websearch_to_tsquery('simple', %(company_name)s) as search_query
+        ),
+        candidate_resume_search as (
+            select
+                c.id as candidate_id,
+                p.id as person_id,
+                p.full_name,
+                c.current_title,
+                c.candidate_status,
+                c.resume_updated_at,
+                co.name as current_company_name,
+                d.id as document_id,
+                d.title as document_title,
+                d.source_uri as document_source_uri,
+                d.resume_updated_at as document_resume_updated_at,
+                d.extracted_text,
+                setweight(
+                    to_tsvector('simple', coalesce(d.extracted_text, '')),
+                    'A'
+                ) as resume_search_vector
+            from candidates c
+            join people p
+              on p.id = c.person_id
+            left join companies co
+              on co.id = c.current_company_id
+            join document_links dl
+              on dl.candidate_id = c.id
+             and dl.relationship_type = 'current_resume'
+            join documents d
+              on d.id = dl.document_id
+             and d.document_type = 'resume'
+        )
+        select
+            crs.candidate_id,
+            crs.person_id,
+            crs.full_name,
+            crs.current_title,
+            crs.candidate_status,
+            crs.current_company_name,
+            coalesce(
+                crs.document_resume_updated_at,
+                crs.resume_updated_at
+            ) as resume_updated_at,
+            crs.document_id,
+            crs.document_title,
+            crs.document_source_uri,
+            case
+                when lower(coalesce(crs.current_company_name, '')) = si.normalized_company_name
+                    then 'current_company_exact'
+                when lower(coalesce(crs.current_company_name, '')) like
+                    ('%%' || si.normalized_company_name || '%%')
+                    then 'current_company_partial'
+                else 'resume_text'
+            end as company_match_source,
+            round(
+                case
+                    when lower(coalesce(crs.current_company_name, '')) = si.normalized_company_name
+                        then 1.0
+                    when lower(coalesce(crs.current_company_name, '')) like
+                        ('%%' || si.normalized_company_name || '%%')
+                        then 0.85
+                    else least(
+                        0.8,
+                        greatest(
+                            0.2,
+                            ts_rank_cd(
+                                crs.resume_search_vector,
+                                si.search_query
+                            )
+                        )
+                    )
+                end::numeric,
+                6
+            ) as company_match_score,
+            case
+                when lower(coalesce(crs.current_company_name, '')) = si.normalized_company_name
+                    then 'Current company exactly matches ' || crs.current_company_name
+                when lower(coalesce(crs.current_company_name, '')) like
+                    ('%%' || si.normalized_company_name || '%%')
+                    then 'Current company matches ' || crs.current_company_name
+                else ts_headline(
+                    'simple',
+                    coalesce(crs.extracted_text, ''),
+                    si.search_query,
+                    'MaxFragments=2, MinWords=5, MaxWords=18, StartSel=<mark>, StopSel=</mark>'
+                )
+            end as match_excerpt
+        from candidate_resume_search crs
+        cross join search_input si
+        where
+            lower(coalesce(crs.current_company_name, '')) like
+                ('%%' || si.normalized_company_name || '%%')
+            or crs.resume_search_vector @@ si.search_query
+        order by
+            case
+                when lower(coalesce(crs.current_company_name, '')) = si.normalized_company_name
+                    then 0
+                when lower(coalesce(crs.current_company_name, '')) like
+                    ('%%' || si.normalized_company_name || '%%')
+                    then 1
+                else 2
+            end,
+            company_match_score desc,
+            coalesce(
+                crs.document_resume_updated_at,
+                crs.resume_updated_at
+            ) desc nulls last,
+            crs.candidate_id desc
+        limit %(limit)s
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                search_sql,
+                {
+                    "company_name": normalized_company_name,
+                    "limit": bounded_limit,
+                },
+            )
+            rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
+
+
 __all__ = [
     "get_candidate_current_resume_document",
     "get_candidate_profile",
+    "search_candidates_by_company_name",
     "search_candidates_by_resume_text",
 ]
