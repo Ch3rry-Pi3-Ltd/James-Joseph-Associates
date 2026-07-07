@@ -40,6 +40,10 @@ def test_fuse_candidate_rankings_prefers_candidates_seen_in_both_sources() -> No
     assert [row["candidate_id"] for row in fused] == ["cand-2", "cand-1"]
     assert fused[0]["match_excerpt"] == "platform data engineering"
     assert fused[0]["match_score"] > fused[1]["match_score"]
+    assert fused[0]["retrieval_sources"] == ["text", "semantic"]
+    assert fused[0]["text_rank"] == 2
+    assert fused[0]["semantic_rank"] == 1
+    assert fused[0]["semantic_block_type"] is None
 
 
 def test_derive_text_retrieval_query_compacts_role_brief_into_keywords() -> None:

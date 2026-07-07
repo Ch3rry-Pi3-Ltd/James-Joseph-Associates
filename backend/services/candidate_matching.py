@@ -140,6 +140,21 @@ def build_candidate_job_description_shortlist(
                 "document_title": matched_candidate.get("document_title"),
                 "document_source_uri": matched_candidate.get("document_source_uri"),
                 "retrieval_score": float(matched_candidate.get("match_score") or 0.0),
+                "retrieval_sources": list(
+                    matched_candidate.get("retrieval_sources") or []
+                ),
+                "text_rank": matched_candidate.get("text_rank"),
+                "semantic_rank": matched_candidate.get("semantic_rank"),
+                "text_score": float(matched_candidate.get("text_score") or 0.0)
+                if matched_candidate.get("text_score") is not None
+                else None,
+                "semantic_score": float(
+                    matched_candidate.get("semantic_score") or 0.0
+                )
+                if matched_candidate.get("semantic_score") is not None
+                else None,
+                "semantic_block_type": matched_candidate.get("semantic_block_type"),
+                "semantic_block_label": matched_candidate.get("semantic_block_label"),
                 "fit_score": assessment.fit_score,
                 "fit_summary": assessment.fit_summary,
                 "strengths": list(assessment.strengths),
@@ -197,6 +212,19 @@ def _rank_retrieved_candidates_for_job_description(
             ),
             "document_title": _json_safe_value(candidate.get("document_title")),
             "retrieval_score": _json_safe_value(candidate.get("match_score")),
+            "retrieval_sources": _json_safe_value(
+                candidate.get("retrieval_sources") or []
+            ),
+            "text_rank": _json_safe_value(candidate.get("text_rank")),
+            "semantic_rank": _json_safe_value(candidate.get("semantic_rank")),
+            "text_score": _json_safe_value(candidate.get("text_score")),
+            "semantic_score": _json_safe_value(candidate.get("semantic_score")),
+            "semantic_block_type": _json_safe_value(
+                candidate.get("semantic_block_type")
+            ),
+            "semantic_block_label": _json_safe_value(
+                candidate.get("semantic_block_label")
+            ),
             "match_excerpt": _json_safe_value(candidate.get("match_excerpt")),
         }
         for candidate in retrieved_candidates

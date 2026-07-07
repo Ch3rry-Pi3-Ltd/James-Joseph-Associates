@@ -83,6 +83,13 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
             "document_title": "Sarah-Jones-CV.pdf",
             "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
             "match_score": 0.812345,
+            "retrieval_sources": ["text", "semantic"],
+            "text_rank": 2,
+            "semantic_rank": 1,
+            "text_score": 0.723,
+            "semantic_score": 0.954,
+            "semantic_block_type": "skills",
+            "semantic_block_label": "Core skills",
             "match_excerpt": "python pipelines cloud",
         },
         {
@@ -97,6 +104,13 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
             "document_title": "Mark-Smith-CV.pdf",
             "document_source_uri": "dropbox:///cv/Mark-Smith-CV.pdf",
             "match_score": 0.734,
+            "retrieval_sources": ["text"],
+            "text_rank": 1,
+            "semantic_rank": None,
+            "text_score": 0.734,
+            "semantic_score": None,
+            "semantic_block_type": None,
+            "semantic_block_label": None,
             "match_excerpt": "sql airflow analytics",
         },
     ]
@@ -138,6 +152,7 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["candidate_id"] == "cand-2"
     assert result["shortlisted_candidates"][0]["fit_score"] == 89
     assert result["shortlisted_candidates"][0]["retrieval_score"] == 0.734
+    assert result["shortlisted_candidates"][0]["retrieval_sources"] == ["text"]
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
 
 

@@ -133,6 +133,13 @@ class CandidateResumeSearchResult(BaseModel):
     document_title: str | None = None
     document_source_uri: str | None = None
     match_score: float
+    retrieval_sources: list[str] = Field(default_factory=list)
+    text_rank: int | None = None
+    semantic_rank: int | None = None
+    text_score: float | None = None
+    semantic_score: float | None = None
+    semantic_block_type: str | None = None
+    semantic_block_label: str | None = None
     match_excerpt: str | None = None
 
 
@@ -245,6 +252,13 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     document_title: str | None = None
     document_source_uri: str | None = None
     retrieval_score: float
+    retrieval_sources: list[str] = Field(default_factory=list)
+    text_rank: int | None = None
+    semantic_rank: int | None = None
+    text_score: float | None = None
+    semantic_score: float | None = None
+    semantic_block_type: str | None = None
+    semantic_block_label: str | None = None
     fit_score: int
     fit_summary: str
     strengths: list[str] = Field(default_factory=list)

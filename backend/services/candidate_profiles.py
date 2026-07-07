@@ -175,6 +175,21 @@ def _normalize_candidate_resume_search_result(
             result.get("document_source_uri")
         ),
         "match_score": float(result.get("match_score") or 0.0),
+        "retrieval_sources": _normalize_string_list_value(
+            result.get("retrieval_sources")
+        ),
+        "text_rank": _normalize_optional_int_value(result.get("text_rank")),
+        "semantic_rank": _normalize_optional_int_value(result.get("semantic_rank")),
+        "text_score": _normalize_optional_float_value(result.get("text_score")),
+        "semantic_score": _normalize_optional_float_value(
+            result.get("semantic_score")
+        ),
+        "semantic_block_type": _normalize_optional_string_value(
+            result.get("semantic_block_type") or result.get("block_type")
+        ),
+        "semantic_block_label": _normalize_optional_string_value(
+            result.get("semantic_block_label") or result.get("block_label")
+        ),
         "match_excerpt": _normalize_optional_string_value(
             result.get("match_excerpt")
         ),
@@ -189,6 +204,26 @@ def _normalize_optional_string_value(value: Any) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _normalize_string_list_value(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if item is not None]
+    return [str(value)]
+
+
+def _normalize_optional_int_value(value: Any) -> int | None:
+    if value is None:
+        return None
+    return int(value)
+
+
+def _normalize_optional_float_value(value: Any) -> float | None:
+    if value is None:
+        return None
+    return float(value)
 
 
 def _normalize_optional_datetime_value(value: Any) -> str | None:

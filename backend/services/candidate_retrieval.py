@@ -280,10 +280,22 @@ def fuse_candidate_rankings(
     fused_results: list[dict[str, Any]] = []
     for entry in ranked_entries[: max(1, min(int(limit), 100))]:
         candidate = dict(entry["candidate"])
+        retrieval_sources: list[str] = []
+        if entry["text_rank"] is not None:
+            retrieval_sources.append("text")
+        if entry["semantic_rank"] is not None:
+            retrieval_sources.append("semantic")
         if max_fused_score > 0:
             candidate["match_score"] = round(entry["fused_score"] / max_fused_score, 6)
         else:
             candidate["match_score"] = 0.0
+        candidate["retrieval_sources"] = retrieval_sources
+        candidate["text_rank"] = entry["text_rank"]
+        candidate["semantic_rank"] = entry["semantic_rank"]
+        candidate["text_score"] = round(entry["text_score"], 6)
+        candidate["semantic_score"] = round(entry["semantic_score"], 6)
+        candidate["semantic_block_type"] = candidate.get("block_type")
+        candidate["semantic_block_label"] = candidate.get("block_label")
         fused_results.append(candidate)
 
     return fused_results

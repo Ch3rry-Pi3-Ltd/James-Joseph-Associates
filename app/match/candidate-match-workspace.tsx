@@ -9,6 +9,16 @@ import {
   useState,
 } from "react";
 
+type RetrievalEvidence = {
+  retrieval_sources: string[];
+  text_rank: number | null;
+  semantic_rank: number | null;
+  text_score: number | null;
+  semantic_score: number | null;
+  semantic_block_type: string | null;
+  semantic_block_label: string | null;
+};
+
 type CandidateResumeSearchResult = {
   candidate_id: string;
   person_id: string;
@@ -21,6 +31,13 @@ type CandidateResumeSearchResult = {
   document_title: string | null;
   document_source_uri: string | null;
   match_score: number;
+  retrieval_sources: string[];
+  text_rank: number | null;
+  semantic_rank: number | null;
+  text_score: number | null;
+  semantic_score: number | null;
+  semantic_block_type: string | null;
+  semantic_block_label: string | null;
   match_excerpt: string | null;
 };
 
@@ -53,6 +70,13 @@ type CandidateJobDescriptionShortlistItem = {
   document_title: string | null;
   document_source_uri: string | null;
   retrieval_score: number;
+  retrieval_sources: string[];
+  text_rank: number | null;
+  semantic_rank: number | null;
+  text_score: number | null;
+  semantic_score: number | null;
+  semantic_block_type: string | null;
+  semantic_block_label: string | null;
   fit_score: number;
   fit_summary: string;
   strengths: string[];
@@ -251,6 +275,26 @@ function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
     });
 }
 
+function formatRetrievalSourceLabel(source: string): string {
+  if (source === "text") {
+    return "Full-text";
+  }
+
+  if (source === "semantic") {
+    return "Semantic";
+  }
+
+  return source;
+}
+
+function formatSemanticBlockType(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return value.replaceAll("_", " ");
+}
+
 function deriveRetrievalFocusTerms(jobDescription: string): string {
   const normalizedTerms =
     jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
@@ -296,6 +340,110 @@ function buildLoadingMessage(mode: RunMode): string {
   }
 
   return "";
+}
+
+function renderRetrievalDiagnostics(
+  result: RetrievalEvidence,
+  {
+    primaryScoreLabel,
+    primaryScoreValue,
+  }: {
+    primaryScoreLabel: string;
+    primaryScoreValue: number;
+  },
+): ReactNode {
+  const semanticBlockType = formatSemanticBlockType(result.semantic_block_type);
+  const hasDiagnostics =
+    result.retrieval_sources.length > 0 ||
+    result.text_rank !== null ||
+    result.semantic_rank !== null ||
+    result.text_score !== null ||
+    result.semantic_score !== null ||
+    result.semantic_block_label !== null ||
+    semanticBlockType !== null;
+
+  if (!hasDiagnostics) {
+    return null;
+  }
+
+  return (
+    <div className="mt-6 border border-zinc-200 p-4">
+      <p className="text-xs font-semibold uppercase text-zinc-500">
+        Retrieval diagnostics
+      </p>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <dt className="text-xs font-semibold uppercase text-zinc-500">
+            Sources
+          </dt>
+          <dd className="mt-2 flex flex-wrap gap-2">
+            {result.retrieval_sources.length > 0 ? (
+              result.retrieval_sources.map((source) => (
+                <span
+                  key={source}
+                  className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700"
+                >
+                  {formatRetrievalSourceLabel(source)}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm leading-6 text-zinc-900">Unknown</span>
+            )}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="text-xs font-semibold uppercase text-zinc-500">
+            Scores
+          </dt>
+          <dd className="mt-1 grid gap-1 text-sm leading-6 text-zinc-900">
+            <span>
+              {primaryScoreLabel}: {primaryScoreValue.toFixed(3)}
+            </span>
+            {result.text_score !== null ? (
+              <span>Full-text: {result.text_score.toFixed(3)}</span>
+            ) : null}
+            {result.semantic_score !== null ? (
+              <span>Semantic: {result.semantic_score.toFixed(3)}</span>
+            ) : null}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="text-xs font-semibold uppercase text-zinc-500">
+            Ranks
+          </dt>
+          <dd className="mt-1 grid gap-1 text-sm leading-6 text-zinc-900">
+            {result.text_rank !== null ? (
+              <span>Full-text rank: {result.text_rank}</span>
+            ) : null}
+            {result.semantic_rank !== null ? (
+              <span>Semantic rank: {result.semantic_rank}</span>
+            ) : null}
+            {result.text_rank === null && result.semantic_rank === null ? (
+              <span>Not available</span>
+            ) : null}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="text-xs font-semibold uppercase text-zinc-500">
+            Semantic evidence
+          </dt>
+          <dd className="mt-1 grid gap-1 text-sm leading-6 text-zinc-900">
+            {result.semantic_block_label ? (
+              <span>{result.semantic_block_label}</span>
+            ) : null}
+            {semanticBlockType ? <span>Type: {semanticBlockType}</span> : null}
+            {!result.semantic_block_label && !semanticBlockType ? (
+              <span>Not available</span>
+            ) : null}
+          </dd>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 async function encodeFileAsBase64(file: File): Promise<string> {
@@ -1251,6 +1399,14 @@ export function CandidateMatchWorkspace() {
                     <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
                       Retrieval {result.retrieval_score.toFixed(3)}
                     </span>
+                    {result.retrieval_sources.map((source) => (
+                      <span
+                        key={`${result.candidate_id}-${source}`}
+                        className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700"
+                      >
+                        {formatRetrievalSourceLabel(source)}
+                      </span>
+                    ))}
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -1365,6 +1521,11 @@ export function CandidateMatchWorkspace() {
                   </ul>
                 </div>
               </div>
+
+              {renderRetrievalDiagnostics(result, {
+                primaryScoreLabel: "Fused retrieval",
+                primaryScoreValue: result.retrieval_score,
+              })}
 
               <div className="mt-6 border border-zinc-200 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
@@ -1502,6 +1663,14 @@ export function CandidateMatchWorkspace() {
                     <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
                       Score {result.match_score.toFixed(3)}
                     </span>
+                    {result.retrieval_sources.map((source) => (
+                      <span
+                        key={`${result.candidate_id}-${source}`}
+                        className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700"
+                      >
+                        {formatRetrievalSourceLabel(source)}
+                      </span>
+                    ))}
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -1582,6 +1751,11 @@ export function CandidateMatchWorkspace() {
                   </dd>
                 </div>
               </dl>
+
+              {renderRetrievalDiagnostics(result, {
+                primaryScoreLabel: "Fused retrieval",
+                primaryScoreValue: result.match_score,
+              })}
 
               <div className="mt-6 border border-zinc-200 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
