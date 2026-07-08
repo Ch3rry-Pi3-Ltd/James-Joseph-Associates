@@ -42,6 +42,7 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    CompanyJobDiscoveryResponse,
     UploadedResumeSearchRequest,
     UploadedResumeSearchResponse,
 )
@@ -53,6 +54,7 @@ from backend.services.candidate_matching import (
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_jobs_by_company,
     search_candidate_resumes,
 )
 from backend.services.candidate_resume_files import (
@@ -344,6 +346,47 @@ def discover_candidates_by_company_route(
         limit=limit,
     )
     return CandidateCompanyDiscoveryResponse(**result)
+
+
+@router.get(
+    "/discover-jobs-by-company",
+    response_model=CompanyJobDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company job discovery query was invalid.",
+        }
+    },
+)
+def discover_jobs_by_company_route(
+    company_name: str = Query(
+        description="Company name used to find linked job records.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of jobs to return.",
+    ),
+) -> CompanyJobDiscoveryResponse | JSONResponse:
+    """
+    Find canonical jobs already linked to one company name.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company job discovery query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_jobs_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return CompanyJobDiscoveryResponse(**result)
 
 
 @router.get(

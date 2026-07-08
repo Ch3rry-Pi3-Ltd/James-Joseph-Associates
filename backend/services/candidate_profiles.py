@@ -38,6 +38,7 @@ from backend.db.candidates import (
     search_candidates_by_company_name,
 )
 from backend.db.skills import get_candidate_skills
+from backend.db.jobs import search_jobs_by_company_name
 from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
@@ -171,6 +172,29 @@ def discover_candidates_by_company(
     }
 
 
+def discover_jobs_by_company(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """
+    Return one ranked job list for a recruiter company query.
+    """
+
+    normalized_company_name = company_name.strip()
+    results = search_jobs_by_company_name(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return {
+        "company_name": normalized_company_name,
+        "limit": limit,
+        "results": [
+            _normalize_company_job_discovery_result(result) for result in results
+        ],
+    }
+
+
 def _normalize_candidate_resume_search_result(
     result: dict[str, Any],
 ) -> dict[str, Any]:
@@ -263,6 +287,55 @@ def _normalize_candidate_company_discovery_result(
     }
 
 
+def _normalize_company_job_discovery_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Return one public API-safe company-job discovery row.
+    """
+
+    return {
+        "job_id": _normalize_string_value(result.get("job_id")),
+        "title": _normalize_optional_string_value(result.get("title")),
+        "status": _normalize_optional_string_value(result.get("status")),
+        "source": _normalize_optional_string_value(result.get("source")),
+        "owner_name": _normalize_optional_string_value(result.get("owner_name")),
+        "location": _normalize_optional_string_value(result.get("location")),
+        "workplace_type": _normalize_optional_string_value(
+            result.get("workplace_type")
+        ),
+        "employment_type": _normalize_optional_string_value(
+            result.get("employment_type")
+        ),
+        "updated_from_source_at": _normalize_optional_datetime_value(
+            result.get("updated_from_source_at")
+        ),
+        "company_id": _normalize_optional_string_value(result.get("company_id")),
+        "company_name": _normalize_optional_string_value(result.get("company_name")),
+        "hiring_manager_contact_id": _normalize_optional_string_value(
+            result.get("hiring_manager_contact_id")
+        ),
+        "hiring_manager_person_id": _normalize_optional_string_value(
+            result.get("hiring_manager_person_id")
+        ),
+        "hiring_manager_name": _normalize_optional_string_value(
+            result.get("hiring_manager_name")
+        ),
+        "hiring_manager_email": _normalize_optional_string_value(
+            result.get("hiring_manager_email")
+        ),
+        "hiring_manager_phone": _normalize_optional_string_value(
+            result.get("hiring_manager_phone")
+        ),
+        "hiring_manager_role_title": _normalize_optional_string_value(
+            result.get("hiring_manager_role_title")
+        ),
+        "company_match_source": _normalize_string_value(
+            result.get("company_match_source")
+        ),
+    }
+
+
 def _normalize_string_value(value: Any) -> str:
     return "" if value is None else str(value)
 
@@ -306,5 +379,6 @@ def _normalize_optional_datetime_value(value: Any) -> str | None:
 __all__ = [
     "build_candidate_profile",
     "discover_candidates_by_company",
+    "discover_jobs_by_company",
     "search_candidate_resumes",
 ]

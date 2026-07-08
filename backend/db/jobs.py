@@ -53,6 +53,7 @@ from typing import Any
 
 from backend.db.connection import postgres_connection
 
+
 def get_job_profile(job_id: str) -> dict[str, Any] | None:
     """
     Return one job profile joined to company, contact, and person details.
@@ -199,6 +200,84 @@ def get_job_profile(job_id: str) -> dict[str, Any] | None:
     #   - That gives later services, routes, and tests a predictable result type.
     return dict(row)
 
+
+def search_jobs_by_company_name(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """
+    Return recent jobs linked to one company name.
+
+    Notes
+    -----
+    This is a narrow recruiter-facing helper for the workflow:
+
+    - "I see company X hiring"
+    - "show me the jobs we already know there"
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return []
+
+    bounded_limit = max(1, min(int(limit), 100))
+
+    query = """
+        select
+            j.id as job_id,
+            j.title,
+            j.status,
+            j.source,
+            j.owner_name,
+            j.location,
+            j.workplace_type,
+            j.employment_type,
+            j.updated_from_source_at,
+            co.id as company_id,
+            co.name as company_name,
+            ct.id as hiring_manager_contact_id,
+            p.id as hiring_manager_person_id,
+            p.full_name as hiring_manager_name,
+            p.primary_email as hiring_manager_email,
+            p.primary_phone as hiring_manager_phone,
+            ct.role_title as hiring_manager_role_title,
+            case
+                when lower(co.name) = lower(%(company_name)s) then 'company_exact'
+                else 'company_partial'
+            end as company_match_source
+        from jobs j
+        join companies co
+          on co.id = j.company_id
+        left join contacts ct
+          on ct.id = j.hiring_manager_contact_id
+        left join people p
+          on p.id = ct.person_id
+        where lower(co.name) like ('%%' || lower(%(company_name)s) || '%%')
+        order by
+            case
+                when lower(co.name) = lower(%(company_name)s) then 0
+                else 1
+            end,
+            coalesce(j.updated_from_source_at, j.updated_at, j.created_at) desc,
+            j.id desc
+        limit %(limit)s
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {
+                    "company_name": normalized_company_name,
+                    "limit": bounded_limit,
+                },
+            )
+            rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
+
 __all__ = [
     "get_job_profile",
+    "search_jobs_by_company_name",
 ]

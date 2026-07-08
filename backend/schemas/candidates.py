@@ -203,6 +203,52 @@ class CandidateCompanyDiscoveryResponse(BaseModel):
     )
 
 
+class CompanyJobDiscoveryResult(BaseModel):
+    """
+    One job returned by the company job-discovery endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    job_id: str
+    title: str | None = None
+    status: str | None = None
+    source: str | None = None
+    owner_name: str | None = None
+    location: str | None = None
+    workplace_type: str | None = None
+    employment_type: str | None = None
+    updated_from_source_at: str | None = None
+    company_id: str | None = None
+    company_name: str | None = None
+    hiring_manager_contact_id: str | None = None
+    hiring_manager_person_id: str | None = None
+    hiring_manager_name: str | None = None
+    hiring_manager_email: str | None = None
+    hiring_manager_phone: str | None = None
+    hiring_manager_role_title: str | None = None
+    company_match_source: str
+
+
+class CompanyJobDiscoveryResponse(BaseModel):
+    """
+    Response envelope for one company-to-job discovery query.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for the job discovery query.",
+    )
+    limit: int = Field(
+        description="Maximum number of jobs requested.",
+    )
+    results: list[CompanyJobDiscoveryResult] = Field(
+        default_factory=list,
+        description="Recent canonical jobs already linked to the company.",
+    )
+
+
 class UploadedResumeSearchResponse(BaseModel):
     """
     Response envelope for transient uploaded-resume semantic search.
@@ -335,6 +381,8 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
 __all__ = [
     "CandidateCompanyDiscoveryResponse",
     "CandidateCompanyDiscoveryResult",
+    "CompanyJobDiscoveryResponse",
+    "CompanyJobDiscoveryResult",
     "CandidateProfileResponse",
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",

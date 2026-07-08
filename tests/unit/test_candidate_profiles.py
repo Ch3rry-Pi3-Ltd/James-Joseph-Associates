@@ -54,6 +54,7 @@ from uuid import UUID
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_jobs_by_company,
     search_candidate_resumes,
 )
 
@@ -360,6 +361,73 @@ def test_discover_candidates_by_company_normalizes_raw_rows() -> None:
         ],
     }
     mock_search_candidates_by_company_name.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_discover_jobs_by_company_normalizes_raw_rows() -> None:
+    """
+    Verify that company-job discovery results are normalized into the public API shape.
+    """
+
+    raw_result = {
+        "job_id": UUID("55555555-5555-5555-5555-555555555551"),
+        "title": "Senior Data Engineer",
+        "status": "Open",
+        "source": "jobadder",
+        "owner_name": "Tom Owens",
+        "location": "London, UK",
+        "workplace_type": "hybrid",
+        "employment_type": "permanent",
+        "updated_from_source_at": datetime(2026, 4, 22, 12, 0, tzinfo=UTC),
+        "company_id": UUID("11111111-1111-1111-1111-111111111111"),
+        "company_name": "Acme Hiring Ltd",
+        "hiring_manager_contact_id": None,
+        "hiring_manager_person_id": None,
+        "hiring_manager_name": None,
+        "hiring_manager_email": None,
+        "hiring_manager_phone": None,
+        "hiring_manager_role_title": None,
+        "company_match_source": "company_exact",
+    }
+
+    with patch(
+        "backend.services.candidate_profiles.search_jobs_by_company_name",
+        return_value=[raw_result],
+    ) as mock_search_jobs_by_company_name:
+        result = discover_jobs_by_company(
+            company_name=" Acme Hiring Ltd ",
+            limit=5,
+        )
+
+    assert result == {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "job_id": "55555555-5555-5555-5555-555555555551",
+                "title": "Senior Data Engineer",
+                "status": "Open",
+                "source": "jobadder",
+                "owner_name": "Tom Owens",
+                "location": "London, UK",
+                "workplace_type": "hybrid",
+                "employment_type": "permanent",
+                "updated_from_source_at": "2026-04-22T12:00:00+00:00",
+                "company_id": "11111111-1111-1111-1111-111111111111",
+                "company_name": "Acme Hiring Ltd",
+                "hiring_manager_contact_id": None,
+                "hiring_manager_person_id": None,
+                "hiring_manager_name": None,
+                "hiring_manager_email": None,
+                "hiring_manager_phone": None,
+                "hiring_manager_role_title": None,
+                "company_match_source": "company_exact",
+            }
+        ],
+    }
+    mock_search_jobs_by_company_name.assert_called_once_with(
         company_name="Acme Hiring Ltd",
         limit=5,
     )

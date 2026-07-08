@@ -69,6 +69,33 @@ type CandidateCompanyDiscoveryResponse = {
   results: CandidateCompanyDiscoveryResult[];
 };
 
+type CompanyJobDiscoveryResult = {
+  job_id: string;
+  title: string | null;
+  status: string | null;
+  source: string | null;
+  owner_name: string | null;
+  location: string | null;
+  workplace_type: string | null;
+  employment_type: string | null;
+  updated_from_source_at: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  hiring_manager_contact_id: string | null;
+  hiring_manager_person_id: string | null;
+  hiring_manager_name: string | null;
+  hiring_manager_email: string | null;
+  hiring_manager_phone: string | null;
+  hiring_manager_role_title: string | null;
+  company_match_source: string;
+};
+
+type CompanyJobDiscoveryResponse = {
+  company_name: string;
+  limit: number;
+  results: CompanyJobDiscoveryResult[];
+};
+
 type UploadedResumeSearchResponse = {
   file_name: string | null;
   content_type: string | null;
@@ -545,6 +572,12 @@ export function CandidateMatchWorkspace() {
   const [companyDiscoveryResults, setCompanyDiscoveryResults] = useState<
     CandidateCompanyDiscoveryResult[]
   >([]);
+  const [companyJobResults, setCompanyJobResults] = useState<
+    CompanyJobDiscoveryResult[]
+  >([]);
+  const [companyJobsErrorMessage, setCompanyJobsErrorMessage] = useState<
+    string | null
+  >(null);
   const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
     null,
   );
@@ -634,6 +667,22 @@ export function CandidateMatchWorkspace() {
 
     return `${companyDiscoveryResults.length} company matches returned.`;
   }, [companyDiscoveryResults.length, submittedCompanyName]);
+
+  const companyJobsCountLabel = useMemo(() => {
+    if (submittedCompanyName && companyJobResults.length === 0) {
+      return "0 jobs returned.";
+    }
+
+    if (companyJobResults.length === 0) {
+      return "No jobs returned yet.";
+    }
+
+    if (companyJobResults.length === 1) {
+      return "1 job returned.";
+    }
+
+    return `${companyJobResults.length} jobs returned.`;
+  }, [companyJobResults.length, submittedCompanyName]);
 
   async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
@@ -844,6 +893,7 @@ export function CandidateMatchWorkspace() {
 
     setCompanyDiscoveryLoading(true);
     setCompanyDiscoveryErrorMessage(null);
+    setCompanyJobsErrorMessage(null);
 
     try {
       const searchParams = new URLSearchParams({
@@ -876,8 +926,33 @@ export function CandidateMatchWorkspace() {
       const companyDiscoveryResponse = payload as CandidateCompanyDiscoveryResponse;
       setCompanyDiscoveryResults(companyDiscoveryResponse.results);
       setSubmittedCompanyName(companyDiscoveryResponse.company_name);
+
+      const jobsResponse = await fetch(
+        `/api/v1/candidates/discover-jobs-by-company?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const jobsPayload = (await jobsResponse.json()) as unknown;
+
+      if (!jobsResponse.ok) {
+        setCompanyJobResults([]);
+        setCompanyJobsErrorMessage(
+          (isApiErrorResponse(jobsPayload) ? jobsPayload.error?.message : undefined) ??
+            `Company jobs request failed with ${jobsResponse.status}.`,
+        );
+        return;
+      }
+
+      const companyJobsResponse = jobsPayload as CompanyJobDiscoveryResponse;
+      setCompanyJobResults(companyJobsResponse.results);
     } catch (error) {
       setCompanyDiscoveryResults([]);
+      setCompanyJobResults([]);
       setSubmittedCompanyName(trimmedCompanyName);
       setCompanyDiscoveryErrorMessage(
         error instanceof Error
@@ -917,6 +992,8 @@ export function CandidateMatchWorkspace() {
     setCompanyNameQuery("");
     setCompanyDiscoveryResults([]);
     setCompanyDiscoveryErrorMessage(null);
+    setCompanyJobResults([]);
+    setCompanyJobsErrorMessage(null);
     setSubmittedCompanyName(null);
     setUploadedResumeFile(null);
     setUploadedResumeResult(null);
@@ -1475,6 +1552,13 @@ export function CandidateMatchWorkspace() {
           </div>
         </div>
 
+        <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+          Hiring-manager records are not persisted yet in live data. This
+          section currently shows two usable signals for the same company query:
+          matching candidates and known canonical jobs. Contact discovery comes
+          after we persist `contacts` from upstream sources.
+        </div>
+
         <div className="grid gap-6 border border-zinc-200 bg-white p-6">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_120px_auto] lg:items-end">
             <div className="grid gap-2">
@@ -1665,6 +1749,118 @@ export function CandidateMatchWorkspace() {
                 </div>
               </article>
             ))}
+          </div>
+
+          <div className="grid gap-4 border-t border-zinc-200 pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  Known jobs at this company
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">
+                  Canonical jobs already linked to the same company.
+                </p>
+              </div>
+
+              <div className="text-sm text-zinc-600">{companyJobsCountLabel}</div>
+            </div>
+
+            {companyJobsErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {companyJobsErrorMessage}
+              </div>
+            ) : null}
+
+            {submittedCompanyName &&
+            companyJobResults.length === 0 &&
+            !companyJobsErrorMessage ? (
+              <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                No canonical jobs are linked to that company query yet.
+              </div>
+            ) : null}
+
+            <div className="grid gap-5">
+              {companyJobResults.map((result, index) => (
+                <article
+                  key={result.job_id}
+                  className="border border-zinc-200 bg-white p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                          Job {index + 1}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {result.status ?? "Unknown status"}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {result.source ?? "Unknown source"}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-4 text-2xl font-semibold text-zinc-950">
+                        {result.title ?? "Untitled job"}
+                      </h4>
+
+                      <p className="mt-2 text-base leading-7 text-zinc-700">
+                        {result.company_name ?? "Unknown company"}
+                        {result.location ? ` | ${result.location}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Owner
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.owner_name ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Workplace
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.workplace_type ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Employment
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.employment_type ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Source updated
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {formatTimestamp(result.updated_from_source_at)}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-6 border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Hiring-manager contact
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-zinc-900">
+                      {result.hiring_manager_name
+                        ? `${result.hiring_manager_name}${result.hiring_manager_role_title ? ` | ${result.hiring_manager_role_title}` : ""}`
+                        : "No hiring-manager contact is linked on this canonical job yet."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
