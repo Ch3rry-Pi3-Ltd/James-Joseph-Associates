@@ -1,0 +1,32 @@
+{
+  "source_record_id": "linkedin-helper-row-001",
+  "source_payload": {
+    "profileUrl": "https://www.linkedin.com/in/sarah-jones/",
+    "company": "Acme Hiring Ltd",
+    "title": "Head of Data",
+    "email": "sarah@acme.test"
+  },
+  "record_kind": "hiring_manager",
+  "full_name": "Sarah Jones",
+  "primary_email": "sarah@acme.test",
+  "primary_phone": "+44 7700 900123",
+  "linkedin_url": "https://www.linkedin.com/in/sarah-jones/",
+  "location": "London, UK",
+  "headline": "Head of Data",
+  "summary": "Owns hiring for the central data platform team.",
+  "company_name": "Acme Hiring Ltd",
+  "company_domain": "acme.test",
+  "company_website_url": "https://acme.test",
+  "company_linkedin_url": "https://www.linkedin.com/company/acme-hiring-ltd/",
+  "role_title": "Head of Data",
+  "seniority": "head",
+  "contact_type": "hiring_manager",
+  "is_hiring_manager": true,
+  "is_current_company": true,
+  "role_start_date": "2024-01-01",
+  "role_end_date": null,
+  "candidate_status": null,
+  "availability_status": null,
+  "resume_updated_at": null,
+  "last_contacted_at": "2026-07-08T08:15:00Z"
+}
