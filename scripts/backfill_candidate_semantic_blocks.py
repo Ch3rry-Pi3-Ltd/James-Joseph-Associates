@@ -18,10 +18,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from backend.db.candidate_semantic_blocks import (
-    backfill_candidate_semantic_blocks,
-)
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -73,6 +69,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    from backend.db.candidate_semantic_blocks import (
+        backfill_candidate_semantic_blocks,
+    )
+
     parser = build_parser()
     args = parser.parse_args()
 

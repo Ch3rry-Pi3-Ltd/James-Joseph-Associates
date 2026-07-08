@@ -5,12 +5,10 @@ Current-resume file access helpers for matched/searchable candidates.
 from __future__ import annotations
 
 import re
-from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import unquote, urlparse
 
 from backend.db.candidates import get_candidate_current_resume_document
-from backend.db.dropbox_oauth import get_dropbox_oauth_connection
 from backend.db.dropbox_oauth_read import get_latest_dropbox_oauth_connection
 from backend.db.jobadder_oauth import get_jobadder_oauth_connection
 from backend.db.outlook_oauth import get_outlook_oauth_connection
