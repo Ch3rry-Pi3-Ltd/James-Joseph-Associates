@@ -54,6 +54,7 @@ from backend.main import create_app
 from backend.settings import get_settings
 from backend.services.jobadder_api import JobAdderApiError
 from backend.services.jobadder_oauth import JobAdderOAuthExchangeError
+from backend.services.recruitly_api import RecruitlyApiError
 
 JOBADDER_AUTHORIZE_PATH = "/api/v1/integrations/jobadder/authorize"
 JOBADDER_CALLBACK_PATH = "/api/v1/integrations/jobadder/callback"
@@ -96,6 +97,13 @@ JOBADDER_CANDIDATE_NOTES_PATH_TEMPLATE = (
 JOBADDER_CANDIDATE_SKILLS_PATH_TEMPLATE = (
     "/api/v1/integrations/jobadder/accounts/{jobadder_account}/candidates/{candidate_id}/skills"
 )
+RECRUITLY_CANDIDATES_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/candidates-preview"
+RECRUITLY_COMPANIES_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/companies-preview"
+RECRUITLY_CONTACTS_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/contacts-preview"
+RECRUITLY_JOBS_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/jobs-preview"
+RECRUITLY_JOURNAL_PREVIEW_PATH_TEMPLATE = (
+    "/api/v1/integrations/recruitly/admin/{record_type}/{record_id}/journal-preview"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -130,8 +138,199 @@ def create_test_client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setenv("JOBADDER_CLIENT_ID", "")
     monkeypatch.setenv("JOBADDER_CLIENT_SECRET", "")
     monkeypatch.setenv("JOBADDER_REDIRECT_URI", "")
+    monkeypatch.setenv("ADMIN_API_TOKEN", "")
+    monkeypatch.setenv("INTERNAL_ADMIN_API_TOKEN", "")
+    monkeypatch.setenv("MAKE_API_TOKEN", "")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "")
+    monkeypatch.setenv("RECRUITLY_BASE_URL", "https://api.recruitly.io")
 
     return TestClient(create_app())
+
+
+def test_recruitly_candidates_preview_requires_admin_bearer_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = create_test_client(monkeypatch)
+
+    response = client.get(RECRUITLY_CANDIDATES_PREVIEW_PATH)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()["error"]["message"] == "Admin API bearer token is not configured."
+
+
+def test_recruitly_candidates_preview_returns_provider_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+    monkeypatch.setenv("RECRUITLY_BASE_URL", "https://api.recruitly.io")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.fetch_recruitly_candidates_preview",
+        return_value={
+            "resource": "candidates",
+            "query": "python",
+            "page": 0,
+            "size": 5,
+            "item_count": 1,
+            "total_count": 42,
+            "data": [{"id": "cand-1", "name": "Sarah Jones"}],
+            "raw_payload": {"data": [{"id": "cand-1", "name": "Sarah Jones"}]},
+        },
+    ) as mock_fetch_recruitly_candidates_preview:
+        response = client.get(
+            f"{RECRUITLY_CANDIDATES_PREVIEW_PATH}?query=python&page=0&size=5",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "resource": "candidates",
+        "api_base_url": "https://api.recruitly.io",
+        "query": "python",
+        "page": 0,
+        "size": 5,
+        "item_count": 1,
+        "total_count": 42,
+        "data": [{"id": "cand-1", "name": "Sarah Jones"}],
+    }
+    mock_fetch_recruitly_candidates_preview.assert_called_once_with(
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        query="python",
+        page=0,
+        size=5,
+    )
+
+
+def test_recruitly_companies_preview_returns_provider_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.fetch_recruitly_companies_preview",
+        return_value={
+            "resource": "companies",
+            "query": None,
+            "page": 0,
+            "size": 20,
+            "item_count": 1,
+            "total_count": 1,
+            "data": [{"id": "company-1", "name": "Acme Hiring Ltd"}],
+            "raw_payload": {"data": [{"id": "company-1", "name": "Acme Hiring Ltd"}]},
+        },
+    ) as mock_fetch_recruitly_companies_preview:
+        response = client.get(
+            RECRUITLY_COMPANIES_PREVIEW_PATH,
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["resource"] == "companies"
+    assert response.json()["item_count"] == 1
+    mock_fetch_recruitly_companies_preview.assert_called_once_with(
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        query=None,
+        page=0,
+        size=20,
+    )
+
+
+def test_recruitly_preview_returns_provider_error_cleanly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.fetch_recruitly_jobs_preview",
+        side_effect=RecruitlyApiError("Recruitly API request returned an error response."),
+    ) as mock_fetch_recruitly_jobs_preview:
+        response = client.get(
+            RECRUITLY_JOBS_PREVIEW_PATH,
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+    assert response.status_code == status.HTTP_502_BAD_GATEWAY
+    assert response.json() == {
+        "error": {
+            "code": "integration_connection_invalid",
+            "message": "Recruitly job preview failed.",
+            "details": [
+                {
+                    "error_type": "RecruitlyApiError",
+                    "message": "Recruitly API request returned an error response.",
+                }
+            ],
+        }
+    }
+    mock_fetch_recruitly_jobs_preview.assert_called_once_with(
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        query=None,
+        page=0,
+        size=20,
+    )
+
+
+def test_recruitly_journal_preview_returns_provider_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.fetch_recruitly_record_journal_preview",
+        return_value={
+            "record_type": "candidate",
+            "record_id": "cand-1",
+            "page": 0,
+            "size": 5,
+            "item_count": 1,
+            "total_count": 3,
+            "data": [{"id": "journal-1", "subject": "Candidate note"}],
+            "raw_payload": {"data": [{"id": "journal-1", "subject": "Candidate note"}]},
+        },
+    ) as mock_fetch_recruitly_record_journal_preview:
+        response = client.get(
+            RECRUITLY_JOURNAL_PREVIEW_PATH_TEMPLATE.format(
+                record_type="candidate",
+                record_id="cand-1",
+            )
+            + "?page=0&size=5",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "record_type": "candidate",
+        "record_id": "cand-1",
+        "api_base_url": "https://api.recruitly.io",
+        "page": 0,
+        "size": 5,
+        "item_count": 1,
+        "total_count": 3,
+        "data": [{"id": "journal-1", "subject": "Candidate note"}],
+    }
+    mock_fetch_recruitly_record_journal_preview.assert_called_once_with(
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        record_type="candidate",
+        record_id="cand-1",
+        page=0,
+        size=5,
+    )
 
 
 def test_jobadder_authorize_returns_url_when_minimum_oauth_settings_exist(

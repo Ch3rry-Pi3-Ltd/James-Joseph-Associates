@@ -179,6 +179,89 @@ class LinkedHelperPersonIngestResponse(BaseModel):
     )
 
 
+class RecruitlyEntityPreviewResponse(BaseModel):
+    """
+    Response returned after one protected Recruitly collection preview read.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    resource: Literal["candidates", "companies", "contacts", "jobs"] = Field(
+        description="Recruitly collection that was previewed.",
+    )
+    api_base_url: str = Field(
+        min_length=1,
+        description="Recruitly API base URL used for the authenticated read.",
+    )
+    query: str | None = Field(
+        default=None,
+        description="Optional search string used for the preview read.",
+    )
+    page: int = Field(
+        ge=0,
+        description="Zero-based preview page requested from Recruitly.",
+    )
+    size: int = Field(
+        ge=1,
+        le=100,
+        description="Maximum number of rows requested from Recruitly.",
+    )
+    item_count: int = Field(
+        ge=0,
+        description="Number of entity rows returned in this preview response.",
+    )
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total row count when Recruitly includes it.",
+    )
+    data: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small preview payload returned by Recruitly for this collection.",
+    )
+
+
+class RecruitlyJournalPreviewResponse(BaseModel):
+    """
+    Response returned after one protected Recruitly journal/activity preview read.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    record_type: str = Field(
+        min_length=1,
+        description="Recruitly record type used for the journal lookup.",
+    )
+    record_id: str = Field(
+        min_length=1,
+        description="Recruitly record identifier used for the journal lookup.",
+    )
+    api_base_url: str = Field(
+        min_length=1,
+        description="Recruitly API base URL used for the authenticated read.",
+    )
+    page: int = Field(
+        ge=0,
+        description="Zero-based journal preview page requested from Recruitly.",
+    )
+    size: int = Field(
+        ge=1,
+        le=100,
+        description="Maximum number of journal rows requested from Recruitly.",
+    )
+    item_count: int = Field(
+        ge=0,
+        description="Number of journal rows returned in this preview response.",
+    )
+    total_count: int | None = Field(
+        default=None,
+        description="Provider-reported total journal row count when available.",
+    )
+    data: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Small journal/activity preview payload returned by Recruitly.",
+    )
+
+
 class OutlookFolderIngestRunRequest(BaseModel):
     """
     Request body for one bounded protected Outlook folder-ingest run.
@@ -2469,6 +2552,8 @@ class OutlookMessageAttachmentDownloadProofResponse(BaseModel):
 __all__ = [
     "LinkedHelperPersonIngestRequest",
     "LinkedHelperPersonIngestResponse",
+    "RecruitlyEntityPreviewResponse",
+    "RecruitlyJournalPreviewResponse",
     "JobAdderAuthorizationUrlResponse",
     "JobAdderApplicationDetailResponse",
     "JobAdderApplicationAttachmentsResponse",

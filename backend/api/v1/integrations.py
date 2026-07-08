@@ -101,6 +101,8 @@ from backend.schemas.integrations import (
     DropboxZipMembersPreviewResponse,
     LinkedHelperPersonIngestRequest,
     LinkedHelperPersonIngestResponse,
+    RecruitlyEntityPreviewResponse,
+    RecruitlyJournalPreviewResponse,
     JobAdderApplicationDetailResponse,
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateAttachmentDownloadProofResponse,
@@ -161,6 +163,14 @@ from backend.services.outlook_cv_attachment_export import (
 )
 from backend.services.linkedin_helper_ingestion import (
     ingest_linkedin_helper_person,
+)
+from backend.services.recruitly_api import (
+    RecruitlyApiError,
+    fetch_recruitly_candidates_preview,
+    fetch_recruitly_companies_preview,
+    fetch_recruitly_contacts_preview,
+    fetch_recruitly_jobs_preview,
+    fetch_recruitly_record_journal_preview,
 )
 from backend.services.outlook_oauth import (
     OutlookOAuthExchangeError,
@@ -350,6 +360,34 @@ def _normalize_outlook_folder_segments(folder_segments: list[str]) -> list[str]:
     if not normalized_segments:
         raise ValueError("At least one non-empty Outlook folder segment is required.")
     return normalized_segments
+
+
+def _load_recruitly_configuration() -> tuple[str, str] | JSONResponse:
+    """
+    Load the bounded Recruitly API configuration for protected preview routes.
+    """
+
+    settings = get_settings()
+    api_key = getattr(settings, "recruitly_api_key", "")
+    api_base_url = getattr(settings, "recruitly_base_url", "")
+
+    if not isinstance(api_key, str) or api_key.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Recruitly API is not configured.",
+            details=[{"required_settings": ["RECRUITLY_API_KEY"]}],
+        )
+
+    if not isinstance(api_base_url, str) or api_base_url.strip() == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Recruitly API is not configured.",
+            details=[{"required_settings": ["RECRUITLY_BASE_URL"]}],
+        )
+
+    return api_base_url.strip(), api_key.strip()
 
 
 def _refresh_jobadder_stored_connection(
@@ -4563,6 +4601,283 @@ def get_outlook_message_attachments_route(
         message_id=message_id,
         attachment_count=attachment_result["attachment_count"],
         attachments=attachment_result["attachments"],
+    )
+
+
+@router.get(
+    "/recruitly/admin/candidates-preview",
+    response_model=RecruitlyEntityPreviewResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly preview read failed."},
+    },
+)
+def get_recruitly_candidates_preview_route(
+    request: Request,
+    query: str | None = Query(default=None),
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=20, ge=1, le=100),
+) -> RecruitlyEntityPreviewResponse | JSONResponse:
+    """
+    Return one protected Recruitly candidate preview page.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        preview = fetch_recruitly_candidates_preview(
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=query,
+            page=page,
+            size=size,
+        )
+    except (RecruitlyApiError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly candidate preview failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return RecruitlyEntityPreviewResponse(
+        resource="candidates",
+        api_base_url=api_base_url,
+        query=preview["query"],
+        page=preview["page"],
+        size=preview["size"],
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        data=preview["data"],
+    )
+
+
+@router.get(
+    "/recruitly/admin/companies-preview",
+    response_model=RecruitlyEntityPreviewResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly preview read failed."},
+    },
+)
+def get_recruitly_companies_preview_route(
+    request: Request,
+    query: str | None = Query(default=None),
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=20, ge=1, le=100),
+) -> RecruitlyEntityPreviewResponse | JSONResponse:
+    """
+    Return one protected Recruitly company preview page.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        preview = fetch_recruitly_companies_preview(
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=query,
+            page=page,
+            size=size,
+        )
+    except (RecruitlyApiError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly company preview failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return RecruitlyEntityPreviewResponse(
+        resource="companies",
+        api_base_url=api_base_url,
+        query=preview["query"],
+        page=preview["page"],
+        size=preview["size"],
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        data=preview["data"],
+    )
+
+
+@router.get(
+    "/recruitly/admin/contacts-preview",
+    response_model=RecruitlyEntityPreviewResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly preview read failed."},
+    },
+)
+def get_recruitly_contacts_preview_route(
+    request: Request,
+    query: str | None = Query(default=None),
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=20, ge=1, le=100),
+) -> RecruitlyEntityPreviewResponse | JSONResponse:
+    """
+    Return one protected Recruitly contact preview page.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        preview = fetch_recruitly_contacts_preview(
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=query,
+            page=page,
+            size=size,
+        )
+    except (RecruitlyApiError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly contact preview failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return RecruitlyEntityPreviewResponse(
+        resource="contacts",
+        api_base_url=api_base_url,
+        query=preview["query"],
+        page=preview["page"],
+        size=preview["size"],
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        data=preview["data"],
+    )
+
+
+@router.get(
+    "/recruitly/admin/jobs-preview",
+    response_model=RecruitlyEntityPreviewResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly preview read failed."},
+    },
+)
+def get_recruitly_jobs_preview_route(
+    request: Request,
+    query: str | None = Query(default=None),
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=20, ge=1, le=100),
+) -> RecruitlyEntityPreviewResponse | JSONResponse:
+    """
+    Return one protected Recruitly job preview page.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        preview = fetch_recruitly_jobs_preview(
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=query,
+            page=page,
+            size=size,
+        )
+    except (RecruitlyApiError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly job preview failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return RecruitlyEntityPreviewResponse(
+        resource="jobs",
+        api_base_url=api_base_url,
+        query=preview["query"],
+        page=preview["page"],
+        size=preview["size"],
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        data=preview["data"],
+    )
+
+
+@router.get(
+    "/recruitly/admin/{record_type}/{record_id}/journal-preview",
+    response_model=RecruitlyJournalPreviewResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly preview read failed."},
+    },
+)
+def get_recruitly_journal_preview_route(
+    request: Request,
+    record_type: str,
+    record_id: str,
+    page: int = Query(default=0, ge=0),
+    size: int = Query(default=20, ge=1, le=100),
+) -> RecruitlyJournalPreviewResponse | JSONResponse:
+    """
+    Return one protected Recruitly journal/activity preview page.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        preview = fetch_recruitly_record_journal_preview(
+            api_base_url=api_base_url,
+            api_key=api_key,
+            record_type=record_type,
+            record_id=record_id,
+            page=page,
+            size=size,
+        )
+    except (RecruitlyApiError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly journal preview failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return RecruitlyJournalPreviewResponse(
+        record_type=preview["record_type"],
+        record_id=preview["record_id"],
+        api_base_url=api_base_url,
+        page=preview["page"],
+        size=preview["size"],
+        item_count=preview["item_count"],
+        total_count=preview["total_count"],
+        data=preview["data"],
     )
 
 

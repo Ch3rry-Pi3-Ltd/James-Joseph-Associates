@@ -20,6 +20,7 @@ It gives the rest of the repository a stable way to talk about:
 - the default timeout used for backend LLM provider calls
 - the Dropbox OAuth app credentials used for Dropbox integration routes
 - the Microsoft / Outlook OAuth app credentials used for Outlook integration routes
+- the Recruitly API key and base URL used for Recruitly integration preview routes
 
 Keeping settings in one place makes the project easier to understand because:
 
@@ -169,6 +170,12 @@ class Settings(BaseSettings):
     microsoft_redirect_uri : str
         Exact redirect URI registered for the Microsoft Entra application.
 
+    recruitly_api_key : str
+        API key used for authenticated Recruitly API reads.
+
+    recruitly_base_url : str
+        Base URL used for Recruitly API requests.
+
     openai_api_key : str
         OpenAI API key used by the backend LLM provider layer.
 
@@ -227,6 +234,8 @@ class Settings(BaseSettings):
         MICROSOFT_CLIENT_SECRET
         MICROSOFT_TENANT_ID
         MICROSOFT_REDIRECT_URI
+        RECRUITLY_API_KEY
+        RECRUITLY_BASE_URL
         OPENAI_API_KEY
         OPENROUTER_API_KEY
         OPENROUTER_BASE_URL
@@ -254,6 +263,8 @@ class Settings(BaseSettings):
         MICROSOFT_CLIENT_SECRET=""
         MICROSOFT_TENANT_ID="organizations"
         MICROSOFT_REDIRECT_URI=""
+        RECRUITLY_API_KEY=""
+        RECRUITLY_BASE_URL="https://api.recruitly.io"
         OPENAI_API_KEY=""
         OPENAI_EMBEDDING_MODEL="text-embedding-3-large"
         OPENAI_EMBEDDING_DIMENSIONS="1536"
@@ -434,6 +445,21 @@ class Settings(BaseSettings):
     microsoft_redirect_uri: str = Field(
         default="",
         validation_alias="MICROSOFT_REDIRECT_URI",
+    )
+
+    # API key for Recruitly authenticated reads.
+    #   - Recruitly uses API-key query authentication instead of OAuth for the
+    #     developer API surface we are using first.
+    recruitly_api_key: str = Field(
+        default="",
+        validation_alias="RECRUITLY_API_KEY",
+    )
+
+    # Base URL for Recruitly API requests.
+    #   - The official docs show endpoints under `https://api.recruitly.io`.
+    recruitly_base_url: str = Field(
+        default="https://api.recruitly.io",
+        validation_alias="RECRUITLY_BASE_URL",
     )
 
     # Shared OpenAI API key for the backend LLM provider layer.
