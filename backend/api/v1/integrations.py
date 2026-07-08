@@ -99,6 +99,8 @@ from backend.schemas.integrations import (
     DropboxOAuthConnectionSavedResponse,
     DropboxZipJsonMemberPreviewResponse,
     DropboxZipMembersPreviewResponse,
+    LinkedHelperPersonIngestRequest,
+    LinkedHelperPersonIngestResponse,
     JobAdderApplicationDetailResponse,
     JobAdderAuthorizationUrlResponse,
     JobAdderCandidateAttachmentDownloadProofResponse,
@@ -156,6 +158,9 @@ from backend.services.outlook_api import (
 )
 from backend.services.outlook_cv_attachment_export import (
     run_outlook_cv_attachment_export,
+)
+from backend.services.linkedin_helper_ingestion import (
+    ingest_linkedin_helper_person,
 )
 from backend.services.outlook_oauth import (
     OutlookOAuthExchangeError,
@@ -4558,6 +4563,52 @@ def get_outlook_message_attachments_route(
         message_id=message_id,
         attachment_count=attachment_result["attachment_count"],
         attachments=attachment_result["attachments"],
+    )
+
+
+@router.post(
+    "/linkedin-helper/admin/ingest-person",
+    response_model=LinkedHelperPersonIngestResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Linked Helper ingest failed."},
+    },
+)
+def ingest_linkedin_helper_person_route(
+    request: Request,
+    payload: LinkedHelperPersonIngestRequest,
+) -> LinkedHelperPersonIngestResponse | JSONResponse:
+    """
+    Persist one Linked Helper sourced person/contact payload.
+
+    Notes
+    -----
+    - This route is intentionally protected and operator-facing first.
+    - The upstream source may be a webhook adapter or a CSV-to-JSON adapter.
+    - The canonical storage contract is the stable part.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    try:
+        persisted = ingest_linkedin_helper_person(payload.model_dump())
+    except (RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Linked Helper person ingest failed.",
+            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+        )
+
+    return LinkedHelperPersonIngestResponse(
+        status="completed",
+        message=(
+            "Linked Helper person ingest completed. The raw upstream payload "
+            "was preserved and the canonical rows were refreshed."
+        ),
+        persisted=persisted,
     )
 
 

@@ -45,7 +45,7 @@ In plain language:
 - it only defines typed response shapes
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -101,6 +101,81 @@ class JobAdderAuthorizationUrlResponse(BaseModel):
     state: str | None = Field(
         default=None,
         description="Optional opaque state value included in the URL.",
+    )
+
+
+class LinkedHelperPersonIngestRequest(BaseModel):
+    """
+    Request body for one protected Linked Helper person/contact ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_record_id: str | None = Field(
+        default=None,
+        description=(
+            "Stable upstream row identifier. When omitted, the backend derives "
+            "one from LinkedIn URL, email, or name/company."
+        ),
+    )
+    source_payload: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Raw Linked Helper webhook/CSV row preserved for provenance.",
+    )
+    import_run_id: str | None = Field(
+        default=None,
+        description="Optional import run identifier for operator bookkeeping.",
+    )
+    record_kind: Literal["candidate", "contact", "hiring_manager"] = Field(
+        description="Canonical interpretation of the incoming Linked Helper row.",
+    )
+    full_name: str | None = Field(
+        default=None,
+        description="Full person name when the upstream row already provides it.",
+    )
+    first_name: str | None = Field(default=None)
+    last_name: str | None = Field(default=None)
+    primary_email: str | None = Field(default=None)
+    primary_phone: str | None = Field(default=None)
+    linkedin_url: str | None = Field(default=None)
+    location: str | None = Field(default=None)
+    headline: str | None = Field(default=None)
+    summary: str | None = Field(default=None)
+    company_name: str | None = Field(default=None)
+    company_domain: str | None = Field(default=None)
+    company_website_url: str | None = Field(default=None)
+    company_linkedin_url: str | None = Field(default=None)
+    role_title: str | None = Field(default=None)
+    seniority: str | None = Field(default=None)
+    postcode: str | None = Field(default=None)
+    contact_type: str | None = Field(default=None)
+    is_hiring_manager: bool = Field(default=False)
+    is_current_company: bool = Field(default=True)
+    role_start_date: date | None = Field(default=None)
+    role_end_date: date | None = Field(default=None)
+    candidate_status: str | None = Field(default=None)
+    availability_status: str | None = Field(default=None)
+    resume_updated_at: datetime | None = Field(default=None)
+    last_contacted_at: datetime | None = Field(default=None)
+
+
+class LinkedHelperPersonIngestResponse(BaseModel):
+    """
+    Response returned after one protected Linked Helper ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["completed"] = Field(
+        description="Fixed status confirming the ingest completed."
+    )
+    message: str = Field(
+        min_length=1,
+        description="Short human-readable summary of the ingest result.",
+    )
+    persisted: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Canonical IDs and provenance IDs written by the ingest.",
     )
 
 
@@ -2392,6 +2467,8 @@ class OutlookMessageAttachmentDownloadProofResponse(BaseModel):
 
 
 __all__ = [
+    "LinkedHelperPersonIngestRequest",
+    "LinkedHelperPersonIngestResponse",
     "JobAdderAuthorizationUrlResponse",
     "JobAdderApplicationDetailResponse",
     "JobAdderApplicationAttachmentsResponse",
