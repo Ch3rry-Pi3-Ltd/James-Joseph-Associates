@@ -42,6 +42,8 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    CompanyContactDiscoveryResponse,
+    CompanyInteractionDiscoveryResponse,
     CompanyJobDiscoveryResponse,
     UploadedResumeSearchRequest,
     UploadedResumeSearchResponse,
@@ -54,6 +56,8 @@ from backend.services.candidate_matching import (
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_contacts_by_company,
+    discover_interactions_by_company,
     discover_jobs_by_company,
     search_candidate_resumes,
 )
@@ -387,6 +391,88 @@ def discover_jobs_by_company_route(
         limit=limit,
     )
     return CompanyJobDiscoveryResponse(**result)
+
+
+@router.get(
+    "/discover-contacts-by-company",
+    response_model=CompanyContactDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company contact discovery query was invalid.",
+        }
+    },
+)
+def discover_contacts_by_company_route(
+    company_name: str = Query(
+        description="Company name used to find linked contact and hiring-manager records.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of contacts to return.",
+    ),
+) -> CompanyContactDiscoveryResponse | JSONResponse:
+    """
+    Find contacts and hiring managers already linked to one company name.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company contact discovery query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_contacts_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return CompanyContactDiscoveryResponse(**result)
+
+
+@router.get(
+    "/discover-interactions-by-company",
+    response_model=CompanyInteractionDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company interaction discovery query was invalid.",
+        }
+    },
+)
+def discover_interactions_by_company_route(
+    company_name: str = Query(
+        description="Company name used to find prior interaction evidence.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of interaction rows to return.",
+    ),
+) -> CompanyInteractionDiscoveryResponse | JSONResponse:
+    """
+    Find recent interaction evidence for people linked to one company name.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company interaction discovery query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_interactions_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return CompanyInteractionDiscoveryResponse(**result)
 
 
 @router.get(

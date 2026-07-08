@@ -249,6 +249,95 @@ class CompanyJobDiscoveryResponse(BaseModel):
     )
 
 
+class CompanyContactDiscoveryResult(BaseModel):
+    """
+    One contact or hiring manager returned by the company-contact discovery endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    contact_id: str
+    person_id: str
+    full_name: str | None = None
+    primary_email: str | None = None
+    primary_phone: str | None = None
+    linkedin_url: str | None = None
+    location: str | None = None
+    headline: str | None = None
+    company_id: str | None = None
+    company_name: str | None = None
+    role_title: str | None = None
+    contact_type: str | None = None
+    seniority: str | None = None
+    is_hiring_manager: bool
+    role_is_current: bool | None = None
+    role_start_date: str | None = None
+    role_end_date: str | None = None
+    company_match_source: str
+
+
+class CompanyContactDiscoveryResponse(BaseModel):
+    """
+    Response envelope for one company-to-contact discovery query.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for the contact discovery query.",
+    )
+    limit: int = Field(
+        description="Maximum number of contacts requested.",
+    )
+    results: list[CompanyContactDiscoveryResult] = Field(
+        default_factory=list,
+        description="Contacts and hiring managers already linked to the company.",
+    )
+
+
+class CompanyInteractionDiscoveryResult(BaseModel):
+    """
+    One recent interaction returned by the company-interaction discovery endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    interaction_id: str
+    interaction_type: str | None = None
+    occurred_at: str | None = None
+    subject: str | None = None
+    summary: str | None = None
+    body: str | None = None
+    source_system: str | None = None
+    person_id: str
+    candidate_id: str | None = None
+    company_id: str | None = None
+    company_name: str | None = None
+    full_name: str | None = None
+    role_title: str | None = None
+    candidate_last_contacted_at: str | None = None
+    matched_entity_type: str
+
+
+class CompanyInteractionDiscoveryResponse(BaseModel):
+    """
+    Response envelope for one company-to-interaction discovery query.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for the interaction discovery query.",
+    )
+    limit: int = Field(
+        description="Maximum number of interactions requested.",
+    )
+    results: list[CompanyInteractionDiscoveryResult] = Field(
+        default_factory=list,
+        description="Recent interaction evidence for people linked to the company.",
+    )
+
+
 class UploadedResumeSearchResponse(BaseModel):
     """
     Response envelope for transient uploaded-resume semantic search.
@@ -381,6 +470,10 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
 __all__ = [
     "CandidateCompanyDiscoveryResponse",
     "CandidateCompanyDiscoveryResult",
+    "CompanyContactDiscoveryResponse",
+    "CompanyContactDiscoveryResult",
+    "CompanyInteractionDiscoveryResponse",
+    "CompanyInteractionDiscoveryResult",
     "CompanyJobDiscoveryResponse",
     "CompanyJobDiscoveryResult",
     "CandidateProfileResponse",

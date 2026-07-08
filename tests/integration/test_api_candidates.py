@@ -490,6 +490,149 @@ def test_company_job_discovery_route_rejects_blank_company_name() -> None:
     mock_discover_jobs_by_company.assert_not_called()
 
 
+def test_company_contact_discovery_route_returns_ranked_results() -> None:
+    """
+    Verify that the company-contact discovery route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "contact_id": "contact-1",
+                "person_id": "person-1",
+                "full_name": "Tom Richards",
+                "primary_email": "tom.richards@acme.test",
+                "primary_phone": "+447700900222",
+                "linkedin_url": "https://www.linkedin.com/in/tom-richards/",
+                "location": "London",
+                "headline": "Head of Talent",
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "role_title": "Head of Talent",
+                "contact_type": "hiring_manager",
+                "seniority": "head",
+                "is_hiring_manager": True,
+                "role_is_current": True,
+                "role_start_date": "2026-01-01",
+                "role_end_date": None,
+                "company_match_source": "company_exact",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_contacts_by_company",
+        return_value=service_result,
+    ) as mock_discover_contacts_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-contacts-by-company?company_name=Acme%20Hiring%20Ltd&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_contacts_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_company_contact_discovery_route_rejects_blank_company_name() -> None:
+    """
+    Verify that the company-contact discovery route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.discover_contacts_by_company",
+    ) as mock_discover_contacts_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-contacts-by-company?company_name=%20%20%20"
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Company contact discovery query must not be blank.",
+            "details": [{"company_name": "   "}],
+        }
+    }
+    mock_discover_contacts_by_company.assert_not_called()
+
+
+def test_company_interaction_discovery_route_returns_ranked_results() -> None:
+    """
+    Verify that the company-interaction discovery route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "interaction_id": "interaction-1",
+                "interaction_type": "jobadder_candidate_note",
+                "occurred_at": "2026-04-20T12:00:00+00:00",
+                "subject": "Candidate note",
+                "summary": "Spoke about the Acme data platform role.",
+                "body": "Spoke about the Acme data platform role.",
+                "source_system": "jobadder",
+                "person_id": "person-1",
+                "candidate_id": "candidate-1",
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "full_name": "Sarah Jones",
+                "role_title": "Senior Data Engineer",
+                "candidate_last_contacted_at": "2026-04-20T12:00:00+00:00",
+                "matched_entity_type": "candidate",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_interactions_by_company",
+        return_value=service_result,
+    ) as mock_discover_interactions_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-interactions-by-company?company_name=Acme%20Hiring%20Ltd&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_interactions_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_company_interaction_discovery_route_rejects_blank_company_name() -> None:
+    """
+    Verify that the company-interaction discovery route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.discover_interactions_by_company",
+    ) as mock_discover_interactions_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-interactions-by-company?company_name=%20%20%20"
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Company interaction discovery query must not be blank.",
+            "details": [{"company_name": "   "}],
+        }
+    }
+    mock_discover_interactions_by_company.assert_not_called()
+
+
 def test_uploaded_resume_search_route_returns_ranked_results() -> None:
     """
     Verify that the uploaded-resume search route returns the service payload unchanged.

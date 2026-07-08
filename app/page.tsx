@@ -114,6 +114,14 @@ const foundationItems: FoundationItem[] = [
 
 const workspaceSections: WorkspaceSection[] = [
   {
+    title: "Company Intelligence",
+    description:
+      "Look up target firms and see which candidates and jobs are already linked to them.",
+    state: "Foundation ready",
+    href: "/company",
+    actionLabel: "Open company lookup",
+  },
+  {
     title: "Candidate Intelligence",
     description:
       "Review candidate context, skills, documents, and source-system history.",

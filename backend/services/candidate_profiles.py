@@ -37,6 +37,8 @@ from backend.db.candidates import (
     get_candidate_profile,
     search_candidates_by_company_name,
 )
+from backend.db.contacts import search_contacts_by_company_name
+from backend.db.interactions import search_interactions_by_company_name
 from backend.db.skills import get_candidate_skills
 from backend.db.jobs import search_jobs_by_company_name
 from backend.services.candidate_retrieval import search_candidates_hybrid
@@ -195,6 +197,53 @@ def discover_jobs_by_company(
     }
 
 
+def discover_contacts_by_company(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """
+    Return one ranked contact/hiring-manager list for a recruiter company query.
+    """
+
+    normalized_company_name = company_name.strip()
+    results = search_contacts_by_company_name(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return {
+        "company_name": normalized_company_name,
+        "limit": limit,
+        "results": [
+            _normalize_company_contact_discovery_result(result) for result in results
+        ],
+    }
+
+
+def discover_interactions_by_company(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """
+    Return recent interaction evidence for people linked to one company.
+    """
+
+    normalized_company_name = company_name.strip()
+    results = search_interactions_by_company_name(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return {
+        "company_name": normalized_company_name,
+        "limit": limit,
+        "results": [
+            _normalize_company_interaction_discovery_result(result)
+            for result in results
+        ],
+    }
+
+
 def _normalize_candidate_resume_search_result(
     result: dict[str, Any],
 ) -> dict[str, Any]:
@@ -336,6 +385,83 @@ def _normalize_company_job_discovery_result(
     }
 
 
+def _normalize_company_contact_discovery_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Return one public API-safe company-contact discovery row.
+    """
+
+    return {
+        "contact_id": _normalize_string_value(result.get("contact_id")),
+        "person_id": _normalize_string_value(result.get("person_id")),
+        "full_name": _normalize_optional_string_value(result.get("full_name")),
+        "primary_email": _normalize_optional_string_value(
+            result.get("primary_email")
+        ),
+        "primary_phone": _normalize_optional_string_value(
+            result.get("primary_phone")
+        ),
+        "linkedin_url": _normalize_optional_string_value(
+            result.get("linkedin_url")
+        ),
+        "location": _normalize_optional_string_value(result.get("location")),
+        "headline": _normalize_optional_string_value(result.get("headline")),
+        "company_id": _normalize_optional_string_value(result.get("company_id")),
+        "company_name": _normalize_optional_string_value(result.get("company_name")),
+        "role_title": _normalize_optional_string_value(result.get("role_title")),
+        "contact_type": _normalize_optional_string_value(result.get("contact_type")),
+        "seniority": _normalize_optional_string_value(result.get("seniority")),
+        "is_hiring_manager": bool(result.get("is_hiring_manager")),
+        "role_is_current": (
+            None
+            if result.get("role_is_current") is None
+            else bool(result.get("role_is_current"))
+        ),
+        "role_start_date": _normalize_optional_datetime_value(
+            result.get("role_start_date")
+        ),
+        "role_end_date": _normalize_optional_datetime_value(
+            result.get("role_end_date")
+        ),
+        "company_match_source": _normalize_string_value(
+            result.get("company_match_source")
+        ),
+    }
+
+
+def _normalize_company_interaction_discovery_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Return one public API-safe company-interaction discovery row.
+    """
+
+    return {
+        "interaction_id": _normalize_string_value(result.get("interaction_id")),
+        "interaction_type": _normalize_optional_string_value(
+            result.get("interaction_type")
+        ),
+        "occurred_at": _normalize_optional_datetime_value(result.get("occurred_at")),
+        "subject": _normalize_optional_string_value(result.get("subject")),
+        "summary": _normalize_optional_string_value(result.get("summary")),
+        "body": _normalize_optional_string_value(result.get("body")),
+        "source_system": _normalize_optional_string_value(result.get("source_system")),
+        "person_id": _normalize_string_value(result.get("person_id")),
+        "candidate_id": _normalize_optional_string_value(result.get("candidate_id")),
+        "company_id": _normalize_optional_string_value(result.get("company_id")),
+        "company_name": _normalize_optional_string_value(result.get("company_name")),
+        "full_name": _normalize_optional_string_value(result.get("full_name")),
+        "role_title": _normalize_optional_string_value(result.get("role_title")),
+        "candidate_last_contacted_at": _normalize_optional_datetime_value(
+            result.get("candidate_last_contacted_at")
+        ),
+        "matched_entity_type": _normalize_string_value(
+            result.get("matched_entity_type")
+        ),
+    }
+
+
 def _normalize_string_value(value: Any) -> str:
     return "" if value is None else str(value)
 
@@ -379,6 +505,8 @@ def _normalize_optional_datetime_value(value: Any) -> str | None:
 __all__ = [
     "build_candidate_profile",
     "discover_candidates_by_company",
+    "discover_contacts_by_company",
+    "discover_interactions_by_company",
     "discover_jobs_by_company",
     "search_candidate_resumes",
 ]
