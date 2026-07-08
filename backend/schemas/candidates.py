@@ -338,6 +338,48 @@ class CompanyInteractionDiscoveryResponse(BaseModel):
     )
 
 
+class CandidateCompanyLeadDiscoveryResponse(BaseModel):
+    """
+    Candidate-first outreach view for one target company.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate: dict[str, Any] = Field(
+        description="Canonical candidate profile data for the selected candidate.",
+    )
+    skills: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Structured skill rows already linked to the candidate.",
+    )
+    skill_names: list[str] = Field(
+        default_factory=list,
+        description="Deduplicated skill-name summary for quick recruiter review.",
+    )
+    company_name: str = Field(
+        description="Normalized target company name used for discovery.",
+    )
+    candidate_already_at_company: bool = Field(
+        description="Whether the selected candidate is already marked as working at the target company.",
+    )
+    peer_candidates: list[CandidateCompanyDiscoveryResult] = Field(
+        default_factory=list,
+        description="Other candidates in the database already linked to the target company.",
+    )
+    contacts: list[CompanyContactDiscoveryResult] = Field(
+        default_factory=list,
+        description="Known contacts and hiring managers already linked to the target company.",
+    )
+    interactions: list[CompanyInteractionDiscoveryResult] = Field(
+        default_factory=list,
+        description="Recent interaction evidence for people linked to the target company.",
+    )
+    jobs: list[CompanyJobDiscoveryResult] = Field(
+        default_factory=list,
+        description="Canonical jobs already linked to the target company.",
+    )
+
+
 class UploadedResumeSearchResponse(BaseModel):
     """
     Response envelope for transient uploaded-resume semantic search.
@@ -470,6 +512,7 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
 __all__ = [
     "CandidateCompanyDiscoveryResponse",
     "CandidateCompanyDiscoveryResult",
+    "CandidateCompanyLeadDiscoveryResponse",
     "CompanyContactDiscoveryResponse",
     "CompanyContactDiscoveryResult",
     "CompanyInteractionDiscoveryResponse",

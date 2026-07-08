@@ -633,6 +633,189 @@ def test_company_interaction_discovery_route_rejects_blank_company_name() -> Non
     mock_discover_interactions_by_company.assert_not_called()
 
 
+def test_candidate_company_lead_discovery_route_returns_composed_results() -> None:
+    """
+    Verify that the candidate-first company-lead route returns the service payload unchanged.
+    """
+
+    candidate_id = "candidate-1"
+    service_result = {
+        "candidate": {
+            "candidate_id": candidate_id,
+            "person_id": "person-1",
+            "full_name": "Sarah Jones",
+            "current_title": "Senior Data Engineer",
+            "current_company_name": "Example Current Employer",
+        },
+        "skills": [
+            {
+                "candidate_id": candidate_id,
+                "skill_id": "skill-1",
+                "skill_name": "Python",
+                "canonical_name": "python",
+                "skill_type": "technical",
+                "confidence": 0.98,
+                "evidence_text": "Python delivery",
+            }
+        ],
+        "skill_names": ["python"],
+        "company_name": "Acme Hiring Ltd",
+        "candidate_already_at_company": False,
+        "peer_candidates": [
+            {
+                "candidate_id": "candidate-2",
+                "person_id": "person-2",
+                "full_name": "Alex Brown",
+                "current_title": "Platform Engineer",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "document-2",
+                "document_title": "Alex-Brown-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Alex-Brown-CV.pdf",
+                "company_match_source": "current_company_exact",
+                "company_match_score": 1.0,
+                "match_excerpt": "Current company exactly matches Acme Hiring Ltd",
+            }
+        ],
+        "contacts": [
+            {
+                "contact_id": "contact-1",
+                "person_id": "person-3",
+                "full_name": "Tom Richards",
+                "primary_email": "tom.richards@acme.test",
+                "primary_phone": "+447700900222",
+                "linkedin_url": "https://www.linkedin.com/in/tom-richards/",
+                "location": "London",
+                "headline": "Head of Talent",
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "role_title": "Head of Talent",
+                "contact_type": "hiring_manager",
+                "seniority": "head",
+                "is_hiring_manager": True,
+                "role_is_current": True,
+                "role_start_date": "2026-01-01",
+                "role_end_date": None,
+                "company_match_source": "company_exact",
+            }
+        ],
+        "interactions": [
+            {
+                "interaction_id": "interaction-1",
+                "interaction_type": "email",
+                "occurred_at": "2026-04-20T12:00:00+00:00",
+                "subject": "Intro call",
+                "summary": "Spoke about hiring plans.",
+                "body": "Spoke about hiring plans.",
+                "source_system": "outlook",
+                "person_id": "person-3",
+                "candidate_id": None,
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "full_name": "Tom Richards",
+                "role_title": "Head of Talent",
+                "candidate_last_contacted_at": None,
+                "matched_entity_type": "contact",
+            }
+        ],
+        "jobs": [
+            {
+                "job_id": "job-1",
+                "title": "Senior Data Engineer",
+                "status": "Open",
+                "source": "jobadder",
+                "owner_name": "Tom Owens",
+                "location": "London, UK",
+                "workplace_type": "hybrid",
+                "employment_type": "permanent",
+                "updated_from_source_at": "2026-04-22T12:00:00+00:00",
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "hiring_manager_contact_id": "contact-1",
+                "hiring_manager_person_id": "person-3",
+                "hiring_manager_name": "Tom Richards",
+                "hiring_manager_email": "tom.richards@acme.test",
+                "hiring_manager_phone": "+447700900222",
+                "hiring_manager_role_title": "Head of Talent",
+                "company_match_source": "company_exact",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_company_leads_for_candidate",
+        return_value=service_result,
+    ) as mock_discover_company_leads_for_candidate:
+        client = make_client()
+        response = client.get(
+            f"/api/v1/candidates/{candidate_id}/discover-company-leads?company_name=Acme%20Hiring%20Ltd&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_company_leads_for_candidate.assert_called_once_with(
+        candidate_id=candidate_id,
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_candidate_company_lead_discovery_route_rejects_blank_company_name() -> None:
+    """
+    Verify that the candidate-first company-lead route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.discover_company_leads_for_candidate",
+    ) as mock_discover_company_leads_for_candidate:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/candidate-1/discover-company-leads?company_name=%20%20%20"
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Candidate company-lead query must not be blank.",
+            "details": [{"company_name": "   "}],
+        }
+    }
+    mock_discover_company_leads_for_candidate.assert_not_called()
+
+
+def test_candidate_company_lead_discovery_route_returns_not_found_when_candidate_missing() -> None:
+    """
+    Verify that the candidate-first company-lead route returns 404 when the candidate is missing.
+    """
+
+    candidate_id = "candidate-1"
+
+    with patch(
+        "backend.api.v1.candidates.discover_company_leads_for_candidate",
+        return_value=None,
+    ) as mock_discover_company_leads_for_candidate:
+        client = make_client()
+        response = client.get(
+            f"/api/v1/candidates/{candidate_id}/discover-company-leads?company_name=Acme%20Hiring%20Ltd"
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+        "error": {
+            "code": "not_found",
+            "message": "Candidate profile was not found.",
+            "details": [{"candidate_id": candidate_id}],
+        }
+    }
+    mock_discover_company_leads_for_candidate.assert_called_once_with(
+        candidate_id=candidate_id,
+        company_name="Acme Hiring Ltd",
+        limit=10,
+    )
+
+
 def test_uploaded_resume_search_route_returns_ranked_results() -> None:
     """
     Verify that the uploaded-resume search route returns the service payload unchanged.

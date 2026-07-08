@@ -54,6 +54,7 @@ from uuid import UUID
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_company_leads_for_candidate,
     discover_jobs_by_company,
     search_candidate_resumes,
 )
@@ -428,6 +429,140 @@ def test_discover_jobs_by_company_normalizes_raw_rows() -> None:
         ],
     }
     mock_search_jobs_by_company_name.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_discover_company_leads_for_candidate_returns_none_when_candidate_is_missing() -> None:
+    """
+    Verify that candidate-first lead discovery stops when the candidate is missing.
+    """
+
+    with patch(
+        "backend.services.candidate_profiles.build_candidate_profile",
+        return_value=None,
+    ) as mock_build_candidate_profile:
+        result = discover_company_leads_for_candidate(
+            candidate_id="candidate-1",
+            company_name="Acme Hiring Ltd",
+            limit=5,
+        )
+
+    assert result is None
+    mock_build_candidate_profile.assert_called_once_with("candidate-1")
+
+
+def test_discover_company_leads_for_candidate_composes_company_views() -> None:
+    """
+    Verify that candidate-first lead discovery combines candidate, skills, and company evidence.
+    """
+
+    with patch(
+        "backend.services.candidate_profiles.build_candidate_profile",
+        return_value={
+            "candidate": {
+                "candidate_id": "candidate-1",
+                "person_id": "person-1",
+                "full_name": "Sarah Jones",
+                "current_company_name": "Other Employer",
+            },
+            "skills": [
+                {
+                    "candidate_id": "candidate-1",
+                    "skill_id": "skill-1",
+                    "skill_name": "Python",
+                    "canonical_name": "python",
+                },
+                {
+                    "candidate_id": "candidate-1",
+                    "skill_id": "skill-2",
+                    "skill_name": "Python",
+                    "canonical_name": "python",
+                },
+                {
+                    "candidate_id": "candidate-1",
+                    "skill_id": "skill-3",
+                    "skill_name": "SQL",
+                    "canonical_name": "sql",
+                },
+            ],
+        },
+    ) as mock_build_candidate_profile, patch(
+        "backend.services.candidate_profiles.discover_contacts_by_company",
+        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"contact_id": "contact-1"}]},
+    ) as mock_discover_contacts_by_company, patch(
+        "backend.services.candidate_profiles.discover_interactions_by_company",
+        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"interaction_id": "interaction-1"}]},
+    ) as mock_discover_interactions_by_company, patch(
+        "backend.services.candidate_profiles.discover_jobs_by_company",
+        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"job_id": "job-1"}]},
+    ) as mock_discover_jobs_by_company, patch(
+        "backend.services.candidate_profiles.discover_candidates_by_company",
+        return_value={
+            "company_name": "Acme Hiring Ltd",
+            "limit": 6,
+            "results": [
+                {"candidate_id": "candidate-1"},
+                {"candidate_id": "candidate-2"},
+            ],
+        },
+    ) as mock_discover_candidates_by_company:
+        result = discover_company_leads_for_candidate(
+            candidate_id="candidate-1",
+            company_name=" Acme Hiring Ltd ",
+            limit=5,
+        )
+
+    assert result == {
+        "candidate": {
+            "candidate_id": "candidate-1",
+            "person_id": "person-1",
+            "full_name": "Sarah Jones",
+            "current_company_name": "Other Employer",
+        },
+        "skills": [
+            {
+                "candidate_id": "candidate-1",
+                "skill_id": "skill-1",
+                "skill_name": "Python",
+                "canonical_name": "python",
+            },
+            {
+                "candidate_id": "candidate-1",
+                "skill_id": "skill-2",
+                "skill_name": "Python",
+                "canonical_name": "python",
+            },
+            {
+                "candidate_id": "candidate-1",
+                "skill_id": "skill-3",
+                "skill_name": "SQL",
+                "canonical_name": "sql",
+            },
+        ],
+        "skill_names": ["python", "sql"],
+        "company_name": "Acme Hiring Ltd",
+        "candidate_already_at_company": False,
+        "peer_candidates": [{"candidate_id": "candidate-2"}],
+        "contacts": [{"contact_id": "contact-1"}],
+        "interactions": [{"interaction_id": "interaction-1"}],
+        "jobs": [{"job_id": "job-1"}],
+    }
+    mock_build_candidate_profile.assert_called_once_with("candidate-1")
+    mock_discover_contacts_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+    mock_discover_interactions_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+    mock_discover_jobs_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+    mock_discover_candidates_by_company.assert_called_once_with(
         company_name="Acme Hiring Ltd",
         limit=5,
     )

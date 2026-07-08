@@ -38,6 +38,7 @@ from fastapi.responses import JSONResponse, Response
 
 from backend.schemas.candidates import (
     CandidateCompanyDiscoveryResponse,
+    CandidateCompanyLeadDiscoveryResponse,
     CandidateJobDescriptionMatchRequest,
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
@@ -56,6 +57,7 @@ from backend.services.candidate_matching import (
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_company_leads_for_candidate,
     discover_contacts_by_company,
     discover_interactions_by_company,
     discover_jobs_by_company,
@@ -473,6 +475,61 @@ def discover_interactions_by_company_route(
         limit=limit,
     )
     return CompanyInteractionDiscoveryResponse(**result)
+
+
+@router.get(
+    "/{candidate_id}/discover-company-leads",
+    response_model=CandidateCompanyLeadDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Candidate company-lead query was invalid.",
+        },
+        404: {
+            "model": ApiErrorResponse,
+            "description": "Candidate profile was not found.",
+        },
+    },
+)
+def discover_company_leads_for_candidate_route(
+    candidate_id: str,
+    company_name: str = Query(
+        description="Target company name used to find contacts, jobs, and interaction evidence for one candidate.",
+    ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum number of contacts, jobs, interactions, and peer candidates to return.",
+    ),
+) -> CandidateCompanyLeadDiscoveryResponse | JSONResponse:
+    """
+    Return a candidate-first outreach view for one target company.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Candidate company-lead query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_company_leads_for_candidate(
+        candidate_id=candidate_id,
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    if result is None:
+        return build_error_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="not_found",
+            message="Candidate profile was not found.",
+            details=[{"candidate_id": candidate_id}],
+        )
+
+    return CandidateCompanyLeadDiscoveryResponse(**result)
 
 
 @router.get(

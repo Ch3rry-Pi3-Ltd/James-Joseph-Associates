@@ -96,6 +96,57 @@ type CompanyJobDiscoveryResponse = {
   results: CompanyJobDiscoveryResult[];
 };
 
+type CompanyContactDiscoveryResult = {
+  contact_id: string;
+  person_id: string;
+  full_name: string | null;
+  primary_email: string | null;
+  primary_phone: string | null;
+  linkedin_url: string | null;
+  location: string | null;
+  headline: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  role_title: string | null;
+  contact_type: string | null;
+  seniority: string | null;
+  is_hiring_manager: boolean;
+  role_is_current: boolean | null;
+  role_start_date: string | null;
+  role_end_date: string | null;
+  company_match_source: string;
+};
+
+type CompanyInteractionDiscoveryResult = {
+  interaction_id: string;
+  interaction_type: string | null;
+  occurred_at: string | null;
+  subject: string | null;
+  summary: string | null;
+  body: string | null;
+  source_system: string | null;
+  person_id: string;
+  candidate_id: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  full_name: string | null;
+  role_title: string | null;
+  candidate_last_contacted_at: string | null;
+  matched_entity_type: string;
+};
+
+type CandidateCompanyLeadDiscoveryResponse = {
+  candidate: CandidateProfileCandidate;
+  skills: CandidateProfileSkill[];
+  skill_names: string[];
+  company_name: string;
+  candidate_already_at_company: boolean;
+  peer_candidates: CandidateCompanyDiscoveryResult[];
+  contacts: CompanyContactDiscoveryResult[];
+  interactions: CompanyInteractionDiscoveryResult[];
+  jobs: CompanyJobDiscoveryResult[];
+};
+
 type UploadedResumeSearchResponse = {
   file_name: string | null;
   content_type: string | null;
@@ -360,6 +411,14 @@ function formatCompanyMatchSourceLabel(source: string): string {
   return source.replaceAll("_", " ");
 }
 
+function formatUnderscoredLabel(value: string | null): string {
+  if (!value) {
+    return "Unknown";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
 function deriveRetrievalFocusTerms(jobDescription: string): string {
   const normalizedTerms =
     jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
@@ -563,6 +622,14 @@ export function CandidateMatchWorkspace() {
   const [previewErrorMessage, setPreviewErrorMessage] = useState<string | null>(
     null,
   );
+  const [candidateLeadCompanyName, setCandidateLeadCompanyName] = useState("");
+  const [candidateLeadLimit, setCandidateLeadLimit] = useState("10");
+  const [candidateLeadLoading, setCandidateLeadLoading] = useState(false);
+  const [candidateLeadErrorMessage, setCandidateLeadErrorMessage] = useState<
+    string | null
+  >(null);
+  const [candidateLeadResult, setCandidateLeadResult] =
+    useState<CandidateCompanyLeadDiscoveryResponse | null>(null);
   const [companyNameQuery, setCompanyNameQuery] = useState("");
   const [companySearchLimit, setCompanySearchLimit] = useState("10");
   const [companyDiscoveryLoading, setCompanyDiscoveryLoading] = useState(false);
@@ -989,6 +1056,9 @@ export function CandidateMatchWorkspace() {
     setPreviewCandidateId(null);
     setPreviewProfile(null);
     setPreviewErrorMessage(null);
+    setCandidateLeadCompanyName("");
+    setCandidateLeadErrorMessage(null);
+    setCandidateLeadResult(null);
     setCompanyNameQuery("");
     setCompanyDiscoveryResults([]);
     setCompanyDiscoveryErrorMessage(null);
@@ -1007,6 +1077,8 @@ export function CandidateMatchWorkspace() {
     setPreviewCandidateId(candidateId);
     setPreviewLoading(true);
     setPreviewErrorMessage(null);
+    setCandidateLeadErrorMessage(null);
+    setCandidateLeadResult(null);
 
     try {
       const response = await fetch(`/api/v1/candidates/${candidateId}/profile`, {
@@ -1037,6 +1109,65 @@ export function CandidateMatchWorkspace() {
       );
     } finally {
       setPreviewLoading(false);
+    }
+  }
+
+  async function runCandidateLeadDiscovery(): Promise<void> {
+    if (!previewProfile) {
+      setCandidateLeadErrorMessage(
+        "Open a candidate preview before running company lead discovery.",
+      );
+      setCandidateLeadResult(null);
+      return;
+    }
+
+    const trimmedCompanyName = candidateLeadCompanyName.trim();
+    if (trimmedCompanyName === "") {
+      setCandidateLeadErrorMessage("Enter a target company before running lead discovery.");
+      setCandidateLeadResult(null);
+      return;
+    }
+
+    setCandidateLeadLoading(true);
+    setCandidateLeadErrorMessage(null);
+
+    try {
+      const searchParams = new URLSearchParams({
+        company_name: trimmedCompanyName,
+        limit: candidateLeadLimit,
+      });
+
+      const response = await fetch(
+        `/api/v1/candidates/${previewProfile.candidate.candidate_id}/discover-company-leads?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const payload = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        setCandidateLeadResult(null);
+        setCandidateLeadErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Candidate lead discovery request failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      setCandidateLeadResult(payload as CandidateCompanyLeadDiscoveryResponse);
+    } catch (error) {
+      setCandidateLeadResult(null);
+      setCandidateLeadErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Candidate lead discovery request failed unexpectedly.",
+      );
+    } finally {
+      setCandidateLeadLoading(false);
     }
   }
 
@@ -1531,6 +1662,366 @@ export function CandidateMatchWorkspace() {
             ) : null}
           </article>
         ) : null}
+
+        {previewProfile ? (
+          <div className="grid gap-6 border-t border-zinc-200 pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  Candidate to company lead discovery
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-700">
+                  Use the selected candidate plus one target company to see who
+                  we know there, what jobs already exist there, and what prior
+                  interaction evidence is already in the database.
+                </p>
+              </div>
+
+              {candidateLeadResult ? (
+                <div className="text-sm text-zinc-600">
+                  Target:{" "}
+                  <span className="font-medium text-zinc-900">
+                    {candidateLeadResult.company_name}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_120px_auto] lg:items-end">
+              <div className="grid gap-2">
+                <label
+                  className="text-sm font-semibold uppercase text-zinc-500"
+                  htmlFor="candidate-lead-company-name"
+                >
+                  Target company
+                </label>
+                <input
+                  id="candidate-lead-company-name"
+                  type="text"
+                  value={candidateLeadCompanyName}
+                  onChange={(event) =>
+                    setCandidateLeadCompanyName(event.target.value)
+                  }
+                  placeholder="Goldman Sachs"
+                  className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <label
+                  className="text-sm font-semibold uppercase text-zinc-500"
+                  htmlFor="candidate-lead-limit"
+                >
+                  Results
+                </label>
+                <select
+                  id="candidate-lead-limit"
+                  value={candidateLeadLimit}
+                  onChange={(event) => setCandidateLeadLimit(event.target.value)}
+                  className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+                >
+                  <option value="5">Top 5</option>
+                  <option value="10">Top 10</option>
+                  <option value="20">Top 20</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void runCandidateLeadDiscovery();
+                  }}
+                  disabled={candidateLeadLoading}
+                  className="inline-flex h-12 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+                >
+                  {candidateLeadLoading ? "Searching..." : "Find company leads"}
+                </button>
+
+                {previewProfile.candidate.current_company_name ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCandidateLeadCompanyName(
+                        previewProfile.candidate.current_company_name ?? "",
+                      )
+                    }
+                    className="inline-flex h-12 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                  >
+                    Use current company
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {candidateLeadErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {candidateLeadErrorMessage}
+              </div>
+            ) : null}
+
+            {candidateLeadResult ? (
+              <div className="grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Selected candidate
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-zinc-950">
+                      {candidateLeadResult.candidate.full_name ?? "Unnamed candidate"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-700">
+                      {candidateLeadResult.candidate.current_title ??
+                        "Title not available"}
+                    </p>
+                  </div>
+
+                  <div className="border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Other candidates there
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-zinc-950">
+                      {candidateLeadResult.peer_candidates.length}
+                    </p>
+                  </div>
+
+                  <div className="border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Known contacts
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-zinc-950">
+                      {candidateLeadResult.contacts.length}
+                    </p>
+                  </div>
+
+                  <div className="border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Interaction evidence
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-zinc-950">
+                      {candidateLeadResult.interactions.length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border border-zinc-200 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Candidate skills
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {candidateLeadResult.skill_names.length > 0 ? (
+                      candidateLeadResult.skill_names.map((skillName) => (
+                        <span
+                          key={`lead-skill-${skillName}`}
+                          className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-sm text-zinc-800"
+                        >
+                          {skillName}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm leading-6 text-zinc-700">
+                        No structured skills are linked to this candidate yet.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {candidateLeadResult.candidate_already_at_company ? (
+                  <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                    This candidate is already marked as currently working at{" "}
+                    {candidateLeadResult.company_name}.
+                  </div>
+                ) : null}
+
+                <div className="grid gap-6 xl:grid-cols-2">
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-zinc-950">
+                        Contacts and hiring managers
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        People already linked to the target company.
+                      </p>
+                    </div>
+
+                    {candidateLeadResult.contacts.length === 0 ? (
+                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                        No contacts are linked to this company yet.
+                      </div>
+                    ) : (
+                      candidateLeadResult.contacts.map((contact) => (
+                        <article
+                          key={contact.contact_id}
+                          className="border border-zinc-200 p-4"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            {contact.is_hiring_manager ? (
+                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                                Hiring manager
+                              </span>
+                            ) : null}
+                            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                              {formatCompanyMatchSourceLabel(
+                                contact.company_match_source,
+                              )}
+                            </span>
+                          </div>
+                          <h5 className="mt-3 text-lg font-semibold text-zinc-950">
+                            {contact.full_name ?? "Unnamed contact"}
+                          </h5>
+                          <p className="mt-1 text-sm leading-6 text-zinc-700">
+                            {contact.role_title ?? contact.headline ?? "Role not available"}
+                          </p>
+                          <dl className="mt-4 grid gap-2 text-sm leading-6 text-zinc-800">
+                            <div>
+                              <dt className="inline font-semibold">Email:</dt>{" "}
+                              <dd className="inline">
+                                {contact.primary_email ?? "Not available"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="inline font-semibold">Phone:</dt>{" "}
+                              <dd className="inline">
+                                {contact.primary_phone ?? "Not available"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="inline font-semibold">LinkedIn:</dt>{" "}
+                              <dd className="inline break-all">
+                                {contact.linkedin_url ?? "Not available"}
+                              </dd>
+                            </div>
+                          </dl>
+                        </article>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-zinc-950">
+                        Prior interaction evidence
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        Notes, emails, or other interaction rows tied to that company.
+                      </p>
+                    </div>
+
+                    {candidateLeadResult.interactions.length === 0 ? (
+                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                        No recent interaction evidence was returned.
+                      </div>
+                    ) : (
+                      candidateLeadResult.interactions.map((interaction) => (
+                        <article
+                          key={interaction.interaction_id}
+                          className="border border-zinc-200 p-4"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                              {formatUnderscoredLabel(interaction.interaction_type)}
+                            </span>
+                            <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                              {formatUnderscoredLabel(interaction.matched_entity_type)}
+                            </span>
+                          </div>
+                          <h5 className="mt-3 text-lg font-semibold text-zinc-950">
+                            {interaction.full_name ?? interaction.subject ?? "Interaction"}
+                          </h5>
+                          <p className="mt-1 text-sm leading-6 text-zinc-700">
+                            {interaction.role_title ?? interaction.company_name ?? "No role title"}
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-zinc-900">
+                            {interaction.summary ??
+                              interaction.subject ??
+                              interaction.body ??
+                              "No interaction summary available."}
+                          </p>
+                          <p className="mt-3 text-xs uppercase text-zinc-500">
+                            {formatTimestamp(interaction.occurred_at)} |{" "}
+                            {interaction.source_system ?? "Unknown source"}
+                          </p>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-2">
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-zinc-950">
+                        Known jobs at this company
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        Existing jobs already linked to the same target company.
+                      </p>
+                    </div>
+
+                    {candidateLeadResult.jobs.length === 0 ? (
+                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                        No canonical jobs are linked to this company yet.
+                      </div>
+                    ) : (
+                      candidateLeadResult.jobs.map((job) => (
+                        <article key={job.job_id} className="border border-zinc-200 p-4">
+                          <h5 className="text-lg font-semibold text-zinc-950">
+                            {job.title ?? "Untitled job"}
+                          </h5>
+                          <p className="mt-1 text-sm leading-6 text-zinc-700">
+                            {job.location ?? "Location not available"}
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-zinc-900">
+                            Hiring manager:{" "}
+                            {job.hiring_manager_name ?? "Not linked yet"}
+                          </p>
+                          <p className="mt-2 text-xs uppercase text-zinc-500">
+                            {job.status ?? "Unknown status"} |{" "}
+                            {formatTimestamp(job.updated_from_source_at)}
+                          </p>
+                        </article>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-zinc-950">
+                        Other candidates already there
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        Existing candidate records already tied to the target company.
+                      </p>
+                    </div>
+
+                    {candidateLeadResult.peer_candidates.length === 0 ? (
+                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                        No other linked candidates were returned for this company.
+                      </div>
+                    ) : (
+                      candidateLeadResult.peer_candidates.map((peer) => (
+                        <article
+                          key={`${peer.candidate_id}-${peer.document_id}-peer`}
+                          className="border border-zinc-200 p-4"
+                        >
+                          <h5 className="text-lg font-semibold text-zinc-950">
+                            {peer.full_name ?? "Unnamed candidate"}
+                          </h5>
+                          <p className="mt-1 text-sm leading-6 text-zinc-700">
+                            {peer.current_title ?? "Title not available"}
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-zinc-900">
+                            {renderHighlightedExcerpt(peer.match_excerpt)}
+                          </p>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-6 border-t border-zinc-200 pt-8">
@@ -1553,10 +2044,9 @@ export function CandidateMatchWorkspace() {
         </div>
 
         <div className="border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-          Hiring-manager records are not persisted yet in live data. This
-          section currently shows two usable signals for the same company query:
-          matching candidates and known canonical jobs. Contact discovery comes
-          after we persist `contacts` from upstream sources.
+          This is the company-first view. If you already have one candidate in
+          mind, use the candidate preview section above to run the more direct
+          company lead workflow for that person.
         </div>
 
         <div className="grid gap-6 border border-zinc-200 bg-white p-6">

@@ -244,6 +244,87 @@ def discover_interactions_by_company(
     }
 
 
+def discover_company_leads_for_candidate(
+    *,
+    candidate_id: str,
+    company_name: str,
+    limit: int = 10,
+) -> dict[str, Any] | None:
+    """
+    Return a candidate-first company outreach view for one target company.
+
+    This supports the recruiter workflow:
+
+    - "I have a candidate"
+    - "I want to pitch them to company X"
+    - "show me who we know there, what jobs we already have there, and any
+      prior interaction evidence tied to that company"
+    """
+
+    profile = build_candidate_profile(candidate_id)
+    if profile is None:
+        return None
+
+    normalized_company_name = company_name.strip()
+
+    contacts_result = discover_contacts_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    interactions_result = discover_interactions_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    jobs_result = discover_jobs_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    peer_candidates_result = discover_candidates_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+
+    candidate = profile["candidate"]
+    peer_candidates = [
+        result
+        for result in peer_candidates_result["results"]
+        if result.get("candidate_id") != candidate_id
+    ][:limit]
+
+    skill_names: list[str] = []
+    seen_skill_names: set[str] = set()
+    for skill in profile["skills"]:
+        skill_name = (
+            skill.get("canonical_name")
+            or skill.get("skill_name")
+            or ""
+        ).strip()
+        if skill_name == "":
+            continue
+        normalized_skill_name = skill_name.lower()
+        if normalized_skill_name in seen_skill_names:
+            continue
+        seen_skill_names.add(normalized_skill_name)
+        skill_names.append(skill_name)
+
+    current_company_name = (candidate.get("current_company_name") or "").strip()
+
+    return {
+        "candidate": candidate,
+        "skills": profile["skills"],
+        "skill_names": skill_names,
+        "company_name": normalized_company_name,
+        "candidate_already_at_company": (
+            current_company_name != ""
+            and current_company_name.lower() == normalized_company_name.lower()
+        ),
+        "peer_candidates": peer_candidates,
+        "contacts": contacts_result["results"],
+        "interactions": interactions_result["results"],
+        "jobs": jobs_result["results"],
+    }
+
+
 def _normalize_candidate_resume_search_result(
     result: dict[str, Any],
 ) -> dict[str, Any]:
@@ -505,6 +586,7 @@ def _normalize_optional_datetime_value(value: Any) -> str | None:
 __all__ = [
     "build_candidate_profile",
     "discover_candidates_by_company",
+    "discover_company_leads_for_candidate",
     "discover_contacts_by_company",
     "discover_interactions_by_company",
     "discover_jobs_by_company",
