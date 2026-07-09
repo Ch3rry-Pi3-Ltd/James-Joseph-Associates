@@ -146,17 +146,14 @@ def fetch_recruitly_record_journal_preview(
     Fetch a bounded Recruitly journal/activity preview for one record.
     """
 
-    normalized_record_type = record_type.strip().lower()
     normalized_record_id = record_id.strip()
-    if normalized_record_type == "":
-        raise ValueError("Recruitly record type cannot be blank.")
     if normalized_record_id == "":
         raise ValueError("Recruitly record id cannot be blank.")
 
     payload = _get_recruitly_json(
         api_base_url=api_base_url,
         api_key=api_key,
-        endpoint_path=f"/api/{normalized_record_type}/{normalized_record_id}/journal",
+        endpoint_path=f"/api/nova/journal/{normalized_record_id}",
         params={
             "page": int(page),
             "size": _clamp_preview_size(size),
@@ -167,7 +164,7 @@ def fetch_recruitly_record_journal_preview(
     rows = data if isinstance(data, list) else []
 
     return {
-        "record_type": normalized_record_type,
+        "record_type": record_type.strip().lower(),
         "record_id": normalized_record_id,
         "page": int(page),
         "size": _clamp_preview_size(size),
@@ -196,10 +193,12 @@ def _fetch_recruitly_collection_preview(
     if normalized_query != "":
         params["search"] = normalized_query
 
+    endpoint_suffix = "search" if normalized_query != "" else "list"
+
     payload = _get_recruitly_json(
         api_base_url=api_base_url,
         api_key=api_key,
-        endpoint_path=f"/api/{resource}",
+        endpoint_path=f"/api/nova/{resource}/{endpoint_suffix}",
         params=params,
         timeout_seconds=timeout_seconds,
     )
