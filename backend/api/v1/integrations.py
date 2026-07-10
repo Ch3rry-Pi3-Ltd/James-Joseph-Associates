@@ -390,6 +390,36 @@ def _load_recruitly_configuration() -> tuple[str, str] | JSONResponse:
     return api_base_url.strip(), api_key.strip()
 
 
+def _build_recruitly_error_details(exc: Exception) -> list[dict[str, Any]]:
+    """
+    Build one consistent protected-route error detail payload for Recruitly.
+
+    Notes
+    -----
+    - Always include the local exception type and message.
+    - When Recruitly returned the failure, also surface the downstream status,
+      endpoint, and decoded body so production checks can distinguish bad keys
+      from route/permission issues without extra logging changes.
+    """
+
+    details: list[dict[str, Any]] = [
+        {
+            "error_type": exc.__class__.__name__,
+            "message": str(exc),
+        }
+    ]
+
+    if isinstance(exc, RecruitlyApiError):
+        if exc.status_code is not None:
+            details.append({"status_code": exc.status_code})
+        if exc.endpoint_url is not None:
+            details.append({"endpoint_url": exc.endpoint_url})
+        if exc.response_body is not None:
+            details.append({"response_body": exc.response_body})
+
+    return details
+
+
 def _refresh_jobadder_stored_connection(
     *,
     jobadder_account: int,
@@ -4644,7 +4674,7 @@ def get_recruitly_candidates_preview_route(
             status_code=status.HTTP_502_BAD_GATEWAY,
             code="integration_connection_invalid",
             message="Recruitly candidate preview failed.",
-            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+            details=_build_recruitly_error_details(exc),
         )
 
     return RecruitlyEntityPreviewResponse(
@@ -4699,7 +4729,7 @@ def get_recruitly_companies_preview_route(
             status_code=status.HTTP_502_BAD_GATEWAY,
             code="integration_connection_invalid",
             message="Recruitly company preview failed.",
-            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+            details=_build_recruitly_error_details(exc),
         )
 
     return RecruitlyEntityPreviewResponse(
@@ -4754,7 +4784,7 @@ def get_recruitly_contacts_preview_route(
             status_code=status.HTTP_502_BAD_GATEWAY,
             code="integration_connection_invalid",
             message="Recruitly contact preview failed.",
-            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+            details=_build_recruitly_error_details(exc),
         )
 
     return RecruitlyEntityPreviewResponse(
@@ -4809,7 +4839,7 @@ def get_recruitly_jobs_preview_route(
             status_code=status.HTTP_502_BAD_GATEWAY,
             code="integration_connection_invalid",
             message="Recruitly job preview failed.",
-            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+            details=_build_recruitly_error_details(exc),
         )
 
     return RecruitlyEntityPreviewResponse(
@@ -4866,7 +4896,7 @@ def get_recruitly_journal_preview_route(
             status_code=status.HTTP_502_BAD_GATEWAY,
             code="integration_connection_invalid",
             message="Recruitly journal preview failed.",
-            details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
+            details=_build_recruitly_error_details(exc),
         )
 
     return RecruitlyJournalPreviewResponse(

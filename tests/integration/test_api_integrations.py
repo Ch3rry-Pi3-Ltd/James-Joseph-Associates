@@ -253,7 +253,16 @@ def test_recruitly_preview_returns_provider_error_cleanly(
 
     with patch(
         "backend.api.v1.integrations.fetch_recruitly_jobs_preview",
-        side_effect=RecruitlyApiError("Recruitly API request returned an error response."),
+        side_effect=RecruitlyApiError(
+            "Recruitly API request returned an error response.",
+            status_code=401,
+            endpoint_url="https://api.recruitly.io/api/nova/jobs/list",
+            response_body={
+                "success": False,
+                "error": "UNAUTHORIZED",
+                "message": "Invalid or missing API key",
+            },
+        ),
     ) as mock_fetch_recruitly_jobs_preview:
         response = client.get(
             RECRUITLY_JOBS_PREVIEW_PATH,
@@ -269,7 +278,16 @@ def test_recruitly_preview_returns_provider_error_cleanly(
                 {
                     "error_type": "RecruitlyApiError",
                     "message": "Recruitly API request returned an error response.",
-                }
+                },
+                {"status_code": 401},
+                {"endpoint_url": "https://api.recruitly.io/api/nova/jobs/list"},
+                {
+                    "response_body": {
+                        "success": False,
+                        "error": "UNAUTHORIZED",
+                        "message": "Invalid or missing API key",
+                    }
+                },
             ],
         }
     }
