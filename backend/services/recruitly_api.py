@@ -193,7 +193,10 @@ def _fetch_recruitly_collection_preview(
     if normalized_query != "":
         params["search"] = normalized_query
 
-    endpoint_suffix = "search" if normalized_query != "" else "list"
+    endpoint_suffix = _resolve_collection_endpoint_suffix(
+        resource=resource,
+        query=normalized_query,
+    )
 
     payload = _get_recruitly_json(
         api_base_url=api_base_url,
@@ -216,6 +219,23 @@ def _fetch_recruitly_collection_preview(
         "data": rows,
         "raw_payload": payload,
     }
+
+
+def _resolve_collection_endpoint_suffix(*, resource: str, query: str) -> str:
+    """
+    Resolve the documented Recruitly collection endpoint for one resource.
+
+    Notes
+    -----
+    - The Recruitly docs explicitly show candidate reads under `/search`.
+    - Companies, contacts, and jobs expose `/list` for non-search previews.
+    """
+
+    normalized_resource = resource.strip().lower()
+    if normalized_resource == "candidates":
+        return "search"
+
+    return "search" if query != "" else "list"
 
 
 def _get_recruitly_json(
