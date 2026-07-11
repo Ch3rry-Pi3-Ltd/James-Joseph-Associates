@@ -46,6 +46,7 @@ from backend.schemas.candidates import (
     CompanyContactDiscoveryResponse,
     CompanyInteractionDiscoveryResponse,
     CompanyJobDiscoveryResponse,
+    CompanyOpportunityDiscoveryResponse,
     UploadedResumeSearchRequest,
     UploadedResumeSearchResponse,
 )
@@ -61,6 +62,7 @@ from backend.services.candidate_profiles import (
     discover_contacts_by_company,
     discover_interactions_by_company,
     discover_jobs_by_company,
+    discover_opportunities_by_company,
     search_candidate_resumes,
 )
 from backend.services.candidate_resume_files import (
@@ -475,6 +477,47 @@ def discover_interactions_by_company_route(
         limit=limit,
     )
     return CompanyInteractionDiscoveryResponse(**result)
+
+
+@router.get(
+    "/discover-opportunities-by-company",
+    response_model=CompanyOpportunityDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company opportunity discovery query was invalid.",
+        }
+    },
+)
+def discover_opportunities_by_company_route(
+    company_name: str = Query(
+        description="Company name used to find linked opportunity records.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of opportunities to return.",
+    ),
+) -> CompanyOpportunityDiscoveryResponse | JSONResponse:
+    """
+    Find canonical opportunities already linked to one company name.
+    """
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company opportunity discovery query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_opportunities_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return CompanyOpportunityDiscoveryResponse(**result)
 
 
 @router.get(

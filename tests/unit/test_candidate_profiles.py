@@ -56,6 +56,7 @@ from backend.services.candidate_profiles import (
     discover_candidates_by_company,
     discover_company_leads_for_candidate,
     discover_jobs_by_company,
+    discover_opportunities_by_company,
     search_candidate_resumes,
 )
 
@@ -434,6 +435,69 @@ def test_discover_jobs_by_company_normalizes_raw_rows() -> None:
     )
 
 
+def test_discover_opportunities_by_company_normalizes_raw_rows() -> None:
+    """
+    Verify that company-opportunity discovery results are normalized into the public API shape.
+    """
+
+    raw_result = {
+        "opportunity_id": UUID("66666666-6666-6666-6666-666666666661"),
+        "title": "Acme data platform follow-up",
+        "smart_summary": "Warm opportunity with active hiring discussion.",
+        "stage": "qualified",
+        "last_contact_at": datetime(2026, 4, 24, 12, 0, tzinfo=UTC),
+        "next_task_at": datetime(2026, 4, 27, 9, 0, tzinfo=UTC),
+        "value": 35000,
+        "company_id": UUID("11111111-1111-1111-1111-111111111111"),
+        "company_name": "Acme Hiring Ltd",
+        "contact_id": UUID("77777777-7777-7777-7777-777777777771"),
+        "contact_person_id": UUID("88888888-8888-8888-8888-888888888881"),
+        "contact_name": "Tom Richards",
+        "contact_email": "tom.richards@acme.test",
+        "contact_phone": "+447700900222",
+        "contact_role_title": "Head of Talent",
+        "company_match_source": "company_exact",
+    }
+
+    with patch(
+        "backend.services.candidate_profiles.search_opportunities_by_company_name",
+        return_value=[raw_result],
+    ) as mock_search_opportunities_by_company_name:
+        result = discover_opportunities_by_company(
+            company_name=" Acme Hiring Ltd ",
+            limit=5,
+        )
+
+    assert result == {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "opportunity_id": "66666666-6666-6666-6666-666666666661",
+                "title": "Acme data platform follow-up",
+                "smart_summary": "Warm opportunity with active hiring discussion.",
+                "stage": "qualified",
+                "last_contact_at": "2026-04-24T12:00:00+00:00",
+                "next_task_at": "2026-04-27T09:00:00+00:00",
+                "value": 35000.0,
+                "company_id": "11111111-1111-1111-1111-111111111111",
+                "company_name": "Acme Hiring Ltd",
+                "contact_id": "77777777-7777-7777-7777-777777777771",
+                "contact_person_id": "88888888-8888-8888-8888-888888888881",
+                "contact_name": "Tom Richards",
+                "contact_email": "tom.richards@acme.test",
+                "contact_phone": "+447700900222",
+                "contact_role_title": "Head of Talent",
+                "company_match_source": "company_exact",
+            }
+        ],
+    }
+    mock_search_opportunities_by_company_name.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
 def test_discover_company_leads_for_candidate_returns_none_when_candidate_is_missing() -> None:
     """
     Verify that candidate-first lead discovery stops when the candidate is missing.
@@ -498,6 +562,9 @@ def test_discover_company_leads_for_candidate_composes_company_views() -> None:
         "backend.services.candidate_profiles.discover_jobs_by_company",
         return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"job_id": "job-1"}]},
     ) as mock_discover_jobs_by_company, patch(
+        "backend.services.candidate_profiles.discover_opportunities_by_company",
+        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"opportunity_id": "opp-1"}]},
+    ) as mock_discover_opportunities_by_company, patch(
         "backend.services.candidate_profiles.discover_candidates_by_company",
         return_value={
             "company_name": "Acme Hiring Ltd",
@@ -548,6 +615,7 @@ def test_discover_company_leads_for_candidate_composes_company_views() -> None:
         "contacts": [{"contact_id": "contact-1"}],
         "interactions": [{"interaction_id": "interaction-1"}],
         "jobs": [{"job_id": "job-1"}],
+        "opportunities": [{"opportunity_id": "opp-1"}],
     }
     mock_build_candidate_profile.assert_called_once_with("candidate-1")
     mock_discover_contacts_by_company.assert_called_once_with(
@@ -559,6 +627,10 @@ def test_discover_company_leads_for_candidate_composes_company_views() -> None:
         limit=5,
     )
     mock_discover_jobs_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+    mock_discover_opportunities_by_company.assert_called_once_with(
         company_name="Acme Hiring Ltd",
         limit=5,
     )

@@ -39,6 +39,7 @@ from backend.db.candidates import (
 )
 from backend.db.contacts import search_contacts_by_company_name
 from backend.db.interactions import search_interactions_by_company_name
+from backend.db.opportunities import search_opportunities_by_company_name
 from backend.db.skills import get_candidate_skills
 from backend.db.jobs import search_jobs_by_company_name
 from backend.services.candidate_retrieval import search_candidates_hybrid
@@ -244,6 +245,30 @@ def discover_interactions_by_company(
     }
 
 
+def discover_opportunities_by_company(
+    *,
+    company_name: str,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """
+    Return recent opportunities for one recruiter company query.
+    """
+
+    normalized_company_name = company_name.strip()
+    results = search_opportunities_by_company_name(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    return {
+        "company_name": normalized_company_name,
+        "limit": limit,
+        "results": [
+            _normalize_company_opportunity_discovery_result(result)
+            for result in results
+        ],
+    }
+
+
 def discover_company_leads_for_candidate(
     *,
     candidate_id: str,
@@ -276,6 +301,10 @@ def discover_company_leads_for_candidate(
         limit=limit,
     )
     jobs_result = discover_jobs_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )
+    opportunities_result = discover_opportunities_by_company(
         company_name=normalized_company_name,
         limit=limit,
     )
@@ -322,6 +351,7 @@ def discover_company_leads_for_candidate(
         "contacts": contacts_result["results"],
         "interactions": interactions_result["results"],
         "jobs": jobs_result["results"],
+        "opportunities": opportunities_result["results"],
     }
 
 
@@ -528,17 +558,63 @@ def _normalize_company_interaction_discovery_result(
         "summary": _normalize_optional_string_value(result.get("summary")),
         "body": _normalize_optional_string_value(result.get("body")),
         "source_system": _normalize_optional_string_value(result.get("source_system")),
-        "person_id": _normalize_string_value(result.get("person_id")),
+        "person_id": _normalize_optional_string_value(result.get("person_id")),
         "candidate_id": _normalize_optional_string_value(result.get("candidate_id")),
         "company_id": _normalize_optional_string_value(result.get("company_id")),
         "company_name": _normalize_optional_string_value(result.get("company_name")),
         "full_name": _normalize_optional_string_value(result.get("full_name")),
         "role_title": _normalize_optional_string_value(result.get("role_title")),
+        "contact_id": _normalize_optional_string_value(result.get("contact_id")),
+        "job_id": _normalize_optional_string_value(result.get("job_id")),
+        "job_title": _normalize_optional_string_value(result.get("job_title")),
         "candidate_last_contacted_at": _normalize_optional_datetime_value(
             result.get("candidate_last_contacted_at")
         ),
         "matched_entity_type": _normalize_string_value(
             result.get("matched_entity_type")
+        ),
+    }
+
+
+def _normalize_company_opportunity_discovery_result(
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Return one public API-safe company-opportunity discovery row.
+    """
+
+    return {
+        "opportunity_id": _normalize_string_value(result.get("opportunity_id")),
+        "title": _normalize_optional_string_value(result.get("title")),
+        "smart_summary": _normalize_optional_string_value(
+            result.get("smart_summary")
+        ),
+        "stage": _normalize_optional_string_value(result.get("stage")),
+        "last_contact_at": _normalize_optional_datetime_value(
+            result.get("last_contact_at")
+        ),
+        "next_task_at": _normalize_optional_datetime_value(
+            result.get("next_task_at")
+        ),
+        "value": _normalize_optional_float_value(result.get("value")),
+        "company_id": _normalize_optional_string_value(result.get("company_id")),
+        "company_name": _normalize_optional_string_value(result.get("company_name")),
+        "contact_id": _normalize_optional_string_value(result.get("contact_id")),
+        "contact_person_id": _normalize_optional_string_value(
+            result.get("contact_person_id")
+        ),
+        "contact_name": _normalize_optional_string_value(result.get("contact_name")),
+        "contact_email": _normalize_optional_string_value(
+            result.get("contact_email")
+        ),
+        "contact_phone": _normalize_optional_string_value(
+            result.get("contact_phone")
+        ),
+        "contact_role_title": _normalize_optional_string_value(
+            result.get("contact_role_title")
+        ),
+        "company_match_source": _normalize_string_value(
+            result.get("company_match_source")
         ),
     }
 
@@ -590,5 +666,6 @@ __all__ = [
     "discover_contacts_by_company",
     "discover_interactions_by_company",
     "discover_jobs_by_company",
+    "discover_opportunities_by_company",
     "search_candidate_resumes",
 ]

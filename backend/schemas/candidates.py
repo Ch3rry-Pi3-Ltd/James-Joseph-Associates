@@ -309,12 +309,15 @@ class CompanyInteractionDiscoveryResult(BaseModel):
     summary: str | None = None
     body: str | None = None
     source_system: str | None = None
-    person_id: str
+    person_id: str | None = None
     candidate_id: str | None = None
     company_id: str | None = None
     company_name: str | None = None
     full_name: str | None = None
     role_title: str | None = None
+    contact_id: str | None = None
+    job_id: str | None = None
+    job_title: str | None = None
     candidate_last_contacted_at: str | None = None
     matched_entity_type: str
 
@@ -335,6 +338,50 @@ class CompanyInteractionDiscoveryResponse(BaseModel):
     results: list[CompanyInteractionDiscoveryResult] = Field(
         default_factory=list,
         description="Recent interaction evidence for people linked to the company.",
+    )
+
+
+class CompanyOpportunityDiscoveryResult(BaseModel):
+    """
+    One opportunity returned by the company opportunity-discovery endpoint.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    opportunity_id: str
+    title: str | None = None
+    smart_summary: str | None = None
+    stage: str | None = None
+    last_contact_at: str | None = None
+    next_task_at: str | None = None
+    value: float | None = None
+    company_id: str | None = None
+    company_name: str | None = None
+    contact_id: str | None = None
+    contact_person_id: str | None = None
+    contact_name: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    contact_role_title: str | None = None
+    company_match_source: str
+
+
+class CompanyOpportunityDiscoveryResponse(BaseModel):
+    """
+    Response envelope for one company-to-opportunity discovery query.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for the opportunity discovery query.",
+    )
+    limit: int = Field(
+        description="Maximum number of opportunities requested.",
+    )
+    results: list[CompanyOpportunityDiscoveryResult] = Field(
+        default_factory=list,
+        description="Recent opportunities already linked to the company.",
     )
 
 
@@ -377,6 +424,10 @@ class CandidateCompanyLeadDiscoveryResponse(BaseModel):
     jobs: list[CompanyJobDiscoveryResult] = Field(
         default_factory=list,
         description="Canonical jobs already linked to the target company.",
+    )
+    opportunities: list[CompanyOpportunityDiscoveryResult] = Field(
+        default_factory=list,
+        description="Canonical opportunities already linked to the target company.",
     )
 
 
@@ -519,6 +570,8 @@ __all__ = [
     "CompanyInteractionDiscoveryResult",
     "CompanyJobDiscoveryResponse",
     "CompanyJobDiscoveryResult",
+    "CompanyOpportunityDiscoveryResponse",
+    "CompanyOpportunityDiscoveryResult",
     "CandidateProfileResponse",
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",

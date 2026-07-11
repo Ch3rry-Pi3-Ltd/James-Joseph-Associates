@@ -586,6 +586,9 @@ def test_company_interaction_discovery_route_returns_ranked_results() -> None:
                 "company_name": "Acme Hiring Ltd",
                 "full_name": "Sarah Jones",
                 "role_title": "Senior Data Engineer",
+                "contact_id": None,
+                "job_id": None,
+                "job_title": None,
                 "candidate_last_contacted_at": "2026-04-20T12:00:00+00:00",
                 "matched_entity_type": "candidate",
             }
@@ -607,6 +610,77 @@ def test_company_interaction_discovery_route_returns_ranked_results() -> None:
         company_name="Acme Hiring Ltd",
         limit=5,
     )
+
+
+def test_company_opportunity_discovery_route_returns_ranked_results() -> None:
+    """
+    Verify that the company-opportunity discovery route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "results": [
+            {
+                "opportunity_id": "opp-1",
+                "title": "Acme data platform follow-up",
+                "smart_summary": "Warm opportunity with active hiring discussion.",
+                "stage": "qualified",
+                "last_contact_at": "2026-04-24T12:00:00+00:00",
+                "next_task_at": "2026-04-27T09:00:00+00:00",
+                "value": 35000.0,
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "contact_id": "contact-1",
+                "contact_person_id": "person-3",
+                "contact_name": "Tom Richards",
+                "contact_email": "tom.richards@acme.test",
+                "contact_phone": "+447700900222",
+                "contact_role_title": "Head of Talent",
+                "company_match_source": "company_exact",
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_opportunities_by_company",
+        return_value=service_result,
+    ) as mock_discover_opportunities_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-opportunities-by-company?company_name=Acme%20Hiring%20Ltd&limit=5"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_opportunities_by_company.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+    )
+
+
+def test_company_opportunity_discovery_route_rejects_blank_company_name() -> None:
+    """
+    Verify that the company-opportunity discovery route rejects blank queries cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.discover_opportunities_by_company",
+    ) as mock_discover_opportunities_by_company:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-opportunities-by-company?company_name=%20%20%20"
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Company opportunity discovery query must not be blank.",
+            "details": [{"company_name": "   "}],
+        }
+    }
+    mock_discover_opportunities_by_company.assert_not_called()
 
 
 def test_company_interaction_discovery_route_rejects_blank_company_name() -> None:
@@ -715,6 +789,9 @@ def test_candidate_company_lead_discovery_route_returns_composed_results() -> No
                 "company_name": "Acme Hiring Ltd",
                 "full_name": "Tom Richards",
                 "role_title": "Head of Talent",
+                "contact_id": "contact-1",
+                "job_id": None,
+                "job_title": None,
                 "candidate_last_contacted_at": None,
                 "matched_entity_type": "contact",
             }
@@ -738,6 +815,26 @@ def test_candidate_company_lead_discovery_route_returns_composed_results() -> No
                 "hiring_manager_email": "tom.richards@acme.test",
                 "hiring_manager_phone": "+447700900222",
                 "hiring_manager_role_title": "Head of Talent",
+                "company_match_source": "company_exact",
+            }
+        ],
+        "opportunities": [
+            {
+                "opportunity_id": "opp-1",
+                "title": "Acme data platform follow-up",
+                "smart_summary": "Warm opportunity with active hiring discussion.",
+                "stage": "qualified",
+                "last_contact_at": "2026-04-24T12:00:00+00:00",
+                "next_task_at": "2026-04-27T09:00:00+00:00",
+                "value": 35000.0,
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "contact_id": "contact-1",
+                "contact_person_id": "person-3",
+                "contact_name": "Tom Richards",
+                "contact_email": "tom.richards@acme.test",
+                "contact_phone": "+447700900222",
+                "contact_role_title": "Head of Talent",
                 "company_match_source": "company_exact",
             }
         ],
