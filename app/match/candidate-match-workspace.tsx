@@ -125,14 +125,42 @@ type CompanyInteractionDiscoveryResult = {
   summary: string | null;
   body: string | null;
   source_system: string | null;
-  person_id: string;
+  person_id: string | null;
   candidate_id: string | null;
   company_id: string | null;
   company_name: string | null;
   full_name: string | null;
   role_title: string | null;
+  contact_id: string | null;
+  job_id: string | null;
+  job_title: string | null;
   candidate_last_contacted_at: string | null;
   matched_entity_type: string;
+};
+
+type CompanyOpportunityDiscoveryResult = {
+  opportunity_id: string;
+  title: string | null;
+  smart_summary: string | null;
+  stage: string | null;
+  last_contact_at: string | null;
+  next_task_at: string | null;
+  value: number | null;
+  company_id: string | null;
+  company_name: string | null;
+  contact_id: string | null;
+  contact_person_id: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_role_title: string | null;
+  company_match_source: string;
+};
+
+type CompanyOpportunityDiscoveryResponse = {
+  company_name: string;
+  limit: number;
+  results: CompanyOpportunityDiscoveryResult[];
 };
 
 type CandidateCompanyLeadDiscoveryResponse = {
@@ -145,6 +173,7 @@ type CandidateCompanyLeadDiscoveryResponse = {
   contacts: CompanyContactDiscoveryResult[];
   interactions: CompanyInteractionDiscoveryResult[];
   jobs: CompanyJobDiscoveryResult[];
+  opportunities: CompanyOpportunityDiscoveryResult[];
 };
 
 type UploadedResumeSearchResponse = {
@@ -419,6 +448,18 @@ function formatUnderscoredLabel(value: string | null): string {
   return value.replaceAll("_", " ");
 }
 
+function formatCurrencyValue(value: number | null): string {
+  if (value === null || Number.isNaN(value)) {
+    return "Unknown";
+  }
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function deriveRetrievalFocusTerms(jobDescription: string): string {
   const normalizedTerms =
     jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
@@ -642,9 +683,14 @@ export function CandidateMatchWorkspace() {
   const [companyJobResults, setCompanyJobResults] = useState<
     CompanyJobDiscoveryResult[]
   >([]);
+  const [companyOpportunityResults, setCompanyOpportunityResults] = useState<
+    CompanyOpportunityDiscoveryResult[]
+  >([]);
   const [companyJobsErrorMessage, setCompanyJobsErrorMessage] = useState<
     string | null
   >(null);
+  const [companyOpportunitiesErrorMessage, setCompanyOpportunitiesErrorMessage] =
+    useState<string | null>(null);
   const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
     null,
   );
@@ -750,6 +796,22 @@ export function CandidateMatchWorkspace() {
 
     return `${companyJobResults.length} jobs returned.`;
   }, [companyJobResults.length, submittedCompanyName]);
+
+  const companyOpportunitiesCountLabel = useMemo(() => {
+    if (submittedCompanyName && companyOpportunityResults.length === 0) {
+      return "0 opportunities returned.";
+    }
+
+    if (companyOpportunityResults.length === 0) {
+      return "No opportunities returned yet.";
+    }
+
+    if (companyOpportunityResults.length === 1) {
+      return "1 opportunity returned.";
+    }
+
+    return `${companyOpportunityResults.length} opportunities returned.`;
+  }, [companyOpportunityResults.length, submittedCompanyName]);
 
   async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
@@ -961,6 +1023,7 @@ export function CandidateMatchWorkspace() {
     setCompanyDiscoveryLoading(true);
     setCompanyDiscoveryErrorMessage(null);
     setCompanyJobsErrorMessage(null);
+    setCompanyOpportunitiesErrorMessage(null);
 
     try {
       const searchParams = new URLSearchParams({
@@ -1017,9 +1080,37 @@ export function CandidateMatchWorkspace() {
 
       const companyJobsResponse = jobsPayload as CompanyJobDiscoveryResponse;
       setCompanyJobResults(companyJobsResponse.results);
+
+      const opportunitiesResponse = await fetch(
+        `/api/v1/candidates/discover-opportunities-by-company?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const opportunitiesPayload = (await opportunitiesResponse.json()) as unknown;
+
+      if (!opportunitiesResponse.ok) {
+        setCompanyOpportunityResults([]);
+        setCompanyOpportunitiesErrorMessage(
+          (isApiErrorResponse(opportunitiesPayload)
+            ? opportunitiesPayload.error?.message
+            : undefined) ??
+            `Company opportunities request failed with ${opportunitiesResponse.status}.`,
+        );
+        return;
+      }
+
+      const companyOpportunitiesResponse =
+        opportunitiesPayload as CompanyOpportunityDiscoveryResponse;
+      setCompanyOpportunityResults(companyOpportunitiesResponse.results);
     } catch (error) {
       setCompanyDiscoveryResults([]);
       setCompanyJobResults([]);
+      setCompanyOpportunityResults([]);
       setSubmittedCompanyName(trimmedCompanyName);
       setCompanyDiscoveryErrorMessage(
         error instanceof Error
@@ -1064,6 +1155,8 @@ export function CandidateMatchWorkspace() {
     setCompanyDiscoveryErrorMessage(null);
     setCompanyJobResults([]);
     setCompanyJobsErrorMessage(null);
+    setCompanyOpportunityResults([]);
+    setCompanyOpportunitiesErrorMessage(null);
     setSubmittedCompanyName(null);
     setUploadedResumeFile(null);
     setUploadedResumeResult(null);
@@ -1762,7 +1855,7 @@ export function CandidateMatchWorkspace() {
 
             {candidateLeadResult ? (
               <div className="grid gap-6">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                   <div className="border border-zinc-200 p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Selected candidate
@@ -1802,6 +1895,15 @@ export function CandidateMatchWorkspace() {
                       {candidateLeadResult.interactions.length}
                     </p>
                   </div>
+
+                  <div className="border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Open opportunities
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-zinc-950">
+                      {candidateLeadResult.opportunities.length}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="border border-zinc-200 p-4">
@@ -1833,7 +1935,7 @@ export function CandidateMatchWorkspace() {
                   </div>
                 ) : null}
 
-                <div className="grid gap-6 xl:grid-cols-2">
+                <div className="grid gap-6 xl:grid-cols-3">
                   <div className="grid gap-4">
                     <div>
                       <h4 className="text-xl font-semibold text-zinc-950">
@@ -1900,6 +2002,47 @@ export function CandidateMatchWorkspace() {
                   <div className="grid gap-4">
                     <div>
                       <h4 className="text-xl font-semibold text-zinc-950">
+                        Known opportunities at this company
+                      </h4>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        Existing opportunities already linked to the same target company.
+                      </p>
+                    </div>
+
+                    {candidateLeadResult.opportunities.length === 0 ? (
+                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                        No canonical opportunities are linked to this company yet.
+                      </div>
+                    ) : (
+                      candidateLeadResult.opportunities.map((opportunity) => (
+                        <article
+                          key={opportunity.opportunity_id}
+                          className="border border-zinc-200 p-4"
+                        >
+                          <h5 className="text-lg font-semibold text-zinc-950">
+                            {opportunity.title ?? "Untitled opportunity"}
+                          </h5>
+                          <p className="mt-1 text-sm leading-6 text-zinc-700">
+                            {opportunity.contact_name
+                              ? `${opportunity.contact_name}${opportunity.contact_role_title ? ` | ${opportunity.contact_role_title}` : ""}`
+                              : "No linked contact yet"}
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-zinc-900">
+                            {opportunity.smart_summary ?? "No opportunity summary available."}
+                          </p>
+                          <p className="mt-3 text-xs uppercase text-zinc-500">
+                            {opportunity.stage ?? "Unknown stage"} | Next task{" "}
+                            {formatTimestamp(opportunity.next_task_at)} | Value{" "}
+                            {formatCurrencyValue(opportunity.value)}
+                          </p>
+                        </article>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div>
+                      <h4 className="text-xl font-semibold text-zinc-950">
                         Prior interaction evidence
                       </h4>
                       <p className="mt-2 text-sm leading-6 text-zinc-700">
@@ -1931,6 +2074,26 @@ export function CandidateMatchWorkspace() {
                           <p className="mt-1 text-sm leading-6 text-zinc-700">
                             {interaction.role_title ?? interaction.company_name ?? "No role title"}
                           </p>
+                          <dl className="mt-3 grid gap-1 text-sm leading-6 text-zinc-800">
+                            {interaction.job_title ? (
+                              <div>
+                                <dt className="inline font-semibold">Job:</dt>{" "}
+                                <dd className="inline">{interaction.job_title}</dd>
+                              </div>
+                            ) : null}
+                            {interaction.company_name ? (
+                              <div>
+                                <dt className="inline font-semibold">Company:</dt>{" "}
+                                <dd className="inline">{interaction.company_name}</dd>
+                              </div>
+                            ) : null}
+                            {interaction.contact_id ? (
+                              <div>
+                                <dt className="inline font-semibold">Contact link:</dt>{" "}
+                                <dd className="inline">Linked</dd>
+                              </div>
+                            ) : null}
+                          </dl>
                           <p className="mt-3 text-sm leading-6 text-zinc-900">
                             {interaction.summary ??
                               interaction.subject ??
@@ -2261,6 +2424,12 @@ export function CandidateMatchWorkspace() {
               </div>
             ) : null}
 
+            {companyOpportunitiesErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {companyOpportunitiesErrorMessage}
+              </div>
+            ) : null}
+
             {submittedCompanyName &&
             companyJobResults.length === 0 &&
             !companyJobsErrorMessage ? (
@@ -2346,6 +2515,112 @@ export function CandidateMatchWorkspace() {
                       {result.hiring_manager_name
                         ? `${result.hiring_manager_name}${result.hiring_manager_role_title ? ` | ${result.hiring_manager_role_title}` : ""}`
                         : "No hiring-manager contact is linked on this canonical job yet."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 border-t border-zinc-200 pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  Known opportunities at this company
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">
+                  Canonical opportunities already linked to the same company.
+                </p>
+              </div>
+
+              <div className="text-sm text-zinc-600">
+                {companyOpportunitiesCountLabel}
+              </div>
+            </div>
+
+            {submittedCompanyName &&
+            companyOpportunityResults.length === 0 &&
+            !companyOpportunitiesErrorMessage ? (
+              <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                No canonical opportunities are linked to that company query yet.
+              </div>
+            ) : null}
+
+            <div className="grid gap-5">
+              {companyOpportunityResults.map((result, index) => (
+                <article
+                  key={result.opportunity_id}
+                  className="border border-zinc-200 bg-white p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                          Opportunity {index + 1}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {result.stage ?? "Unknown stage"}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatCompanyMatchSourceLabel(result.company_match_source)}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-4 text-2xl font-semibold text-zinc-950">
+                        {result.title ?? "Untitled opportunity"}
+                      </h4>
+
+                      <p className="mt-2 text-base leading-7 text-zinc-700">
+                        {result.company_name ?? "Unknown company"}
+                        {result.contact_name ? ` | ${result.contact_name}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Contact
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.contact_name ?? "Not linked"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Next task
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {formatTimestamp(result.next_task_at)}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Last contact
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {formatTimestamp(result.last_contact_at)}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Value
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {formatCurrencyValue(result.value)}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-6 border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Opportunity summary
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-zinc-900">
+                      {result.smart_summary ?? "No opportunity summary available."}
                     </p>
                   </div>
                 </article>
