@@ -132,6 +132,30 @@ def fetch_recruitly_jobs_preview(
     )
 
 
+def fetch_recruitly_opportunities_preview(
+    *,
+    api_base_url: str,
+    api_key: str,
+    query: str | None = None,
+    page: int = 0,
+    size: int = 20,
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """
+    Fetch a bounded Recruitly opportunity preview page.
+    """
+
+    return _fetch_recruitly_collection_preview(
+        api_base_url=api_base_url,
+        api_key=api_key,
+        resource="opportunities",
+        query=query,
+        page=page,
+        size=size,
+        timeout_seconds=timeout_seconds,
+    )
+
+
 def fetch_recruitly_record_journal_preview(
     *,
     api_base_url: str,
@@ -328,5 +352,6 @@ __all__ = [
     "fetch_recruitly_companies_preview",
     "fetch_recruitly_contacts_preview",
     "fetch_recruitly_jobs_preview",
+    "fetch_recruitly_opportunities_preview",
     "fetch_recruitly_record_journal_preview",
 ]

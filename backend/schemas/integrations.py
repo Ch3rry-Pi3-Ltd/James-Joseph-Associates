@@ -186,7 +186,13 @@ class RecruitlyEntityPreviewResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    resource: Literal["candidates", "companies", "contacts", "jobs"] = Field(
+    resource: Literal[
+        "candidates",
+        "companies",
+        "contacts",
+        "jobs",
+        "opportunities",
+    ] = Field(
         description="Recruitly collection that was previewed.",
     )
     api_base_url: str = Field(
@@ -300,7 +306,7 @@ class RecruitlyCollectionIngestResponse(BaseModel):
     status: Literal["completed"] = Field(
         description="Fixed status confirming the ingest completed."
     )
-    resource: Literal["companies", "contacts"] = Field(
+    resource: Literal["companies", "contacts", "jobs", "opportunities"] = Field(
         description="Recruitly collection that was ingested."
     )
     message: str = Field(
@@ -316,6 +322,63 @@ class RecruitlyCollectionIngestResponse(BaseModel):
     persisted: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Canonical IDs and provenance IDs written by the ingest.",
+    )
+
+
+class RecruitlyJournalIngestRequest(BaseModel):
+    """
+    Request body for one bounded protected Recruitly journal ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    page: int = Field(
+        default=0,
+        ge=0,
+        description="Zero-based Recruitly journal page to ingest.",
+    )
+    size: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of Recruitly journal rows to ingest.",
+    )
+    import_run_id: str | None = Field(
+        default=None,
+        description="Optional operator-supplied import run identifier.",
+    )
+
+
+class RecruitlyJournalIngestResponse(BaseModel):
+    """
+    Response returned after one protected Recruitly journal ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["completed"] = Field(
+        description="Fixed status confirming the journal ingest completed."
+    )
+    record_type: str = Field(
+        min_length=1,
+        description="Recruitly record type whose journal was ingested.",
+    )
+    record_id: str = Field(
+        min_length=1,
+        description="Recruitly record identifier whose journal was ingested.",
+    )
+    message: str = Field(
+        min_length=1,
+        description="Short human-readable summary of the journal ingest result.",
+    )
+    page: int = Field(ge=0)
+    size: int = Field(ge=1, le=100)
+    item_count: int = Field(ge=0)
+    total_count: int | None = Field(default=None)
+    interaction_count: int = Field(ge=0)
+    persisted: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Canonical interaction IDs and journal provenance IDs written.",
     )
 
 
@@ -2609,7 +2672,11 @@ class OutlookMessageAttachmentDownloadProofResponse(BaseModel):
 __all__ = [
     "LinkedHelperPersonIngestRequest",
     "LinkedHelperPersonIngestResponse",
+    "RecruitlyCollectionIngestRequest",
+    "RecruitlyCollectionIngestResponse",
     "RecruitlyEntityPreviewResponse",
+    "RecruitlyJournalIngestRequest",
+    "RecruitlyJournalIngestResponse",
     "RecruitlyJournalPreviewResponse",
     "JobAdderAuthorizationUrlResponse",
     "JobAdderApplicationDetailResponse",
