@@ -262,6 +262,63 @@ class RecruitlyJournalPreviewResponse(BaseModel):
     )
 
 
+class RecruitlyCollectionIngestRequest(BaseModel):
+    """
+    Request body for one bounded protected Recruitly collection ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str | None = Field(
+        default=None,
+        description="Optional search string to pass through to Recruitly.",
+    )
+    page: int = Field(
+        default=0,
+        ge=0,
+        description="Zero-based Recruitly page to ingest.",
+    )
+    size: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of Recruitly rows to ingest from this page.",
+    )
+    import_run_id: str | None = Field(
+        default=None,
+        description="Optional operator-supplied import run identifier.",
+    )
+
+
+class RecruitlyCollectionIngestResponse(BaseModel):
+    """
+    Response returned after one protected Recruitly collection ingest.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["completed"] = Field(
+        description="Fixed status confirming the ingest completed."
+    )
+    resource: Literal["companies", "contacts"] = Field(
+        description="Recruitly collection that was ingested."
+    )
+    message: str = Field(
+        min_length=1,
+        description="Short human-readable summary of the ingest result.",
+    )
+    query: str | None = Field(default=None)
+    page: int = Field(ge=0)
+    size: int = Field(ge=1, le=100)
+    item_count: int = Field(ge=0)
+    total_count: int | None = Field(default=None)
+    persisted_count: int = Field(ge=0)
+    persisted: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Canonical IDs and provenance IDs written by the ingest.",
+    )
+
+
 class OutlookFolderIngestRunRequest(BaseModel):
     """
     Request body for one bounded protected Outlook folder-ingest run.

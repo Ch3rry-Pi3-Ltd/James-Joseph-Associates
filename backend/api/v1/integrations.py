@@ -101,6 +101,8 @@ from backend.schemas.integrations import (
     DropboxZipMembersPreviewResponse,
     LinkedHelperPersonIngestRequest,
     LinkedHelperPersonIngestResponse,
+    RecruitlyCollectionIngestRequest,
+    RecruitlyCollectionIngestResponse,
     RecruitlyEntityPreviewResponse,
     RecruitlyJournalPreviewResponse,
     JobAdderApplicationDetailResponse,
@@ -163,6 +165,9 @@ from backend.services.outlook_cv_attachment_export import (
 )
 from backend.services.linkedin_helper_ingestion import (
     ingest_linkedin_helper_person,
+)
+from backend.services.recruitly_ingestion import (
+    ingest_recruitly_collection_page,
 )
 from backend.services.recruitly_api import (
     RecruitlyApiError,
@@ -4908,6 +4913,126 @@ def get_recruitly_journal_preview_route(
         item_count=preview["item_count"],
         total_count=preview["total_count"],
         data=preview["data"],
+    )
+
+
+@router.post(
+    "/recruitly/admin/companies-ingest",
+    response_model=RecruitlyCollectionIngestResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly company ingest failed."},
+    },
+)
+def ingest_recruitly_companies_route(
+    request: Request,
+    payload: RecruitlyCollectionIngestRequest,
+) -> RecruitlyCollectionIngestResponse | JSONResponse:
+    """
+    Persist one bounded Recruitly companies page into canonical storage.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        ingest_report = ingest_recruitly_collection_page(
+            resource="companies",
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=payload.query,
+            page=payload.page,
+            size=payload.size,
+            import_run_id=payload.import_run_id,
+        )
+    except (RecruitlyApiError, RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly company ingest failed.",
+            details=_build_recruitly_error_details(exc),
+        )
+
+    return RecruitlyCollectionIngestResponse(
+        status="completed",
+        resource="companies",
+        message=(
+            "Recruitly company ingest completed. The raw upstream payloads "
+            "were preserved and canonical company rows were refreshed."
+        ),
+        query=ingest_report["query"],
+        page=ingest_report["page"],
+        size=ingest_report["size"],
+        item_count=ingest_report["item_count"],
+        total_count=ingest_report["total_count"],
+        persisted_count=ingest_report["persisted_count"],
+        persisted=ingest_report["persisted"],
+    )
+
+
+@router.post(
+    "/recruitly/admin/contacts-ingest",
+    response_model=RecruitlyCollectionIngestResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Admin bearer token is missing or invalid."},
+        502: {"model": ApiErrorResponse, "description": "Recruitly contact ingest failed."},
+    },
+)
+def ingest_recruitly_contacts_route(
+    request: Request,
+    payload: RecruitlyCollectionIngestRequest,
+) -> RecruitlyCollectionIngestResponse | JSONResponse:
+    """
+    Persist one bounded Recruitly contacts page into canonical storage.
+    """
+
+    auth_failure = _authorize_admin_request(request)
+    if auth_failure is not None:
+        return auth_failure
+
+    configuration = _load_recruitly_configuration()
+    if isinstance(configuration, JSONResponse):
+        return configuration
+    api_base_url, api_key = configuration
+
+    try:
+        ingest_report = ingest_recruitly_collection_page(
+            resource="contacts",
+            api_base_url=api_base_url,
+            api_key=api_key,
+            query=payload.query,
+            page=payload.page,
+            size=payload.size,
+            import_run_id=payload.import_run_id,
+        )
+    except (RecruitlyApiError, RuntimeError, ValueError) as exc:
+        return build_error_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            code="integration_connection_invalid",
+            message="Recruitly contact ingest failed.",
+            details=_build_recruitly_error_details(exc),
+        )
+
+    return RecruitlyCollectionIngestResponse(
+        status="completed",
+        resource="contacts",
+        message=(
+            "Recruitly contact ingest completed. The raw upstream payloads "
+            "were preserved and canonical company/contact rows were refreshed."
+        ),
+        query=ingest_report["query"],
+        page=ingest_report["page"],
+        size=ingest_report["size"],
+        item_count=ingest_report["item_count"],
+        total_count=ingest_report["total_count"],
+        persisted_count=ingest_report["persisted_count"],
+        persisted=ingest_report["persisted"],
     )
 
 

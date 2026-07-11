@@ -101,6 +101,8 @@ RECRUITLY_CANDIDATES_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/candid
 RECRUITLY_COMPANIES_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/companies-preview"
 RECRUITLY_CONTACTS_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/contacts-preview"
 RECRUITLY_JOBS_PREVIEW_PATH = "/api/v1/integrations/recruitly/admin/jobs-preview"
+RECRUITLY_COMPANIES_INGEST_PATH = "/api/v1/integrations/recruitly/admin/companies-ingest"
+RECRUITLY_CONTACTS_INGEST_PATH = "/api/v1/integrations/recruitly/admin/contacts-ingest"
 RECRUITLY_JOURNAL_PREVIEW_PATH_TEMPLATE = (
     "/api/v1/integrations/recruitly/admin/{record_type}/{record_id}/journal-preview"
 )
@@ -348,6 +350,94 @@ def test_recruitly_journal_preview_returns_provider_payload(
         record_id="cand-1",
         page=0,
         size=5,
+    )
+
+
+def test_recruitly_companies_ingest_returns_persistence_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.ingest_recruitly_collection_page",
+        return_value={
+            "resource": "companies",
+            "query": None,
+            "page": 0,
+            "size": 2,
+            "item_count": 2,
+            "total_count": 3,
+            "persisted_count": 2,
+            "persisted": [
+                {"company_id": "co-1"},
+                {"company_id": "co-2"},
+            ],
+        },
+    ) as mock_ingest:
+        response = client.post(
+            RECRUITLY_COMPANIES_INGEST_PATH,
+            headers={"Authorization": "Bearer admin-token"},
+            json={"page": 0, "size": 2},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["resource"] == "companies"
+    assert response.json()["persisted_count"] == 2
+    mock_ingest.assert_called_once_with(
+        resource="companies",
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        query=None,
+        page=0,
+        size=2,
+        import_run_id=None,
+    )
+
+
+def test_recruitly_contacts_ingest_returns_persistence_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ADMIN_API_TOKEN", "admin-token")
+    monkeypatch.setenv("RECRUITLY_API_KEY", "recruitly-api-key")
+
+    client = TestClient(create_app())
+
+    with patch(
+        "backend.api.v1.integrations.ingest_recruitly_collection_page",
+        return_value={
+            "resource": "contacts",
+            "query": "grid",
+            "page": 1,
+            "size": 3,
+            "item_count": 1,
+            "total_count": 5,
+            "persisted_count": 1,
+            "persisted": [
+                {"contact_id": "ct-1", "company_id": "co-1"},
+            ],
+        },
+    ) as mock_ingest:
+        response = client.post(
+            RECRUITLY_CONTACTS_INGEST_PATH,
+            headers={"Authorization": "Bearer admin-token"},
+            json={"query": "grid", "page": 1, "size": 3},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["resource"] == "contacts"
+    assert response.json()["query"] == "grid"
+    assert response.json()["persisted_count"] == 1
+    mock_ingest.assert_called_once_with(
+        resource="contacts",
+        api_base_url="https://api.recruitly.io",
+        api_key="recruitly-api-key",
+        query="grid",
+        page=1,
+        size=3,
+        import_run_id=None,
     )
 
 
