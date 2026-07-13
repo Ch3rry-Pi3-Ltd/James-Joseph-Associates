@@ -4,9 +4,12 @@ Current-resume file access helpers for matched/searchable candidates.
 
 from __future__ import annotations
 
+from io import BytesIO
 import re
+from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import unquote, urlparse
+from zipfile import BadZipFile, ZipFile
 
 from backend.db.candidates import get_candidate_current_resume_document
 from backend.db.dropbox_oauth_read import get_latest_dropbox_oauth_connection
@@ -277,6 +280,50 @@ def _download_dropbox_resume_source(source_uri: str) -> dict[str, Any]:
         refreshed = refresh_dropbox_access_token(refresh_token=refresh_token.strip())
         resolved_access_token = refreshed.access_token
 
+    archive_path, archive_member_name = _split_dropbox_archive_member_path(dropbox_path)
+    if archive_member_name is not None:
+        downloaded_archive = download_dropbox_file(
+            access_token=resolved_access_token,
+            path=archive_path,
+        )
+        archive_bytes = downloaded_archive["content_bytes"]
+        if not isinstance(archive_bytes, bytes):
+            raise CandidateResumeFileAccessError(
+                "Dropbox archive download did not return file bytes.",
+                code="resume_download_failed",
+                status_code=502,
+                details=[{"source_uri": source_uri}],
+            )
+        try:
+            with ZipFile(BytesIO(archive_bytes)) as archive:
+                content_bytes = archive.read(archive_member_name)
+        except BadZipFile as exc:
+            raise CandidateResumeFileAccessError(
+                "Dropbox archive resume source is not a valid zip file.",
+                code="resume_source_invalid",
+                status_code=502,
+                details=[
+                    {"source_uri": source_uri},
+                    {"archive_path": archive_path},
+                ],
+            ) from exc
+        except KeyError as exc:
+            raise CandidateResumeFileAccessError(
+                "Dropbox archive resume member was not found.",
+                code="resume_source_invalid",
+                status_code=404,
+                details=[
+                    {"source_uri": source_uri},
+                    {"archive_path": archive_path},
+                    {"archive_member_name": archive_member_name},
+                ],
+            ) from exc
+        return {
+            "file_name": PurePosixPath(archive_member_name).name,
+            "content_type": None,
+            "content_bytes": content_bytes,
+        }
+
     return download_dropbox_file(
         access_token=resolved_access_token,
         path=dropbox_path,
@@ -464,6 +511,17 @@ def _extract_dropbox_source_path(source_uri: str) -> str:
         parsed = urlparse(source_uri)
         return unquote(parsed.path or "")
     return unquote(raw_path)
+
+
+def _split_dropbox_archive_member_path(dropbox_path: str) -> tuple[str, str | None]:
+    if "::" not in dropbox_path:
+        return dropbox_path, None
+    archive_path, archive_member_name = dropbox_path.split("::", 1)
+    cleaned_archive_path = archive_path.strip()
+    cleaned_archive_member_name = archive_member_name.strip()
+    if cleaned_archive_path == "" or cleaned_archive_member_name == "":
+        return dropbox_path, None
+    return cleaned_archive_path, cleaned_archive_member_name
 
 
 __all__ = [

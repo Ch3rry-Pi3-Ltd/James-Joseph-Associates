@@ -3,6 +3,8 @@ from backend.services.candidate_resume_files import (
     CandidateResumeFileAccessError,
     fetch_candidate_current_resume_file,
 )
+from io import BytesIO
+from zipfile import ZipFile
 
 
 def test_fetch_candidate_current_resume_file_returns_dropbox_download(
@@ -410,4 +412,75 @@ def test_fetch_candidate_current_resume_file_supports_legacy_raw_dropbox_uri_wit
     assert captured == {
         "access_token": "dropbox-token",
         "path": raw_path,
+    }
+
+
+def test_fetch_candidate_current_resume_file_reads_dropbox_zip_member_source(
+    monkeypatch,
+) -> None:
+    archive_path = "/archive/TW50/CVs-2019-Mar-07-092045.zip"
+    member_name = "Joyce Adjei (18860328 - Jobsite).docx"
+    source_uri = (
+        "dropbox:///archive/TW50/CVs-2019-Mar-07-092045.zip%3A%3A"
+        "Joyce%20Adjei%20%2818860328%20-%20Jobsite%29.docx"
+        "#candidate=1&attachment=2"
+    )
+
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "get_candidate_current_resume_document",
+        lambda candidate_id: {
+            "candidate_id": candidate_id,
+            "document_id": "doc-zip-1",
+            "document_title": member_name,
+            "document_source_uri": source_uri,
+            "document_mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        },
+    )
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "get_latest_dropbox_oauth_connection",
+        lambda: {
+            "access_token": "dropbox-token",
+            "refresh_token": "dropbox-refresh",
+            "obtained_at": "2026-06-23T18:00:00+00:00",
+            "expires_in_seconds": 14400,
+        },
+    )
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "is_dropbox_access_token_expired",
+        lambda **kwargs: False,
+    )
+
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, "w") as archive:
+        archive.writestr(member_name, b"fake-docx-bytes")
+
+    captured: dict[str, object] = {}
+
+    def fake_download_dropbox_file(*, access_token: str, path: str) -> dict[str, object]:
+        captured["access_token"] = access_token
+        captured["path"] = path
+        return {
+            "file_name": "CVs-2019-Mar-07-092045.zip",
+            "content_type": "application/zip",
+            "content_bytes": zip_buffer.getvalue(),
+        }
+
+    monkeypatch.setattr(
+        candidate_resume_files,
+        "download_dropbox_file",
+        fake_download_dropbox_file,
+    )
+
+    result = fetch_candidate_current_resume_file(
+        "33333333-3333-3333-3333-333333333334",
+    )
+
+    assert result["file_name"] == member_name
+    assert result["content_bytes"] == b"fake-docx-bytes"
+    assert captured == {
+        "access_token": "dropbox-token",
+        "path": archive_path,
     }
