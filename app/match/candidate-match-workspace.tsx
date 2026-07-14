@@ -117,6 +117,12 @@ type CompanyContactDiscoveryResult = {
   company_match_source: string;
 };
 
+type CompanyContactDiscoveryResponse = {
+  company_name: string;
+  limit: number;
+  results: CompanyContactDiscoveryResult[];
+};
+
 type CompanyInteractionDiscoveryResult = {
   interaction_id: string;
   interaction_type: string | null;
@@ -136,6 +142,12 @@ type CompanyInteractionDiscoveryResult = {
   job_title: string | null;
   candidate_last_contacted_at: string | null;
   matched_entity_type: string;
+};
+
+type CompanyInteractionDiscoveryResponse = {
+  company_name: string;
+  limit: number;
+  results: CompanyInteractionDiscoveryResult[];
 };
 
 type CompanyOpportunityDiscoveryResult = {
@@ -680,12 +692,23 @@ export function CandidateMatchWorkspace() {
   const [companyDiscoveryResults, setCompanyDiscoveryResults] = useState<
     CandidateCompanyDiscoveryResult[]
   >([]);
+  const [companyContactResults, setCompanyContactResults] = useState<
+    CompanyContactDiscoveryResult[]
+  >([]);
+  const [companyInteractionResults, setCompanyInteractionResults] = useState<
+    CompanyInteractionDiscoveryResult[]
+  >([]);
   const [companyJobResults, setCompanyJobResults] = useState<
     CompanyJobDiscoveryResult[]
   >([]);
   const [companyOpportunityResults, setCompanyOpportunityResults] = useState<
     CompanyOpportunityDiscoveryResult[]
   >([]);
+  const [companyContactsErrorMessage, setCompanyContactsErrorMessage] = useState<
+    string | null
+  >(null);
+  const [companyInteractionsErrorMessage, setCompanyInteractionsErrorMessage] =
+    useState<string | null>(null);
   const [companyJobsErrorMessage, setCompanyJobsErrorMessage] = useState<
     string | null
   >(null);
@@ -796,6 +819,38 @@ export function CandidateMatchWorkspace() {
 
     return `${companyJobResults.length} jobs returned.`;
   }, [companyJobResults.length, submittedCompanyName]);
+
+  const companyContactsCountLabel = useMemo(() => {
+    if (submittedCompanyName && companyContactResults.length === 0) {
+      return "0 contacts returned.";
+    }
+
+    if (companyContactResults.length === 0) {
+      return "No contacts returned yet.";
+    }
+
+    if (companyContactResults.length === 1) {
+      return "1 contact returned.";
+    }
+
+    return `${companyContactResults.length} contacts returned.`;
+  }, [companyContactResults.length, submittedCompanyName]);
+
+  const companyInteractionsCountLabel = useMemo(() => {
+    if (submittedCompanyName && companyInteractionResults.length === 0) {
+      return "0 interactions returned.";
+    }
+
+    if (companyInteractionResults.length === 0) {
+      return "No interactions returned yet.";
+    }
+
+    if (companyInteractionResults.length === 1) {
+      return "1 interaction returned.";
+    }
+
+    return `${companyInteractionResults.length} interactions returned.`;
+  }, [companyInteractionResults.length, submittedCompanyName]);
 
   const companyOpportunitiesCountLabel = useMemo(() => {
     if (submittedCompanyName && companyOpportunityResults.length === 0) {
@@ -1022,6 +1077,8 @@ export function CandidateMatchWorkspace() {
 
     setCompanyDiscoveryLoading(true);
     setCompanyDiscoveryErrorMessage(null);
+    setCompanyContactsErrorMessage(null);
+    setCompanyInteractionsErrorMessage(null);
     setCompanyJobsErrorMessage(null);
     setCompanyOpportunitiesErrorMessage(null);
 
@@ -1056,6 +1113,60 @@ export function CandidateMatchWorkspace() {
       const companyDiscoveryResponse = payload as CandidateCompanyDiscoveryResponse;
       setCompanyDiscoveryResults(companyDiscoveryResponse.results);
       setSubmittedCompanyName(companyDiscoveryResponse.company_name);
+
+      const contactsResponse = await fetch(
+        `/api/v1/candidates/discover-contacts-by-company?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const contactsPayload = (await contactsResponse.json()) as unknown;
+
+      if (!contactsResponse.ok) {
+        setCompanyContactResults([]);
+        setCompanyContactsErrorMessage(
+          (isApiErrorResponse(contactsPayload)
+            ? contactsPayload.error?.message
+            : undefined) ??
+            `Company contacts request failed with ${contactsResponse.status}.`,
+        );
+        return;
+      }
+
+      const companyContactsResponse =
+        contactsPayload as CompanyContactDiscoveryResponse;
+      setCompanyContactResults(companyContactsResponse.results);
+
+      const interactionsResponse = await fetch(
+        `/api/v1/candidates/discover-interactions-by-company?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const interactionsPayload = (await interactionsResponse.json()) as unknown;
+
+      if (!interactionsResponse.ok) {
+        setCompanyInteractionResults([]);
+        setCompanyInteractionsErrorMessage(
+          (isApiErrorResponse(interactionsPayload)
+            ? interactionsPayload.error?.message
+            : undefined) ??
+            `Company interactions request failed with ${interactionsResponse.status}.`,
+        );
+        return;
+      }
+
+      const companyInteractionsResponse =
+        interactionsPayload as CompanyInteractionDiscoveryResponse;
+      setCompanyInteractionResults(companyInteractionsResponse.results);
 
       const jobsResponse = await fetch(
         `/api/v1/candidates/discover-jobs-by-company?${searchParams.toString()}`,
@@ -1109,6 +1220,8 @@ export function CandidateMatchWorkspace() {
       setCompanyOpportunityResults(companyOpportunitiesResponse.results);
     } catch (error) {
       setCompanyDiscoveryResults([]);
+      setCompanyContactResults([]);
+      setCompanyInteractionResults([]);
       setCompanyJobResults([]);
       setCompanyOpportunityResults([]);
       setSubmittedCompanyName(trimmedCompanyName);
@@ -1153,6 +1266,10 @@ export function CandidateMatchWorkspace() {
     setCompanyNameQuery("");
     setCompanyDiscoveryResults([]);
     setCompanyDiscoveryErrorMessage(null);
+    setCompanyContactResults([]);
+    setCompanyContactsErrorMessage(null);
+    setCompanyInteractionResults([]);
+    setCompanyInteractionsErrorMessage(null);
     setCompanyJobResults([]);
     setCompanyJobsErrorMessage(null);
     setCompanyOpportunityResults([]);
@@ -2402,6 +2519,228 @@ export function CandidateMatchWorkspace() {
                 </div>
               </article>
             ))}
+          </div>
+
+          <div className="grid gap-4 border-t border-zinc-200 pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  Known contacts at this company
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">
+                  Contacts and hiring managers already linked to the same company.
+                </p>
+              </div>
+
+              <div className="text-sm text-zinc-600">
+                {companyContactsCountLabel}
+              </div>
+            </div>
+
+            {companyContactsErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {companyContactsErrorMessage}
+              </div>
+            ) : null}
+
+            {submittedCompanyName &&
+            companyContactResults.length === 0 &&
+            !companyContactsErrorMessage ? (
+              <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                No contacts are linked to that company query yet.
+              </div>
+            ) : null}
+
+            <div className="grid gap-5">
+              {companyContactResults.map((result, index) => (
+                <article
+                  key={result.contact_id}
+                  className="border border-zinc-200 bg-white p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                          Contact {index + 1}
+                        </span>
+                        {result.is_hiring_manager ? (
+                          <span className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                            Hiring manager
+                          </span>
+                        ) : null}
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatCompanyMatchSourceLabel(result.company_match_source)}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-4 text-2xl font-semibold text-zinc-950">
+                        {result.full_name ?? "Unnamed contact"}
+                      </h4>
+
+                      <p className="mt-2 text-base leading-7 text-zinc-700">
+                        {result.role_title ?? result.headline ?? "Role not available"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Email
+                      </dt>
+                      <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
+                        {result.primary_email ?? "Not available"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Phone
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.primary_phone ?? "Not available"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Seniority
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.seniority ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Current role
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.role_is_current === null
+                          ? "Unknown"
+                          : result.role_is_current
+                            ? "Yes"
+                            : "No"}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 border-t border-zinc-200 pt-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold text-zinc-950">
+                  Prior interaction evidence at this company
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">
+                  Notes, emails, and other interaction rows already tied to the company.
+                </p>
+              </div>
+
+              <div className="text-sm text-zinc-600">
+                {companyInteractionsCountLabel}
+              </div>
+            </div>
+
+            {companyInteractionsErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {companyInteractionsErrorMessage}
+              </div>
+            ) : null}
+
+            {submittedCompanyName &&
+            companyInteractionResults.length === 0 &&
+            !companyInteractionsErrorMessage ? (
+              <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                No interaction evidence is linked to that company query yet.
+              </div>
+            ) : null}
+
+            <div className="grid gap-5">
+              {companyInteractionResults.map((result, index) => (
+                <article
+                  key={result.interaction_id}
+                  className="border border-zinc-200 bg-white p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                          Interaction {index + 1}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatUnderscoredLabel(result.interaction_type)}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatUnderscoredLabel(result.matched_entity_type)}
+                        </span>
+                      </div>
+
+                      <h4 className="mt-4 text-2xl font-semibold text-zinc-950">
+                        {result.full_name ?? result.subject ?? "Interaction"}
+                      </h4>
+
+                      <p className="mt-2 text-base leading-7 text-zinc-700">
+                        {result.role_title ?? result.company_name ?? "Role not available"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Source
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.source_system ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Occurred
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {formatTimestamp(result.occurred_at)}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Company
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.company_name ?? "Unknown"}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-zinc-500">
+                        Job
+                      </dt>
+                      <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                        {result.job_title ?? "Not linked"}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-6 border border-zinc-200 p-4">
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Evidence
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-zinc-900">
+                      {result.summary ??
+                        result.subject ??
+                        result.body ??
+                        "No interaction summary available."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-4 border-t border-zinc-200 pt-6">
