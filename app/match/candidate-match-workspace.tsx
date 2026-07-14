@@ -223,6 +223,19 @@ type CandidateJobDescriptionShortlistItem = {
   strengths: string[];
   gaps: string[];
   match_excerpt: string | null;
+  graph_evidence: {
+    candidate_id: string;
+    current_company_name: string | null;
+    skill_names: string[];
+    contacts_count: number;
+    interactions_count: number;
+    jobs_count: number;
+    opportunities_count: number;
+    contacts: CompanyContactDiscoveryResult[];
+    interactions: CompanyInteractionDiscoveryResult[];
+    jobs: CompanyJobDiscoveryResult[];
+    opportunities: CompanyOpportunityDiscoveryResult[];
+  } | null;
 };
 
 type CandidateJobDescriptionMatchResponse = {
@@ -3159,6 +3172,220 @@ export function CandidateMatchWorkspace() {
                   </ul>
                 </div>
               </div>
+
+              {result.graph_evidence ? (
+                <div className="mt-6 grid gap-4 border border-zinc-200 p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Linked evidence
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-700">
+                        Bounded graph-style context from linked canonical skills,
+                        contacts, interactions, jobs, and opportunities.
+                      </p>
+                    </div>
+
+                    <div className="text-sm text-zinc-600">
+                      {result.graph_evidence.current_company_name
+                        ? `Company context: ${result.graph_evidence.current_company_name}`
+                        : "No current-company context linked."}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Skills
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-zinc-950">
+                        {result.graph_evidence.skill_names.length}
+                      </p>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Contacts
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-zinc-950">
+                        {result.graph_evidence.contacts_count}
+                      </p>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Interactions
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-zinc-950">
+                        {result.graph_evidence.interactions_count}
+                      </p>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Jobs
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-zinc-950">
+                        {result.graph_evidence.jobs_count}
+                      </p>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Opportunities
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-zinc-950">
+                        {result.graph_evidence.opportunities_count}
+                      </p>
+                    </div>
+                  </div>
+
+                  {result.graph_evidence.skill_names.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Candidate skills
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {result.graph_evidence.skill_names.map((skillName) => (
+                          <span
+                            key={`${result.candidate_id}-${skillName}`}
+                            className="rounded-md border border-zinc-200 px-3 py-1 text-sm text-zinc-900"
+                          >
+                            {skillName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Contacts
+                      </p>
+                      <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-900">
+                        {result.graph_evidence.contacts.length > 0 ? (
+                          result.graph_evidence.contacts.map((contact) => (
+                            <div
+                              key={`${result.candidate_id}-${contact.contact_id}-graph-contact`}
+                              className="border border-zinc-200 p-3"
+                            >
+                              <p className="font-semibold text-zinc-950">
+                                {contact.full_name ?? "Unnamed contact"}
+                              </p>
+                              <p className="text-zinc-700">
+                                {contact.role_title ??
+                                  contact.headline ??
+                                  "Role not available"}
+                              </p>
+                              <p className="text-zinc-600">
+                                {contact.primary_email ??
+                                  contact.primary_phone ??
+                                  "No direct contact details"}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No contact evidence returned.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Recent interactions
+                      </p>
+                      <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-900">
+                        {result.graph_evidence.interactions.length > 0 ? (
+                          result.graph_evidence.interactions.map((interaction) => (
+                            <div
+                              key={`${result.candidate_id}-${interaction.interaction_id}-graph-interaction`}
+                              className="border border-zinc-200 p-3"
+                            >
+                              <p className="font-semibold text-zinc-950">
+                                {interaction.full_name ??
+                                  interaction.subject ??
+                                  "Interaction"}
+                              </p>
+                              <p className="text-zinc-700">
+                                {interaction.summary ??
+                                  interaction.subject ??
+                                  "No interaction summary available."}
+                              </p>
+                              <p className="text-zinc-600">
+                                {formatTimestamp(interaction.occurred_at)} |{" "}
+                                {interaction.source_system ?? "Unknown source"}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No recent interaction evidence returned.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Linked jobs
+                      </p>
+                      <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-900">
+                        {result.graph_evidence.jobs.length > 0 ? (
+                          result.graph_evidence.jobs.map((job) => (
+                            <div
+                              key={`${result.candidate_id}-${job.job_id}-graph-job`}
+                              className="border border-zinc-200 p-3"
+                            >
+                              <p className="font-semibold text-zinc-950">
+                                {job.title ?? "Untitled job"}
+                              </p>
+                              <p className="text-zinc-700">
+                                {job.hiring_manager_name ??
+                                  job.company_name ??
+                                  "No linked hiring context"}
+                              </p>
+                              <p className="text-zinc-600">
+                                {job.status ?? "Unknown status"}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No linked job evidence returned.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border border-zinc-200 p-4">
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Linked opportunities
+                      </p>
+                      <div className="mt-3 grid gap-3 text-sm leading-6 text-zinc-900">
+                        {result.graph_evidence.opportunities.length > 0 ? (
+                          result.graph_evidence.opportunities.map((opportunity) => (
+                            <div
+                              key={`${result.candidate_id}-${opportunity.opportunity_id}-graph-opportunity`}
+                              className="border border-zinc-200 p-3"
+                            >
+                              <p className="font-semibold text-zinc-950">
+                                {opportunity.title ?? "Untitled opportunity"}
+                              </p>
+                              <p className="text-zinc-700">
+                                {opportunity.contact_name ??
+                                  opportunity.company_name ??
+                                  "No linked contact"}
+                              </p>
+                              <p className="text-zinc-600">
+                                {opportunity.stage ?? "Unknown stage"}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <p>No linked opportunity evidence returned.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               {renderRetrievalDiagnostics(result, {
                 primaryScoreLabel: "Fused retrieval",

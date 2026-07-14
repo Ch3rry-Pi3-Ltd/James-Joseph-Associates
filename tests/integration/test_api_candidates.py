@@ -1110,6 +1110,7 @@ def test_match_job_description_route_returns_shortlist() -> None:
                 "strengths": ["Python", "Cloud data pipelines"],
                 "gaps": ["Leadership scope not explicit"],
                 "match_excerpt": "<mark>python</mark> pipelines cloud",
+                "graph_evidence": None,
             }
         ],
     }

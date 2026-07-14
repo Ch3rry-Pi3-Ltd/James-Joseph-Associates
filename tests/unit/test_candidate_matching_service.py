@@ -122,6 +122,29 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     )
     monkeypatch.setattr(
         candidate_matching,
+        "_attach_graph_evidence_to_candidates",
+        lambda candidates, **kwargs: [
+            {
+                **candidate,
+                "graph_evidence": {
+                    "candidate_id": candidate["candidate_id"],
+                    "current_company_name": candidate.get("current_company_name"),
+                    "skill_names": ["python", "sql"],
+                    "contacts_count": 1,
+                    "interactions_count": 1,
+                    "jobs_count": 1,
+                    "opportunities_count": 0,
+                    "contacts": [{"contact_id": "contact-1"}],
+                    "interactions": [{"interaction_id": "interaction-1"}],
+                    "jobs": [{"job_id": "job-1"}],
+                    "opportunities": [],
+                },
+            }
+            for candidate in candidates
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
         "_rank_retrieved_candidates_for_job_description",
         lambda **kwargs: [
             CandidateShortlistAssessment(
@@ -153,7 +176,70 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["fit_score"] == 89
     assert result["shortlisted_candidates"][0]["retrieval_score"] == 0.734
     assert result["shortlisted_candidates"][0]["retrieval_sources"] == ["text"]
+    assert result["shortlisted_candidates"][0]["graph_evidence"]["contacts_count"] == 1
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
+
+
+def test_build_candidate_graph_evidence_composes_company_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        candidate_matching,
+        "build_candidate_profile",
+        lambda candidate_id: {
+            "candidate": {
+                "candidate_id": candidate_id,
+                "current_company_name": "Acme Hiring Ltd",
+            },
+            "skills": [
+                {"canonical_name": "python"},
+                {"canonical_name": "sql"},
+                {"canonical_name": "python"},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_contacts_by_company",
+        lambda **kwargs: {"results": [{"contact_id": "contact-1"}]},
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_interactions_by_company",
+        lambda **kwargs: {"results": [{"interaction_id": "interaction-1"}]},
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_jobs_by_company",
+        lambda **kwargs: {"results": [{"job_id": "job-1"}]},
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_opportunities_by_company",
+        lambda **kwargs: {"results": [{"opportunity_id": "opp-1"}]},
+    )
+
+    result = candidate_matching._build_candidate_graph_evidence(
+        {
+            "candidate_id": "cand-1",
+            "current_company_name": "Acme Hiring Ltd",
+        },
+        per_candidate_limit=3,
+    )
+
+    assert result == {
+        "candidate_id": "cand-1",
+        "current_company_name": "Acme Hiring Ltd",
+        "skill_names": ["python", "sql"],
+        "contacts_count": 1,
+        "interactions_count": 1,
+        "jobs_count": 1,
+        "opportunities_count": 1,
+        "contacts": [{"contact_id": "contact-1"}],
+        "interactions": [{"interaction_id": "interaction-1"}],
+        "jobs": [{"job_id": "job-1"}],
+        "opportunities": [{"opportunity_id": "opp-1"}],
+    }
 
 
 def test_rank_retrieved_candidates_for_job_description_raises_matching_error_on_llm_failure(

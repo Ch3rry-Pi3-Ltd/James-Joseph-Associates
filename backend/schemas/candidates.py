@@ -533,6 +533,14 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     strengths: list[str] = Field(default_factory=list)
     gaps: list[str] = Field(default_factory=list)
     match_excerpt: str | None = None
+    graph_evidence: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Bounded graph-style evidence assembled from linked canonical "
+            "entities such as skills, contacts, interactions, jobs, and "
+            "opportunities."
+        ),
+    )
 
 
 class CandidateJobDescriptionMatchResponse(BaseModel):

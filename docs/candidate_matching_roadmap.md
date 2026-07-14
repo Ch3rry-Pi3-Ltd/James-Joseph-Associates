@@ -262,6 +262,15 @@ Goal: improve recall and relevance before full graph-style expansion.
 
 Goal: make retrieval richer and more explainable.
 
+Priority note:
+
+- This is now one of the most important near-term build slices.
+- We already have the searchable corpus, resume chunk embeddings, and
+  candidate semantic blocks in place.
+- The next step is to build the graph-aware retrieval/evidence layer on top of
+  that indexed corpus, rather than letting the work stall at "vector search
+  plus reranking".
+
 - [ ] Expand retrieval across linked canonical entities:
   - candidate
   - person
@@ -302,6 +311,13 @@ These are the ideas from Tom's notes that are already materially underway:
 These are the most defensible next build steps given the current platform
 state.
 
+- [ ] Build the first graph-aware retrieval layer on top of the indexed
+  candidate corpus:
+  - traverse linked canonical entities before final ranking
+  - assemble explainable evidence across candidate, company, contact, and
+    interaction context
+  - keep the current semantic retrieval and LLM shortlist flow as the ranking
+    spine underneath
 - [ ] Add dedicated `candidate_semantic_blocks` retrieval data.
 - [ ] Backfill structured semantic blocks from canonical candidate/profile/skill
   fields.

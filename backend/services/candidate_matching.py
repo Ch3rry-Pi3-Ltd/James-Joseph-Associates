@@ -22,6 +22,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
+from backend.services.candidate_profiles import (
+    build_candidate_profile,
+    discover_contacts_by_company,
+    discover_interactions_by_company,
+    discover_jobs_by_company,
+    discover_opportunities_by_company,
+)
 from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
@@ -105,6 +112,11 @@ def build_candidate_job_description_shortlist(
             "shortlisted_candidates": [],
         }
 
+    retrieved_candidates = _attach_graph_evidence_to_candidates(
+        retrieved_candidates,
+        per_candidate_limit=3,
+    )
+
     shortlist_assessments = _rank_retrieved_candidates_for_job_description(
         job_description=normalized_job_description,
         retrieved_candidates=retrieved_candidates,
@@ -160,6 +172,7 @@ def build_candidate_job_description_shortlist(
                 "strengths": list(assessment.strengths),
                 "gaps": list(assessment.gaps),
                 "match_excerpt": matched_candidate.get("match_excerpt"),
+                "graph_evidence": matched_candidate.get("graph_evidence"),
             }
         )
         seen_candidate_ids.add(candidate_id)
@@ -226,6 +239,7 @@ def _rank_retrieved_candidates_for_job_description(
                 candidate.get("semantic_block_label")
             ),
             "match_excerpt": _json_safe_value(candidate.get("match_excerpt")),
+            "graph_evidence": _json_safe_value(candidate.get("graph_evidence")),
         }
         for candidate in retrieved_candidates
     ]
@@ -287,7 +301,145 @@ def _json_safe_value(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, date):
         return value.isoformat()
+    if isinstance(value, dict):
+        return {
+            str(key): _json_safe_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_json_safe_value(item) for item in value]
     return value
+
+
+def _attach_graph_evidence_to_candidates(
+    candidates: list[dict[str, Any]],
+    *,
+    per_candidate_limit: int = 3,
+) -> list[dict[str, Any]]:
+    """
+    Enrich retrieved candidates with bounded graph-style evidence.
+
+    This first slice is intentionally pragmatic rather than fully recursive:
+
+    - candidate profile + linked skill names
+    - current-company context
+    - top contacts, interactions, jobs, and opportunities for that company
+    """
+
+    enriched_candidates: list[dict[str, Any]] = []
+    bounded_limit = max(1, min(int(per_candidate_limit), 10))
+
+    for candidate in candidates:
+        candidate_copy = dict(candidate)
+        candidate_copy["graph_evidence"] = _build_candidate_graph_evidence(
+            candidate_copy,
+            per_candidate_limit=bounded_limit,
+        )
+        enriched_candidates.append(candidate_copy)
+
+    return enriched_candidates
+
+
+def _build_candidate_graph_evidence(
+    candidate: dict[str, Any],
+    *,
+    per_candidate_limit: int = 3,
+) -> dict[str, Any]:
+    """
+    Build one bounded evidence bundle for a retrieved candidate.
+    """
+
+    candidate_id = str(candidate["candidate_id"])
+    profile = build_candidate_profile(candidate_id)
+    if profile is None:
+        return {
+            "candidate_id": candidate_id,
+            "current_company_name": candidate.get("current_company_name"),
+            "skill_names": [],
+            "contacts_count": 0,
+            "interactions_count": 0,
+            "jobs_count": 0,
+            "opportunities_count": 0,
+            "contacts": [],
+            "interactions": [],
+            "jobs": [],
+            "opportunities": [],
+        }
+
+    skill_names = _extract_skill_names(profile.get("skills") or [])
+    current_company_name = (
+        candidate.get("current_company_name")
+        or profile["candidate"].get("current_company_name")
+        or ""
+    ).strip()
+
+    evidence = {
+        "candidate_id": candidate_id,
+        "current_company_name": current_company_name or None,
+        "skill_names": skill_names,
+        "contacts_count": 0,
+        "interactions_count": 0,
+        "jobs_count": 0,
+        "opportunities_count": 0,
+        "contacts": [],
+        "interactions": [],
+        "jobs": [],
+        "opportunities": [],
+    }
+
+    if current_company_name == "":
+        return evidence
+
+    contacts = discover_contacts_by_company(
+        company_name=current_company_name,
+        limit=per_candidate_limit,
+    )["results"]
+    interactions = discover_interactions_by_company(
+        company_name=current_company_name,
+        limit=per_candidate_limit,
+    )["results"]
+    jobs = discover_jobs_by_company(
+        company_name=current_company_name,
+        limit=per_candidate_limit,
+    )["results"]
+    opportunities = discover_opportunities_by_company(
+        company_name=current_company_name,
+        limit=per_candidate_limit,
+    )["results"]
+
+    evidence["contacts_count"] = len(contacts)
+    evidence["interactions_count"] = len(interactions)
+    evidence["jobs_count"] = len(jobs)
+    evidence["opportunities_count"] = len(opportunities)
+    evidence["contacts"] = contacts
+    evidence["interactions"] = interactions
+    evidence["jobs"] = jobs
+    evidence["opportunities"] = opportunities
+    return evidence
+
+
+def _extract_skill_names(skills: list[dict[str, Any]]) -> list[str]:
+    skill_names: list[str] = []
+    seen_skill_names: set[str] = set()
+
+    for skill in skills:
+        skill_name = (
+            str(
+                skill.get("canonical_name")
+                or skill.get("skill_name")
+                or ""
+            )
+            .strip()
+        )
+        if skill_name == "":
+            continue
+        normalized_skill_name = skill_name.lower()
+        if normalized_skill_name in seen_skill_names:
+            continue
+        seen_skill_names.add(normalized_skill_name)
+        skill_names.append(skill_name)
+
+    return skill_names
 
 
 __all__ = [
