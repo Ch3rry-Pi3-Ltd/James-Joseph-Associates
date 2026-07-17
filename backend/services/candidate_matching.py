@@ -116,6 +116,7 @@ def build_candidate_job_description_shortlist(
         retrieved_candidates,
         per_candidate_limit=3,
     )
+    retrieved_candidates = _score_candidates_with_graph_context(retrieved_candidates)
 
     shortlist_assessments = _rank_retrieved_candidates_for_job_description(
         job_description=normalized_job_description,
@@ -167,6 +168,8 @@ def build_candidate_job_description_shortlist(
                 else None,
                 "semantic_block_type": matched_candidate.get("semantic_block_type"),
                 "semantic_block_label": matched_candidate.get("semantic_block_label"),
+                "graph_context_score": matched_candidate.get("graph_context_score"),
+                "ranking_input_score": matched_candidate.get("ranking_input_score"),
                 "fit_score": assessment.fit_score,
                 "fit_summary": assessment.fit_summary,
                 "strengths": list(assessment.strengths),
@@ -237,6 +240,12 @@ def _rank_retrieved_candidates_for_job_description(
             ),
             "semantic_block_label": _json_safe_value(
                 candidate.get("semantic_block_label")
+            ),
+            "graph_context_score": _json_safe_value(
+                candidate.get("graph_context_score")
+            ),
+            "ranking_input_score": _json_safe_value(
+                candidate.get("ranking_input_score")
             ),
             "match_excerpt": _json_safe_value(candidate.get("match_excerpt")),
             "graph_evidence": _json_safe_value(candidate.get("graph_evidence")),
@@ -340,6 +349,44 @@ def _attach_graph_evidence_to_candidates(
     return enriched_candidates
 
 
+def _score_candidates_with_graph_context(
+    candidates: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Apply a bounded graph-context score and reorder shortlist input candidates.
+
+    This is intentionally conservative. Semantic/text retrieval remains the
+    primary signal; graph context provides a small deterministic lift where the
+    corpus already contains richer linked evidence.
+    """
+
+    scored_candidates: list[dict[str, Any]] = []
+
+    for candidate in candidates:
+        candidate_copy = dict(candidate)
+        graph_context_score = _compute_graph_context_score(
+            candidate_copy.get("graph_evidence")
+        )
+        retrieval_score = float(candidate_copy.get("match_score") or 0.0)
+        ranking_input_score = round(
+            (retrieval_score * 0.85) + (graph_context_score * 0.15),
+            6,
+        )
+        candidate_copy["graph_context_score"] = graph_context_score
+        candidate_copy["ranking_input_score"] = ranking_input_score
+        scored_candidates.append(candidate_copy)
+
+    return sorted(
+        scored_candidates,
+        key=lambda candidate: (
+            float(candidate.get("ranking_input_score") or 0.0),
+            float(candidate.get("match_score") or 0.0),
+            float(candidate.get("graph_context_score") or 0.0),
+        ),
+        reverse=True,
+    )
+
+
 def _build_candidate_graph_evidence(
     candidate: dict[str, Any],
     *,
@@ -416,6 +463,34 @@ def _build_candidate_graph_evidence(
     evidence["jobs"] = jobs
     evidence["opportunities"] = opportunities
     return evidence
+
+
+def _compute_graph_context_score(graph_evidence: dict[str, Any] | None) -> float:
+    """
+    Return a conservative 0..1 score from bounded linked evidence counts.
+    """
+
+    if not graph_evidence:
+        return 0.0
+
+    contacts_count = min(int(graph_evidence.get("contacts_count") or 0), 3)
+    interactions_count = min(int(graph_evidence.get("interactions_count") or 0), 3)
+    jobs_count = min(int(graph_evidence.get("jobs_count") or 0), 2)
+    opportunities_count = min(
+        int(graph_evidence.get("opportunities_count") or 0),
+        2,
+    )
+    skill_names_count = min(len(graph_evidence.get("skill_names") or []), 4)
+
+    raw_score = (
+        (contacts_count * 0.15)
+        + (interactions_count * 0.2)
+        + (jobs_count * 0.15)
+        + (opportunities_count * 0.15)
+        + (skill_names_count * 0.05)
+    )
+    max_score = (3 * 0.15) + (3 * 0.2) + (2 * 0.15) + (2 * 0.15) + (4 * 0.05)
+    return round(min(raw_score / max_score, 1.0), 6)
 
 
 def _extract_skill_names(skills: list[dict[str, Any]]) -> list[str]:

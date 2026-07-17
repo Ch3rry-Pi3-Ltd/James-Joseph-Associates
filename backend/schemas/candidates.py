@@ -528,6 +528,8 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     semantic_score: float | None = None
     semantic_block_type: str | None = None
     semantic_block_label: str | None = None
+    graph_context_score: float | None = None
+    ranking_input_score: float | None = None
     fit_score: int
     fit_summary: str
     strengths: list[str] = Field(default_factory=list)

@@ -1,6 +1,37 @@
 # Phase 1 To-Do List
 
 <details open>
+<summary><strong>Current Outstanding Program Work (17 July 2026)</strong></summary>
+
+This is the trimmed engineering backlog that matters most right now.
+
+- [ ] Keep Supabase service live while ownership/billing is sorted.
+- [ ] Write and verify a controlled database export / migration path into a future Tom-owned setup.
+- [ ] Polish the `/match` UI for UAT:
+  - [ ] clearer instructions
+  - [ ] more intuitive flow labels
+  - [ ] more professional presentation of search, shortlist, and company evidence
+- [ ] Finish Recruitly canonical ingest beyond people/contacts/companies:
+  - [ ] jobs
+  - [ ] opportunities
+  - [ ] journal / note interactions
+- [ ] Harden LinkedHelper ingestion:
+  - [ ] CSV import normalizer
+  - [ ] deterministic matching to existing candidates/contacts/companies
+  - [ ] provenance tracking
+  - [ ] webhook path if payload support is good enough
+- [ ] Continue retrieval quality work:
+  - [ ] real-brief search tuning
+  - [ ] shortlist quality checks
+  - [ ] better evidence presentation for recruiter trust
+- [ ] Add operator output tools:
+  - [ ] shortlist export/share
+  - [ ] saved searches / saved briefs
+  - [ ] shortlist feedback capture
+
+</details>
+
+<details open>
 <summary><strong>Phase 1 Objective</strong></summary>
 
 Phase 1 should establish the **minimum viable technical foundation** for the GraphRAG recruitment intelligence system without overbuilding the full agentic platform.

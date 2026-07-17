@@ -27,6 +27,59 @@ The immediate milestone is simple:
   - `/match`
 - [x] LLM shortlist/reranking flow added on top of first-pass retrieval
 - [x] Dropbox ingestor failure diagnostics improved
+- [x] Structured candidate semantic blocks stored in Supabase
+- [x] Structured candidate semantic blocks backfilled and embedded for the live corpus
+- [x] Hybrid retrieval added to the candidate search/shortlist flow
+- [x] Graph-aware shortlist evidence added across linked company/contact/job/opportunity context
+
+## Outstanding Program Backlog
+
+This is the practical engineering backlog as of Friday, July 17, 2026.
+
+### Highest Priority
+
+- [ ] Stabilize the client-owned infrastructure path:
+  - [ ] short-term Supabase continuity plan under the current billing pressure
+  - [ ] documented migration/export plan into a future Tom-owned Vercel/Supabase setup
+- [ ] Tighten the recruiter demo for UAT:
+  - [ ] clearer on-page instructions
+  - [ ] more polished `/match` layout and copy
+  - [ ] cleaner evidence presentation for search, shortlist, and company discovery
+- [ ] Finish the next Recruitly ingestion slice:
+  - [ ] jobs into canonical `jobs`
+  - [ ] opportunities into canonical `opportunities`
+  - [ ] journal / note-style interactions into canonical `interactions`
+
+### Retrieval And Workflow Build-Out
+
+- [ ] Improve retrieval quality against real Tom briefs:
+  - [ ] tune weighting between full-text, semantic, and graph context
+  - [ ] verify better recall for non-keyword-exact briefs
+  - [ ] reduce obvious false negatives before wider UAT
+- [ ] Expand recruiter workflow coverage in the UI:
+  - [ ] company-to-candidate discovery polish
+  - [ ] clearer "who works there / who knows them" flow
+  - [ ] candidate-to-company lead flow polish
+- [ ] Add operator-friendly output actions:
+  - [ ] shortlist export/share
+  - [ ] saveable searches or saved briefs
+  - [ ] lightweight feedback capture on good/bad shortlist results
+
+### Data Freshness And Sync
+
+- [ ] LinkedHelper ingestion path:
+  - [ ] CSV ingest normalizer
+  - [ ] deterministic matching/upsert rules
+  - [ ] provenance for LinkedHelper refresh data
+  - [ ] webhook path if the vendor payload shape is good enough
+- [ ] Recruitly sync policy:
+  - [ ] define authoritative fields by source
+  - [ ] upsert rules for candidate/contact/company freshness
+  - [ ] controlled two-way sync boundaries so we do not overwrite good data blindly
+- [ ] Outlook CV automation hardening:
+  - [ ] date-window backfill strategy
+  - [ ] quarter/year Dropbox staging structure
+  - [ ] repeatable ingest + semantic refresh flow
 
 ## Tom Idea Buckets
 
@@ -225,7 +278,7 @@ Goal: improve quality beyond plain text retrieval.
 
 Goal: improve recall and relevance before full graph-style expansion.
 
-- [ ] Enable `pgvector` in Supabase for production and local environments
+- [x] Enable `pgvector` in Supabase for production and local environments
 - [x] Define the canonical embedding target:
   - structured candidate semantic blocks built from canonical fields
   - optional raw resume chunks as secondary evidence
@@ -233,23 +286,23 @@ Goal: improve recall and relevance before full graph-style expansion.
 - [x] Define the first embedding model/runtime choice:
   - `text-embedding-3-large`
   - shortened to `1536` dimensions to fit the existing `document_chunks.embedding` column
-- [ ] Add a dedicated `candidate_semantic_blocks` store for candidate-level retrieval
-- [ ] Backfill structured candidate semantic blocks from canonical fields already in Supabase:
+- [x] Add a dedicated `candidate_semantic_blocks` store for candidate-level retrieval
+- [x] Backfill structured candidate semantic blocks from canonical fields already in Supabase:
   - person profile fields
   - candidate fields
   - candidate skills
   - linked current-resume metadata
-- [ ] Embed those structured candidate semantic blocks
+- [x] Embed those structured candidate semantic blocks
 - [ ] Keep raw resume chunk embeddings as secondary evidence, not the primary retrieval surface
 - [x] Build the first chunking/backfill foundation over existing canonical text
 - [x] Prove the first tiny raw-chunk semantic sample on a handful of real records before broad rollout
-- [ ] Prove the first structured semantic-block sample on a handful of real candidates before broad rollout
-- [ ] Implement hybrid retrieval:
+- [x] Prove the first structured semantic-block sample on a handful of real candidates before broad rollout
+- [x] Implement hybrid retrieval:
   - full-text search
   - semantic block vector similarity
   - reciprocal rank fusion or equivalent merge
   - structured ranking signals
-- [ ] Backfill semantic retrieval artefacts for already-ingested canonical records without reingesting source CVs
+- [x] Backfill semantic retrieval artefacts for already-ingested canonical records without reingesting source CVs
 - [ ] Update ingestion so new resumes refresh semantic blocks during normal persistence
 - [ ] Add optional structured filters:
   - location
@@ -278,8 +331,8 @@ Priority note:
   - companies
   - resume documents
   - source provenance
-- [ ] Use graph-style evidence assembly before final ranking
-- [ ] Surface explainable match evidence in the UI
+- [x] Use graph-style evidence assembly before final ranking
+- [x] Surface explainable match evidence in the UI
 
 ## Milestone 7: Recruiter Workflow Improvements
 
@@ -311,19 +364,19 @@ These are the ideas from Tom's notes that are already materially underway:
 These are the most defensible next build steps given the current platform
 state.
 
-- [ ] Build the first graph-aware retrieval layer on top of the indexed
+- [x] Build the first graph-aware retrieval layer on top of the indexed
   candidate corpus:
   - traverse linked canonical entities before final ranking
   - assemble explainable evidence across candidate, company, contact, and
     interaction context
   - keep the current semantic retrieval and LLM shortlist flow as the ranking
     spine underneath
-- [ ] Add dedicated `candidate_semantic_blocks` retrieval data.
-- [ ] Backfill structured semantic blocks from canonical candidate/profile/skill
+- [x] Add dedicated `candidate_semantic_blocks` retrieval data.
+- [x] Backfill structured semantic blocks from canonical candidate/profile/skill
   fields.
-- [ ] Embed those semantic blocks and add hybrid retrieval to `/match`.
-- [ ] Add explainable evidence blocks to shortlist results.
-- [ ] Add a first company-to-candidate discovery API/UI slice.
+- [x] Embed those semantic blocks and add hybrid retrieval to `/match`.
+- [x] Add explainable evidence blocks to shortlist results.
+- [x] Add a first company-to-candidate discovery API/UI slice.
 - [ ] Add a first "who currently works there / who has spoken to them before"
   lookup slice.
 

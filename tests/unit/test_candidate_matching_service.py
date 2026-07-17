@@ -145,6 +145,18 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     )
     monkeypatch.setattr(
         candidate_matching,
+        "_score_candidates_with_graph_context",
+        lambda candidates: [
+            {
+                **candidate,
+                "graph_context_score": 0.4,
+                "ranking_input_score": 0.7,
+            }
+            for candidate in candidates
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
         "_rank_retrieved_candidates_for_job_description",
         lambda **kwargs: [
             CandidateShortlistAssessment(
@@ -177,6 +189,8 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["retrieval_score"] == 0.734
     assert result["shortlisted_candidates"][0]["retrieval_sources"] == ["text"]
     assert result["shortlisted_candidates"][0]["graph_evidence"]["contacts_count"] == 1
+    assert result["shortlisted_candidates"][0]["graph_context_score"] == 0.4
+    assert result["shortlisted_candidates"][0]["ranking_input_score"] == 0.7
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
 
 
@@ -240,6 +254,42 @@ def test_build_candidate_graph_evidence_composes_company_context(
         "jobs": [{"job_id": "job-1"}],
         "opportunities": [{"opportunity_id": "opp-1"}],
     }
+
+
+def test_score_candidates_with_graph_context_adds_conservative_boost() -> None:
+    result = candidate_matching._score_candidates_with_graph_context(
+        [
+            {
+                "candidate_id": "cand-1",
+                "match_score": 0.7,
+                "graph_evidence": {
+                    "contacts_count": 3,
+                    "interactions_count": 3,
+                    "jobs_count": 2,
+                    "opportunities_count": 2,
+                    "skill_names": ["python", "sql", "aws", "etl"],
+                },
+            },
+            {
+                "candidate_id": "cand-2",
+                "match_score": 0.75,
+                "graph_evidence": {
+                    "contacts_count": 0,
+                    "interactions_count": 0,
+                    "jobs_count": 0,
+                    "opportunities_count": 0,
+                    "skill_names": [],
+                },
+            },
+        ]
+    )
+
+    assert result[0]["candidate_id"] == "cand-1"
+    assert result[0]["graph_context_score"] == 1.0
+    assert result[0]["ranking_input_score"] == 0.745
+    assert result[1]["candidate_id"] == "cand-2"
+    assert result[1]["graph_context_score"] == 0.0
+    assert result[1]["ranking_input_score"] == 0.6375
 
 
 def test_rank_retrieved_candidates_for_job_description_raises_matching_error_on_llm_failure(

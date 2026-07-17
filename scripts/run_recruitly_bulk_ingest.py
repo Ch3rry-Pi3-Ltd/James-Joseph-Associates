@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -19,21 +20,6 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-from backend.settings import get_settings
-from backend.services.recruitly_api import (
-    fetch_recruitly_companies_preview,
-    fetch_recruitly_contacts_preview,
-    fetch_recruitly_jobs_preview,
-    fetch_recruitly_opportunities_preview,
-)
-from backend.services.recruitly_ingestion import (
-    ingest_recruitly_company,
-    ingest_recruitly_contact,
-    ingest_recruitly_job,
-    ingest_recruitly_opportunity,
-    ingest_recruitly_record_journal,
-)
 
 ResourceName = str
 
@@ -50,6 +36,47 @@ JOURNAL_RECORD_TYPE_BY_RESOURCE: dict[str, str] = {
     "jobs": "job",
     "opportunities": "opportunity",
 }
+
+_BACKEND_DEPENDENCIES: dict[str, Any] | None = None
+
+
+def _load_backend_dependencies() -> dict[str, Any]:
+    settings_module = importlib.import_module("backend.settings")
+    recruitly_api_module = importlib.import_module("backend.services.recruitly_api")
+    recruitly_ingestion_module = importlib.import_module(
+        "backend.services.recruitly_ingestion"
+    )
+    return {
+        "get_settings": settings_module.get_settings,
+        "fetch_recruitly_companies_preview": (
+            recruitly_api_module.fetch_recruitly_companies_preview
+        ),
+        "fetch_recruitly_contacts_preview": (
+            recruitly_api_module.fetch_recruitly_contacts_preview
+        ),
+        "fetch_recruitly_jobs_preview": recruitly_api_module.fetch_recruitly_jobs_preview,
+        "fetch_recruitly_opportunities_preview": (
+            recruitly_api_module.fetch_recruitly_opportunities_preview
+        ),
+        "ingest_recruitly_company": recruitly_ingestion_module.ingest_recruitly_company,
+        "ingest_recruitly_contact": recruitly_ingestion_module.ingest_recruitly_contact,
+        "ingest_recruitly_job": recruitly_ingestion_module.ingest_recruitly_job,
+        "ingest_recruitly_opportunity": (
+            recruitly_ingestion_module.ingest_recruitly_opportunity
+        ),
+        "ingest_recruitly_record_journal": (
+            recruitly_ingestion_module.ingest_recruitly_record_journal
+        ),
+    }
+
+
+def _get_backend_dependency(name: str) -> Any:
+    global _BACKEND_DEPENDENCIES
+
+    if _BACKEND_DEPENDENCIES is None:
+        _BACKEND_DEPENDENCIES = _load_backend_dependencies()
+
+    return _BACKEND_DEPENDENCIES[name]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -141,7 +168,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
-    settings = get_settings()
+    global _BACKEND_DEPENDENCIES
+    _BACKEND_DEPENDENCIES = _load_backend_dependencies()
+    settings = _BACKEND_DEPENDENCIES["get_settings"]()
 
     resources = tuple(args.resources or RESOURCE_ORDER)
     journal_resources = tuple(
@@ -318,7 +347,7 @@ def _ingest_resource_journals(
     for record_id in record_ids:
         pages: list[dict[str, Any]] = []
         for page in range(max_pages):
-            report = ingest_recruitly_record_journal(
+            report = _get_backend_dependency("ingest_recruitly_record_journal")(
                 api_base_url=api_base_url,
                 api_key=api_key,
                 record_type=record_type,
@@ -367,25 +396,25 @@ def _ingest_resource_journals(
 
 def _get_preview_fetcher(resource: str) -> Any:
     if resource == "companies":
-        return fetch_recruitly_companies_preview
+        return _get_backend_dependency("fetch_recruitly_companies_preview")
     if resource == "contacts":
-        return fetch_recruitly_contacts_preview
+        return _get_backend_dependency("fetch_recruitly_contacts_preview")
     if resource == "jobs":
-        return fetch_recruitly_jobs_preview
+        return _get_backend_dependency("fetch_recruitly_jobs_preview")
     if resource == "opportunities":
-        return fetch_recruitly_opportunities_preview
+        return _get_backend_dependency("fetch_recruitly_opportunities_preview")
     raise ValueError(f"Unsupported Recruitly resource: {resource}")
 
 
 def _get_row_ingester(resource: str) -> Any:
     if resource == "companies":
-        return ingest_recruitly_company
+        return _get_backend_dependency("ingest_recruitly_company")
     if resource == "contacts":
-        return ingest_recruitly_contact
+        return _get_backend_dependency("ingest_recruitly_contact")
     if resource == "jobs":
-        return ingest_recruitly_job
+        return _get_backend_dependency("ingest_recruitly_job")
     if resource == "opportunities":
-        return ingest_recruitly_opportunity
+        return _get_backend_dependency("ingest_recruitly_opportunity")
     raise ValueError(f"Unsupported Recruitly resource: {resource}")
 
 

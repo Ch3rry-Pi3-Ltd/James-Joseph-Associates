@@ -218,6 +218,8 @@ type CandidateJobDescriptionShortlistItem = {
   semantic_score: number | null;
   semantic_block_type: string | null;
   semantic_block_label: string | null;
+  graph_context_score: number | null;
+  ranking_input_score: number | null;
   fit_score: number;
   fit_summary: string;
   strengths: string[];
@@ -1397,59 +1399,138 @@ export function CandidateMatchWorkspace() {
   return (
     <div className="grid gap-8">
       <section className="grid gap-4 border border-zinc-200 bg-white p-6 sm:p-8">
+        <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-semibold text-zinc-950">
+              How to use this workspace
+            </h2>
+            <p className="mt-2 text-base leading-7 text-zinc-700">
+              Pick one starting point, inspect the evidence, and then run the
+              final shortlist. The page is designed to show why a result was
+              retrieved, not just output a black-box list.
+            </p>
+          </div>
+          <div className="text-sm text-zinc-600">
+            Search first. Shortlist second.
+          </div>
+        </div>
+
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="border border-zinc-200 p-4">
             <p className="text-xs font-semibold uppercase text-zinc-500">
-              Stage 1
+              Route A
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950">
-              Hybrid retrieval
+              Role brief to shortlist
             </p>
             <p className="mt-2 text-sm leading-6 text-zinc-700">
-              Search uses compact retrieval terms against the current CV corpus.
+              Best for a live vacancy where you want a recruiter-style shortlist
+              with fit summaries, strengths, and gaps.
+            </p>
+            <a
+              href="#role-brief-workflow"
+              className="mt-4 inline-flex text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4"
+            >
+              Go to role-brief workflow
+            </a>
+          </div>
+
+          <div className="border border-zinc-200 p-4">
+            <p className="text-xs font-semibold uppercase text-zinc-500">
+              Route B
+            </p>
+            <p className="mt-2 text-lg font-semibold text-zinc-950">
+              Uploaded CV to similar profiles
+            </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-700">
+              Best when you already have one candidate CV and want to search for
+              similar people in the stored corpus without persisting that file.
             </p>
           </div>
 
           <div className="border border-zinc-200 p-4">
             <p className="text-xs font-semibold uppercase text-zinc-500">
-              Stage 2
+              Route C
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950">
-              LLM reranking
+              Company intelligence
             </p>
             <p className="mt-2 text-sm leading-6 text-zinc-700">
-              Shortlisting keeps the full role brief, then asks the reasoning
-              model to rank the strongest retrieved candidates.
+              Best when Tom wants to know who works there, who knows them, and
+              what jobs or opportunities are already in the database.
             </p>
-          </div>
-
-          <div className="border border-zinc-200 p-4">
-            <p className="text-xs font-semibold uppercase text-zinc-500">
-              Current goal
-            </p>
-            <p className="mt-2 text-lg font-semibold text-zinc-950">
-              Recruiter-usable demo
-            </p>
-            <p className="mt-2 text-sm leading-6 text-zinc-700">
-              The page should make the retrieval engine legible, not just return
-              a black-box shortlist after a long wait.
-            </p>
+            <a
+              href="#company-intelligence"
+              className="mt-4 inline-flex text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4"
+            >
+              Go to company lookup
+            </a>
           </div>
         </div>
 
         <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
-          <p className="font-semibold">Recommended flow</p>
+          <p className="font-semibold">Recommended demo path</p>
           <ol className="mt-2 grid gap-1 pl-5 list-decimal">
             <li>Paste the full role brief.</li>
-            <li>Click <span className="font-semibold">Search corpus</span> to inspect the candidate pool.</li>
-            <li>Open any candidate preview to sanity-check the retrieval.</li>
-            <li>Click <span className="font-semibold">Shortlist top {shortlistLimit}</span> when the search pool looks sensible.</li>
+            <li>
+              Click <span className="font-semibold">1. Search corpus</span> to
+              inspect the candidate pool.
+            </li>
+            <li>Open one or two candidate previews to sanity-check the retrieval.</li>
+            <li>
+              Click <span className="font-semibold">2. Shortlist top {shortlistLimit}</span>{" "}
+              when the pool looks sensible.
+            </li>
           </ol>
         </div>
       </section>
 
-      <section className="border border-zinc-200 bg-white p-6 sm:p-8">
+      <section
+        id="role-brief-workflow"
+        className="border border-zinc-200 bg-white p-6 sm:p-8"
+      >
         <form className="grid gap-6" onSubmit={handleSubmit}>
+          <div className="grid gap-4 border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-3">
+            <div>
+              <p className="text-xs font-semibold uppercase text-zinc-500">
+                Step 1
+              </p>
+              <p className="mt-2 text-base font-semibold text-zinc-950">
+                Keep the full brief
+              </p>
+              <p className="mt-2 text-sm leading-6 text-zinc-700">
+                The full brief stays here for reranking, even when the first
+                search pass uses shorter focus terms.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase text-zinc-500">
+                Step 2
+              </p>
+              <p className="mt-2 text-base font-semibold text-zinc-950">
+                Inspect retrieval before ranking
+              </p>
+              <p className="mt-2 text-sm leading-6 text-zinc-700">
+                Corpus search shows what the engine actually found before any
+                LLM call is made.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase text-zinc-500">
+                Step 3
+              </p>
+              <p className="mt-2 text-base font-semibold text-zinc-950">
+                Use shortlist as the final pass
+              </p>
+              <p className="mt-2 text-sm leading-6 text-zinc-700">
+                Shortlisting is slower because it adds reasoning and fit
+                summaries on top of grounded retrieval.
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <label
@@ -1485,8 +1566,8 @@ export function CandidateMatchWorkspace() {
               placeholder="Paste the role brief here."
             />
             <p className="text-sm leading-6 text-zinc-600">
-              Keep the full brief here. The shortlist step uses this full text
-              for reranking.
+              Keep the full brief here. Search retrieves the candidate pool and
+              shortlist uses the same full text for reranking.
             </p>
           </div>
 
@@ -1497,7 +1578,7 @@ export function CandidateMatchWorkspace() {
                   className="text-sm font-semibold uppercase text-zinc-500"
                   htmlFor="uploaded-resume"
                 >
-                  Reference CV upload
+                  Alternative route: upload one CV
                 </label>
                 <p className="mt-2 text-sm leading-6 text-zinc-600">
                   Upload one CV to extract its text and use it as a transient
@@ -1596,7 +1677,7 @@ export function CandidateMatchWorkspace() {
                   className="text-sm font-semibold uppercase text-zinc-500"
                   htmlFor="search-result-limit"
                 >
-                  Search mode
+                  Step 1 search
                 </label>
                 <div className="flex items-center gap-3">
                   <label
@@ -1623,7 +1704,7 @@ export function CandidateMatchWorkspace() {
                   className="text-sm font-semibold uppercase text-zinc-500"
                   htmlFor="retrieval-limit"
                 >
-                  Shortlist mode
+                  Step 2 shortlist pool
                 </label>
                 <div className="flex items-center gap-3">
                   <label
@@ -1650,7 +1731,7 @@ export function CandidateMatchWorkspace() {
                   className="text-sm font-semibold uppercase text-zinc-500"
                   htmlFor="shortlist-limit"
                 >
-                  Final shortlist
+                  Step 3 final shortlist
                 </label>
                 <div className="flex items-center gap-3">
                   <label
@@ -1678,7 +1759,7 @@ export function CandidateMatchWorkspace() {
                 disabled={isSearchLoading || isShortlistLoading}
                 className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-200"
               >
-                {isSearchLoading ? "Searching..." : "Search corpus"}
+                {isSearchLoading ? "Searching..." : "1. Search corpus"}
               </button>
 
               <button
@@ -1691,7 +1772,7 @@ export function CandidateMatchWorkspace() {
               >
                 {isShortlistLoading
                   ? "Shortlisting..."
-                  : `Shortlist top ${shortlistLimit}`}
+                  : `2. Shortlist top ${shortlistLimit}`}
               </button>
             </div>
           </div>
@@ -1704,15 +1785,18 @@ export function CandidateMatchWorkspace() {
         </section>
       ) : null}
 
-      <section className="grid gap-4 border border-zinc-200 bg-white p-6 sm:p-8">
+      <section
+        id="candidate-preview"
+        className="grid gap-4 border border-zinc-200 bg-white p-6 sm:p-8"
+      >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
-              Candidate preview
+              Selected candidate profile
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Inspect the selected candidate in-page instead of jumping straight
-              to raw JSON.
+              Inspect the selected candidate in-page before opening raw JSON or
+              the original CV.
             </p>
           </div>
 
@@ -2317,15 +2401,18 @@ export function CandidateMatchWorkspace() {
         ) : null}
       </section>
 
-      <section className="grid gap-6 border-t border-zinc-200 pt-8">
+      <section
+        id="company-intelligence"
+        className="grid gap-6 border-t border-zinc-200 pt-8"
+      >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
               Company discovery
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Find candidates already linked to a company, then inspect the CV
-              evidence before outreach.
+              Find candidates, contacts, jobs, opportunities, and interaction
+              history already linked to one company before outreach.
             </p>
           </div>
 
@@ -2989,8 +3076,8 @@ export function CandidateMatchWorkspace() {
               Recruiter shortlist
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Full role brief plus LLM reranking over the retrieved candidate
-              pool.
+              Final recruiter-facing output after grounded retrieval plus LLM
+              reranking over the retrieved candidate pool.
             </p>
           </div>
 
@@ -3050,6 +3137,11 @@ export function CandidateMatchWorkspace() {
                     <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
                       Retrieval {result.retrieval_score.toFixed(3)}
                     </span>
+                    {result.graph_context_score !== null ? (
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
+                        Graph {result.graph_context_score.toFixed(3)}
+                      </span>
+                    ) : null}
                     {result.retrieval_sources.map((source) => (
                       <span
                         key={`${result.candidate_id}-${source}`}
@@ -3121,6 +3213,17 @@ export function CandidateMatchWorkspace() {
                   </dt>
                   <dd className="mt-1 text-sm leading-6 text-zinc-900">
                     {formatTimestamp(result.resume_updated_at)}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-xs font-semibold uppercase text-zinc-500">
+                    Ranking input
+                  </dt>
+                  <dd className="mt-1 text-sm leading-6 text-zinc-900">
+                    {result.ranking_input_score !== null
+                      ? result.ranking_input_score.toFixed(3)
+                      : "Unknown"}
                   </dd>
                 </div>
 
