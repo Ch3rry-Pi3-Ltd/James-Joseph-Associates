@@ -237,26 +237,34 @@ export default async function ReviewPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f7f2] text-zinc-950">
+    <main className="min-h-screen bg-[#eef1ec] text-zinc-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-10">
-        <header className="flex flex-col gap-5 border-b border-zinc-200 pb-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase text-emerald-700">
+        <header className="grid gap-6 rounded-md border border-zinc-900 bg-[#101714] px-6 py-8 text-white shadow-sm sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)] lg:px-10 lg:py-10">
+          <div className="max-w-4xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
               Internal review
             </p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight text-zinc-950 sm:text-5xl">
-              Supabase database overview
+            <h1 className="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">
+              Canonical database overview
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-700">
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-zinc-200">
               A compact read-only view of the canonical records, recent
               documents, and source provenance already stored in the system.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid content-start gap-4 rounded-md border border-white/10 bg-white/6 p-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                Operator surface
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                Read-only inspection and landing checks
+              </p>
+            </div>
             <a
               href="/api/v1/review/overview?limit=10"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/8"
             >
               Open raw JSON
             </a>

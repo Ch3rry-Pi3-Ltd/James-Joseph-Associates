@@ -1398,27 +1398,27 @@ export function CandidateMatchWorkspace() {
 
   return (
     <div className="grid gap-10">
-      <section className="grid gap-5 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="grid gap-6 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <h2 className="text-3xl font-semibold text-zinc-950">
-              How to use this workspace
+              Match operating modes
             </h2>
             <p className="mt-2 text-base leading-7 text-zinc-700">
               Pick one starting point, inspect the evidence, and then run the
-              final shortlist. The page is designed to show why a result was
-              retrieved, not just output a black-box list.
+              final shortlist. The point of this page is to keep retrieval
+              visible before any ranking model makes the final call.
             </p>
           </div>
           <div className="text-sm text-zinc-600">
-            Search first. Shortlist second.
+            Retrieval first. Reasoning second.
           </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-md border border-zinc-200 bg-[#f7fbf8] p-4">
+          <div className="rounded-md border border-zinc-200 bg-[#f6faf8] p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
-              Route A
+              Mode 1
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950">
               Role brief to shortlist
@@ -1435,29 +1435,30 @@ export function CandidateMatchWorkspace() {
             </a>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-[#fbfaf5] p-4">
+          <div className="rounded-md border border-zinc-200 bg-[#f8f8fb] p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
-              Route B
+              Mode 2
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950">
               Uploaded CV to similar profiles
             </p>
             <p className="mt-2 text-sm leading-6 text-zinc-700">
-              Best when you already have one candidate CV and want to search for
-              similar people in the stored corpus without persisting that file.
+              Use one CV as transient search input when you want to find
+              similar people already stored in the corpus without persisting
+              that uploaded file.
             </p>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-[#f8f8fb] p-4">
+          <div className="rounded-md border border-zinc-200 bg-[#fff8f4] p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
-              Route C
+              Mode 3
             </p>
             <p className="mt-2 text-lg font-semibold text-zinc-950">
               Company intelligence
             </p>
             <p className="mt-2 text-sm leading-6 text-zinc-700">
-              Best when Tom wants to know who works there, who knows them, and
-              what jobs or opportunities are already in the database.
+              Use this when you want to know who works there, who knows them,
+              and what jobs or opportunities are already linked to that firm.
             </p>
             <a
               href="#company-intelligence"
@@ -1469,7 +1470,7 @@ export function CandidateMatchWorkspace() {
         </div>
 
         <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
-          <p className="font-semibold">Recommended demo path</p>
+          <p className="font-semibold">Recommended path</p>
           <ol className="mt-2 grid gap-1 pl-5 list-decimal">
             <li>Paste the full role brief.</li>
             <li>

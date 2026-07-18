@@ -27,16 +27,35 @@ export function WorkspaceNav() {
   const pathname = usePathname();
 
   return (
-    <div className="border-b border-zinc-200 bg-[#f7f7f2]">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4 sm:px-8 lg:px-10">
-        <div>
-          <p className="text-xs font-semibold uppercase text-emerald-700">
-            James Joseph Associates
-          </p>
-          <p className="text-sm text-zinc-600">Recruitment intelligence</p>
+    <div className="border-b border-zinc-800 bg-[#101714] text-zinc-50">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 sm:px-8 lg:px-10">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="grid h-11 w-11 place-items-center rounded-md border border-emerald-400/30 bg-emerald-400/10 text-sm font-semibold text-emerald-200">
+              JJA
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                James Joseph Associates
+              </p>
+              <p className="text-sm text-zinc-300">
+                Recruitment intelligence platform
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-1 text-sm text-zinc-400 sm:text-right">
+            <p>Canonical data, retrieval, review, and workflow execution</p>
+            <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
+              Internal operator workspace
+            </p>
+          </div>
         </div>
 
-        <nav aria-label="Primary" className="flex flex-wrap gap-2">
+        <nav
+          aria-label="Primary"
+          className="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-[#161f1b] p-2"
+        >
           {navigationItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
 
@@ -44,10 +63,10 @@ export function WorkspaceNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition ${
+                className={`inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold transition ${
                   isActive
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-300 bg-white text-zinc-950 hover:border-zinc-500"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 }`}
               >
                 {item.label}
