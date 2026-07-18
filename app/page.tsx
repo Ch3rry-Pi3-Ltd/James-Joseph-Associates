@@ -18,8 +18,8 @@ const foundationItems: FoundationItem[] = [
   { label: "Versioned API routes", status: "Live" },
   { label: "Structured error responses", status: "Ready" },
   { label: "HTTP metadata helpers", status: "Ready" },
-  { label: "Supabase schema", status: "Planned" },
-  { label: "LangGraph workflows", status: "Planned" },
+  { label: "Canonical Supabase schema", status: "Live" },
+  { label: "LangGraph foundation", status: "Ready" },
 ];
 
 const workspaceSections: WorkspaceSection[] = [
