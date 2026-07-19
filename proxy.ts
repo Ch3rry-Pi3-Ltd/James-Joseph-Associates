@@ -5,9 +5,10 @@ const isPublicRoute = createRouteMatcher([
   "/unauthorized(.*)",
   "/api/v1/health",
 ]);
+const isApiRoute = createRouteMatcher(["/(api|trpc)(.*)"]);
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
+  if (isApiRoute(request) && !isPublicRoute(request)) {
     await auth.protect();
   }
 });
