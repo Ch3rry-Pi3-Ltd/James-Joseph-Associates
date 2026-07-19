@@ -177,13 +177,6 @@ export default async function Home() {
                   >
                     Open matching
                   </Link>
-
-                  <a
-                    href="/api/v1/health"
-                    className="inline-flex h-11 items-center justify-center rounded-md border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/8"
-                  >
-                    Check API health
-                  </a>
                 </div>
               </aside>
             </div>
@@ -208,11 +201,12 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-md border border-zinc-200/80 bg-zinc-100/70 p-4 shadow-inner">
+              <div className="grid gap-4 md:grid-cols-2">
               {workspaceSections.map((section, index) => (
                 <article
                   key={section.title}
-                  className="relative grid gap-5 overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]"
+                  className="relative grid h-full gap-5 overflow-hidden rounded-md border border-zinc-200/80 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500" />
 
@@ -234,7 +228,7 @@ export default async function Home() {
                     </span>
                   </div>
 
-                  <p className="text-base leading-7 text-zinc-700">
+                  <p className="min-h-[8.5rem] text-base leading-7 text-zinc-700">
                     {section.description}
                   </p>
 
@@ -250,6 +244,7 @@ export default async function Home() {
                   ) : null}
                 </article>
               ))}
+              </div>
             </div>
           </div>
 
@@ -294,34 +289,43 @@ export default async function Home() {
           </aside>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
           <div className="grid gap-5 rounded-md border border-zinc-200/80 bg-[linear-gradient(180deg,#fffdf7_0%,#f5efe3_100%)] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                Live route
+                Operating principle
               </p>
               <h2 className="mt-2 max-w-md text-4xl font-semibold leading-tight text-zinc-950">
-                Backend health and deployment checks
+                Retrieval first. Reasoning second.
               </h2>
             </div>
 
-            <div className="rounded-md border border-zinc-900/10 bg-zinc-950 p-4 font-mono text-sm text-emerald-200 shadow-inner">
-              GET /api/v1/health
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-md border border-emerald-300/50 bg-emerald-400/10 px-3 py-1 text-sm font-medium text-emerald-800">
-                FastAPI live
-              </span>
-              <span className="rounded-md border border-sky-300/50 bg-sky-400/10 px-3 py-1 text-sm font-medium text-sky-800">
-                Vercel routed
-              </span>
-            </div>
-
             <p className="max-w-lg text-base leading-7 text-zinc-700">
-              This remains the quickest operator check that the deployed app is
-              reachable and the backend route map is intact.
+              The landing page should orient the operator around how the system
+              is used, not expose backend diagnostics. Health checks still
+              exist in the platform, but they do not belong in the primary UI.
             </p>
+
+            <div className="grid gap-3">
+              <article className="rounded-md border border-zinc-200 bg-white/90 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  Evidence
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-950">
+                  Start from stored CVs, linked companies, contacts, jobs, and
+                  opportunities.
+                </p>
+              </article>
+
+              <article className="rounded-md border border-zinc-200 bg-white/90 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  Judgment
+                </p>
+                <p className="mt-2 text-lg font-semibold text-zinc-950">
+                  Use the model after the retrieved pool already looks credible.
+                </p>
+              </article>
+            </div>
           </div>
 
           <div className="grid gap-6 rounded-md border border-zinc-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f6f5fb_100%)] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-8">

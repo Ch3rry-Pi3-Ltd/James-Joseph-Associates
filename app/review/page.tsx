@@ -124,8 +124,23 @@ async function getReviewOverview(): Promise<ReviewOverview> {
    */
 
   const baseUrl = await getBaseUrl();
+  const requestHeaders = await headers();
+  const forwardedHeaders = new Headers();
+
+  const cookieHeader = requestHeaders.get("cookie");
+  const authorizationHeader = requestHeaders.get("authorization");
+
+  if (cookieHeader) {
+    forwardedHeaders.set("cookie", cookieHeader);
+  }
+
+  if (authorizationHeader) {
+    forwardedHeaders.set("authorization", authorizationHeader);
+  }
+
   const response = await fetch(`${baseUrl}/api/v1/review/overview?limit=10`, {
     cache: "no-store",
+    headers: forwardedHeaders,
   });
 
   if (!response.ok) {
