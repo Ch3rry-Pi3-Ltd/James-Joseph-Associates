@@ -34,14 +34,14 @@ export function WorkspaceNav() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="grid h-11 w-11 place-items-center rounded-md border border-emerald-400/30 bg-emerald-400/10 text-sm font-semibold text-emerald-200">
-              JJA
+              RI
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                James Joseph Associates
+                Recruitment intelligence
               </p>
               <p className="text-sm text-zinc-300">
-                Recruitment intelligence platform
+                Canonical search and workflow platform
               </p>
             </div>
           </div>
@@ -49,7 +49,7 @@ export function WorkspaceNav() {
           <div className="grid gap-1 text-sm text-zinc-400 sm:text-right">
             <p>Canonical data, retrieval, review, and workflow execution</p>
             <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
-              Internal operator workspace
+              Restricted operator workspace
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export function WorkspaceNav() {
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
                       Auth
                     </p>
-                    <p className="text-sm text-zinc-300">Clerk protected</p>
+                    <p className="text-sm text-zinc-300">Restricted access</p>
                   </div>
                   <UserButton
                     appearance={{

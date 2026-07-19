@@ -30,7 +30,7 @@ const workspaceSections: WorkspaceSection[] = [
       "Look up target firms and inspect linked candidates, contacts, jobs, and opportunities already in the canonical layer.",
     state: "Foundation ready",
     href: "/company",
-    actionLabel: "Open company lookup",
+    actionLabel: "Open company surface",
   },
   {
     title: "Review Surface",
@@ -38,7 +38,7 @@ const workspaceSections: WorkspaceSection[] = [
       "Inspect recent canonical rows, source provenance, document activity, and system-level landing checks.",
     state: "Foundation ready",
     href: "/review",
-    actionLabel: "Open review surface",
+    actionLabel: "Open review workspace",
   },
   {
     title: "Job Matching",
@@ -46,7 +46,7 @@ const workspaceSections: WorkspaceSection[] = [
       "Search the CV corpus, inspect evidence, and turn a live brief into a recruiter-usable shortlist.",
     state: "Foundation ready",
     href: "/match",
-    actionLabel: "Open matching",
+    actionLabel: "Open matching workspace",
   },
   {
     title: "Workflow Actions",
@@ -101,7 +101,7 @@ export default async function Home() {
               <div className="flex flex-col justify-between gap-8">
                 <div className="max-w-4xl">
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                    James Joseph Associates
+                    Canonical recruiter system
                   </p>
 
                   <h1 className="mt-4 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
@@ -151,7 +151,7 @@ export default async function Home() {
                     Current operating mode
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-white">
-                    Evidence-first recruiter workflow
+                    Evidence-first search workflow
                   </p>
                 </div>
 
@@ -175,7 +175,7 @@ export default async function Home() {
                     href="/match"
                     className="inline-flex h-11 items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
                   >
-                    Open matching
+                    Open matching workspace
                   </Link>
                 </div>
               </aside>
