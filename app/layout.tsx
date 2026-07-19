@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { WorkspaceNav } from "./workspace-nav";
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
 
 /**
  * Root layout for the James Joseph Associates intelligence app.
@@ -71,13 +77,13 @@ export default function RootLayout({
    */
 
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={`${geist.variable} h-full antialiased`}>
       {/* 
         Shared body wrapper.
         - `min-h-full` lets pages fill the available browser height.
         - `flex flex-col` gives page layouts a stable vertical structure.
       */}
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         <ClerkProvider afterSignOutUrl="/sign-in">
           <WorkspaceNav />
           <div className="flex-1">{children}</div>
