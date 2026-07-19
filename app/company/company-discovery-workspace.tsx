@@ -527,12 +527,12 @@ export function CompanyDiscoveryWorkspace() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_12rem_12rem]">
+        <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_12rem_12rem] lg:items-start">
           <label className="grid gap-2">
             <span className="text-sm font-semibold uppercase text-zinc-500">
               Company name
             </span>
-            <div className="relative grid gap-2">
+            <div className="relative">
               <input
                 type="text"
                 value={companyName}
@@ -584,11 +584,6 @@ export function CompanyDiscoveryWorkspace() {
                   )}
                 </div>
               ) : null}
-              <p className="text-sm text-zinc-500">
-                {isDirectoryLoading
-                  ? "Loading canonical companies..."
-                  : `${companyDirectory.length} canonical companies loaded. Start typing to filter, then choose from the list.`}
-              </p>
             </div>
           </label>
 
@@ -623,6 +618,12 @@ export function CompanyDiscoveryWorkspace() {
             </button>
           </div>
         </div>
+
+        <p className="mt-3 text-sm text-zinc-500">
+          {isDirectoryLoading
+            ? "Loading canonical companies..."
+            : `${companyDirectory.length} canonical companies loaded. Start typing to filter, then choose from the list.`}
+        </p>
 
         <div className="workspace-card-soft mt-6 p-4 text-sm text-zinc-800">
           {summaryText}
