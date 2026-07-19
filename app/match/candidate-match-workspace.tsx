@@ -1398,7 +1398,7 @@ export function CandidateMatchWorkspace() {
 
   return (
     <div className="grid gap-10">
-      <section className="grid gap-6 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="workspace-section grid gap-6 p-6 sm:p-8">
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <h2 className="text-3xl font-semibold text-zinc-950">
@@ -1416,7 +1416,7 @@ export function CandidateMatchWorkspace() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-md border border-zinc-200 bg-[#f6faf8] p-5">
+          <div className="workspace-card-soft p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
               Mode 1
             </p>
@@ -1435,7 +1435,7 @@ export function CandidateMatchWorkspace() {
             </a>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-[#f8f8fb] p-5">
+          <div className="workspace-card-soft p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
               Mode 2
             </p>
@@ -1449,7 +1449,7 @@ export function CandidateMatchWorkspace() {
             </p>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-[#fff8f4] p-5">
+          <div className="workspace-card-soft p-5">
             <p className="text-xs font-semibold uppercase text-zinc-500">
               Mode 3
             </p>
@@ -1469,7 +1469,7 @@ export function CandidateMatchWorkspace() {
           </div>
         </div>
 
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+        <div className="workspace-highlight p-4 text-sm leading-6 text-emerald-950">
           <p className="font-semibold">Recommended path</p>
           <ol className="mt-2 grid gap-1 pl-5 list-decimal">
             <li>Paste the full role brief.</li>
@@ -1488,7 +1488,7 @@ export function CandidateMatchWorkspace() {
 
       <section
         id="role-brief-workflow"
-        className="grid gap-6 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8"
+        className="workspace-section grid gap-6 p-6 sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1506,7 +1506,7 @@ export function CandidateMatchWorkspace() {
         </div>
 
         <form className="grid gap-6" onSubmit={handleSubmit}>
-          <div className="grid gap-4 rounded-md border border-zinc-200 bg-zinc-50 p-4 lg:grid-cols-3">
+          <div className="workspace-card-soft grid gap-4 p-4 lg:grid-cols-3">
             <div>
               <p className="text-xs font-semibold uppercase text-zinc-500">
                 Step 1
@@ -1578,7 +1578,7 @@ export function CandidateMatchWorkspace() {
               id="job-description"
               value={jobDescription}
               onChange={(event) => setJobDescription(event.target.value)}
-              className="min-h-72 rounded-md border border-zinc-300 bg-white px-4 py-3 text-base leading-7 text-zinc-950 outline-none transition focus:border-zinc-500"
+              className="workspace-textarea min-h-72 px-4 py-3 text-base leading-7 text-zinc-950"
               placeholder="Paste the role brief here."
             />
             <p className="text-sm leading-6 text-zinc-600">
@@ -1587,7 +1587,7 @@ export function CandidateMatchWorkspace() {
             </p>
           </div>
 
-          <div className="grid gap-3 rounded-md border border-zinc-200 p-4">
+          <div className="workspace-card grid gap-3 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <label
@@ -1677,7 +1677,7 @@ export function CandidateMatchWorkspace() {
                 setIsFocusTermsAuto(false);
                 setRetrievalFocusTerms(event.target.value);
               }}
-              className="min-h-24 rounded-md border border-zinc-300 bg-white px-4 py-3 text-base leading-7 text-zinc-950 outline-none transition focus:border-zinc-500"
+              className="workspace-textarea min-h-24 px-4 py-3 text-base leading-7 text-zinc-950"
               placeholder="python sql aws data engineer etl"
             />
             <p className="text-sm leading-6 text-zinc-600">
@@ -1803,7 +1803,7 @@ export function CandidateMatchWorkspace() {
 
       <section
         id="candidate-preview"
-        className="grid gap-5 rounded-md border border-zinc-200 bg-[#fcfcf8] p-6 shadow-sm sm:p-8"
+        className="workspace-section grid gap-5 bg-[#fcfcf8] p-6 sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1836,14 +1836,14 @@ export function CandidateMatchWorkspace() {
         ) : null}
 
         {!previewLoading && !previewProfile && !previewErrorMessage ? (
-          <div className="rounded-md border border-dashed border-zinc-300 bg-white p-6 text-sm leading-7 text-zinc-600">
+          <div className="workspace-empty bg-white p-6 text-sm leading-7 text-zinc-600">
             Use any result card to preview the candidate profile, skills, and
             contact details here.
           </div>
         ) : null}
 
         {previewProfile ? (
-          <article className="grid gap-6 rounded-md border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <article className="workspace-card grid gap-6 p-5 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-3xl">
                 <h3 className="text-2xl font-semibold text-zinc-950">
@@ -1871,7 +1871,7 @@ export function CandidateMatchWorkspace() {
             </div>
 
             <dl className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Candidate status
                 </dt>
@@ -1880,7 +1880,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Availability
                 </dt>
@@ -1889,7 +1889,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Resume updated
                 </dt>
@@ -1898,7 +1898,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Last contacted
                 </dt>
@@ -1907,7 +1907,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Email
                 </dt>
@@ -1916,7 +1916,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Phone
                 </dt>
@@ -1925,7 +1925,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   LinkedIn
                 </dt>
@@ -1945,7 +1945,7 @@ export function CandidateMatchWorkspace() {
                 </dd>
               </div>
 
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+              <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Location
                 </dt>
@@ -1956,7 +1956,7 @@ export function CandidateMatchWorkspace() {
             </dl>
 
             {previewSkillNames.length > 0 ? (
-              <div className="rounded-md border border-zinc-200 bg-[#f8faf8] p-4">
+              <div className="workspace-card-soft bg-[#f8faf8] p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
                   Skills
                 </p>
@@ -1974,7 +1974,7 @@ export function CandidateMatchWorkspace() {
             ) : null}
 
             {previewProfile.candidate.summary ? (
-              <div className="rounded-md border border-zinc-200 bg-white p-4">
+              <div className="workspace-card-soft bg-white p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
                   Summary
                 </p>
@@ -2086,7 +2086,7 @@ export function CandidateMatchWorkspace() {
             {candidateLeadResult ? (
               <div className="grid gap-6">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                  <div className="border border-zinc-200 p-4">
+                  <div className="workspace-card-soft p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Selected candidate
                     </p>
@@ -2099,7 +2099,7 @@ export function CandidateMatchWorkspace() {
                     </p>
                   </div>
 
-                  <div className="border border-zinc-200 p-4">
+                  <div className="workspace-card-soft p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Other candidates there
                     </p>
@@ -2108,7 +2108,7 @@ export function CandidateMatchWorkspace() {
                     </p>
                   </div>
 
-                  <div className="border border-zinc-200 p-4">
+                  <div className="workspace-card-soft p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Known contacts
                     </p>
@@ -2117,7 +2117,7 @@ export function CandidateMatchWorkspace() {
                     </p>
                   </div>
 
-                  <div className="border border-zinc-200 p-4">
+                  <div className="workspace-card-soft p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Interaction evidence
                     </p>
@@ -2126,7 +2126,7 @@ export function CandidateMatchWorkspace() {
                     </p>
                   </div>
 
-                  <div className="border border-zinc-200 p-4">
+                  <div className="workspace-card-soft p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Open opportunities
                     </p>
@@ -2136,7 +2136,7 @@ export function CandidateMatchWorkspace() {
                   </div>
                 </div>
 
-                <div className="border border-zinc-200 p-4">
+                <div className="workspace-card-soft p-4">
                   <p className="text-xs font-semibold uppercase text-zinc-500">
                     Candidate skills
                   </p>
@@ -2177,14 +2177,14 @@ export function CandidateMatchWorkspace() {
                     </div>
 
                     {candidateLeadResult.contacts.length === 0 ? (
-                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                      <div className="workspace-card-soft p-4 text-sm leading-6 text-zinc-700">
                         No contacts are linked to this company yet.
                       </div>
                     ) : (
                       candidateLeadResult.contacts.map((contact) => (
                         <article
                           key={contact.contact_id}
-                          className="border border-zinc-200 p-4"
+                          className="workspace-card p-4"
                         >
                           <div className="flex flex-wrap items-center gap-2">
                             {contact.is_hiring_manager ? (
@@ -2240,14 +2240,14 @@ export function CandidateMatchWorkspace() {
                     </div>
 
                     {candidateLeadResult.opportunities.length === 0 ? (
-                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                      <div className="workspace-card-soft p-4 text-sm leading-6 text-zinc-700">
                         No canonical opportunities are linked to this company yet.
                       </div>
                     ) : (
                       candidateLeadResult.opportunities.map((opportunity) => (
                         <article
                           key={opportunity.opportunity_id}
-                          className="border border-zinc-200 p-4"
+                          className="workspace-card p-4"
                         >
                           <h5 className="text-lg font-semibold text-zinc-950">
                             {opportunity.title ?? "Untitled opportunity"}
@@ -2281,14 +2281,14 @@ export function CandidateMatchWorkspace() {
                     </div>
 
                     {candidateLeadResult.interactions.length === 0 ? (
-                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                      <div className="workspace-card-soft p-4 text-sm leading-6 text-zinc-700">
                         No recent interaction evidence was returned.
                       </div>
                     ) : (
                       candidateLeadResult.interactions.map((interaction) => (
                         <article
                           key={interaction.interaction_id}
-                          className="border border-zinc-200 p-4"
+                          className="workspace-card p-4"
                         >
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
@@ -2352,12 +2352,12 @@ export function CandidateMatchWorkspace() {
                     </div>
 
                     {candidateLeadResult.jobs.length === 0 ? (
-                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                      <div className="workspace-card-soft p-4 text-sm leading-6 text-zinc-700">
                         No canonical jobs are linked to this company yet.
                       </div>
                     ) : (
                       candidateLeadResult.jobs.map((job) => (
-                        <article key={job.job_id} className="border border-zinc-200 p-4">
+                        <article key={job.job_id} className="workspace-card p-4">
                           <h5 className="text-lg font-semibold text-zinc-950">
                             {job.title ?? "Untitled job"}
                           </h5>
@@ -2388,14 +2388,14 @@ export function CandidateMatchWorkspace() {
                     </div>
 
                     {candidateLeadResult.peer_candidates.length === 0 ? (
-                      <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                      <div className="workspace-card-soft p-4 text-sm leading-6 text-zinc-700">
                         No other linked candidates were returned for this company.
                       </div>
                     ) : (
                       candidateLeadResult.peer_candidates.map((peer) => (
                         <article
                           key={`${peer.candidate_id}-${peer.document_id}-peer`}
-                          className="border border-zinc-200 p-4"
+                          className="workspace-card p-4"
                         >
                           <h5 className="text-lg font-semibold text-zinc-950">
                             {peer.full_name ?? "Unnamed candidate"}
@@ -2419,7 +2419,7 @@ export function CandidateMatchWorkspace() {
 
       <section
         id="company-intelligence"
-        className="grid gap-6 rounded-md border border-zinc-200 bg-[#fffdf7] p-6 shadow-sm sm:p-8"
+        className="workspace-section grid gap-6 bg-[#fffdf7] p-6 sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -2445,7 +2445,7 @@ export function CandidateMatchWorkspace() {
           company lead workflow for that person.
         </div>
 
-        <div className="grid gap-6 rounded-md border border-zinc-200 bg-white p-6">
+        <div className="workspace-card grid gap-6 p-6">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_120px_auto] lg:items-end">
             <div className="grid gap-2">
               <label
@@ -2460,7 +2460,7 @@ export function CandidateMatchWorkspace() {
                 value={companyNameQuery}
                 onChange={(event) => setCompanyNameQuery(event.target.value)}
                 placeholder="Goldman Sachs"
-                className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+                className="workspace-input h-12 px-4 text-base text-zinc-950"
               />
             </div>
 
@@ -2475,7 +2475,7 @@ export function CandidateMatchWorkspace() {
                 id="company-search-limit"
                 value={companySearchLimit}
                 onChange={(event) => setCompanySearchLimit(event.target.value)}
-                className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-500"
+                className="workspace-select h-12 px-4 text-base text-zinc-950"
               >
                 <option value="5">Top 5</option>
                 <option value="10">Top 10</option>
@@ -2520,7 +2520,7 @@ export function CandidateMatchWorkspace() {
           ) : null}
 
           {companyDiscoveryResults.length === 0 && !companyDiscoveryErrorMessage ? (
-            <div className="border border-dashed border-zinc-300 p-6 text-sm leading-7 text-zinc-600">
+            <div className="workspace-empty p-6 text-sm leading-7 text-zinc-600">
               Use this when you know the target company first and want to see
               who in the canonical CV corpus is already there.
             </div>
@@ -2530,7 +2530,7 @@ export function CandidateMatchWorkspace() {
             {companyDiscoveryResults.map((result, index) => (
               <article
                 key={`${result.candidate_id}-${result.document_id}-company`}
-                className="border border-zinc-200 bg-white p-6"
+                className="workspace-card p-6"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
@@ -2625,7 +2625,7 @@ export function CandidateMatchWorkspace() {
                   </div>
                 </dl>
 
-                <div className="mt-6 border border-zinc-200 p-4">
+                <div className="workspace-card-soft mt-6 p-4">
                   <p className="text-xs font-semibold uppercase text-zinc-500">
                     Evidence
                   </p>
@@ -2671,7 +2671,7 @@ export function CandidateMatchWorkspace() {
               {companyContactResults.map((result, index) => (
                 <article
                   key={result.contact_id}
-                  className="border border-zinc-200 bg-white p-6"
+                  className="workspace-card p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-3xl">
@@ -2779,7 +2779,7 @@ export function CandidateMatchWorkspace() {
               {companyInteractionResults.map((result, index) => (
                 <article
                   key={result.interaction_id}
-                  className="border border-zinc-200 bg-white p-6"
+                  className="workspace-card p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-3xl">
@@ -2843,7 +2843,7 @@ export function CandidateMatchWorkspace() {
                     </div>
                   </dl>
 
-                  <div className="mt-6 border border-zinc-200 p-4">
+                  <div className="workspace-card-soft mt-6 p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Evidence
                     </p>
@@ -2897,7 +2897,7 @@ export function CandidateMatchWorkspace() {
               {companyJobResults.map((result, index) => (
                 <article
                   key={result.job_id}
-                  className="border border-zinc-200 bg-white p-6"
+                  className="workspace-card p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-3xl">
@@ -2962,7 +2962,7 @@ export function CandidateMatchWorkspace() {
                     </div>
                   </dl>
 
-                  <div className="mt-6 border border-zinc-200 p-4">
+                  <div className="workspace-card-soft mt-6 p-4">
                     <p className="text-xs font-semibold uppercase text-zinc-500">
                       Hiring-manager contact
                     </p>
@@ -3005,7 +3005,7 @@ export function CandidateMatchWorkspace() {
               {companyOpportunityResults.map((result, index) => (
                 <article
                   key={result.opportunity_id}
-                  className="border border-zinc-200 bg-white p-6"
+                  className="workspace-card p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-3xl">

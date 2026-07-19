@@ -371,10 +371,10 @@ export function CompanyDiscoveryWorkspace() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="border border-zinc-200 bg-white px-6 py-6">
+      <section className="workspace-section px-6 py-6 sm:px-8">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className="text-sm font-semibold uppercase text-zinc-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Company lookup
             </p>
             <h2 className="mt-3 text-3xl font-semibold text-zinc-950">
@@ -388,24 +388,24 @@ export function CompanyDiscoveryWorkspace() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-            <div className="border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs font-semibold uppercase text-zinc-500">
+            <div className="workspace-card-soft p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Candidate signals
               </p>
               <p className="mt-3 text-sm leading-6 text-zinc-800">
                 Current employer matches plus CV text mentions.
               </p>
             </div>
-            <div className="border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs font-semibold uppercase text-zinc-500">
+            <div className="workspace-card-soft p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Job signals
               </p>
               <p className="mt-3 text-sm leading-6 text-zinc-800">
                 Canonical jobs already linked to the same company.
               </p>
             </div>
-            <div className="border border-zinc-200 bg-zinc-50 p-4">
-              <p className="text-xs font-semibold uppercase text-zinc-500">
+            <div className="workspace-card-soft p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Next slice
               </p>
               <p className="mt-3 text-sm leading-6 text-zinc-800">
@@ -416,10 +416,10 @@ export function CompanyDiscoveryWorkspace() {
         </div>
       </section>
 
-      <section className="border border-zinc-200 bg-white px-6 py-6">
+      <section className="workspace-section px-6 py-6 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase text-zinc-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Query
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-zinc-950">
@@ -448,7 +448,7 @@ export function CompanyDiscoveryWorkspace() {
               value={companyName}
               onChange={(event) => setCompanyName(event.target.value)}
               placeholder="Capgemini UK Plc"
-              className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-950"
+              className="workspace-input h-12 px-4 text-base text-zinc-950"
             />
           </label>
 
@@ -459,7 +459,7 @@ export function CompanyDiscoveryWorkspace() {
             <select
               value={String(resultLimit)}
               onChange={(event) => setResultLimit(Number(event.target.value))}
-              className="h-12 rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-950 outline-none transition focus:border-zinc-950"
+              className="workspace-select h-12 px-4 text-base text-zinc-950"
             >
               {[5, 10, 15, 20].map((value) => (
                 <option key={value} value={value}>
@@ -484,19 +484,19 @@ export function CompanyDiscoveryWorkspace() {
           </div>
         </div>
 
-        <div className="mt-6 border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-800">
+        <div className="workspace-card-soft mt-6 p-4 text-sm text-zinc-800">
           {summaryText}
         </div>
 
         {errorMessage ? (
-          <div className="mt-4 border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             {errorMessage}
           </div>
         ) : null}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <article className="border border-zinc-200 bg-white px-6 py-6">
+        <article className="workspace-section px-6 py-6 sm:px-8">
           <div className="flex items-end justify-between gap-4 border-b border-zinc-200 pb-5">
             <div>
               <p className="text-sm font-semibold uppercase text-zinc-500">
@@ -513,14 +513,14 @@ export function CompanyDiscoveryWorkspace() {
 
           <div className="mt-5 grid gap-4">
             {candidateResults.length === 0 ? (
-              <div className="border border-dashed border-zinc-300 p-5 text-sm text-zinc-600">
+              <div className="workspace-empty p-5 text-sm text-zinc-600">
                 No candidate matches returned yet.
               </div>
             ) : (
               candidateResults.map((result) => (
                 <div
                   key={`${result.candidate_id}-${result.document_id}`}
-                  className="border border-zinc-200 p-5"
+                  className="workspace-card p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -576,7 +576,7 @@ export function CompanyDiscoveryWorkspace() {
           </div>
         </article>
 
-        <article className="border border-zinc-200 bg-white px-6 py-6">
+        <article className="workspace-section px-6 py-6 sm:px-8">
           <div className="flex items-end justify-between gap-4 border-b border-zinc-200 pb-5">
             <div>
               <p className="text-sm font-semibold uppercase text-zinc-500">
@@ -593,14 +593,14 @@ export function CompanyDiscoveryWorkspace() {
 
           <div className="mt-5 grid gap-4">
             {contactResults.length === 0 ? (
-              <div className="border border-dashed border-zinc-300 p-5 text-sm text-zinc-600">
+              <div className="workspace-empty p-5 text-sm text-zinc-600">
                 No company-linked contacts returned yet.
               </div>
             ) : (
               contactResults.map((result) => (
                 <div
                   key={result.contact_id}
-                  className="border border-zinc-200 p-5"
+                  className="workspace-card p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -670,7 +670,7 @@ export function CompanyDiscoveryWorkspace() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <article className="border border-zinc-200 bg-white px-6 py-6">
+        <article className="workspace-section px-6 py-6 sm:px-8">
           <div className="flex items-end justify-between gap-4 border-b border-zinc-200 pb-5">
             <div>
               <p className="text-sm font-semibold uppercase text-zinc-500">
@@ -687,14 +687,14 @@ export function CompanyDiscoveryWorkspace() {
 
           <div className="mt-5 grid gap-4">
             {interactionResults.length === 0 ? (
-              <div className="border border-dashed border-zinc-300 p-5 text-sm text-zinc-600">
+              <div className="workspace-empty p-5 text-sm text-zinc-600">
                 No recent interaction evidence returned yet.
               </div>
             ) : (
               interactionResults.map((result) => (
                 <div
                   key={result.interaction_id}
-                  className="border border-zinc-200 p-5"
+                  className="workspace-card p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -735,7 +735,7 @@ export function CompanyDiscoveryWorkspace() {
           </div>
         </article>
 
-        <article className="border border-zinc-200 bg-white px-6 py-6">
+        <article className="workspace-section px-6 py-6 sm:px-8">
           <div className="flex items-end justify-between gap-4 border-b border-zinc-200 pb-5">
             <div>
               <p className="text-sm font-semibold uppercase text-zinc-500">
@@ -750,14 +750,14 @@ export function CompanyDiscoveryWorkspace() {
 
           <div className="mt-5 grid gap-4">
             {jobResults.length === 0 ? (
-              <div className="border border-dashed border-zinc-300 p-5 text-sm text-zinc-600">
+              <div className="workspace-empty p-5 text-sm text-zinc-600">
                 No linked jobs returned yet.
               </div>
             ) : (
               jobResults.map((result) => (
                 <div
                   key={result.job_id}
-                  className="border border-zinc-200 p-5"
+                  className="workspace-card p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>

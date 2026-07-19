@@ -5,10 +5,10 @@ export default async function MatchPage() {
   await requireAuthorizedUser();
 
   return (
-    <main className="min-h-screen bg-[#eef1ec] text-zinc-950">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#eef1ec_0%,#f6f6f1_40%,#fbfbf8_100%)] text-zinc-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-10">
-        <header className="overflow-hidden rounded-md border border-zinc-900 bg-[#101714] text-white shadow-sm">
-          <div className="grid gap-6 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)] lg:px-10 lg:py-10">
+        <header className="workspace-hero">
+          <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)] lg:px-10 lg:py-10">
             <div className="max-w-4xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
                 Match workspace
@@ -21,9 +21,36 @@ export default async function MatchPage() {
                 Inspect the retrieved evidence first, then run shortlist
                 reasoning over a candidate pool that already looks right.
               </p>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div className="workspace-card-contrast p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    Retrieve
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-100">
+                    Search CV evidence and linked company context first.
+                  </p>
+                </div>
+                <div className="workspace-card-contrast p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    Inspect
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-100">
+                    Preview candidate profiles, documents, contacts, and jobs.
+                  </p>
+                </div>
+                <div className="workspace-card-contrast p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                    Shortlist
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-100">
+                    Apply reasoning only when the evidence already looks credible.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <aside className="grid gap-4 rounded-md border border-white/10 bg-white/6 p-5">
+            <aside className="grid gap-4 rounded-md border border-white/10 bg-white/6 p-5 backdrop-blur-sm">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300">
                   Workflow
@@ -52,40 +79,25 @@ export default async function MatchPage() {
         </header>
 
         <nav className="flex flex-wrap gap-3">
-          <a
-            href="#role-brief-workflow"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-500"
-          >
-            Search workflow
-          </a>
-          <a
-            href="#search-results"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-500"
-          >
-            Retrieval output
-          </a>
-          <a
-            href="#shortlist-results"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-500"
-          >
-            Shortlist
-          </a>
-          <a
-            href="#candidate-preview"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-500"
-          >
-            Candidate profile
-          </a>
-          <a
-            href="#company-intelligence"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:border-zinc-500"
-          >
-            Company lookup
-          </a>
+          {[
+            ["#role-brief-workflow", "Search workflow"],
+            ["#search-results", "Retrieval output"],
+            ["#shortlist-results", "Shortlist"],
+            ["#candidate-preview", "Candidate profile"],
+            ["#company-intelligence", "Company lookup"],
+          ].map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-200/80 bg-white/90 px-4 text-sm font-semibold text-zinc-900 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition hover:border-emerald-400 hover:bg-white"
+            >
+              {label}
+            </a>
+          ))}
         </nav>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="workspace-kpi p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
               Retrieval
             </p>
@@ -98,7 +110,7 @@ export default async function MatchPage() {
             </p>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="workspace-kpi p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
               Inspection
             </p>
@@ -111,7 +123,7 @@ export default async function MatchPage() {
             </p>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="workspace-kpi p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
               Final pass
             </p>
