@@ -1267,6 +1267,16 @@ export function CandidateMatchWorkspace() {
     await runSearch();
   }
 
+  function applyAutoRetrievalFocusTerms(): void {
+    setIsFocusTermsAuto(true);
+    setRetrievalFocusTerms(deriveRetrievalFocusTerms(jobDescription));
+  }
+
+  function applyFullBriefRetrievalFocusTerms(): void {
+    setIsFocusTermsAuto(false);
+    setRetrievalFocusTerms(jobDescription.trim());
+  }
+
   function resetToExampleBrief(): void {
     setJobDescription(DEFAULT_JOB_DESCRIPTION);
     setIsFocusTermsAuto(true);
@@ -1688,34 +1698,51 @@ export function CandidateMatchWorkspace() {
 
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <label
-                className="text-sm font-semibold uppercase text-zinc-500"
-                htmlFor="retrieval-focus-terms"
-              >
-                Retrieval focus terms
-              </label>
+              <div className="grid gap-1">
+                <label
+                  className="text-sm font-semibold uppercase text-zinc-500"
+                  htmlFor="retrieval-focus-terms"
+                >
+                  Retrieval focus terms
+                </label>
+                <p className="text-sm leading-6 text-zinc-600">
+                  Search starts from this query first, then broadens if the
+                  first pass is too narrow.
+                </p>
+              </div>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsFocusTermsAuto(true);
-                    setRetrievalFocusTerms(deriveRetrievalFocusTerms(jobDescription));
-                  }}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+              <div className="flex flex-wrap items-center gap-2">
+                <label
+                  className="text-sm font-medium text-zinc-700"
+                  htmlFor="retrieval-focus-mode"
                 >
-                  Regenerate terms
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsFocusTermsAuto(false);
-                    setRetrievalFocusTerms(jobDescription.trim());
+                  Query mode
+                </label>
+                <select
+                  id="retrieval-focus-mode"
+                  value={isFocusTermsAuto ? "auto" : "full"}
+                  onChange={(event) => {
+                    if (event.target.value === "full") {
+                      applyFullBriefRetrievalFocusTerms();
+                      return;
+                    }
+
+                    applyAutoRetrievalFocusTerms();
                   }}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                  className="h-9 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-500"
                 >
-                  Use full brief
-                </button>
+                  <option value="auto">Auto terms from brief</option>
+                  <option value="full">Use full brief text</option>
+                </select>
+                {isFocusTermsAuto ? (
+                  <button
+                    type="button"
+                    onClick={applyAutoRetrievalFocusTerms}
+                    className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500"
+                  >
+                    Refresh
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -1729,10 +1756,6 @@ export function CandidateMatchWorkspace() {
               className="workspace-textarea min-h-24 px-4 py-3 text-base leading-7 text-zinc-950"
               placeholder="python sql aws data engineer etl"
             />
-            <p className="text-sm leading-6 text-zinc-600">
-              Corpus search starts with a short keyword query. If needed, the
-              backend automatically retries broader fallbacks before giving up.
-            </p>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
@@ -1816,6 +1839,22 @@ export function CandidateMatchWorkspace() {
                   </select>
                 </div>
               </div>
+            </div>
+
+            <div className="grid gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700 xl:max-w-xl">
+              <p>
+                Run <span className="font-semibold text-zinc-950">1. Search corpus</span>{" "}
+                first to pull the initial candidate pool and sanity-check the
+                evidence.
+              </p>
+              <p>
+                Then run{" "}
+                <span className="font-semibold text-zinc-950">
+                  2. Shortlist top {shortlistLimit}
+                </span>{" "}
+                to send that retrieved pool to the reasoning model for the
+                final ranked shortlist.
+              </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -3623,8 +3662,7 @@ export function CandidateMatchWorkspace() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsFocusTermsAuto(false);
-                    setRetrievalFocusTerms(jobDescription.trim());
+                    applyFullBriefRetrievalFocusTerms();
                     void runSearch({
                       focusQueryOverride: jobDescription.trim(),
                     });
@@ -3636,10 +3674,9 @@ export function CandidateMatchWorkspace() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsFocusTermsAuto(true);
-                    const regeneratedTerms = deriveRetrievalFocusTerms(
-                      jobDescription,
-                    );
+                    const regeneratedTerms =
+                      deriveRetrievalFocusTerms(jobDescription);
+                    applyAutoRetrievalFocusTerms();
                     setRetrievalFocusTerms(regeneratedTerms);
                     void runSearch({
                       focusQueryOverride: regeneratedTerms,
