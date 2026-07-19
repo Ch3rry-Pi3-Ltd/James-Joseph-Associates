@@ -20,10 +20,13 @@ def list_canonical_company_names() -> list[str]:
     """
 
     query = """
-        select distinct c.name
-        from companies c
-        where nullif(trim(c.name), '') is not null
-        order by lower(c.name), c.name
+        select company_name as name
+        from (
+            select distinct trim(c.name) as company_name
+            from companies c
+            where nullif(trim(c.name), '') is not null
+        ) canonical_companies
+        order by lower(company_name), company_name
     """
 
     with postgres_connection() as connection:

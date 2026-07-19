@@ -205,9 +205,10 @@ function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
 export function CompanyDiscoveryWorkspace() {
   const [companyName, setCompanyName] = useState(EXAMPLE_COMPANY);
   const [companyDirectory, setCompanyDirectory] = useState<string[]>([]);
-  const [resultLimit, setResultLimit] = useState(10);
+  const [resultLimit, setResultLimit] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectoryLoading, setIsDirectoryLoading] = useState(false);
+  const [isCompanyPickerOpen, setIsCompanyPickerOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
     null,
@@ -270,6 +271,21 @@ export function CompanyDiscoveryWorkspace() {
     jobResults.length,
     submittedCompanyName,
   ]);
+
+  const filteredCompanies = useMemo(() => {
+    const normalizedQuery = companyName.trim().toLowerCase();
+    if (companyDirectory.length === 0) {
+      return [];
+    }
+
+    if (normalizedQuery === "") {
+      return companyDirectory.slice(0, 12);
+    }
+
+    return companyDirectory
+      .filter((name) => name.toLowerCase().includes(normalizedQuery))
+      .slice(0, 12);
+  }, [companyDirectory, companyName]);
 
   async function runLookup() {
     const normalizedCompanyName = companyName.trim();
@@ -516,24 +532,62 @@ export function CompanyDiscoveryWorkspace() {
             <span className="text-sm font-semibold uppercase text-zinc-500">
               Company name
             </span>
-            <div className="grid gap-2">
+            <div className="relative grid gap-2">
               <input
                 type="text"
-                list="company-directory-options"
                 value={companyName}
-                onChange={(event) => setCompanyName(event.target.value)}
+                onChange={(event) => {
+                  setCompanyName(event.target.value);
+                  setIsCompanyPickerOpen(true);
+                }}
+                onFocus={() => setIsCompanyPickerOpen(true)}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    setIsCompanyPickerOpen(false);
+                  }, 120);
+                }}
                 placeholder="Start typing a company name"
                 className="workspace-input h-12 px-4 text-base text-zinc-950"
+                autoComplete="off"
               />
-              <datalist id="company-directory-options">
-                {companyDirectory.map((name) => (
-                  <option key={name} value={name} />
-                ))}
-              </datalist>
+              {isCompanyPickerOpen && companyDirectory.length > 0 ? (
+                <div className="absolute top-[calc(100%+0.25rem)] z-20 max-h-72 w-full overflow-y-auto rounded-md border border-zinc-200 bg-white p-2 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.35)]">
+                  <div className="mb-2 flex items-center justify-between px-2 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                    <span>Canonical companies</span>
+                    <span>{filteredCompanies.length} shown</span>
+                  </div>
+                  {filteredCompanies.length === 0 ? (
+                    <div className="rounded-md border border-dashed border-zinc-200 px-3 py-3 text-sm text-zinc-500">
+                      No matching companies found.
+                    </div>
+                  ) : (
+                    <div className="grid gap-1">
+                      {filteredCompanies.map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            setCompanyName(name);
+                            setIsCompanyPickerOpen(false);
+                          }}
+                          className={`rounded-md px-3 py-2 text-left text-sm transition ${
+                            name === companyName
+                              ? "bg-emerald-50 text-zinc-950"
+                              : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
               <p className="text-sm text-zinc-500">
                 {isDirectoryLoading
                   ? "Loading canonical companies..."
-                  : `${companyDirectory.length} canonical companies loaded. Start typing to filter the list.`}
+                  : `${companyDirectory.length} canonical companies loaded. Start typing to filter, then choose from the list.`}
               </p>
             </div>
           </label>
