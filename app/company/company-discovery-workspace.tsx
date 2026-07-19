@@ -202,6 +202,10 @@ function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
     });
 }
 
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function CompanyDiscoveryWorkspace() {
   const [companyName, setCompanyName] = useState(EXAMPLE_COMPANY);
   const [companyDirectory, setCompanyDirectory] = useState<string[]>([]);
@@ -282,8 +286,36 @@ export function CompanyDiscoveryWorkspace() {
       return companyDirectory.slice(0, 12);
     }
 
+    const wordBoundaryPattern = new RegExp(
+      `(?:^|[^a-z0-9])${escapeRegexLiteral(normalizedQuery)}`,
+      "i",
+    );
+
     return companyDirectory
       .filter((name) => name.toLowerCase().includes(normalizedQuery))
+      .sort((left, right) => {
+        const leftLower = left.toLowerCase();
+        const rightLower = right.toLowerCase();
+        const leftStartsWith = leftLower.startsWith(normalizedQuery) ? 0 : 1;
+        const rightStartsWith = rightLower.startsWith(normalizedQuery) ? 0 : 1;
+
+        if (leftStartsWith !== rightStartsWith) {
+          return leftStartsWith - rightStartsWith;
+        }
+
+        const leftWordStart = wordBoundaryPattern.test(left);
+        const rightWordStart = wordBoundaryPattern.test(right);
+
+        if (leftWordStart !== rightWordStart) {
+          return leftWordStart ? -1 : 1;
+        }
+
+        if (left.length !== right.length) {
+          return left.length - right.length;
+        }
+
+        return left.localeCompare(right);
+      })
       .slice(0, 12);
   }, [companyDirectory, companyName]);
 
