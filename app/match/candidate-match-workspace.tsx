@@ -534,6 +534,52 @@ function deriveRetrievalFocusTerms(jobDescription: string): string {
   return selectedTerms.join(" ");
 }
 
+function deriveCompanyNameFromUploadedFileName(fileName: string | null): string | null {
+  if (!fileName) {
+    return null;
+  }
+
+  const normalizedName = fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/\[[^\]]+\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (normalizedName === "") {
+    return null;
+  }
+
+  const segments = normalizedName
+    .split(/\s+-\s+/)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment !== "");
+
+  return segments[0] ?? null;
+}
+
+function deriveCompanyNameFromJobDescription(jobDescription: string): string | null {
+  const compactText = jobDescription.replace(/\s+/g, " ").trim();
+  if (compactText === "") {
+    return null;
+  }
+
+  const aboutUsMatch = compactText.match(
+    /about\s+us\s*:\s*([A-Z][A-Za-z0-9&.,'()\/+\-\s]{1,80}?)\s+is\b/i,
+  );
+  if (aboutUsMatch?.[1]) {
+    return aboutUsMatch[1].trim().replace(/[.,;:]+$/, "");
+  }
+
+  const titlePrefixMatch = compactText.match(
+    /^([A-Z][A-Za-z0-9&.'()\/+\-]+(?:\s+[A-Z][A-Za-z0-9&.'()\/+\-]+){0,5})\s+-/,
+  );
+  if (titlePrefixMatch?.[1]) {
+    return titlePrefixMatch[1].trim();
+  }
+
+  return null;
+}
+
 function buildLoadingMessage(mode: RunMode): string {
   if (mode === "search") {
     return "Running hybrid retrieval across the CV corpus.";
@@ -751,6 +797,9 @@ export function CandidateMatchWorkspace() {
     useState<UploadedJobDescriptionExtractResponse | null>(null);
   const [uploadedJobDescriptionErrorMessage, setUploadedJobDescriptionErrorMessage] =
     useState<string | null>(null);
+  const [detectedTargetCompanyName, setDetectedTargetCompanyName] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!isFocusTermsAuto) {
@@ -759,6 +808,19 @@ export function CandidateMatchWorkspace() {
 
     setRetrievalFocusTerms(deriveRetrievalFocusTerms(jobDescription));
   }, [isFocusTermsAuto, jobDescription]);
+
+  useEffect(() => {
+    const derivedCompanyName =
+      deriveCompanyNameFromUploadedFileName(
+        uploadedJobDescriptionResult?.file_name ?? null,
+      ) ?? deriveCompanyNameFromJobDescription(jobDescription);
+
+    setDetectedTargetCompanyName(derivedCompanyName);
+
+    if (derivedCompanyName && companyNameQuery.trim() === "") {
+      setCompanyNameQuery(derivedCompanyName);
+    }
+  }, [companyNameQuery, jobDescription, uploadedJobDescriptionResult]);
 
   const loadingMessage = useMemo(
     () => buildLoadingMessage(activeRunMode),
@@ -815,6 +877,8 @@ export function CandidateMatchWorkspace() {
 
     return `${shortlistResults.length} shortlisted candidates.`;
   }, [retrievedCandidateCount, shortlistResults.length, submittedJobDescription]);
+
+  const activeCompanyContextName = detectedTargetCompanyName;
 
   const companyDiscoveryCountLabel = useMemo(() => {
     if (submittedCompanyName && companyDiscoveryResults.length === 0) {
@@ -1015,10 +1079,6 @@ export function CandidateMatchWorkspace() {
       setShortlistErrorMessage(null);
       setSubmittedSearchQuery(null);
       setSubmittedJobDescription(null);
-      window.scrollTo({
-        behavior: "smooth",
-        top: 0,
-      });
     } catch (error) {
       setUploadedJobDescriptionResult(null);
       setUploadedJobDescriptionErrorMessage(
@@ -1077,6 +1137,12 @@ export function CandidateMatchWorkspace() {
       setShortlistResults(shortlistResponse.shortlisted_candidates);
       setRetrievedCandidateCount(shortlistResponse.retrieved_candidate_count);
       setSubmittedJobDescription(shortlistResponse.job_description);
+
+      if (detectedTargetCompanyName) {
+        setCompanyNameQuery(detectedTargetCompanyName);
+        void fetchCompanyContext(detectedTargetCompanyName);
+      }
+
       shortlistSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -1095,11 +1161,9 @@ export function CandidateMatchWorkspace() {
     }
   }
 
-  async function runCompanyDiscovery(): Promise<void> {
-    const trimmedCompanyName = companyNameQuery.trim();
+  async function fetchCompanyContext(companyName: string): Promise<void> {
+    const trimmedCompanyName = companyName.trim();
     if (trimmedCompanyName === "") {
-      setCompanyDiscoveryErrorMessage("Enter a company name before searching.");
-      setCompanyDiscoveryResults([]);
       return;
     }
 
@@ -1261,6 +1325,17 @@ export function CandidateMatchWorkspace() {
     } finally {
       setCompanyDiscoveryLoading(false);
     }
+  }
+
+  async function runCompanyDiscovery(): Promise<void> {
+    const trimmedCompanyName = companyNameQuery.trim();
+    if (trimmedCompanyName === "") {
+      setCompanyDiscoveryErrorMessage("Enter a company name before searching.");
+      setCompanyDiscoveryResults([]);
+      return;
+    }
+
+    await fetchCompanyContext(trimmedCompanyName);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1695,6 +1770,14 @@ export function CandidateMatchWorkspace() {
                 </p>
               </div>
             ) : null}
+            {detectedTargetCompanyName ? (
+              <p className="text-sm leading-6 text-zinc-600">
+                Detected target company:{" "}
+                <span className="font-medium text-zinc-900">
+                  {detectedTargetCompanyName}
+                </span>
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-3">
@@ -1892,7 +1975,7 @@ export function CandidateMatchWorkspace() {
 
       <section
         id="candidate-preview"
-        className="workspace-section grid gap-5 bg-[#fcfcf8] p-6 sm:p-8"
+        className="workspace-section order-50 grid gap-5 bg-[#fcfcf8] p-6 sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -2508,16 +2591,17 @@ export function CandidateMatchWorkspace() {
 
       <section
         id="company-intelligence"
-        className="workspace-section grid gap-6 bg-[#fffdf7] p-6 sm:p-8"
+        className="workspace-section order-60 grid gap-6 bg-[#fffdf7] p-6 sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-semibold text-zinc-950">
-              Company discovery
+              Manual company lookup
             </h2>
             <p className="mt-2 max-w-3xl text-base leading-7 text-zinc-700">
-              Find candidates, contacts, jobs, opportunities, and interaction
-              history already linked to one company before outreach.
+              This is the company-first workflow. Use it when you know the firm
+              already and want to inspect linked candidates, contacts, jobs,
+              opportunities, and interaction history before outreach.
             </p>
           </div>
 
@@ -2529,9 +2613,9 @@ export function CandidateMatchWorkspace() {
         </div>
 
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-          This is the company-first view. If you already have one candidate in
-          mind, use the candidate preview section above to run the more direct
-          company lead workflow for that person.
+          This is separate from shortlist generation. The shortlist route starts
+          from a role brief; this view starts from a company name and lets you
+          inspect existing linked context directly.
         </div>
 
         <div className="workspace-card grid gap-6 p-6">
@@ -3177,7 +3261,7 @@ export function CandidateMatchWorkspace() {
       <section
         id="shortlist-results"
         ref={shortlistSectionRef}
-        className="grid gap-6 rounded-md border border-emerald-200 bg-[#f7fbf8] p-6 shadow-sm sm:p-8"
+        className="order-40 grid gap-6 rounded-md border border-emerald-200 bg-[#f7fbf8] p-6 shadow-sm sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -3203,6 +3287,147 @@ export function CandidateMatchWorkspace() {
             <span className="font-medium text-zinc-900">
               {retrievedCandidateCount}
             </span>
+          </div>
+        ) : null}
+
+        {activeCompanyContextName ? (
+          <div className="grid gap-4 rounded-md border border-sky-200 bg-white p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Target company context
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-zinc-950">
+                  What do we already know about {activeCompanyContextName}?
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-700">
+                  This brings in existing company-linked contacts, interactions,
+                  jobs, and opportunities so Tom can use that context alongside
+                  the candidate shortlist.
+                </p>
+              </div>
+
+              <a
+                href="#company-intelligence"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+              >
+                Open manual company lookup
+              </a>
+            </div>
+
+            {companyDiscoveryLoading ? (
+              <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+                Loading linked company context for {activeCompanyContextName}.
+              </div>
+            ) : null}
+
+            {!companyDiscoveryLoading ? (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Contacts
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-zinc-950">
+                    {companyContactResults.length}
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Interactions
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-zinc-950">
+                    {companyInteractionResults.length}
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Jobs
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-zinc-950">
+                    {companyJobResults.length}
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">
+                    Opportunities
+                  </p>
+                  <p className="mt-2 text-lg font-semibold text-zinc-950">
+                    {companyOpportunityResults.length}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {companyContactsErrorMessage ? (
+              <div className="border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+                {companyContactsErrorMessage}
+              </div>
+            ) : null}
+
+            {!companyDiscoveryLoading &&
+            companyContactResults.length === 0 &&
+            companyInteractionResults.length === 0 &&
+            companyJobResults.length === 0 &&
+            companyOpportunityResults.length === 0 &&
+            !companyContactsErrorMessage ? (
+              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-700">
+                No linked company context has been found for this employer yet.
+              </div>
+            ) : null}
+
+            {!companyDiscoveryLoading && companyContactResults.length > 0 ? (
+              <div className="grid gap-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h4 className="text-lg font-semibold text-zinc-950">
+                      Known contacts at this company
+                    </h4>
+                    <p className="mt-1 text-sm leading-6 text-zinc-700">
+                      Top linked contacts already in the database.
+                    </p>
+                  </div>
+                  <div className="text-sm text-zinc-600">
+                    Showing {Math.min(companyContactResults.length, 3)} of{" "}
+                    {companyContactResults.length}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-3">
+                  {companyContactResults.slice(0, 3).map((contact) => (
+                    <article
+                      key={`shortlist-company-contact-${contact.contact_id}`}
+                      className="rounded-md border border-zinc-200 bg-zinc-50 p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        {contact.is_hiring_manager ? (
+                          <span className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                            Hiring manager
+                          </span>
+                        ) : null}
+                        <span className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatCompanyMatchSourceLabel(contact.company_match_source)}
+                        </span>
+                      </div>
+
+                      <h5 className="mt-4 text-lg font-semibold text-zinc-950">
+                        {contact.full_name ?? "Unnamed contact"}
+                      </h5>
+                      <p className="mt-1 text-sm leading-6 text-zinc-700">
+                        {contact.role_title ?? contact.headline ?? "Role not available"}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-900">
+                        {contact.primary_email ??
+                          contact.primary_phone ??
+                          "No direct contact details"}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -3620,7 +3845,7 @@ export function CandidateMatchWorkspace() {
       <section
         id="search-results"
         ref={searchResultsSectionRef}
-        className="grid gap-6 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8"
+        className="order-30 grid gap-6 rounded-md border border-zinc-200 bg-white p-6 shadow-sm sm:p-8"
       >
         <div className="flex flex-col gap-3 border-b border-zinc-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -3853,5 +4078,5 @@ export function CandidateMatchWorkspace() {
         ) : null}
       </section>
     </div>
-  );
+      );
 }
