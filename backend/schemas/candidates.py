@@ -494,6 +494,43 @@ class UploadedResumeSearchRequest(BaseModel):
     )
 
 
+class UploadedJobDescriptionExtractResponse(BaseModel):
+    """
+    Response envelope for transient uploaded job-description extraction.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    file_name: str | None = None
+    content_type: str | None = None
+    extractor: str | None = None
+    page_count: int | None = None
+    character_count: int = Field(
+        description="Character count of the cleaned extracted text.",
+    )
+    cleaned_text_preview: str = Field(
+        description="Short preview of the cleaned extracted text.",
+    )
+    job_description_text: str = Field(
+        description="Cleaned full text extracted from the uploaded file.",
+    )
+
+
+class UploadedJobDescriptionExtractRequest(BaseModel):
+    """
+    Request body for transient uploaded job-description extraction.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    file_name: str | None = None
+    content_type: str | None = None
+    content_base64: str = Field(
+        min_length=1,
+        description="Base64-encoded uploaded job-description file content.",
+    )
+
+
 class CandidateJobDescriptionMatchRequest(BaseModel):
     """
     Request body for shortlist matching against one free-text job description.
@@ -603,7 +640,9 @@ __all__ = [
     "CandidateJobDescriptionMatchResponse",
     "CandidateJobDescriptionShortlistItem",
     "UploadedResumeSearchRequest",
+    "UploadedJobDescriptionExtractRequest",
     "CandidateResumeSearchResponse",
     "CandidateResumeSearchResult",
     "UploadedResumeSearchResponse",
+    "UploadedJobDescriptionExtractResponse",
 ]

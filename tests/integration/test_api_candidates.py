@@ -24,6 +24,7 @@ from fastapi.testclient import TestClient
 from backend.main import app
 from backend.services.candidate_resume_files import CandidateResumeFileAccessError
 from backend.services.uploaded_resume_matching import UploadedResumeSearchError
+from backend.services.uploaded_job_description import UploadedJobDescriptionError
 
 
 def make_client() -> TestClient:
@@ -1077,6 +1078,120 @@ def test_uploaded_resume_search_route_rejects_invalid_base64() -> None:
         }
     }
     mock_search_candidates_by_uploaded_resume.assert_not_called()
+
+
+def test_extract_uploaded_job_description_route_returns_extracted_text() -> None:
+    """
+    Verify that the uploaded-job-description route returns the service payload unchanged.
+    """
+
+    service_result = {
+        "file_name": "role-brief.pdf",
+        "content_type": "application/pdf",
+        "extractor": "pypdf",
+        "page_count": 2,
+        "character_count": 1875,
+        "cleaned_text_preview": "Senior data engineer Python SQL cloud ETL",
+        "job_description_text": "Senior data engineer Python SQL cloud ETL",
+    }
+
+    with patch(
+        "backend.api.v1.candidates.extract_uploaded_job_description",
+        return_value=service_result,
+    ) as mock_extract_uploaded_job_description:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/extract-uploaded-job-description",
+            json={
+                "file_name": "role-brief.pdf",
+                "content_type": "application/pdf",
+                "content_base64": base64.b64encode(b"%PDF-job-brief%").decode(
+                    "ascii"
+                ),
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_extract_uploaded_job_description.assert_called_once_with(
+        content_bytes=b"%PDF-job-brief%",
+        file_name="role-brief.pdf",
+        content_type="application/pdf",
+    )
+
+
+def test_extract_uploaded_job_description_route_returns_standard_error_shape() -> None:
+    """
+    Verify that uploaded job-description failures use the standard API error shape.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.extract_uploaded_job_description",
+        side_effect=UploadedJobDescriptionError(
+            "The resume file format is not supported for text extraction.",
+            stage="input_validation",
+            details=[
+                {"file_name": "role-brief.txt"},
+                {"content_type": "text/plain"},
+            ],
+        ),
+    ) as mock_extract_uploaded_job_description:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/extract-uploaded-job-description",
+            json={
+                "file_name": "role-brief.txt",
+                "content_type": "text/plain",
+                "content_base64": base64.b64encode(b"plain text").decode("ascii"),
+            },
+        )
+
+    assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    assert response.json() == {
+        "error": {
+            "code": "resume_source_not_supported",
+            "message": "The resume file format is not supported for text extraction.",
+            "details": [
+                {"stage": "input_validation"},
+                {"file_name": "role-brief.txt"},
+                {"content_type": "text/plain"},
+            ],
+        }
+    }
+    mock_extract_uploaded_job_description.assert_called_once_with(
+        content_bytes=b"plain text",
+        file_name="role-brief.txt",
+        content_type="text/plain",
+    )
+
+
+def test_extract_uploaded_job_description_route_rejects_invalid_base64() -> None:
+    """
+    Verify that invalid base64 job-description payloads fail cleanly.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.extract_uploaded_job_description",
+    ) as mock_extract_uploaded_job_description:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/extract-uploaded-job-description",
+            json={
+                "file_name": "role-brief.pdf",
+                "content_type": "application/pdf",
+                "content_base64": "!!!not-base64!!!",
+            },
+        )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "error": {
+            "code": "validation_error",
+            "message": "Uploaded job description payload must contain valid base64 content.",
+            "details": [{"field": "content_base64"}],
+        }
+    }
+    mock_extract_uploaded_job_description.assert_not_called()
 
 
 def test_candidate_resume_search_route_rejects_blank_query() -> None:

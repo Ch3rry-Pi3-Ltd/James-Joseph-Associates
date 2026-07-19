@@ -48,6 +48,8 @@ from backend.schemas.candidates import (
     CompanyInteractionDiscoveryResponse,
     CompanyJobDiscoveryResponse,
     CompanyOpportunityDiscoveryResponse,
+    UploadedJobDescriptionExtractRequest,
+    UploadedJobDescriptionExtractResponse,
     UploadedResumeSearchRequest,
     UploadedResumeSearchResponse,
 )
@@ -74,6 +76,10 @@ from backend.services.candidate_resume_files import (
 from backend.services.uploaded_resume_matching import (
     UploadedResumeSearchError,
     search_candidates_by_uploaded_resume,
+)
+from backend.services.uploaded_job_description import (
+    UploadedJobDescriptionError,
+    extract_uploaded_job_description,
 )
 
 
@@ -684,6 +690,61 @@ async def search_uploaded_resume_route(
         )
 
     return UploadedResumeSearchResponse(**result)
+
+
+@router.post(
+    "/extract-uploaded-job-description",
+    response_model=UploadedJobDescriptionExtractResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Uploaded job description could not be processed.",
+        },
+        415: {
+            "model": ApiErrorResponse,
+            "description": "Uploaded job description format is not supported.",
+        },
+    },
+)
+async def extract_uploaded_job_description_route(
+    request: UploadedJobDescriptionExtractRequest,
+) -> UploadedJobDescriptionExtractResponse | JSONResponse:
+    """
+    Extract one uploaded job description into cleaned text for the Match UI.
+    """
+
+    try:
+        content_bytes = base64.b64decode(request.content_base64, validate=True)
+    except Exception:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Uploaded job description payload must contain valid base64 content.",
+            details=[{"field": "content_base64"}],
+        )
+
+    try:
+        result = extract_uploaded_job_description(
+            content_bytes=content_bytes,
+            file_name=request.file_name,
+            content_type=request.content_type,
+        )
+    except UploadedJobDescriptionError as exc:
+        normalized_message = exc.message.lower()
+        status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+        error_code = "resume_source_not_supported"
+        if "supported" not in normalized_message and "format" not in normalized_message:
+            status_code = status.HTTP_400_BAD_REQUEST
+            error_code = "validation_error"
+
+        return build_error_response(
+            status_code=status_code,
+            code=error_code,
+            message=exc.message,
+            details=[{"stage": exc.stage}, *exc.details],
+        )
+
+    return UploadedJobDescriptionExtractResponse(**result)
 
 
 @router.post(
