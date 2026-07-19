@@ -37,6 +37,7 @@ from backend.db.candidates import (
     get_candidate_profile,
     search_candidates_by_company_name,
 )
+from backend.db.companies import list_canonical_company_names
 from backend.db.contacts import search_contacts_by_company_name
 from backend.db.interactions import search_interactions_by_company_name
 from backend.db.opportunities import search_opportunities_by_company_name
@@ -148,6 +149,18 @@ def search_candidate_resumes(
         "results": [
             _normalize_candidate_resume_search_result(result) for result in results
         ],
+    }
+
+
+def list_company_directory() -> dict[str, Any]:
+    """
+    Return the canonical company directory used by recruiter-facing lookup UIs.
+    """
+
+    companies = list_canonical_company_names()
+    return {
+        "count": len(companies),
+        "companies": companies,
     }
 
 

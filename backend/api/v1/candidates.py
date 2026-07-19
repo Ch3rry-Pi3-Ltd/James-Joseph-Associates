@@ -43,6 +43,7 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    CompanyDirectoryResponse,
     CompanyContactDiscoveryResponse,
     CompanyInteractionDiscoveryResponse,
     CompanyJobDiscoveryResponse,
@@ -63,6 +64,7 @@ from backend.services.candidate_profiles import (
     discover_interactions_by_company,
     discover_jobs_by_company,
     discover_opportunities_by_company,
+    list_company_directory,
     search_candidate_resumes,
 )
 from backend.services.candidate_resume_files import (
@@ -148,6 +150,18 @@ def build_error_response(
         status_code=status_code,
         content=error_response.model_dump(),
     )
+
+
+@router.get(
+    "/company-directory",
+    response_model=CompanyDirectoryResponse,
+)
+def get_company_directory_route() -> CompanyDirectoryResponse:
+    """
+    Return canonical company names for recruiter-facing picker controls.
+    """
+
+    return CompanyDirectoryResponse(**list_company_directory())
 
 # Register a GET endpoint on this router
 #   - `"/{candidate_id}/profile"` means the route expects a path value such as:

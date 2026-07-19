@@ -162,6 +162,22 @@ class CandidateResumeSearchResponse(BaseModel):
     )
 
 
+class CompanyDirectoryResponse(BaseModel):
+    """
+    Response envelope for canonical company lookup suggestions.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    count: int = Field(
+        description="Total number of canonical company names returned.",
+    )
+    companies: list[str] = Field(
+        default_factory=list,
+        description="Canonical company names sorted alphabetically.",
+    )
+
+
 class CandidateCompanyDiscoveryResult(BaseModel):
     """
     One ranked candidate returned by the company discovery endpoint.

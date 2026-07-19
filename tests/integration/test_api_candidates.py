@@ -393,6 +393,32 @@ def test_candidate_company_discovery_route_returns_ranked_results() -> None:
     )
 
 
+def test_company_directory_route_returns_alphabetical_company_names() -> None:
+    """
+    Verify that the company directory route returns canonical company suggestions.
+    """
+
+    service_result = {
+        "count": 3,
+        "companies": [
+            "Acme Hiring Ltd",
+            "Capgemini UK Plc",
+            "Monzo Bank",
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.list_company_directory",
+        return_value=service_result,
+    ) as mock_list_company_directory:
+        client = make_client()
+        response = client.get("/api/v1/candidates/company-directory")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_list_company_directory.assert_called_once_with()
+
+
 def test_candidate_company_discovery_route_rejects_blank_company_name() -> None:
     """
     Verify that the company-discovery route rejects blank queries cleanly.

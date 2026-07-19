@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 type ApiErrorResponse = {
   error: {
@@ -110,15 +110,15 @@ type CompanyInteractionDiscoveryResponse = {
   results: CompanyInteractionDiscoveryResult[];
 };
 
+type CompanyDirectoryResponse = {
+  count: number;
+  companies: string[];
+};
+
 const EXAMPLE_COMPANY = "Capgemini UK Plc";
 
 function isApiErrorResponse(
-  payload:
-    | CandidateCompanyDiscoveryResponse
-    | CompanyContactDiscoveryResponse
-    | CompanyInteractionDiscoveryResponse
-    | CompanyJobDiscoveryResponse
-    | ApiErrorResponse,
+  payload: unknown,
 ): payload is ApiErrorResponse {
   return (
     typeof payload === "object" &&
@@ -166,10 +166,48 @@ function describeCompanyMatch(source: string): string {
   return source.replaceAll("_", " ");
 }
 
+function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
+  if (!excerpt || excerpt.trim() === "") {
+    return "-";
+  }
+
+  const parts = excerpt.split(/(<mark>|<\/mark>)/);
+  let isHighlighted = false;
+
+  return parts
+    .filter((part) => part !== "")
+    .map((part, index) => {
+      if (part === "<mark>") {
+        isHighlighted = true;
+        return null;
+      }
+
+      if (part === "</mark>") {
+        isHighlighted = false;
+        return null;
+      }
+
+      if (isHighlighted) {
+        return (
+          <mark
+            key={`company-excerpt-${index}`}
+            className="rounded bg-emerald-100 px-1 text-zinc-950"
+          >
+            {part}
+          </mark>
+        );
+      }
+
+      return <span key={`company-excerpt-${index}`}>{part}</span>;
+    });
+}
+
 export function CompanyDiscoveryWorkspace() {
   const [companyName, setCompanyName] = useState(EXAMPLE_COMPANY);
+  const [companyDirectory, setCompanyDirectory] = useState<string[]>([]);
   const [resultLimit, setResultLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDirectoryLoading, setIsDirectoryLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
     null,
@@ -183,6 +221,41 @@ export function CompanyDiscoveryWorkspace() {
   const [interactionResults, setInteractionResults] = useState<
     CompanyInteractionDiscoveryResult[]
   >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCompanyDirectory() {
+      setIsDirectoryLoading(true);
+
+      try {
+        const response = await fetch("/api/v1/candidates/company-directory", {
+          method: "GET",
+        });
+        const payload = (await response.json()) as
+          | CompanyDirectoryResponse
+          | ApiErrorResponse;
+
+        if (!response.ok || isApiErrorResponse(payload)) {
+          return;
+        }
+
+        if (isMounted) {
+          setCompanyDirectory(payload.companies);
+        }
+      } finally {
+        if (isMounted) {
+          setIsDirectoryLoading(false);
+        }
+      }
+    }
+
+    void loadCompanyDirectory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const summaryText = useMemo(() => {
     if (!submittedCompanyName) {
@@ -443,13 +516,26 @@ export function CompanyDiscoveryWorkspace() {
             <span className="text-sm font-semibold uppercase text-zinc-500">
               Company name
             </span>
-            <input
-              type="text"
-              value={companyName}
-              onChange={(event) => setCompanyName(event.target.value)}
-              placeholder="Capgemini UK Plc"
-              className="workspace-input h-12 px-4 text-base text-zinc-950"
-            />
+            <div className="grid gap-2">
+              <input
+                type="text"
+                list="company-directory-options"
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+                placeholder="Start typing a company name"
+                className="workspace-input h-12 px-4 text-base text-zinc-950"
+              />
+              <datalist id="company-directory-options">
+                {companyDirectory.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+              <p className="text-sm text-zinc-500">
+                {isDirectoryLoading
+                  ? "Loading canonical companies..."
+                  : `${companyDirectory.length} canonical companies loaded. Start typing to filter the list.`}
+              </p>
+            </div>
           </label>
 
           <label className="grid gap-2">
@@ -505,6 +591,10 @@ export function CompanyDiscoveryWorkspace() {
               <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
                 Who already works there?
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+                Candidates whose current employer or CV evidence already points
+                to the target company.
+              </p>
             </div>
             <p className="text-sm text-zinc-600">
               {candidateResults.length} matches
@@ -514,7 +604,8 @@ export function CompanyDiscoveryWorkspace() {
           <div className="mt-5 grid gap-4">
             {candidateResults.length === 0 ? (
               <div className="workspace-empty p-5 text-sm text-zinc-600">
-                No candidate matches returned yet.
+                No candidate matches were found for this company in the current
+                canonical CV corpus.
               </div>
             ) : (
               candidateResults.map((result) => (
@@ -550,7 +641,7 @@ export function CompanyDiscoveryWorkspace() {
                     </div>
                     <div className="grid grid-cols-[9rem_1fr] gap-3">
                       <dt className="font-semibold text-zinc-500">Evidence</dt>
-                      <dd>{result.match_excerpt ?? "-"}</dd>
+                      <dd>{renderHighlightedExcerpt(result.match_excerpt)}</dd>
                     </div>
                   </dl>
 
@@ -585,6 +676,10 @@ export function CompanyDiscoveryWorkspace() {
               <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
                 Who do we already know there?
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+                Canonical contact or hiring-manager records already linked to
+                the target company.
+              </p>
             </div>
             <p className="text-sm text-zinc-600">
               {contactResults.length} contacts
@@ -594,7 +689,8 @@ export function CompanyDiscoveryWorkspace() {
           <div className="mt-5 grid gap-4">
             {contactResults.length === 0 ? (
               <div className="workspace-empty p-5 text-sm text-zinc-600">
-                No company-linked contacts returned yet.
+                No canonical contacts or hiring managers are currently linked
+                to this company.
               </div>
             ) : (
               contactResults.map((result) => (
@@ -679,6 +775,10 @@ export function CompanyDiscoveryWorkspace() {
               <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
                 Who has been spoken to before?
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+                Recent interaction records tied to people or entities already
+                linked to the target company.
+              </p>
             </div>
             <p className="text-sm text-zinc-600">
               {interactionResults.length} interactions
@@ -688,7 +788,8 @@ export function CompanyDiscoveryWorkspace() {
           <div className="mt-5 grid gap-4">
             {interactionResults.length === 0 ? (
               <div className="workspace-empty p-5 text-sm text-zinc-600">
-                No recent interaction evidence returned yet.
+                No recent interaction evidence is currently linked to this
+                company.
               </div>
             ) : (
               interactionResults.map((result) => (
@@ -744,6 +845,10 @@ export function CompanyDiscoveryWorkspace() {
               <h2 className="mt-2 text-3xl font-semibold text-zinc-950">
                 Which roles are already linked?
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+                Open or recent canonical jobs already connected to the target
+                company.
+              </p>
             </div>
             <p className="text-sm text-zinc-600">{jobResults.length} jobs</p>
           </div>
@@ -751,7 +856,7 @@ export function CompanyDiscoveryWorkspace() {
           <div className="mt-5 grid gap-4">
             {jobResults.length === 0 ? (
               <div className="workspace-empty p-5 text-sm text-zinc-600">
-                No linked jobs returned yet.
+                No canonical jobs are currently linked to this company.
               </div>
             ) : (
               jobResults.map((result) => (
