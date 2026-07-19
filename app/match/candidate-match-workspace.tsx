@@ -687,6 +687,7 @@ export function CandidateMatchWorkspace() {
   const [shortlistResults, setShortlistResults] = useState<
     CandidateJobDescriptionShortlistItem[]
   >([]);
+  const [isSearchResultsExpanded, setIsSearchResultsExpanded] = useState(false);
   const [submittedSearchQuery, setSubmittedSearchQuery] = useState<string | null>(
     null,
   );
@@ -3638,6 +3639,29 @@ export function CandidateMatchWorkspace() {
           </div>
         </div>
 
+        <button
+          type="button"
+          onClick={() => setIsSearchResultsExpanded((current) => !current)}
+          className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-left transition hover:border-zinc-300 hover:bg-zinc-100"
+          aria-expanded={isSearchResultsExpanded}
+          aria-controls="corpus-search-panel"
+        >
+          <div className="grid gap-1">
+            <span className="text-sm font-semibold text-zinc-950">
+              {isSearchResultsExpanded ? "Hide corpus results" : "Show corpus results"}
+            </span>
+            <span className="text-sm leading-6 text-zinc-600">
+              Open this when you want to inspect the raw retrieval pool before
+              running the final shortlist.
+            </span>
+          </div>
+          <span className="text-lg text-zinc-500" aria-hidden="true">
+            {isSearchResultsExpanded ? "▾" : "▸"}
+          </span>
+        </button>
+
+        {isSearchResultsExpanded ? (
+          <div id="corpus-search-panel" className="grid gap-6">
         {submittedSearchQuery ? (
           <div className="grid gap-1 rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-600">
             <p>
@@ -3825,6 +3849,8 @@ export function CandidateMatchWorkspace() {
             </article>
           ))}
         </div>
+          </div>
+        ) : null}
       </section>
     </div>
   );

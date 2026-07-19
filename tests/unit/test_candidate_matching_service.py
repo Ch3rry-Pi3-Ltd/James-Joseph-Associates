@@ -194,6 +194,101 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
 
 
+def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Verify that shortlist output is JSON-safe for API response validation.
+    """
+
+    person_id = uuid4()
+    document_id = uuid4()
+    resume_updated_at = datetime(2026, 7, 19, 18, 30, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "search_candidates_hybrid",
+        lambda **kwargs: [
+            {
+                "candidate_id": "cand-1",
+                "person_id": person_id,
+                "full_name": "A Candidate",
+                "current_title": "Financial Systems Analyst",
+                "candidate_status": "active",
+                "current_company_name": "Example Co",
+                "resume_updated_at": resume_updated_at,
+                "document_id": document_id,
+                "document_title": "candidate-cv.pdf",
+                "document_source_uri": "dropbox:///cv/candidate-cv.pdf",
+                "match_score": 0.88,
+                "retrieval_sources": ["text"],
+                "text_rank": 1,
+                "semantic_rank": None,
+                "text_score": 0.88,
+                "semantic_score": None,
+                "semantic_block_type": "experience",
+                "semantic_block_label": "Recent role",
+                "match_excerpt": "finance systems reporting",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "_attach_graph_evidence_to_candidates",
+        lambda candidates, **kwargs: [
+            {
+                **candidate,
+                "graph_evidence": {
+                    "candidate_id": candidate["candidate_id"],
+                    "contacts": [],
+                    "interactions": [],
+                    "jobs": [],
+                    "opportunities": [],
+                    "last_seen_at": resume_updated_at,
+                },
+            }
+            for candidate in candidates
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "_score_candidates_with_graph_context",
+        lambda candidates: [
+            {
+                **candidate,
+                "graph_context_score": 0.3,
+                "ranking_input_score": 0.91,
+            }
+            for candidate in candidates
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "_rank_retrieved_candidates_for_job_description",
+        lambda **kwargs: [
+            CandidateShortlistAssessment(
+                candidate_id="cand-1",
+                fit_score=91,
+                fit_summary="Strong fit.",
+                strengths=["Finance systems"],
+                gaps=[],
+            )
+        ],
+    )
+
+    result = build_candidate_job_description_shortlist(
+        job_description="finance systems analyst",
+        retrieval_limit=10,
+        shortlist_limit=3,
+    )
+
+    shortlisted = result["shortlisted_candidates"][0]
+    assert shortlisted["person_id"] == str(person_id)
+    assert shortlisted["document_id"] == str(document_id)
+    assert shortlisted["resume_updated_at"] == resume_updated_at.isoformat()
+    assert shortlisted["graph_evidence"]["last_seen_at"] == resume_updated_at.isoformat()
+
+
 def test_build_candidate_graph_evidence_composes_company_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

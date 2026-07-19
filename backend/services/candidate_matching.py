@@ -141,23 +141,35 @@ def build_candidate_job_description_shortlist(
         shortlisted_candidates.append(
             {
                 "candidate_id": candidate_id,
-                "person_id": matched_candidate["person_id"],
-                "full_name": matched_candidate.get("full_name"),
-                "current_title": matched_candidate.get("current_title"),
-                "candidate_status": matched_candidate.get("candidate_status"),
-                "current_company_name": matched_candidate.get(
-                    "current_company_name"
+                "person_id": _json_safe_value(matched_candidate["person_id"]),
+                "full_name": _json_safe_value(matched_candidate.get("full_name")),
+                "current_title": _json_safe_value(
+                    matched_candidate.get("current_title")
                 ),
-                "resume_updated_at": matched_candidate.get("resume_updated_at"),
-                "document_id": matched_candidate["document_id"],
-                "document_title": matched_candidate.get("document_title"),
-                "document_source_uri": matched_candidate.get("document_source_uri"),
+                "candidate_status": _json_safe_value(
+                    matched_candidate.get("candidate_status")
+                ),
+                "current_company_name": _json_safe_value(
+                    matched_candidate.get("current_company_name")
+                ),
+                "resume_updated_at": _json_safe_value(
+                    matched_candidate.get("resume_updated_at")
+                ),
+                "document_id": _json_safe_value(matched_candidate["document_id"]),
+                "document_title": _json_safe_value(
+                    matched_candidate.get("document_title")
+                ),
+                "document_source_uri": _json_safe_value(
+                    matched_candidate.get("document_source_uri")
+                ),
                 "retrieval_score": float(matched_candidate.get("match_score") or 0.0),
                 "retrieval_sources": list(
-                    matched_candidate.get("retrieval_sources") or []
+                    _json_safe_value(matched_candidate.get("retrieval_sources") or [])
                 ),
-                "text_rank": matched_candidate.get("text_rank"),
-                "semantic_rank": matched_candidate.get("semantic_rank"),
+                "text_rank": _json_safe_value(matched_candidate.get("text_rank")),
+                "semantic_rank": _json_safe_value(
+                    matched_candidate.get("semantic_rank")
+                ),
                 "text_score": float(matched_candidate.get("text_score") or 0.0)
                 if matched_candidate.get("text_score") is not None
                 else None,
@@ -166,16 +178,26 @@ def build_candidate_job_description_shortlist(
                 )
                 if matched_candidate.get("semantic_score") is not None
                 else None,
-                "semantic_block_type": matched_candidate.get("semantic_block_type"),
-                "semantic_block_label": matched_candidate.get("semantic_block_label"),
-                "graph_context_score": matched_candidate.get("graph_context_score"),
-                "ranking_input_score": matched_candidate.get("ranking_input_score"),
+                "semantic_block_type": _json_safe_value(
+                    matched_candidate.get("semantic_block_type")
+                ),
+                "semantic_block_label": _json_safe_value(
+                    matched_candidate.get("semantic_block_label")
+                ),
+                "graph_context_score": _json_safe_value(
+                    matched_candidate.get("graph_context_score")
+                ),
+                "ranking_input_score": _json_safe_value(
+                    matched_candidate.get("ranking_input_score")
+                ),
                 "fit_score": assessment.fit_score,
                 "fit_summary": assessment.fit_summary,
                 "strengths": list(assessment.strengths),
                 "gaps": list(assessment.gaps),
-                "match_excerpt": matched_candidate.get("match_excerpt"),
-                "graph_evidence": matched_candidate.get("graph_evidence"),
+                "match_excerpt": _json_safe_value(matched_candidate.get("match_excerpt")),
+                "graph_evidence": _json_safe_value(
+                    matched_candidate.get("graph_evidence")
+                ),
             }
         )
         seen_candidate_ids.add(candidate_id)

@@ -35,6 +35,7 @@ from typing import Any
 
 from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse, Response
+from pydantic import ValidationError
 
 from backend.schemas.candidates import (
     CandidateCompanyDiscoveryResponse,
@@ -798,7 +799,15 @@ def match_job_description_route(
             details=[{"error_type": exc.__class__.__name__}],
         )
 
-    return CandidateJobDescriptionMatchResponse(**result)
+    try:
+        return CandidateJobDescriptionMatchResponse(**result)
+    except ValidationError as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Candidate shortlisting response validation failed.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
 
 
 __all__ = ["router"]
