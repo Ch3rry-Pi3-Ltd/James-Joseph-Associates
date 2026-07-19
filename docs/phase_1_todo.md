@@ -7,6 +7,13 @@ This is the trimmed engineering backlog that matters most right now.
 
 - [ ] Keep Supabase service live while ownership/billing is sorted.
 - [ ] Write and verify a controlled database export / migration path into a future Tom-owned setup.
+- [ ] Complete production auth cutover:
+  - [ ] Tom to provide/control a real DNS-backed subdomain for the app
+    (recommended: `app.jamesjosephassociates.co.uk`)
+  - [ ] Add the custom domain to Vercel and point DNS correctly
+  - [ ] Create the Clerk production instance against that real domain
+  - [ ] Replace Clerk test keys in Vercel with `pk_live_...` and `sk_live_...`
+  - [ ] Verify first-time sign-in and protected-route behavior on the real domain
 - [ ] Polish the `/match` UI for UAT:
   - [ ] clearer instructions
   - [ ] more intuitive flow labels
