@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { requireAuthorizedUser } from "@/lib/auth";
 
 type ReviewCounts = {
   people: number;
@@ -216,6 +217,8 @@ export default async function ReviewPage() {
    * - keep it read-only
    * - make it useful before we build a fuller ingestion console
    */
+
+  await requireAuthorizedUser();
 
   const overview = await getReviewOverview();
   const counts = {

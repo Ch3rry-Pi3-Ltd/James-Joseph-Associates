@@ -1,5 +1,6 @@
 "use client";
 
+import { ClerkLoaded, ClerkLoading, UserButton, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,6 +26,7 @@ function isActivePath(pathname: string, href: string): boolean {
 
 export function WorkspaceNav() {
   const pathname = usePathname();
+  const { userId } = useAuth();
 
   return (
     <div className="border-b border-zinc-800 bg-[#101714] text-zinc-50">
@@ -54,25 +56,60 @@ export function WorkspaceNav() {
 
         <nav
           aria-label="Primary"
-          className="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-[#161f1b] p-2"
+          className="flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#161f1b] p-2 md:flex-row md:items-center md:justify-between"
         >
-          {navigationItems.map((item) => {
-            const isActive = isActivePath(pathname, item.href);
+          <div className="flex flex-wrap gap-2">
+            {navigationItems.map((item) => {
+              const isActive = isActivePath(pathname, item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold transition ${
-                  isActive
-                    ? "bg-white text-zinc-950 shadow-sm"
-                    : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold transition ${
+                    isActive
+                      ? "bg-white text-zinc-950 shadow-sm"
+                      : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <ClerkLoading>
+              <div className="h-10 w-10 rounded-full border border-zinc-700 bg-zinc-900/60" />
+            </ClerkLoading>
+
+            <ClerkLoaded>
+              {userId ? (
+                <>
+                  <div className="hidden text-right md:block">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                      Auth
+                    </p>
+                    <p className="text-sm text-zinc-300">Clerk protected</p>
+                  </div>
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        userButtonAvatarBox: "h-10 w-10",
+                      },
+                    }}
+                  />
+                </>
+              ) : (
+                <Link
+                  href="/sign-in"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800 hover:text-white"
+                >
+                  Sign in
+                </Link>
+              )}
+            </ClerkLoaded>
+          </div>
         </nav>
       </div>
     </div>

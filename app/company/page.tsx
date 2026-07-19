@@ -1,6 +1,9 @@
 import { CompanyDiscoveryWorkspace } from "./company-discovery-workspace";
+import { requireAuthorizedUser } from "@/lib/auth";
 
-export default function CompanyPage() {
+export default async function CompanyPage() {
+  await requireAuthorizedUser();
+
   return (
     <main className="min-h-screen bg-[#eef1ec] text-zinc-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-10">

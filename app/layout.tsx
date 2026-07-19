@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { WorkspaceNav } from "./workspace-nav";
 
@@ -33,26 +33,6 @@ import { WorkspaceNav } from "./workspace-nav";
  * - The `children` prop is where the active page is rendered.
  * - Global CSS is imported here so it applies across the whole frontend.
  */
-
-// Geist Sans is the main UI font.
-//   - Next loads it through `next/font`.
-//   - The generated CSS variable is then exposed to Tailwind through
-//     `app/globals.css`.
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-// Geist Mono is the monospace font used for code-like text.
-//   - In the current UI, this is useful for route strings such as:
-//
-//       GET /api/v1/health
-//
-//   - Keeping it configured at the layout level makes it available everywhere.
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 // Browser and search metadata for the app.
 //   - This replaces the default Create Next App text.
@@ -91,18 +71,17 @@ export default function RootLayout({
    */
 
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       {/* 
         Shared body wrapper.
         - `min-h-full` lets pages fill the available browser height.
         - `flex flex-col` gives page layouts a stable vertical structure.
       */}
       <body className="min-h-full flex flex-col">
-        <WorkspaceNav />
-        <div className="flex-1">{children}</div>
+        <ClerkProvider afterSignOutUrl="/sign-in">
+          <WorkspaceNav />
+          <div className="flex-1">{children}</div>
+        </ClerkProvider>
       </body>
     </html>
   );
