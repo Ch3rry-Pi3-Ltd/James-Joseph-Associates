@@ -1,8 +1,18 @@
 import { CompanyDiscoveryWorkspace } from "./company-discovery-workspace";
 import { requireAuthorizedUser } from "@/lib/auth";
 
-export default async function CompanyPage() {
+type CompanyPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function CompanyPage({
+  searchParams,
+}: CompanyPageProps) {
   await requireAuthorizedUser();
+  const resolvedSearchParams = await searchParams;
+  const requestedCompany = resolvedSearchParams.company;
+  const initialCompanyName =
+    typeof requestedCompany === "string" ? requestedCompany : null;
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#eef1ec_0%,#f6f6f1_40%,#fbfbf8_100%)] text-zinc-950">
@@ -81,7 +91,7 @@ export default async function CompanyPage() {
           </div>
         </header>
 
-        <CompanyDiscoveryWorkspace />
+        <CompanyDiscoveryWorkspace initialCompanyName={initialCompanyName} />
       </section>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 type ApiErrorResponse = {
   error: {
@@ -206,13 +206,21 @@ function escapeRegexLiteral(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function CompanyDiscoveryWorkspace() {
+type CompanyDiscoveryWorkspaceProps = {
+  initialCompanyName?: string | null;
+};
+
+export function CompanyDiscoveryWorkspace({
+  initialCompanyName = null,
+}: CompanyDiscoveryWorkspaceProps) {
   const [companyName, setCompanyName] = useState(EXAMPLE_COMPANY);
   const [companyDirectory, setCompanyDirectory] = useState<string[]>([]);
   const [resultLimit, setResultLimit] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectoryLoading, setIsDirectoryLoading] = useState(false);
   const [isCompanyPickerOpen, setIsCompanyPickerOpen] = useState(false);
+  const [hasAppliedInitialCompanyName, setHasAppliedInitialCompanyName] =
+    useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submittedCompanyName, setSubmittedCompanyName] = useState<string | null>(
     null,
@@ -319,6 +327,193 @@ export function CompanyDiscoveryWorkspace() {
       .slice(0, 12);
   }, [companyDirectory, companyName]);
 
+  const runLookupForCompany = useCallback(
+    async (requestedCompanyName?: string) => {
+      const normalizedCompanyName = (requestedCompanyName ?? companyName).trim();
+      if (normalizedCompanyName === "") {
+        setErrorMessage("Company name must not be blank.");
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const queryString = new URLSearchParams({
+          company_name: normalizedCompanyName,
+          limit: String(resultLimit),
+        }).toString();
+
+        const [
+          candidateResponse,
+          contactResponse,
+          interactionResponse,
+          jobResponse,
+        ] = await Promise.all([
+          fetch(`/api/v1/candidates/discover-by-company?${queryString}`, {
+            method: "GET",
+          }),
+          fetch(`/api/v1/candidates/discover-contacts-by-company?${queryString}`, {
+            method: "GET",
+          }),
+          fetch(
+            `/api/v1/candidates/discover-interactions-by-company?${queryString}`,
+            {
+              method: "GET",
+            },
+          ),
+          fetch(`/api/v1/candidates/discover-jobs-by-company?${queryString}`, {
+            method: "GET",
+          }),
+        ]);
+
+        const candidatePayload =
+          (await candidateResponse.json()) as
+            | CandidateCompanyDiscoveryResponse
+            | ApiErrorResponse;
+        const jobPayload =
+          (await jobResponse.json()) as
+            | CompanyJobDiscoveryResponse
+            | ApiErrorResponse;
+        const contactPayload =
+          (await contactResponse.json()) as
+            | CompanyContactDiscoveryResponse
+            | ApiErrorResponse;
+        const interactionPayload =
+          (await interactionResponse.json()) as
+            | CompanyInteractionDiscoveryResponse
+            | ApiErrorResponse;
+
+        if (!candidateResponse.ok) {
+          setErrorMessage(
+            isApiErrorResponse(candidatePayload)
+              ? candidatePayload.error.message
+              : `Candidate lookup failed with ${candidateResponse.status}.`,
+          );
+          setCandidateResults([]);
+          setContactResults([]);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (isApiErrorResponse(candidatePayload)) {
+          setErrorMessage(candidatePayload.error.message);
+          setCandidateResults([]);
+          setContactResults([]);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (!contactResponse.ok) {
+          setErrorMessage(
+            isApiErrorResponse(contactPayload)
+              ? contactPayload.error.message
+              : `Contact lookup failed with ${contactResponse.status}.`,
+          );
+          setCandidateResults(candidatePayload.results);
+          setContactResults([]);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (isApiErrorResponse(contactPayload)) {
+          setErrorMessage(contactPayload.error.message);
+          setCandidateResults(candidatePayload.results);
+          setContactResults([]);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (!interactionResponse.ok) {
+          setErrorMessage(
+            isApiErrorResponse(interactionPayload)
+              ? interactionPayload.error.message
+              : `Interaction lookup failed with ${interactionResponse.status}.`,
+          );
+          setCandidateResults(candidatePayload.results);
+          setContactResults(contactPayload.results);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (isApiErrorResponse(interactionPayload)) {
+          setErrorMessage(interactionPayload.error.message);
+          setCandidateResults(candidatePayload.results);
+          setContactResults(contactPayload.results);
+          setInteractionResults([]);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (!jobResponse.ok) {
+          setErrorMessage(
+            isApiErrorResponse(jobPayload)
+              ? jobPayload.error.message
+              : `Job lookup failed with ${jobResponse.status}.`,
+          );
+          setCandidateResults(candidatePayload.results);
+          setContactResults(contactPayload.results);
+          setInteractionResults(interactionPayload.results);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        if (isApiErrorResponse(jobPayload)) {
+          setErrorMessage(jobPayload.error.message);
+          setCandidateResults(candidatePayload.results);
+          setContactResults(contactPayload.results);
+          setInteractionResults(interactionPayload.results);
+          setJobResults([]);
+          setSubmittedCompanyName(normalizedCompanyName);
+          return;
+        }
+
+        setCandidateResults(candidatePayload.results);
+        setContactResults(contactPayload.results);
+        setInteractionResults(interactionPayload.results);
+        setJobResults(jobPayload.results);
+        setSubmittedCompanyName(normalizedCompanyName);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Company lookup failed unexpectedly.",
+        );
+        setCandidateResults([]);
+        setContactResults([]);
+        setInteractionResults([]);
+        setJobResults([]);
+        setSubmittedCompanyName(normalizedCompanyName);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [companyName, resultLimit],
+  );
+
+  useEffect(() => {
+    const normalizedInitialCompanyName = initialCompanyName?.trim();
+    if (!normalizedInitialCompanyName || hasAppliedInitialCompanyName) {
+      return;
+    }
+
+    setCompanyName(normalizedInitialCompanyName);
+    setHasAppliedInitialCompanyName(true);
+    void runLookupForCompany(normalizedInitialCompanyName);
+  }, [hasAppliedInitialCompanyName, initialCompanyName, runLookupForCompany]);
+
   async function runLookup() {
     const normalizedCompanyName = companyName.trim();
     if (normalizedCompanyName === "") {
@@ -326,168 +521,7 @@ export function CompanyDiscoveryWorkspace() {
       return;
     }
 
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const queryString = new URLSearchParams({
-        company_name: normalizedCompanyName,
-        limit: String(resultLimit),
-      }).toString();
-
-      const [
-        candidateResponse,
-        contactResponse,
-        interactionResponse,
-        jobResponse,
-      ] = await Promise.all([
-        fetch(`/api/v1/candidates/discover-by-company?${queryString}`, {
-          method: "GET",
-        }),
-        fetch(`/api/v1/candidates/discover-contacts-by-company?${queryString}`, {
-          method: "GET",
-        }),
-        fetch(
-          `/api/v1/candidates/discover-interactions-by-company?${queryString}`,
-          {
-            method: "GET",
-          },
-        ),
-        fetch(`/api/v1/candidates/discover-jobs-by-company?${queryString}`, {
-          method: "GET",
-        }),
-      ]);
-
-      const candidatePayload =
-        (await candidateResponse.json()) as
-          | CandidateCompanyDiscoveryResponse
-          | ApiErrorResponse;
-      const jobPayload =
-        (await jobResponse.json()) as CompanyJobDiscoveryResponse | ApiErrorResponse;
-      const contactPayload =
-        (await contactResponse.json()) as
-          | CompanyContactDiscoveryResponse
-          | ApiErrorResponse;
-      const interactionPayload =
-        (await interactionResponse.json()) as
-          | CompanyInteractionDiscoveryResponse
-          | ApiErrorResponse;
-
-      if (!candidateResponse.ok) {
-        setErrorMessage(
-          isApiErrorResponse(candidatePayload)
-            ? candidatePayload.error.message
-            : `Candidate lookup failed with ${candidateResponse.status}.`,
-        );
-        setCandidateResults([]);
-        setContactResults([]);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (isApiErrorResponse(candidatePayload)) {
-        setErrorMessage(candidatePayload.error.message);
-        setCandidateResults([]);
-        setContactResults([]);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (!contactResponse.ok) {
-        setErrorMessage(
-          isApiErrorResponse(contactPayload)
-            ? contactPayload.error.message
-            : `Contact lookup failed with ${contactResponse.status}.`,
-        );
-        setCandidateResults(candidatePayload.results);
-        setContactResults([]);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (isApiErrorResponse(contactPayload)) {
-        setErrorMessage(contactPayload.error.message);
-        setCandidateResults(candidatePayload.results);
-        setContactResults([]);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (!interactionResponse.ok) {
-        setErrorMessage(
-          isApiErrorResponse(interactionPayload)
-            ? interactionPayload.error.message
-            : `Interaction lookup failed with ${interactionResponse.status}.`,
-        );
-        setCandidateResults(candidatePayload.results);
-        setContactResults(contactPayload.results);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (isApiErrorResponse(interactionPayload)) {
-        setErrorMessage(interactionPayload.error.message);
-        setCandidateResults(candidatePayload.results);
-        setContactResults(contactPayload.results);
-        setInteractionResults([]);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (!jobResponse.ok) {
-        setErrorMessage(
-          isApiErrorResponse(jobPayload)
-            ? jobPayload.error.message
-            : `Job lookup failed with ${jobResponse.status}.`,
-        );
-        setCandidateResults(candidatePayload.results);
-        setContactResults(contactPayload.results);
-        setInteractionResults(interactionPayload.results);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      if (isApiErrorResponse(jobPayload)) {
-        setErrorMessage(jobPayload.error.message);
-        setCandidateResults(candidatePayload.results);
-        setContactResults(contactPayload.results);
-        setInteractionResults(interactionPayload.results);
-        setJobResults([]);
-        setSubmittedCompanyName(normalizedCompanyName);
-        return;
-      }
-
-      setCandidateResults(candidatePayload.results);
-      setContactResults(contactPayload.results);
-      setInteractionResults(interactionPayload.results);
-      setJobResults(jobPayload.results);
-      setSubmittedCompanyName(normalizedCompanyName);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Company lookup failed unexpectedly.",
-      );
-      setCandidateResults([]);
-      setContactResults([]);
-      setInteractionResults([]);
-      setJobResults([]);
-      setSubmittedCompanyName(normalizedCompanyName);
-    } finally {
-      setIsLoading(false);
-    }
+    await runLookupForCompany(normalizedCompanyName);
   }
 
   return (
