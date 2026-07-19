@@ -790,6 +790,13 @@ def match_job_description_route(
             message=exc.message,
             details=[{"stage": exc.stage}, *exc.details],
         )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Candidate shortlisting failed unexpectedly.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
 
     return CandidateJobDescriptionMatchResponse(**result)
 

@@ -1308,3 +1308,37 @@ def test_match_job_description_route_rejects_blank_description() -> None:
         }
     }
     mock_build_candidate_job_description_shortlist.assert_not_called()
+
+
+def test_match_job_description_route_handles_unexpected_failure() -> None:
+    """
+    Verify that unexpected shortlist failures still return the standard API shape.
+    """
+
+    with patch(
+        "backend.api.v1.candidates.build_candidate_job_description_shortlist",
+        side_effect=RuntimeError("boom"),
+    ) as mock_build_candidate_job_description_shortlist:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/match-job-description",
+            json={
+                "job_description": "python data engineer",
+                "retrieval_limit": 25,
+                "shortlist_limit": 3,
+            },
+        )
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert response.json() == {
+        "error": {
+            "code": "internal_error",
+            "message": "Candidate shortlisting failed unexpectedly.",
+            "details": [{"error_type": "RuntimeError"}],
+        }
+    }
+    mock_build_candidate_job_description_shortlist.assert_called_once_with(
+        job_description="python data engineer",
+        retrieval_limit=25,
+        shortlist_limit=3,
+    )

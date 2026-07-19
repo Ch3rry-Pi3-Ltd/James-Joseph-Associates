@@ -375,6 +375,19 @@ function isApiErrorResponse(payload: unknown): payload is ApiErrorResponse {
   return "error" in payload;
 }
 
+async function readJsonResponse(response: Response): Promise<unknown> {
+  const responseText = await response.text();
+  if (responseText.trim() === "") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(responseText) as unknown;
+  } catch {
+    return responseText;
+  }
+}
+
 function formatTimestamp(value: string | null): string {
   if (!value) {
     return "Unknown";
@@ -916,7 +929,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
         setSearchResults([]);
@@ -980,7 +993,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
         setUploadedJobDescriptionResult(null);
@@ -1046,13 +1059,14 @@ export function CandidateMatchWorkspace() {
         }),
       });
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
         setShortlistResults([]);
         setSubmittedJobDescription(trimmedDescription);
         setShortlistErrorMessage(
           (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            (typeof payload === "string" ? payload : undefined) ??
             `Shortlist request failed with ${response.status}.`,
         );
         return;
