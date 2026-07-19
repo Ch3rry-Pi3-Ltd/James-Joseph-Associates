@@ -960,6 +960,26 @@ export function CandidateMatchWorkspace() {
     return `${companyOpportunityResults.length} opportunities returned.`;
   }, [companyOpportunityResults.length, submittedCompanyName]);
 
+  const primaryCompanyContact = useMemo(() => {
+    if (companyContactResults.length === 0) {
+      return null;
+    }
+
+    return (
+      companyContactResults.find(
+        (contact) => contact.is_hiring_manager || contact.role_is_current,
+      ) ?? companyContactResults[0]
+    );
+  }, [companyContactResults]);
+
+  const primaryCompanyInteraction = useMemo(() => {
+    if (companyInteractionResults.length === 0) {
+      return null;
+    }
+
+    return companyInteractionResults[0];
+  }, [companyInteractionResults]);
+
   async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
     const trimmedFocusQuery = (
@@ -2633,8 +2653,7 @@ export function CandidateMatchWorkspace() {
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-zinc-700">
                   This brings in existing company-linked contacts, interactions,
-                  jobs, and opportunities so Tom can use that context alongside
-                  the candidate shortlist.
+                  jobs, and opportunities alongside the candidate shortlist.
                 </p>
               </div>
 
@@ -2689,6 +2708,110 @@ export function CandidateMatchWorkspace() {
                     {companyOpportunityResults.length}
                   </p>
                 </div>
+              </div>
+            ) : null}
+
+            {!companyDiscoveryLoading &&
+            (primaryCompanyContact || primaryCompanyInteraction) ? (
+              <div className="grid gap-4 xl:grid-cols-2">
+                <article className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                      Best known contact
+                    </span>
+                    {primaryCompanyContact?.is_hiring_manager ? (
+                      <span className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                        Hiring manager
+                      </span>
+                    ) : null}
+                    {primaryCompanyContact ? (
+                      <span className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-700">
+                        {formatCompanyMatchSourceLabel(
+                          primaryCompanyContact.company_match_source,
+                        )}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {primaryCompanyContact ? (
+                    <>
+                      <h4 className="mt-4 text-lg font-semibold text-zinc-950">
+                        {primaryCompanyContact.full_name ?? "Unnamed contact"}
+                      </h4>
+                      <p className="mt-1 text-sm leading-6 text-zinc-700">
+                        {primaryCompanyContact.role_title ??
+                          primaryCompanyContact.headline ??
+                          "Role not available"}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-900">
+                        {primaryCompanyContact.primary_email ??
+                          primaryCompanyContact.primary_phone ??
+                          "No direct contact details"}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-600">
+                        {primaryCompanyContact.location ??
+                          "Location not available"}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mt-4 rounded-md border border-dashed border-zinc-300 bg-white p-4 text-sm leading-6 text-zinc-600">
+                      No contact route has been linked to this company yet.
+                    </div>
+                  )}
+                </article>
+
+                <article className="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">
+                      Strongest prior interaction
+                    </span>
+                    {primaryCompanyInteraction ? (
+                      <>
+                        <span className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatUnderscoredLabel(
+                            primaryCompanyInteraction.interaction_type,
+                          )}
+                        </span>
+                        <span className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-xs font-semibold text-zinc-700">
+                          {formatUnderscoredLabel(
+                            primaryCompanyInteraction.matched_entity_type,
+                          )}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
+
+                  {primaryCompanyInteraction ? (
+                    <>
+                      <h4 className="mt-4 text-lg font-semibold text-zinc-950">
+                        {primaryCompanyInteraction.full_name ??
+                          primaryCompanyInteraction.subject ??
+                          "Interaction"}
+                      </h4>
+                      <p className="mt-1 text-sm leading-6 text-zinc-700">
+                        {primaryCompanyInteraction.role_title ??
+                          primaryCompanyInteraction.company_name ??
+                          "No linked role title"}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-900">
+                        {primaryCompanyInteraction.summary ??
+                          primaryCompanyInteraction.subject ??
+                          primaryCompanyInteraction.body ??
+                          "No interaction summary available."}
+                      </p>
+                      <p className="mt-3 text-xs uppercase text-zinc-500">
+                        {formatTimestamp(primaryCompanyInteraction.occurred_at)} |{" "}
+                        {primaryCompanyInteraction.source_system ??
+                          "Unknown source"}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mt-4 rounded-md border border-dashed border-zinc-300 bg-white p-4 text-sm leading-6 text-zinc-600">
+                      No prior interaction history has been linked to this
+                      company yet.
+                    </div>
+                  )}
+                </article>
               </div>
             ) : null}
 
