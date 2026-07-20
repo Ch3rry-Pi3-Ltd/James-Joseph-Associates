@@ -1,4 +1,5 @@
 import { CandidateMatchWorkspace } from "./candidate-match-workspace";
+import { UsageGuide } from "../usage-guide";
 import { requireAuthorizedUser } from "@/lib/auth";
 
 export default async function MatchPage() {
@@ -77,6 +78,27 @@ export default async function MatchPage() {
             </aside>
           </div>
         </header>
+
+        <UsageGuide
+          eyebrow="Instructions"
+          title="How to use the matching page"
+          intro="This page is a three-stage workflow: load the brief, inspect the retrieval pool, then run the final shortlist only when the evidence looks credible."
+          steps={[
+            {
+              title: "Load the role brief",
+              body: "Paste a job description or upload a job-spec file, then choose whether to use the uploaded text or your own pasted brief as the working input.",
+            },
+            {
+              title: "Run corpus search first",
+              body: "Click Search corpus to retrieve the first candidate pool. Open the corpus results section to inspect the raw evidence, names, excerpts, and company context before ranking anything.",
+            },
+            {
+              title: "Run the final shortlist",
+              body: "Once the retrieval pool looks sensible, click the shortlist action. That sends the selected candidate pool into the final reasoning pass and returns ranked candidates with strengths, gaps, and CV links.",
+            },
+          ]}
+          tip="Use the Company tab when you already know the firm. Use Match when the starting point is a role brief and you need the best candidate shortlist first."
+        />
 
         <nav className="flex flex-wrap gap-3">
           {[

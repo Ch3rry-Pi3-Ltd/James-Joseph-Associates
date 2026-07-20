@@ -1,4 +1,5 @@
 import { CompanyDiscoveryWorkspace } from "./company-discovery-workspace";
+import { UsageGuide } from "../usage-guide";
 import { requireAuthorizedUser } from "@/lib/auth";
 
 type CompanyPageProps = {
@@ -90,6 +91,27 @@ export default async function CompanyPage({
             </aside>
           </div>
         </header>
+
+        <UsageGuide
+          eyebrow="Instructions"
+          title="How to use the company page"
+          intro="Use this page when the starting point is a target firm and you want to see what is already linked to that company before outreach."
+          steps={[
+            {
+              title: "Choose the company",
+              body: "Start typing the firm name in the company field, then pick the correct match from the filtered list. Use the example button only when you want a quick test run.",
+            },
+            {
+              title: "Run the lookup",
+              body: "Click search to pull back linked candidates, contacts, interaction history, jobs, and opportunities already attached to that company in the canonical database.",
+            },
+            {
+              title: "Use the returned context",
+              body: "Scan the strongest candidate matches first, then inspect known contacts, prior conversations, and linked roles to decide whether there is already a route in.",
+            },
+          ]}
+          tip="Use this page before outreach when you already know the firm and want evidence about existing people, relationships, and live context."
+        />
 
         <CompanyDiscoveryWorkspace initialCompanyName={initialCompanyName} />
       </section>
