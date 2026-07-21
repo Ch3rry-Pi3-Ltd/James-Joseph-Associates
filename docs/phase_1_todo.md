@@ -3,8 +3,46 @@
 <details open>
 <summary><strong>Current Outstanding Program Work (17 July 2026)</strong></summary>
 
-This is the trimmed engineering backlog that matters most right now.
+This is the trimmed engineering backlog that matters most right now, in the
+latest agreed priority order.
 
+- [ ] Add conversational operator workflow:
+  - [ ] ChatGPT-style database assistant over canonical Supabase data
+  - [ ] grounded answers about candidates, companies, contacts, jobs, opportunities, and past interactions
+  - [ ] conversation memory for operator sessions
+  - [ ] bounded retrieval over prior assistant/user exchanges where useful
+  - [ ] ability to answer questions about previous recruiter conversations, notes, and historical context
+  - [ ] first read-only MCP toolset for ChatGPT Business:
+    - [ ] search candidates from a role brief
+    - [ ] inspect candidate profile and current CV
+    - [ ] inspect company context
+    - [ ] inspect company contacts
+    - [ ] inspect prior interactions/notes
+    - [ ] inspect jobs and opportunities
+    - [ ] explain shortlist evidence
+  - [ ] workspace auth model for Tom's ChatGPT Business account
+  - [ ] controlled rollout path from read-only assistant to approved write actions later
+- [ ] Polish the `/match` UI for UAT:
+  - [ ] clearer instructions
+  - [ ] more intuitive flow labels
+  - [ ] more professional presentation of search, shortlist, and company evidence
+- [ ] Continue retrieval quality work:
+  - [ ] real-brief search tuning
+  - [ ] shortlist quality checks
+  - [ ] better evidence presentation for recruiter trust
+- [ ] Add operator output tools:
+  - [ ] shortlist export/share
+  - [ ] saved searches / saved briefs
+  - [ ] shortlist feedback capture
+- [ ] Harden LinkedHelper ingestion:
+  - [ ] CSV import normalizer
+  - [ ] deterministic matching to existing candidates/contacts/companies
+  - [ ] provenance tracking
+  - [ ] webhook path if payload support is good enough
+- [ ] Finish Recruitly canonical ingest beyond people/contacts/companies:
+  - [ ] jobs
+  - [ ] opportunities
+  - [ ] journal / note interactions
 - [ ] Keep Supabase service live while ownership/billing is sorted.
 - [ ] Write and verify a controlled database export / migration path into a future Tom-owned setup.
 - [ ] Complete production auth cutover:
@@ -14,27 +52,6 @@ This is the trimmed engineering backlog that matters most right now.
   - [ ] Create the Clerk production instance against that real domain
   - [ ] Replace Clerk test keys in Vercel with `pk_live_...` and `sk_live_...`
   - [ ] Verify first-time sign-in and protected-route behavior on the real domain
-- [ ] Polish the `/match` UI for UAT:
-  - [ ] clearer instructions
-  - [ ] more intuitive flow labels
-  - [ ] more professional presentation of search, shortlist, and company evidence
-- [ ] Finish Recruitly canonical ingest beyond people/contacts/companies:
-  - [ ] jobs
-  - [ ] opportunities
-  - [ ] journal / note interactions
-- [ ] Harden LinkedHelper ingestion:
-  - [ ] CSV import normalizer
-  - [ ] deterministic matching to existing candidates/contacts/companies
-  - [ ] provenance tracking
-  - [ ] webhook path if payload support is good enough
-- [ ] Continue retrieval quality work:
-  - [ ] real-brief search tuning
-  - [ ] shortlist quality checks
-  - [ ] better evidence presentation for recruiter trust
-- [ ] Add operator output tools:
-  - [ ] shortlist export/share
-  - [ ] saved searches / saved briefs
-  - [ ] shortlist feedback capture
 
 </details>
 

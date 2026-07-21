@@ -38,40 +38,56 @@ This is the practical engineering backlog as of Friday, July 17, 2026.
 
 ### Highest Priority
 
-- [ ] Stabilize the client-owned infrastructure path:
-  - [ ] short-term Supabase continuity plan under the current billing pressure
-  - [ ] documented migration/export plan into a future Tom-owned Vercel/Supabase setup
+- [ ] Add conversational operator workflow:
+  - [ ] grounded chat assistant over the canonical Supabase layer
+  - [ ] session memory for recruiter follow-up questions
+  - [ ] controlled retrieval over prior interactions and assistant context
+  - [ ] ability to answer questions about previous recruiter conversations, notes, and historical company/candidate context
+  - [ ] first read-only MCP toolset for ChatGPT Business:
+    - [ ] search candidates from a role brief
+    - [ ] inspect candidate profile and current CV
+    - [ ] inspect company context
+    - [ ] inspect company contacts
+    - [ ] inspect prior interactions/notes
+    - [ ] inspect jobs and opportunities
+    - [ ] explain shortlist evidence
+  - [ ] workspace auth model for Tom's ChatGPT Business account
+  - [ ] controlled rollout path from read-only assistant to approved write actions later
 - [ ] Tighten the recruiter demo for UAT:
   - [ ] clearer on-page instructions
   - [ ] more polished `/match` layout and copy
   - [ ] cleaner evidence presentation for search, shortlist, and company discovery
-- [ ] Finish the next Recruitly ingestion slice:
-  - [ ] jobs into canonical `jobs`
-  - [ ] opportunities into canonical `opportunities`
-  - [ ] journal / note-style interactions into canonical `interactions`
-
-### Retrieval And Workflow Build-Out
-
 - [ ] Improve retrieval quality against real Tom briefs:
   - [ ] tune weighting between full-text, semantic, and graph context
   - [ ] verify better recall for non-keyword-exact briefs
   - [ ] reduce obvious false negatives before wider UAT
-- [ ] Expand recruiter workflow coverage in the UI:
-  - [ ] company-to-candidate discovery polish
-  - [ ] clearer "who works there / who knows them" flow
-  - [ ] candidate-to-company lead flow polish
 - [ ] Add operator-friendly output actions:
   - [ ] shortlist export/share
   - [ ] saveable searches or saved briefs
   - [ ] lightweight feedback capture on good/bad shortlist results
-
-### Data Freshness And Sync
-
 - [ ] LinkedHelper ingestion path:
   - [ ] CSV ingest normalizer
   - [ ] deterministic matching/upsert rules
   - [ ] provenance for LinkedHelper refresh data
   - [ ] webhook path if the vendor payload shape is good enough
+- [ ] Finish the next Recruitly ingestion slice:
+  - [ ] jobs into canonical `jobs`
+  - [ ] opportunities into canonical `opportunities`
+  - [ ] journal / note-style interactions into canonical `interactions`
+- [ ] Stabilize the client-owned infrastructure path:
+  - [ ] short-term Supabase continuity plan under the current billing pressure
+  - [ ] documented migration/export plan into a future Tom-owned Vercel/Supabase setup
+  - [ ] complete production auth cutover once the real DNS-backed domain is ready
+
+### Retrieval And Workflow Build-Out
+
+- [ ] Expand recruiter workflow coverage in the UI:
+  - [ ] company-to-candidate discovery polish
+  - [ ] clearer "who works there / who knows them" flow
+  - [ ] candidate-to-company lead flow polish
+
+### Data Freshness And Sync
+
 - [ ] Recruitly sync policy:
   - [ ] define authoritative fields by source
   - [ ] upsert rules for candidate/contact/company freshness
