@@ -16,6 +16,10 @@ from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.services import mcp_read_adapter
 from backend.services.mcp_read_adapter import McpReadAdapterError
+from backend.services.operator_session_memory import (
+    append_operator_memory_turn,
+    get_recent_operator_memory,
+)
 
 RouteIntent = Literal["role_search", "company_context", "role_search_with_company"]
 
@@ -51,11 +55,15 @@ class RecruiterQuestionAnsweringError(RuntimeError):
         message: str,
         *,
         stage: str,
+        code: str = "internal_error",
+        status_code: int = 500,
         details: list[dict[str, Any]] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.stage = stage
+        self.code = code
+        self.status_code = status_code
         self.details = details or []
 
 
@@ -83,6 +91,8 @@ def answer_recruiter_question(
     candidate_pool_limit: int = 25,
     shortlist_limit: int = 5,
     company_context_limit: int = 5,
+    user_id: str | None = None,
+    conversation_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Return one grounded recruiter-facing answer over bounded canonical evidence.
@@ -93,10 +103,20 @@ def answer_recruiter_question(
         raise RecruiterQuestionAnsweringError(
             "Question must not be blank.",
             stage="validation",
+            code="validation_error",
+            status_code=400,
             details=[{"field": "question"}],
         )
 
     retrieval_plan = _build_retrieval_plan(normalized_question)
+    normalized_user_id = _normalize_optional_identifier(user_id)
+    normalized_conversation_id = _normalize_optional_identifier(conversation_id)
+    recent_memory: list[dict[str, Any]] = []
+    if normalized_user_id is not None:
+        recent_memory = get_recent_operator_memory(
+            user_id=normalized_user_id,
+            conversation_id=normalized_conversation_id,
+        )
 
     role_search_result: dict[str, Any] | None = None
     company_context_result: dict[str, Any] | None = None
@@ -123,6 +143,8 @@ def answer_recruiter_question(
         raise RecruiterQuestionAnsweringError(
             "Recruiter question retrieval failed.",
             stage="retrieval",
+            code=exc.code,
+            status_code=exc.status_code,
             details=[
                 {"tool": exc.tool},
                 *exc.details,
@@ -133,10 +155,11 @@ def answer_recruiter_question(
         role_search_result=role_search_result,
         company_context_result=company_context_result,
     ):
-        return {
+        result_payload = {
             "question": normalized_question,
             "route_intent": retrieval_plan["route_intent"],
             "retrieval_plan": retrieval_plan,
+            "session_memory_turns_used": len(recent_memory),
             "answer": (
                 "No grounded evidence was found for that question in the current "
                 "candidate and company context."
@@ -149,12 +172,22 @@ def answer_recruiter_question(
             "interactions": [],
             "follow_up_questions": [],
         }
+        if normalized_user_id is not None:
+            append_operator_memory_turn(
+                user_id=normalized_user_id,
+                conversation_id=normalized_conversation_id,
+                question=normalized_question,
+                answer=result_payload["answer"],
+                metadata={"route_intent": retrieval_plan["route_intent"]},
+            )
+        return result_payload
 
     answer_selection = _generate_grounded_answer(
         question=normalized_question,
         retrieval_plan=retrieval_plan,
         role_search_result=role_search_result,
         company_context_result=company_context_result,
+        recent_memory=recent_memory,
     )
 
     candidates = _collect_candidates(
@@ -182,10 +215,11 @@ def answer_recruiter_question(
         key="interaction_id",
     )
 
-    return {
+    result_payload = {
         "question": normalized_question,
         "route_intent": retrieval_plan["route_intent"],
         "retrieval_plan": retrieval_plan,
+        "session_memory_turns_used": len(recent_memory),
         "answer": answer_selection.answer,
         "evidence_bullets": list(answer_selection.evidence_bullets),
         "candidates": candidates,
@@ -195,6 +229,22 @@ def answer_recruiter_question(
         "interactions": interactions,
         "follow_up_questions": list(answer_selection.follow_up_questions),
     }
+    if normalized_user_id is not None:
+        append_operator_memory_turn(
+            user_id=normalized_user_id,
+            conversation_id=normalized_conversation_id,
+            question=normalized_question,
+            answer=answer_selection.answer,
+            metadata={
+                "route_intent": retrieval_plan["route_intent"],
+                "candidate_count": len(candidates),
+                "contact_count": len(contacts),
+                "job_count": len(jobs),
+                "opportunity_count": len(opportunities),
+                "interaction_count": len(interactions),
+            },
+        )
+    return result_payload
 
 
 def _build_retrieval_plan(question: str) -> dict[str, Any]:
@@ -273,6 +323,7 @@ def _generate_grounded_answer(
     retrieval_plan: dict[str, Any],
     role_search_result: dict[str, Any] | None,
     company_context_result: dict[str, Any] | None,
+    recent_memory: list[dict[str, Any]],
 ) -> RecruiterAnswerSelection:
     system_prompt = (
         "You are a recruiter operations assistant. "
@@ -290,6 +341,8 @@ def _generate_grounded_answer(
         f"{json.dumps(role_search_result, indent=2, ensure_ascii=False)}\n\n"
         "Grounded company-context evidence:\n"
         f"{json.dumps(company_context_result, indent=2, ensure_ascii=False)}\n\n"
+        "Recent session memory:\n"
+        f"{json.dumps(recent_memory, indent=2, ensure_ascii=False)}\n\n"
         "Write a short direct answer, then evidence bullets. "
         "Only cite IDs that appear in the supplied evidence."
     )
@@ -314,6 +367,8 @@ def _generate_grounded_answer(
         raise RecruiterQuestionAnsweringError(
             "Recruiter answer generation failed during LLM synthesis.",
             stage="llm_answer",
+            code="internal_error",
+            status_code=500,
             details=[{"error_type": exc.__class__.__name__, "message": str(exc)}],
         ) from exc
 
@@ -326,8 +381,17 @@ def _generate_grounded_answer(
     raise RecruiterQuestionAnsweringError(
         "Recruiter answer returned an unexpected response shape.",
         stage="llm_answer",
+        code="internal_error",
+        status_code=500,
         details=[{"result_type": raw_result.__class__.__name__}],
     )
+
+
+def _normalize_optional_identifier(value: str | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized_value = value.strip()
+    return normalized_value or None
 
 
 def _collect_candidates(

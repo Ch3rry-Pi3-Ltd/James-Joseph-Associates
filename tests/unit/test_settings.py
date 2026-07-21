@@ -94,6 +94,8 @@ def test_settings_load_default_values(monkeypatch) -> None:
     assert settings.openrouter_api_key == ""
     assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"
     assert settings.llm_timeout_seconds == 60.0
+    assert settings.operator_session_memory_ttl_hours == 12
+    assert settings.operator_session_memory_max_turns == 4
     assert settings.jobadder_client_id == ""
     assert settings.jobadder_client_secret == ""
     assert settings.jobadder_redirect_uri == ""
@@ -157,6 +159,8 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
         "https://openrouter.ai/api/v1",
     )
     monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "45")
+    monkeypatch.setenv("OPERATOR_SESSION_MEMORY_TTL_HOURS", "24")
+    monkeypatch.setenv("OPERATOR_SESSION_MEMORY_MAX_TURNS", "6")
 
     settings = get_settings()
 
@@ -172,6 +176,8 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.openrouter_api_key == "sk-test-openrouter-key"
     assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"
     assert settings.llm_timeout_seconds == 45.0
+    assert settings.operator_session_memory_ttl_hours == 24
+    assert settings.operator_session_memory_max_turns == 6
     assert settings.jobadder_client_id == "fake-jobadder-client-id"
     assert settings.jobadder_client_secret == "fake-jobadder-client-secret"
     assert (

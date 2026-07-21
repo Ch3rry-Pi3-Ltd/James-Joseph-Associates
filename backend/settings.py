@@ -176,6 +176,12 @@ class Settings(BaseSettings):
     recruitly_base_url : str
         Base URL used for Recruitly API requests.
 
+    operator_session_memory_ttl_hours : int
+        Short-lived retention window for per-user recruiter Q&A memory.
+
+    operator_session_memory_max_turns : int
+        Maximum recent recruiter Q&A turns retained per user/session key.
+
     openai_api_key : str
         OpenAI API key used by the backend LLM provider layer.
 
@@ -240,6 +246,8 @@ class Settings(BaseSettings):
         OPENROUTER_API_KEY
         OPENROUTER_BASE_URL
         LLM_TIMEOUT_SECONDS
+        OPERATOR_SESSION_MEMORY_TTL_HOURS
+        OPERATOR_SESSION_MEMORY_MAX_TURNS
 
     Example
     -------
@@ -271,6 +279,8 @@ class Settings(BaseSettings):
         OPENROUTER_API_KEY=""
         OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"
         LLM_TIMEOUT_SECONDS="60"
+        OPERATOR_SESSION_MEMORY_TTL_HOURS="12"
+        OPERATOR_SESSION_MEMORY_MAX_TURNS="4"
     """
 
     # Allow configuration from environment variables while keeping defaults
@@ -460,6 +470,19 @@ class Settings(BaseSettings):
     recruitly_base_url: str = Field(
         default="https://api.recruitly.io",
         validation_alias="RECRUITLY_BASE_URL",
+    )
+
+    # Short-lived per-user session memory for recruiter-style Q&A.
+    #   - Keep the first implementation intentionally bounded and cheap.
+    operator_session_memory_ttl_hours: int = Field(
+        default=12,
+        validation_alias="OPERATOR_SESSION_MEMORY_TTL_HOURS",
+    )
+
+    # Maximum recent turns retained per user/session key.
+    operator_session_memory_max_turns: int = Field(
+        default=4,
+        validation_alias="OPERATOR_SESSION_MEMORY_MAX_TURNS",
     )
 
     # Shared OpenAI API key for the backend LLM provider layer.

@@ -187,3 +187,54 @@ def test_answer_recruiter_question_wraps_llm_failures(
         answer_recruiter_question(question="Find candidates for this role")
 
     assert exc_info.value.stage == "llm_answer"
+
+
+def test_answer_recruiter_question_uses_and_appends_session_memory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    appended_turns: list[dict[str, object]] = []
+
+    monkeypatch.setattr(
+        recruiter_question_answering.mcp_read_adapter,
+        "list_company_directory",
+        lambda **kwargs: {"count": 0, "companies": []},
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering.mcp_read_adapter,
+        "search_candidates_for_role",
+        lambda **kwargs: {
+            "search_results": [{"candidate_id": "cand-1", "full_name": "Alice"}],
+            "shortlist_results": [{"candidate_id": "cand-1", "fit_score": 94}],
+        },
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering,
+        "get_recent_operator_memory",
+        lambda **kwargs: [{"question": "Old Q", "answer": "Old A", "metadata": {}}],
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering,
+        "append_operator_memory_turn",
+        lambda **kwargs: appended_turns.append(kwargs),
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering,
+        "build_langchain_chat_model",
+        lambda **kwargs: _FakeChatModel(
+            RecruiterAnswerSelection(
+                answer="Alice is still the strongest fit.",
+                evidence_bullets=["Best match on Rust and trading systems."],
+                cited_candidate_ids=["cand-1"],
+            )
+        ),
+    )
+
+    result = answer_recruiter_question(
+        question="Which candidates best fit this Rust trading role?",
+        user_id="user-1",
+        conversation_id="thread-1",
+    )
+
+    assert result["session_memory_turns_used"] == 1
+    assert appended_turns[0]["user_id"] == "user-1"
+    assert appended_turns[0]["conversation_id"] == "thread-1"

@@ -76,6 +76,7 @@ from backend.api.v1.candidates import router as candidates_router
 from backend.api.v1.health import router as health_router
 from backend.api.v1.integrations import router as integrations_router
 from backend.api.v1.make import router as make_router
+from backend.api.v1.operator import router as operator_router
 from backend.api.v1.review import router as review_router
 
 # Group all public v1 API routes under the shared `/api/v1` prefix.
@@ -87,6 +88,7 @@ api_router.include_router(health_router)
 api_router.include_router(candidates_router)
 api_router.include_router(integrations_router)
 api_router.include_router(make_router)
+api_router.include_router(operator_router)
 api_router.include_router(review_router)
 
 __all__ = ["api_router"]

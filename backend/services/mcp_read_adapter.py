@@ -35,11 +35,15 @@ class McpReadAdapterError(RuntimeError):
         message: str,
         *,
         tool: str,
+        code: str = "internal_error",
+        status_code: int = 500,
         details: list[dict[str, Any]] | None = None,
     ) -> None:
         super().__init__(message)
         self.message = message
         self.tool = tool
+        self.code = code
+        self.status_code = status_code
         self.details = details or []
 
 
@@ -60,6 +64,8 @@ def search_candidates_for_role(
         raise McpReadAdapterError(
             "Role brief must not be blank.",
             tool="search_candidates_for_role",
+            code="validation_error",
+            status_code=400,
             details=[{"field": "role_brief"}],
         )
 
@@ -110,6 +116,8 @@ def get_candidate_profile(
         raise McpReadAdapterError(
             "Candidate profile was not found.",
             tool="get_candidate_profile",
+            code="not_found",
+            status_code=404,
             details=[{"candidate_id": candidate_id}],
         )
 
@@ -168,6 +176,8 @@ def get_candidate_current_resume(
         raise McpReadAdapterError(
             "Current resume document was not found for this candidate.",
             tool="get_candidate_current_resume",
+            code="not_found",
+            status_code=404,
             details=[{"candidate_id": candidate_id}],
         )
 
@@ -209,6 +219,8 @@ def search_company_context(
         raise McpReadAdapterError(
             "Company name must not be blank.",
             tool="search_company_context",
+            code="validation_error",
+            status_code=400,
             details=[{"field": "company_name"}],
         )
 
@@ -290,6 +302,8 @@ def discover_company_leads_for_candidate(
         raise McpReadAdapterError(
             "Candidate was not found for company lead discovery.",
             tool="discover_company_leads_for_candidate",
+            code="not_found",
+            status_code=404,
             details=[{"candidate_id": candidate_id}],
         )
     return result
