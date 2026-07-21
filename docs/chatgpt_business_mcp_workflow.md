@@ -115,6 +115,335 @@ Purpose:
   - what are the gaps
   - what evidence supports the ranking
 
+## V1 MCP Tool Schemas
+
+The first MCP release should keep the tool surface small and explicit.
+
+The tool names below are written in MCP-style terms, but they map onto the
+existing backend routes/services wherever possible.
+
+### `search_candidates_for_role`
+
+Purpose:
+
+- take a role brief
+- retrieve an initial candidate pool
+- optionally produce a ranked shortlist
+
+Input:
+
+```json
+{
+  "role_brief": "string",
+  "search_limit": 10,
+  "candidate_pool_limit": 25,
+  "shortlist_limit": 5,
+  "include_shortlist": true
+}
+```
+
+Output:
+
+```json
+{
+  "retrieval_query": "string",
+  "detected_target_company": "string | null",
+  "candidate_pool_size": 25,
+  "search_results": [],
+  "shortlist_results": []
+}
+```
+
+### `get_candidate_profile`
+
+Purpose:
+
+- fetch one candidate profile with linked evidence and canonical fields
+
+Input:
+
+```json
+{
+  "candidate_id": "uuid"
+}
+```
+
+Output:
+
+```json
+{
+  "candidate_id": "uuid",
+  "full_name": "string",
+  "current_title": "string | null",
+  "current_company_name": "string | null",
+  "candidate_status": "string | null",
+  "resume_updated_at": "timestamp | null",
+  "skills": [],
+  "contacts": [],
+  "jobs": [],
+  "opportunities": [],
+  "interactions": []
+}
+```
+
+### `get_candidate_current_resume`
+
+Purpose:
+
+- fetch the current downloadable resume reference for one candidate
+
+Input:
+
+```json
+{
+  "candidate_id": "uuid"
+}
+```
+
+Output:
+
+```json
+{
+  "candidate_id": "uuid",
+  "file_name": "string",
+  "content_type": "string",
+  "download_url": "string | null",
+  "source_system": "string | null"
+}
+```
+
+Implementation note:
+
+- MCP tools should return a secure reference or signed fetch path, not raw file
+  bytes by default
+
+### `search_company_context`
+
+Purpose:
+
+- find one target company and return the linked operating context
+
+Input:
+
+```json
+{
+  "company_name": "string",
+  "candidate_limit": 10,
+  "contact_limit": 10,
+  "interaction_limit": 10,
+  "job_limit": 10,
+  "opportunity_limit": 10
+}
+```
+
+Output:
+
+```json
+{
+  "company_name": "string",
+  "candidates": [],
+  "contacts": [],
+  "interactions": [],
+  "jobs": [],
+  "opportunities": []
+}
+```
+
+### `list_company_directory`
+
+Purpose:
+
+- provide a typeahead/searchable list of known canonical companies
+
+Input:
+
+```json
+{
+  "prefix": "string | null",
+  "limit": 50
+}
+```
+
+Output:
+
+```json
+{
+  "count": 50,
+  "companies": [
+    "Company A",
+    "Company B"
+  ]
+}
+```
+
+### `discover_company_leads_for_candidate`
+
+Purpose:
+
+- start from one candidate and a target company
+- show linked contacts, jobs, interaction history, and peer candidates
+
+Input:
+
+```json
+{
+  "candidate_id": "uuid",
+  "company_name": "string",
+  "limit": 10
+}
+```
+
+Output:
+
+```json
+{
+  "candidate": {},
+  "target_company_name": "string",
+  "contacts": [],
+  "jobs": [],
+  "interactions": [],
+  "peer_candidates": []
+}
+```
+
+### `answer_recruiter_question`
+
+Purpose:
+
+- grounded natural-language answer over the read-only tools above
+- this should orchestrate retrieval, not query Supabase directly
+
+Input:
+
+```json
+{
+  "question": "string",
+  "conversation_id": "string | null",
+  "max_candidates": 5,
+  "max_contacts": 5,
+  "max_interactions": 5
+}
+```
+
+Output:
+
+```json
+{
+  "answer": "string",
+  "supporting_entities": [],
+  "supporting_candidates": [],
+  "supporting_companies": [],
+  "supporting_contacts": [],
+  "supporting_interactions": [],
+  "citations": []
+}
+```
+
+## Current Backend Route Mapping
+
+The first MCP layer should reuse existing routes/services as far as possible.
+
+### Already Mapped Cleanly
+
+#### Candidate search and shortlist
+
+- `GET /api/v1/candidates/search-resumes`
+- `POST /api/v1/candidates/match-job-description`
+
+Maps to:
+
+- `search_candidates_for_role`
+
+#### Candidate profile
+
+- `GET /api/v1/candidates/{candidate_id}`
+
+Maps to:
+
+- `get_candidate_profile`
+
+#### Current resume access
+
+- `GET /api/v1/candidates/{candidate_id}/current-resume`
+
+Maps to:
+
+- `get_candidate_current_resume`
+
+#### Company directory
+
+- `GET /api/v1/candidates/company-directory`
+
+Maps to:
+
+- `list_company_directory`
+
+#### Company-linked candidates
+
+- `GET /api/v1/candidates/discover-by-company`
+
+#### Company-linked contacts
+
+- `GET /api/v1/candidates/discover-contacts-by-company`
+
+#### Company-linked interactions
+
+- `GET /api/v1/candidates/discover-interactions-by-company`
+
+#### Company-linked jobs
+
+- `GET /api/v1/candidates/discover-jobs-by-company`
+
+#### Company-linked opportunities
+
+- `GET /api/v1/candidates/discover-opportunities-by-company`
+
+Together these map to:
+
+- `search_company_context`
+
+#### Candidate to company lead flow
+
+- `GET /api/v1/candidates/{candidate_id}/company-leads`
+
+Maps to:
+
+- `discover_company_leads_for_candidate`
+
+### Thin MCP Adapter Needed
+
+These do not need major new backend primitives, but they do need an adapter
+layer.
+
+#### Unified company context tool
+
+The MCP tool should call the five company-discovery routes and return one
+merged response rather than exposing five separate tools to ChatGPT.
+
+#### Natural-language Q&A tool
+
+`answer_recruiter_question` should:
+
+- classify the recruiter question
+- decide which read-only tools to call
+- assemble evidence
+- return a grounded answer with citations
+
+This is where the assistant behavior lives. It should not be implemented as
+direct SQL or raw Supabase exposure.
+
+### Gaps Still To Fill
+
+The following still need deliberate implementation or clarification before the
+assistant is complete.
+
+- persisted conversation/session memory policy
+- citation format for notes/interactions/documents
+- access policy for downloadable CV references
+- audit logging for assistant queries
+- optional summarization route for long interaction histories
+
+
 ## Memory Model
 
 There are two different kinds of memory here and they should not be confused.
@@ -160,6 +489,54 @@ Recommended V1:
 That means ChatGPT Business becomes the interface, but our backend remains the
 security boundary.
 
+## Read-Only V1 Implementation Order
+
+### Stage 1: MCP contract and adapter
+
+- define the MCP tool schemas above
+- implement one MCP adapter service that calls the existing backend routes
+- keep all tools read-only
+
+### Stage 2: Grounded recruiter Q&A
+
+- implement `answer_recruiter_question`
+- route questions to:
+  - candidate shortlist
+  - candidate profile
+  - company context
+  - company lead discovery
+- return citations and structured supporting entities
+
+### Stage 3: Session memory
+
+- keep lightweight conversation memory for follow-up questions
+- decide whether memory is:
+  - in-session only
+  - persisted as summaries
+  - persisted as first-class interaction rows
+
+Recommended first cut:
+
+- in-session memory first
+- persisted summaries later if operationally useful
+
+### Stage 4: Workspace rollout
+
+- connect the read-only MCP app to Tom's ChatGPT Business workspace
+- restrict access to approved users only
+- validate real recruiter prompts end to end
+
+### Stage 5: Controlled write actions later
+
+Only after the read-only path is trusted:
+
+- save shortlist
+- save recruiter note
+- draft update for CRM
+- draft outreach action
+
+These should remain approval-gated.
+
 ## Rollout Order
 
 ### Phase A: Read-only assistant
@@ -198,8 +575,8 @@ The MCP layer gives us:
 
 ## Immediate Build Tasks
 
-- [ ] Define the exact MCP tool request/response schemas.
-- [ ] Map each MCP tool to existing backend routes/services where possible.
+- [x] Define the exact MCP tool request/response schemas.
+- [x] Map each MCP tool to existing backend routes/services where possible.
 - [ ] Add any missing read routes needed for company/contact/interaction lookup.
 - [ ] Add read-only auth and audit logging expectations.
 - [ ] Decide whether prior recruiter conversations should be:
