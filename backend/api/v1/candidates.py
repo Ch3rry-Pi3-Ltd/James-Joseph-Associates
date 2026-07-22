@@ -31,7 +31,9 @@ In plain language:
 """
 
 import base64
+import re
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse, Response
@@ -53,6 +55,7 @@ from backend.schemas.candidates import (
     UploadedJobDescriptionExtractResponse,
     UploadedResumeSearchRequest,
     UploadedResumeSearchResponse,
+    MAX_UPLOAD_BYTES,
 )
 from backend.schemas.errors import ApiError, ApiErrorResponse
 from backend.services.candidate_matching import (
@@ -85,6 +88,21 @@ from backend.services.uploaded_job_description import (
 
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
+
+
+def _build_content_disposition(disposition_type: str, file_name: str) -> str:
+    """Build a header-safe filename without losing Unicode download names."""
+
+    normalized_name = file_name.replace("\r", "_").replace("\n", "_")
+    ascii_name = normalized_name.encode("ascii", "ignore").decode("ascii")
+    ascii_name = re.sub(r'[^A-Za-z0-9._ ()\-]', "_", ascii_name).strip()
+    ascii_name = ascii_name[:180] or "resume"
+    header_value = f'{disposition_type}; filename="{ascii_name}"'
+
+    if ascii_name != normalized_name:
+        header_value += f"; filename*=UTF-8''{quote(normalized_name, safe='')}"
+
+    return header_value
 
 
 def build_error_response(
@@ -325,8 +343,12 @@ def get_candidate_current_resume_route(
     disposition_type = "attachment" if download else "inline"
 
     headers = {
-        "Content-Disposition": f'{disposition_type}; filename="{file_name}"',
+        "Content-Disposition": _build_content_disposition(
+            disposition_type,
+            file_name,
+        ),
         "X-Document-Id": result["document_id"],
+        "X-Content-Type-Options": "nosniff",
     }
 
     return Response(
@@ -668,6 +690,14 @@ async def search_uploaded_resume_route(
             details=[{"field": "content_base64"}],
         )
 
+    if len(content_bytes) > MAX_UPLOAD_BYTES:
+        return build_error_response(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            code="upload_too_large",
+            message="Uploaded CV exceeds the maximum supported file size.",
+            details=[{"max_upload_bytes": MAX_UPLOAD_BYTES}],
+        )
+
     try:
         result = search_candidates_by_uploaded_resume(
             content_bytes=content_bytes,
@@ -722,6 +752,14 @@ async def extract_uploaded_job_description_route(
             code="validation_error",
             message="Uploaded job description payload must contain valid base64 content.",
             details=[{"field": "content_base64"}],
+        )
+
+    if len(content_bytes) > MAX_UPLOAD_BYTES:
+        return build_error_response(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            code="upload_too_large",
+            message="Uploaded job description exceeds the maximum supported file size.",
+            details=[{"max_upload_bytes": MAX_UPLOAD_BYTES}],
         )
 
     try:

@@ -60,6 +60,7 @@ ApiErrorCode = Literal[
     "resume_download_failed",
     "integration_connection_missing",
     "integration_connection_invalid",
+    "upload_too_large",
     "internal_error",
 ]
 

@@ -1,0 +1,78 @@
+name: Security checks
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "15 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-and-static-analysis:
+    name: Dependency and static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python application and audit tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install bandit pip-audit
+
+      - name: Audit installed Python dependencies
+        run: python -m pip_audit -r requirements.txt
+
+      - name: Scan Python source for high-confidence security findings
+        run: python -m bandit -r backend api -x tests -ll -ii
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Audit production Node dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  passive-staging-scan:
+    name: Passive staging web scan
+    if: ${{ vars.SECURITY_TEST_BASE_URL != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        continue-on-error: true
+        with:
+          target: ${{ vars.SECURITY_TEST_BASE_URL }}
+          allow_issue_writing: false
+          artifact_name: zap-security-report
+          cmd_options: "-a"

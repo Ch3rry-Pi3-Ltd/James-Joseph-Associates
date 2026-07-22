@@ -35,6 +35,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+MAX_UPLOAD_BASE64_CHARACTERS = ((MAX_UPLOAD_BYTES + 2) // 3) * 4
+
 
 class CandidateProfileResponse(BaseModel):
     """
@@ -480,10 +483,11 @@ class UploadedResumeSearchRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    file_name: str | None = None
-    content_type: str | None = None
+    file_name: str | None = Field(default=None, max_length=255)
+    content_type: str | None = Field(default=None, max_length=255)
     content_base64: str = Field(
         min_length=1,
+        max_length=MAX_UPLOAD_BASE64_CHARACTERS,
         description="Base64-encoded uploaded CV file content.",
     )
     limit: int = Field(
@@ -523,10 +527,11 @@ class UploadedJobDescriptionExtractRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    file_name: str | None = None
-    content_type: str | None = None
+    file_name: str | None = Field(default=None, max_length=255)
+    content_type: str | None = Field(default=None, max_length=255)
     content_base64: str = Field(
         min_length=1,
+        max_length=MAX_UPLOAD_BASE64_CHARACTERS,
         description="Base64-encoded uploaded job-description file content.",
     )
 

@@ -1,4 +1,15 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import {
+  clerkClient,
+  clerkMiddleware,
+  createRouteMatcher,
+} from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+import {
+  getAllowedEmails,
+  getPrimaryEmailAddress,
+  isAuthorizedEmail,
+} from "./lib/auth-policy";
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
@@ -6,10 +17,66 @@ const isPublicRoute = createRouteMatcher([
   "/api/v1/health",
 ]);
 const isApiRoute = createRouteMatcher(["/(api|trpc)(.*)"]);
+const isBearerProtectedBackendRoute = createRouteMatcher([
+  "/api/v1/make(.*)",
+  "/api/v1/operator(.*)",
+]);
+
+function apiAccessError(status: number, code: string, message: string) {
+  return NextResponse.json(
+    {
+      error: {
+        code,
+        message,
+        details: [],
+      },
+    },
+    { status },
+  );
+}
 
 export default clerkMiddleware(async (auth, request) => {
-  if (isApiRoute(request) && !isPublicRoute(request)) {
-    await auth.protect();
+  if (
+    !isApiRoute(request) ||
+    isPublicRoute(request) ||
+    isBearerProtectedBackendRoute(request)
+  ) {
+    return;
+  }
+
+  await auth.protect();
+  const { userId } = await auth();
+  if (!userId) {
+    return apiAccessError(401, "unauthorized", "Authentication is required.");
+  }
+
+  const allowedEmails = getAllowedEmails();
+  if (allowedEmails.size === 0 && !isAuthorizedEmail(null, allowedEmails)) {
+    return apiAccessError(
+      503,
+      "authorization_not_configured",
+      "API access is not configured.",
+    );
+  }
+
+  if (allowedEmails.size === 0) {
+    return;
+  }
+
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const emailAddress = getPrimaryEmailAddress(user)?.toLowerCase() ?? null;
+
+    if (!isAuthorizedEmail(emailAddress, allowedEmails)) {
+      return apiAccessError(403, "forbidden", "This account is not authorized.");
+    }
+  } catch {
+    return apiAccessError(
+      503,
+      "authorization_unavailable",
+      "Authorization could not be verified.",
+    );
   }
 });
 

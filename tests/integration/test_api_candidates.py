@@ -234,6 +234,33 @@ def test_candidate_current_resume_route_streams_file_bytes() -> None:
     mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
 
 
+def test_candidate_current_resume_route_sanitizes_download_filename() -> None:
+    """Verify that stored document names cannot inject response headers."""
+
+    candidate_id = "33333333-3333-3333-3333-333333333331"
+    with patch(
+        "backend.api.v1.candidates.fetch_candidate_current_resume_file",
+        return_value={
+            "candidate_id": candidate_id,
+            "document_id": "11111111-1111-1111-1111-111111111111",
+            "document_title": "candidate.pdf",
+            "document_source_uri": "dropbox:///cv/candidate.pdf",
+            "document_mime_type": "application/pdf",
+            "file_name": 'candidate\r\nX-Injected: yes.pdf',
+            "content_type": "application/pdf",
+            "content_bytes": b"%PDF-test%",
+        },
+    ):
+        client = make_client()
+        response = client.get(f"/api/v1/candidates/{candidate_id}/current-resume")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert "\r" not in response.headers["content-disposition"]
+    assert "\n" not in response.headers["content-disposition"]
+    assert "x-injected" not in response.headers
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
 def test_candidate_current_resume_route_returns_standard_error_shape() -> None:
     """
     Verify that the current-resume route returns standard API errors.
@@ -1077,6 +1104,31 @@ def test_uploaded_resume_search_route_rejects_invalid_base64() -> None:
             "details": [{"field": "content_base64"}],
         }
     }
+    mock_search_candidates_by_uploaded_resume.assert_not_called()
+
+
+def test_uploaded_resume_search_route_rejects_oversized_file() -> None:
+    """Verify that decoded uploads are bounded before document processing."""
+
+    with (
+        patch("backend.api.v1.candidates.MAX_UPLOAD_BYTES", 4),
+        patch(
+            "backend.api.v1.candidates.search_candidates_by_uploaded_resume",
+        ) as mock_search_candidates_by_uploaded_resume,
+    ):
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/search-uploaded-resume",
+            json={
+                "file_name": "sample.pdf",
+                "content_type": "application/pdf",
+                "content_base64": base64.b64encode(b"12345").decode("ascii"),
+                "limit": 5,
+            },
+        )
+
+    assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
+    assert response.json()["error"]["code"] == "upload_too_large"
     mock_search_candidates_by_uploaded_resume.assert_not_called()
 
 
