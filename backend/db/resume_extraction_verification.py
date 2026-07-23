@@ -69,6 +69,8 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from psycopg import sql
+
 from backend.db.candidates import get_candidate_profile
 from backend.db.connection import postgres_connection
 from backend.db.skills import get_candidate_skills
@@ -269,12 +271,14 @@ def _fetch_optional_row_by_id(
         raise ValueError(f"Unsupported verification table: {table_name}")
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select *
         from {table_name}
         where id = %(row_id)s
         limit 1
-        """,
+        """
+        ).format(table_name=sql.Identifier(table_name)),
         {"row_id": row_id},
     )
     row = cursor.fetchone()

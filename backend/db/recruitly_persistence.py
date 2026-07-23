@@ -12,7 +12,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from psycopg import Cursor
+from psycopg import Cursor, sql
 from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
@@ -1207,13 +1207,15 @@ def _find_linked_entity_id(
     ],
 ) -> str | None:
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select {entity_column}
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {entity_column} is not null
         limit 1
-        """,
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {"source_record_id": source_record_id},
     )
     row = cursor.fetchone()
@@ -1238,7 +1240,8 @@ def _find_entity_id_by_source_identity(
     if source_record_id is None:
         return None
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select srl.{entity_column}
         from source_records sr
         join source_record_links srl
@@ -1248,7 +1251,8 @@ def _find_entity_id_by_source_identity(
           and sr.source_record_id = %(source_record_id)s
           and srl.{entity_column} is not null
         limit 1
-        """,
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {
             "source_record_type": source_record_type,
             "source_record_id": source_record_id,
@@ -1278,13 +1282,15 @@ def _ensure_source_record_link(
         opportunity_id=opportunity_id,
     )
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {column_name} = %(entity_id)s
         limit 1
-        """,
+        """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "source_record_id": source_record_id,
             "entity_id": entity_id,
@@ -1594,13 +1600,15 @@ def _ensure_journal_participants(
         if entity_id is None:
             continue
         cursor.execute(
-            f"""
+            sql.SQL(
+                """
             select id
             from interaction_participants
             where interaction_id = %(interaction_id)s
               and {column_name} = %(entity_id)s
             limit 1
-            """,
+            """
+            ).format(column_name=sql.Identifier(column_name)),
             {
                 "interaction_id": interaction_id,
                 "entity_id": entity_id,

@@ -106,8 +106,11 @@ import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 from typing import Any
-from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 from zipfile import BadZipFile, ZipFile
+
+from defusedxml.ElementTree import ParseError as DefusedXmlParseError
+from defusedxml.ElementTree import fromstring as parse_xml_safely
 
 try:
     from pypdf import PdfReader
@@ -618,8 +621,8 @@ def extract_text_from_docx_bytes(
         ) from exc
 
     try:
-        root = ElementTree.fromstring(document_xml)
-    except ElementTree.ParseError as exc:
+        root = parse_xml_safely(document_xml)
+    except DefusedXmlParseError as exc:
         raise ResumeTextExtractionError(
             "The resume DOCX XML could not be parsed.",
             stage="docx_parse",
@@ -919,13 +922,13 @@ def _normalise_extracted_page_text(raw_page_text: Any) -> str:
     return normalised_text
 
 
-def _extract_docx_paragraph_texts(root: ElementTree.Element) -> list[str]:
+def _extract_docx_paragraph_texts(root: Element) -> list[str]:
     """
     Extract normalised paragraph text from a parsed DOCX document tree.
 
     Parameters
     ----------
-    root : ElementTree.Element
+    root : Element
         Parsed `word/document.xml` root element.
 
     Returns

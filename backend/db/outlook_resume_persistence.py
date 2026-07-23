@@ -58,7 +58,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from psycopg import Cursor
+from psycopg import Cursor, sql
 from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
@@ -458,13 +458,15 @@ def _find_linked_entity_id(
     """
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select {entity_column}
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {entity_column} is not null
         limit 1
-        """,
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {"source_record_id": source_record_id},
     )
     row = cursor.fetchone()
@@ -500,13 +502,15 @@ def _ensure_source_record_link(
     )
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {column_name} = %(entity_id)s
         limit 1
-        """,
+        """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "source_record_id": source_record_id,
             "entity_id": entity_id,
@@ -562,14 +566,16 @@ def _ensure_document_link(
     column_name, entity_id = _pick_single_document_target(job_id=job_id)
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from document_links
         where document_id = %(document_id)s
           and relationship_type = %(relationship_type)s
           and {column_name} = %(entity_id)s
         limit 1
-        """,
+        """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "document_id": document_id,
             "relationship_type": relationship_type,

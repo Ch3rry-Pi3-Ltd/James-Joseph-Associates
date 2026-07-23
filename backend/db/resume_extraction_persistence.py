@@ -68,7 +68,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from psycopg import Cursor
+from psycopg import Cursor, sql
 from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
@@ -1586,11 +1586,13 @@ def _find_person_ids_by_field(
     """
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from people
         where {field_name} = %(field_value)s
-        """,
+        """
+        ).format(field_name=sql.Identifier(field_name)),
         {"field_value": field_value},
     )
     return [row["id"] for row in cursor.fetchall()]
@@ -2550,13 +2552,15 @@ def _find_document_linked_entity_id(
         return None
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select {entity_column}
         from document_links
         where document_id = %(document_id)s
           and {entity_column} is not null
         limit 1
-        """,
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {"document_id": document_id},
     )
     row = cursor.fetchone()
@@ -2595,13 +2599,15 @@ def _find_linked_entity_id(
     """
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select {entity_column}
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {entity_column} is not null
         limit 1
-        """,
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {"source_record_id": source_record_id},
     )
     row = cursor.fetchone()
@@ -2648,13 +2654,15 @@ def _ensure_source_record_link(
     )
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from source_record_links
         where source_record_id = %(source_record_id)s
           and {column_name} = %(entity_id)s
         limit 1
-        """,
+        """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "source_record_id": source_record_id,
             "entity_id": entity_id,
@@ -2727,14 +2735,16 @@ def _ensure_document_link(
     )
 
     cursor.execute(
-        f"""
+        sql.SQL(
+            """
         select id
         from document_links
         where document_id = %(document_id)s
           and relationship_type = %(relationship_type)s
           and {column_name} = %(entity_id)s
         limit 1
-        """,
+        """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "document_id": document_id,
             "relationship_type": relationship_type,

@@ -12,7 +12,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from psycopg import Cursor
+from psycopg import Cursor, sql
 from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
@@ -754,13 +754,15 @@ def _find_linked_entity_id(
     entity_column: Literal["person_id", "candidate_id", "company_id", "contact_id"],
 ) -> str | None:
     cursor.execute(
-        f"""
-        select {entity_column}
-        from source_record_links
-        where source_record_id = %(source_record_id)s
-          and {entity_column} is not null
-        limit 1
-        """,
+        sql.SQL(
+            """
+            select {entity_column}
+            from source_record_links
+            where source_record_id = %(source_record_id)s
+              and {entity_column} is not null
+            limit 1
+            """
+        ).format(entity_column=sql.Identifier(entity_column)),
         {"source_record_id": source_record_id},
     )
     row = cursor.fetchone()
@@ -785,13 +787,15 @@ def _ensure_source_record_link(
         contact_id=contact_id,
     )
     cursor.execute(
-        f"""
-        select id
-        from source_record_links
-        where source_record_id = %(source_record_id)s
-          and {column_name} = %(entity_id)s
-        limit 1
-        """,
+        sql.SQL(
+            """
+            select id
+            from source_record_links
+            where source_record_id = %(source_record_id)s
+              and {column_name} = %(entity_id)s
+            limit 1
+            """
+        ).format(column_name=sql.Identifier(column_name)),
         {
             "source_record_id": source_record_id,
             "entity_id": entity_id,
