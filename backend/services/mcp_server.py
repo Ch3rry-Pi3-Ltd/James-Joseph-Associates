@@ -52,7 +52,7 @@ def _build_mcp_server() -> FastMCP:
         ),
         stateless_http=True,
         json_response=True,
-        streamable_http_path="/",
+        streamable_http_path="/mcp",
         transport_security=TransportSecuritySettings(
             enable_dns_rebinding_protection=True,
             allowed_hosts=_split_allowlist(settings.mcp_allowed_hosts),

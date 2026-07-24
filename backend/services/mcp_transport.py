@@ -35,7 +35,7 @@ class McpSecurityMiddleware:
         receive: Receive,
         send: Send,
     ) -> None:
-        if scope["type"] != "http":
+        if scope["type"] != "http" or scope.get("path") != "/mcp":
             await self.app(scope, receive, send)
             return
 

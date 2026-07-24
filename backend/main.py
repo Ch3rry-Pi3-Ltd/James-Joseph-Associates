@@ -164,11 +164,12 @@ def create_app() -> FastAPI:
     # Register all project API routes in one place
     app.include_router(api_router)
 
-    # Expose the narrow remote MCP transport behind dedicated authentication
-    # and shared operational controls. The mounted server contains read tools
-    # only; canonical mutations remain unavailable through this surface.
+    # Keep the MCP transport on an exact, slashless path. Mounting it directly
+    # at /mcp would make Starlette append a slash while Vercel removes it,
+    # creating a redirect loop. This root fallback is registered after the API
+    # router, so existing API routes still take precedence.
     app.mount(
-        "/mcp",
+        "/",
         McpSecurityMiddleware(mcp_server.streamable_http_app()),
         name="read-only-mcp",
     )

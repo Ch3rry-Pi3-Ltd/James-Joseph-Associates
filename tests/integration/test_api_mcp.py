@@ -56,7 +56,7 @@ def _mcp_request(
     }
     if params is not None:
         payload["params"] = params
-    return client.post("/mcp/", headers=_MCP_HEADERS, json=payload)
+    return client.post("/mcp", headers=_MCP_HEADERS, json=payload)
 
 
 def test_remote_mcp_requires_dedicated_bearer_token(
@@ -66,7 +66,7 @@ def test_remote_mcp_requires_dedicated_bearer_token(
         "backend.services.mcp_transport.audit_mcp_event_best_effort"
     ):
         response = mcp_client.post(
-            "/mcp/",
+            "/mcp",
             headers={
                 "Accept": "application/json, text/event-stream",
                 "Content-Type": "application/json",
