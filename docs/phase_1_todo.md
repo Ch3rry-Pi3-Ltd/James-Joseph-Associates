@@ -34,9 +34,20 @@ latest agreed priority order.
   - [ ] saved searches / saved briefs
   - [ ] shortlist feedback capture
 - [ ] Harden LinkedHelper ingestion:
-  - [ ] CSV import normalizer
+  - [x] CSV import normalizer
+  - [x] inspect and compare the two Dropbox `.lhd2` backups without extracting
+    them to disk
+  - [x] confirm the July 2026 backup is a strict data superset of the older
+    backup
+  - [ ] native `.lhd2` backup-to-canonical payload mapper
   - [ ] deterministic matching to existing candidates/contacts/companies
-  - [ ] provenance tracking
+  - [x] provenance tracking
+  - [ ] read-only dry-run report separating matched, new, and ambiguous people
+    before any bulk write
+  - [ ] bounded import of profiles, current roles, employment history, skills,
+    and connection metadata
+  - [ ] decide privacy and retention rules before importing chats/messages as
+    canonical interactions
   - [ ] webhook path if payload support is good enough
 - [ ] Finish Recruitly canonical ingest beyond people/contacts/companies:
   - [ ] jobs
