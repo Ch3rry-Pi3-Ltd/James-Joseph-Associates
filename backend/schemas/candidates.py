@@ -35,6 +35,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.core.llm_safety import MAX_LLM_INPUT_CHARACTERS
+
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_UPLOAD_BASE64_CHARACTERS = ((MAX_UPLOAD_BYTES + 2) // 3) * 4
 
@@ -545,6 +547,7 @@ class CandidateJobDescriptionMatchRequest(BaseModel):
 
     job_description: str = Field(
         min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
         description="Free-text role brief used to retrieve and rank candidates.",
     )
     retrieval_limit: int = Field(

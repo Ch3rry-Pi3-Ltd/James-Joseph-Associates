@@ -20,6 +20,10 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.core.llm_safety import (
+    MAX_LLM_INPUT_CHARACTERS,
+    UNTRUSTED_CONTENT_POLICY,
+)
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.services.candidate_profiles import (
@@ -92,6 +96,17 @@ def build_candidate_job_description_shortlist(
             "Job description must not be blank.",
             stage="validation",
             details=[{"field": "job_description"}],
+        )
+    if len(normalized_job_description) > MAX_LLM_INPUT_CHARACTERS:
+        raise CandidateMatchingError(
+            "Job description is too long.",
+            stage="validation",
+            details=[
+                {
+                    "field": "job_description",
+                    "max_length": MAX_LLM_INPUT_CHARACTERS,
+                }
+            ],
         )
 
     bounded_retrieval_limit = max(1, min(int(retrieval_limit), 100))
@@ -231,6 +246,7 @@ def _rank_retrieved_candidates_for_job_description(
         "Base your decision on the provided candidate data only. "
         "Do not invent missing experience. "
         "Prefer concrete evidence over generic recruiter language. "
+        f"{UNTRUSTED_CONTENT_POLICY} "
         "Return no more than the requested shortlist limit."
     )
 
@@ -276,10 +292,13 @@ def _rank_retrieved_candidates_for_job_description(
     ]
 
     user_prompt = (
-        f"Job description:\n{job_description}\n\n"
+        "<untrusted_job_description>\n"
+        f"{job_description}\n"
+        "</untrusted_job_description>\n\n"
         f"Return the top {shortlist_limit} candidates only.\n\n"
-        "Retrieved candidates:\n"
-        f"{json.dumps(candidate_payload, indent=2, ensure_ascii=False)}\n\n"
+        "<untrusted_retrieved_candidates>\n"
+        f"{json.dumps(candidate_payload, indent=2, ensure_ascii=False)}\n"
+        "</untrusted_retrieved_candidates>\n\n"
         "For each shortlisted candidate:\n"
         "- use the exact candidate_id from the supplied list\n"
         "- assign a fit_score from 0 to 100\n"

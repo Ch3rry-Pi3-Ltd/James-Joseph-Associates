@@ -12,6 +12,10 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.core.llm_safety import (
+    MAX_LLM_INPUT_CHARACTERS,
+    UNTRUSTED_CONTENT_POLICY,
+)
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.services import mcp_read_adapter
@@ -106,6 +110,19 @@ def answer_recruiter_question(
             code="validation_error",
             status_code=400,
             details=[{"field": "question"}],
+        )
+    if len(normalized_question) > MAX_LLM_INPUT_CHARACTERS:
+        raise RecruiterQuestionAnsweringError(
+            "Question is too long.",
+            stage="validation",
+            code="validation_error",
+            status_code=400,
+            details=[
+                {
+                    "field": "question",
+                    "max_length": MAX_LLM_INPUT_CHARACTERS,
+                }
+            ],
         )
 
     retrieval_plan = _build_retrieval_plan(normalized_question)
@@ -330,19 +347,27 @@ def _generate_grounded_answer(
         "Answer the question using only the grounded evidence supplied to you. "
         "Do not invent companies, contacts, candidates, jobs, opportunities, or "
         "interactions that are not present in the payload. "
+        f"{UNTRUSTED_CONTENT_POLICY} "
         "Be concise, concrete, and recruiter-usable. "
         "If the evidence is incomplete, say so plainly."
     )
 
     user_prompt = (
-        f"Recruiter question:\n{question}\n\n"
-        f"Retrieval plan:\n{json.dumps(retrieval_plan, indent=2, ensure_ascii=False)}\n\n"
-        "Grounded role-search evidence:\n"
-        f"{json.dumps(role_search_result, indent=2, ensure_ascii=False)}\n\n"
-        "Grounded company-context evidence:\n"
-        f"{json.dumps(company_context_result, indent=2, ensure_ascii=False)}\n\n"
-        "Recent session memory:\n"
-        f"{json.dumps(recent_memory, indent=2, ensure_ascii=False)}\n\n"
+        "<untrusted_recruiter_question>\n"
+        f"{question}\n"
+        "</untrusted_recruiter_question>\n\n"
+        "<trusted_retrieval_plan>\n"
+        f"{json.dumps(retrieval_plan, indent=2, ensure_ascii=False)}\n"
+        "</trusted_retrieval_plan>\n\n"
+        "<untrusted_role_search_evidence>\n"
+        f"{json.dumps(role_search_result, indent=2, ensure_ascii=False)}\n"
+        "</untrusted_role_search_evidence>\n\n"
+        "<untrusted_company_context_evidence>\n"
+        f"{json.dumps(company_context_result, indent=2, ensure_ascii=False)}\n"
+        "</untrusted_company_context_evidence>\n\n"
+        "<untrusted_recent_session_memory>\n"
+        f"{json.dumps(recent_memory, indent=2, ensure_ascii=False)}\n"
+        "</untrusted_recent_session_memory>\n\n"
         "Write a short direct answer, then evidence bullets. "
         "Only cite IDs that appear in the supplied evidence."
     )
@@ -429,13 +454,11 @@ def _collect_items_by_id(
         if item.get(key) is not None
     }
     if cited_ids:
-        collected = [
+        return [
             items_by_id[item_id]
             for item_id in cited_ids
             if item_id in items_by_id
         ]
-        if collected:
-            return collected
 
     return items[:5]
 

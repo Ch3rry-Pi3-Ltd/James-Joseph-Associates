@@ -9,11 +9,16 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.core.llm_safety import (
+    MAX_LLM_IDENTIFIER_CHARACTERS,
+    MAX_LLM_INPUT_CHARACTERS,
+)
+
 
 class OperatorSearchCandidatesRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    role_brief: str = Field(min_length=1)
+    role_brief: str = Field(min_length=1, max_length=MAX_LLM_INPUT_CHARACTERS)
     search_limit: int = Field(default=10, ge=1, le=50)
     candidate_pool_limit: int = Field(default=25, ge=1, le=100)
     shortlist_limit: int = Field(default=5, ge=1, le=10)
@@ -66,7 +71,7 @@ class OperatorCandidateResumeReferenceResponse(BaseModel):
 class OperatorCompanyContextRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    company_name: str = Field(min_length=1)
+    company_name: str = Field(min_length=1, max_length=MAX_LLM_IDENTIFIER_CHARACTERS)
     candidate_limit: int = Field(default=10, ge=1, le=50)
     contact_limit: int = Field(default=10, ge=1, le=50)
     interaction_limit: int = Field(default=10, ge=1, le=50)
@@ -95,21 +100,27 @@ class OperatorCompanyDirectoryResponse(BaseModel):
 class OperatorCompanyLeadDiscoveryRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    candidate_id: str = Field(min_length=1)
-    company_name: str = Field(min_length=1)
+    candidate_id: str = Field(min_length=1, max_length=MAX_LLM_IDENTIFIER_CHARACTERS)
+    company_name: str = Field(min_length=1, max_length=MAX_LLM_IDENTIFIER_CHARACTERS)
     limit: int = Field(default=10, ge=1, le=50)
 
 
 class OperatorQuestionAnswerRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    question: str = Field(min_length=1)
+    question: str = Field(min_length=1, max_length=MAX_LLM_INPUT_CHARACTERS)
     search_limit: int = Field(default=10, ge=1, le=50)
     candidate_pool_limit: int = Field(default=25, ge=1, le=100)
     shortlist_limit: int = Field(default=5, ge=1, le=10)
     company_context_limit: int = Field(default=5, ge=1, le=20)
-    user_id: str | None = None
-    conversation_id: str | None = None
+    user_id: str | None = Field(
+        default=None,
+        max_length=MAX_LLM_IDENTIFIER_CHARACTERS,
+    )
+    conversation_id: str | None = Field(
+        default=None,
+        max_length=MAX_LLM_IDENTIFIER_CHARACTERS,
+    )
 
 
 class OperatorQuestionAnswerResponse(BaseModel):
@@ -132,8 +143,11 @@ class OperatorQuestionAnswerResponse(BaseModel):
 class OperatorMemoryClearRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    user_id: str = Field(min_length=1)
-    conversation_id: str | None = None
+    user_id: str = Field(min_length=1, max_length=MAX_LLM_IDENTIFIER_CHARACTERS)
+    conversation_id: str | None = Field(
+        default=None,
+        max_length=MAX_LLM_IDENTIFIER_CHARACTERS,
+    )
 
 
 class OperatorMemoryClearResponse(BaseModel):
