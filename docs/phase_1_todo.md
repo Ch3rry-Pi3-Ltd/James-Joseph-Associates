@@ -16,11 +16,46 @@ latest agreed priority order.
   - [x] dedicated bearer authentication, DNS-rebinding protection, shared
     database-backed rate limiting, and metadata-only audit logging
 - [ ] Complete ChatGPT Business workspace rollout:
-  - [ ] configure the production MCP endpoint in the approved workspace
-  - [ ] confirm bearer support or implement the workspace-required OAuth flow
-  - [ ] restrict publication to approved users
-  - [ ] run the documented recruiter UAT prompts
-  - [ ] controlled rollout path from read-only assistant to approved write actions later
+  - [ ] Prepare and send the workspace owner a short connection guide covering
+    the exact ChatGPT Business setup steps below.
+  - [ ] Confirm the person completing setup is an Admin or Owner of the intended
+    ChatGPT Business workspace; members cannot publish custom MCP apps.
+  - [ ] In ChatGPT web, enable Developer mode for that admin account from
+    Workspace settings -> Apps -> Create, or User settings -> Apps ->
+    Advanced settings.
+  - [ ] Create a custom MCP app using the production endpoint:
+    `https://james-joseph-associates.vercel.app/mcp`.
+  - [ ] Select the supported authentication mechanism:
+    - [ ] use the existing dedicated bearer credential if ChatGPT offers that
+      option during app creation
+    - [ ] otherwise implement OAuth before connecting it; never publish the
+      endpoint without authentication
+    - [ ] transfer the required credential through a secure channel rather
+      than WhatsApp, email, screenshots, or documentation
+  - [ ] Run **Scan tools** and confirm only the six intended bounded read-only
+    recruitment tools are exposed.
+  - [ ] Create the app as a draft and test it before publication:
+    - [ ] search candidates from a realistic role brief
+    - [ ] retrieve one candidate profile and its CV reference
+    - [ ] retrieve company, contact, job, opportunity, and interaction context
+    - [ ] confirm out-of-scope requests cannot run raw SQL, inspect arbitrary
+      tables, write records, delete data, send outreach, or modify Recruitly
+  - [ ] Publish the vetted app from Workspace settings -> Apps -> Drafts.
+  - [ ] Confirm which workspace users can access it; keep the first rollout to
+    the approved operator accounts only where Business workspace controls
+    permit.
+  - [ ] Confirm users can start a normal ChatGPT conversation, select the
+    custom app, and ask grounded recruitment questions without direct
+    Supabase credentials or database access.
+  - [ ] Run and record the documented recruiter UAT prompts, returned evidence,
+    CV retrieval, failure cases, and response times.
+  - [ ] Add an operator note explaining that Business workspaces use a frozen
+    snapshot of approved MCP tools; material tool changes require review and
+    republishing rather than appearing automatically.
+  - [ ] Document token rotation, app recreation/republishing, access removal,
+    audit review, and incident-disable procedures.
+  - [ ] Keep the initial release read-only; define a separate controlled rollout
+    for explicitly approved write actions later.
 - [ ] Polish the `/match` UI for UAT:
   - [ ] clearer instructions
   - [ ] more intuitive flow labels
