@@ -1,26 +1,25 @@
 # Phase 1 To-Do List
 
 <details open>
-<summary><strong>Current Outstanding Program Work (17 July 2026)</strong></summary>
+<summary><strong>Current Outstanding Program Work (24 July 2026)</strong></summary>
 
 This is the trimmed engineering backlog that matters most right now, in the
 latest agreed priority order.
 
-- [ ] Add conversational operator workflow:
-  - [ ] ChatGPT-style database assistant over canonical Supabase data
-  - [ ] grounded answers about candidates, companies, contacts, jobs, opportunities, and past interactions
-  - [ ] conversation memory for operator sessions
-  - [ ] bounded retrieval over prior assistant/user exchanges where useful
-  - [ ] ability to answer questions about previous recruiter conversations, notes, and historical context
-  - [ ] first read-only MCP toolset for ChatGPT Business:
-    - [ ] search candidates from a role brief
-    - [ ] inspect candidate profile and current CV
-    - [ ] inspect company context
-    - [ ] inspect company contacts
-    - [ ] inspect prior interactions/notes
-    - [ ] inspect jobs and opportunities
-    - [ ] explain shortlist evidence
-  - [ ] workspace auth model for Tom's ChatGPT Business account
+- [x] Add the conversational operator foundation:
+  - [x] grounded answers over canonical candidates, companies, contacts, jobs,
+    opportunities, and past interactions
+  - [x] bounded per-user conversation memory with a 12-hour TTL and four-turn ceiling
+  - [x] remote stateless Streamable HTTP MCP endpoint at `/mcp`
+  - [x] read-only tools for candidate search/profile/CV references, company
+    context, company directory, and candidate-to-company lead discovery
+  - [x] dedicated bearer authentication, DNS-rebinding protection, shared
+    database-backed rate limiting, and metadata-only audit logging
+- [ ] Complete ChatGPT Business workspace rollout:
+  - [ ] configure the production MCP endpoint in the approved workspace
+  - [ ] confirm bearer support or implement the workspace-required OAuth flow
+  - [ ] restrict publication to approved users
+  - [ ] run the documented recruiter UAT prompts
   - [ ] controlled rollout path from read-only assistant to approved write actions later
 - [ ] Polish the `/match` UI for UAT:
   - [ ] clearer instructions

@@ -493,24 +493,37 @@ security boundary.
 
 ### Stage 1: MCP contract and adapter
 
-- define the MCP tool schemas above
-- implement one MCP adapter service that calls the existing backend routes
-- keep all tools read-only
+- [x] Define the MCP tool schemas above.
+- [x] Implement one MCP adapter service over the existing canonical services.
+- [x] Expose the adapter through stateless Streamable HTTP at `/mcp`.
+- [x] Keep every published MCP tool read-only.
+- [x] Add a dedicated bearer credential, DNS-rebinding protection, a shared
+  database-backed rate limit, and metadata-only audit events.
 
 ### Stage 2: Grounded recruiter Q&A
 
-- implement `answer_recruiter_question`
-- route questions to:
+- [x] Implement `answer_recruiter_question`.
+- [x] Route questions to:
   - candidate shortlist
   - candidate profile
   - company context
   - company lead discovery
-- return citations and structured supporting entities
+- [x] Return citations and structured supporting entities.
+
+The remote MCP release deliberately exposes the evidence-retrieval tools rather
+than publishing a second reasoning tool. ChatGPT can reason over the returned
+evidence directly, while the existing backend Q&A route remains available to
+the application UI.
 
 ### Stage 3: Session memory
 
-- keep lightweight conversation memory for follow-up questions
-- decide whether memory is:
+- [x] Keep lightweight conversation memory for follow-up questions in the
+  application Q&A workflow.
+- [x] Use per-user, per-conversation memory with a 12-hour TTL and a maximum of
+  four retained turns.
+- [ ] Decide whether approved conversation summaries should later become
+  first-class recruiter interaction records.
+- Memory options considered:
   - in-session only
   - persisted as summaries
   - persisted as first-class interaction rows
@@ -522,9 +535,12 @@ Recommended first cut:
 
 ### Stage 4: Workspace rollout
 
-- connect the read-only MCP app to Tom's ChatGPT Business workspace
-- restrict access to approved users only
-- validate real recruiter prompts end to end
+- [ ] Connect the read-only MCP app to the approved ChatGPT Business workspace.
+- [ ] Confirm which authentication options are exposed by that workspace's
+  custom-app setup. Use the dedicated bearer credential where supported;
+  otherwise add the platform's required OAuth flow rather than weakening auth.
+- [ ] Restrict publication to approved workspace users.
+- [ ] Validate the realistic recruiter prompts in the connection guide.
 
 ### Stage 5: Controlled write actions later
 
@@ -577,13 +593,13 @@ The MCP layer gives us:
 
 - [x] Define the exact MCP tool request/response schemas.
 - [x] Map each MCP tool to existing backend routes/services where possible.
-- [ ] Add any missing read routes needed for company/contact/interaction lookup.
-- [ ] Add read-only auth and audit logging expectations.
-- [ ] Decide whether prior recruiter conversations should be:
-  - [ ] session-only
-  - [ ] persisted as conversation summaries
-  - [ ] persisted as first-class interaction records
-- [ ] Produce a first test script with realistic recruiter prompts.
+- [x] Add any missing read services needed for company/contact/interaction lookup.
+- [x] Add read-only bearer authentication, shared rate limiting, and metadata-only
+  audit logging.
+- [x] Implement bounded per-user application conversation memory with a 12-hour
+  TTL and four-turn ceiling.
+- [x] Produce a first test script with realistic recruiter prompts.
+- [ ] Publish and validate the app in the ChatGPT Business workspace.
 
 ## Priority Note
 

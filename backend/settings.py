@@ -370,6 +370,43 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Dedicated bearer credential for the remote read-only MCP endpoint.
+    #   - Keep this separate from broader internal/admin credentials.
+    #   - The endpoint fails closed when the value is not configured.
+    mcp_api_token: str = Field(
+        default="",
+        validation_alias="MCP_API_TOKEN",
+    )
+
+    # Database-backed request ceiling shared across deployed instances.
+    mcp_rate_limit_per_minute: int = Field(
+        default=60,
+        ge=1,
+        le=1000,
+        validation_alias="MCP_RATE_LIMIT_PER_MINUTE",
+    )
+
+    # Comma-separated exact Host values accepted by the MCP transport.
+    #   - Explicit values retain the SDK's DNS-rebinding protection.
+    #   - Add a custom production hostname here before exposing the endpoint on it.
+    mcp_allowed_hosts: str = Field(
+        default=(
+            "127.0.0.1,127.0.0.1:*,localhost,localhost:*,[::1],[::1]:*,"
+            "testserver,james-joseph-associates.vercel.app"
+        ),
+        validation_alias="MCP_ALLOWED_HOSTS",
+    )
+
+    # Browser Origin values are normally absent for server-to-server MCP calls.
+    # This allowlist protects the endpoint if a browser-originated call is made.
+    mcp_allowed_origins: str = Field(
+        default=(
+            "http://127.0.0.1:*,http://localhost:*,http://[::1]:*,"
+            "https://james-joseph-associates.vercel.app"
+        ),
+        validation_alias="MCP_ALLOWED_ORIGINS",
+    )
+
     # OAuth client ID for the JobAdder developer application.
     #   - This will be provided by the JobAdder developer portal once the app is
     #     registered and approved.

@@ -6,6 +6,7 @@ httpx
 ruff==0.15.10
 uvicorn
 langgraph
+mcp>=1.23.2,<2
 psycopg[binary]
 pypdf
 langchain

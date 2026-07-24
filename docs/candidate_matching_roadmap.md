@@ -34,24 +34,24 @@ The immediate milestone is simple:
 
 ## Outstanding Program Backlog
 
-This is the practical engineering backlog as of Friday, July 17, 2026.
+This is the practical engineering backlog as of Friday, July 24, 2026.
 
 ### Highest Priority
 
-- [ ] Add conversational operator workflow:
-  - [ ] grounded chat assistant over the canonical Supabase layer
-  - [ ] session memory for recruiter follow-up questions
-  - [ ] controlled retrieval over prior interactions and assistant context
-  - [ ] ability to answer questions about previous recruiter conversations, notes, and historical company/candidate context
-  - [ ] first read-only MCP toolset for ChatGPT Business:
-    - [ ] search candidates from a role brief
-    - [ ] inspect candidate profile and current CV
-    - [ ] inspect company context
-    - [ ] inspect company contacts
-    - [ ] inspect prior interactions/notes
-    - [ ] inspect jobs and opportunities
-    - [ ] explain shortlist evidence
-  - [ ] workspace auth model for Tom's ChatGPT Business account
+- [x] Add the conversational operator foundation:
+  - [x] grounded Q&A service over the canonical Supabase layer
+  - [x] bounded per-user session memory for recruiter follow-up questions
+  - [x] controlled retrieval over prior interactions and assistant context
+  - [x] first remote read-only MCP toolset for ChatGPT Business:
+    - [x] search candidates from a role brief
+    - [x] inspect candidate profile and current CV reference
+    - [x] inspect company context
+    - [x] inspect company contacts
+    - [x] inspect prior interactions/notes
+    - [x] inspect jobs and opportunities
+  - [x] dedicated bearer authentication, shared rate limiting, and audit logging
+  - [ ] publish the remote app to the approved ChatGPT Business workspace
+  - [ ] validate workspace-user restrictions and realistic recruiter prompts
   - [ ] controlled rollout path from read-only assistant to approved write actions later
 - [ ] Tighten the recruiter demo for UAT:
   - [ ] clearer on-page instructions

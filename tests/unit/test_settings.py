@@ -81,6 +81,7 @@ def test_settings_load_default_values(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "")
     monkeypatch.setenv("OPENROUTER_API_KEY", "")
     monkeypatch.setenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("MCP_API_TOKEN", "")
 
     settings = get_settings()
 
@@ -96,6 +97,9 @@ def test_settings_load_default_values(monkeypatch) -> None:
     assert settings.llm_timeout_seconds == 60.0
     assert settings.operator_session_memory_ttl_hours == 12
     assert settings.operator_session_memory_max_turns == 4
+    assert settings.mcp_api_token == ""
+    assert settings.mcp_rate_limit_per_minute == 60
+    assert "james-joseph-associates.vercel.app" in settings.mcp_allowed_hosts
     assert settings.jobadder_client_id == ""
     assert settings.jobadder_client_secret == ""
     assert settings.jobadder_redirect_uri == ""
@@ -146,6 +150,12 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     )
     monkeypatch.setenv("MAKE_API_TOKEN", "fake-make-token")
     monkeypatch.setenv("ADMIN_API_TOKEN", "fake-admin-token")
+    monkeypatch.setenv("MCP_API_TOKEN", "fake-mcp-token")
+    monkeypatch.setenv("MCP_RATE_LIMIT_PER_MINUTE", "75")
+    monkeypatch.setenv(
+        "MCP_ALLOWED_HOSTS",
+        "localhost:*,recruitment.example.com",
+    )
     monkeypatch.setenv("JOBADDER_CLIENT_ID", "fake-jobadder-client-id")
     monkeypatch.setenv("JOBADDER_CLIENT_SECRET", "fake-jobadder-client-secret")
     monkeypatch.setenv(
@@ -172,6 +182,11 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.postgres_url == "postgresql://user:pass@localhost:5432/jja"
     assert settings.make_api_token == "fake-make-token"
     assert settings.admin_api_token == "fake-admin-token"
+    assert settings.mcp_api_token == "fake-mcp-token"
+    assert settings.mcp_rate_limit_per_minute == 75
+    assert settings.mcp_allowed_hosts == (
+        "localhost:*,recruitment.example.com"
+    )
     assert settings.openai_api_key == "sk-test-openai-key"
     assert settings.openrouter_api_key == "sk-test-openrouter-key"
     assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"

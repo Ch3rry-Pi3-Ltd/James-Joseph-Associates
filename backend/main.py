@@ -74,12 +74,27 @@ This module should not contain:
 If any of that logic appears here, it probably belongs in a more specific module.
 """
 
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
 from backend.api.router import api_router
 from backend.core.errors import request_validation_exception_handler
+from backend.services.mcp_server import mcp_server
+from backend.services.mcp_transport import McpSecurityMiddleware
 from backend.settings import get_settings
+
+
+@asynccontextmanager
+async def _application_lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """
+    Keep the stateless MCP session manager alive with the parent ASGI app.
+    """
+
+    async with mcp_server.session_manager.run():
+        yield
 
 
 def create_app() -> FastAPI:
@@ -134,6 +149,7 @@ def create_app() -> FastAPI:
             "Backend API for the GraphRAG recruitment intelligence system."
         ),
         debug=settings.debug,
+        lifespan=_application_lifespan,
     )
 
     # Route validation failures through our standard API error shape.
@@ -147,6 +163,15 @@ def create_app() -> FastAPI:
 
     # Register all project API routes in one place
     app.include_router(api_router)
+
+    # Expose the narrow remote MCP transport behind dedicated authentication
+    # and shared operational controls. The mounted server contains read tools
+    # only; canonical mutations remain unavailable through this surface.
+    app.mount(
+        "/mcp",
+        McpSecurityMiddleware(mcp_server.streamable_http_app()),
+        name="read-only-mcp",
+    )
 
     return app
 
