@@ -3,7 +3,7 @@ defusedxml
 pydantic-settings
 pytest
 httpx
-ruff
+ruff==0.15.10
 uvicorn
 langgraph
 psycopg[binary]

@@ -53,6 +53,13 @@ jobs:
 
       - name: Audit production Node dependencies
         run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      # Keep high-severity findings visible while npm has no patched release
+      # for the current transitive PostCSS advisory. Critical findings still
+      # fail the workflow.
+      - name: Block critical production Node vulnerabilities
+        run: npm audit --omit=dev --audit-level=critical
 
   passive-staging-scan:
     name: Passive staging web scan
