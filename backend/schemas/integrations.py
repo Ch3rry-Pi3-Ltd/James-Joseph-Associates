@@ -126,7 +126,7 @@ class LinkedHelperPersonIngestRequest(BaseModel):
         default=None,
         description="Optional import run identifier for operator bookkeeping.",
     )
-    record_kind: Literal["candidate", "contact", "hiring_manager"] = Field(
+    record_kind: Literal["person", "candidate", "contact", "hiring_manager"] = Field(
         description="Canonical interpretation of the incoming Linked Helper row.",
     )
     full_name: str | None = Field(

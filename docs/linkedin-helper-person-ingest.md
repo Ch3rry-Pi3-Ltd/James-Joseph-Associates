@@ -11,6 +11,7 @@ The route:
 - preserves the raw upstream payload in `source_records`
 - upserts canonical `people`
 - upserts canonical `companies`
+- supports neutral person rows without inventing a candidate/contact role
 - upserts canonical `contacts` for `contact` / `hiring_manager`
 - upserts canonical `candidates` for `candidate`
 - upserts `person_company_roles`
@@ -18,9 +19,14 @@ The route:
 
 ## Supported record kinds
 
+- `person`
 - `candidate`
 - `contact`
 - `hiring_manager`
+
+Use `person` for native Linked Helper backup profiles unless a separate,
+reliable source establishes that the person is a candidate, contact, or hiring
+manager.
 
 ## Operator script
 
@@ -70,9 +76,25 @@ The backend accepts a normalized JSON payload such as:
 - `resume_updated_at`
 - `last_contacted_at`
 
+## Native backup dry run
+
+The `.lhd2` backup path is intentionally read-only:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.dry_run_linkedin_helper_backup `
+  --dry-run `
+  --limit 100
+```
+
+This downloads the latest backup to memory, maps a bounded profile slice, and
+reports aggregate reconciliation counts. It does not extract the SQLite
+database to disk and does not write canonical data.
+
 ## Next step
 
-Once we have one real Linked Helper webhook or CSV row, map it into this shape and run it through the operator script first. After that, we can add either:
+After reviewing the native-backup dry run and agreeing how ambiguous identities
+should be handled, add a bounded write command. Webhook/CSV paths can continue
+to use the same normalized persistence shape:
 
 - a webhook adapter route
 - or a batch CSV-to-JSON import path

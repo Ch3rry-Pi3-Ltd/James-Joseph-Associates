@@ -17,7 +17,7 @@ from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
 
-LinkedHelperRecordKind = Literal["candidate", "contact", "hiring_manager"]
+LinkedHelperRecordKind = Literal["person", "candidate", "contact", "hiring_manager"]
 
 
 def persist_linkedin_helper_person_snapshot(

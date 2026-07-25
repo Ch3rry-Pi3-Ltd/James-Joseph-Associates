@@ -74,10 +74,14 @@ latest agreed priority order.
     them to disk
   - [x] confirm the July 2026 backup is a strict data superset of the older
     backup
-  - [ ] native `.lhd2` backup-to-canonical payload mapper
-  - [ ] deterministic matching to existing candidates/contacts/companies
+  - [x] native in-memory `.lhd2` backup-to-canonical person payload mapper
+  - [x] deterministic matching to existing canonical people through provenance,
+    LinkedIn profile, email, phone, and unique name-plus-company keys
+  - [ ] deterministic company reconciliation using provenance, LinkedIn
+    organisation identity, domain, and unambiguous company name
   - [x] provenance tracking
-  - [ ] read-only dry-run report separating matched, new, and ambiguous people
+  - [x] read-only dry-run report separating matched, new, ambiguous, and skipped
+    people
     before any bulk write
   - [ ] bounded import of profiles, current roles, employment history, skills,
     and connection metadata

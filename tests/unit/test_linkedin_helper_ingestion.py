@@ -53,3 +53,21 @@ def test_build_linkedin_helper_person_persistence_payload_builds_name_from_parts
     assert payload["full_name"] == "Roger Campbell"
     assert payload["contact_type"] is None
     assert payload["source_record_id"] is not None
+
+
+def test_build_linkedin_helper_person_persistence_payload_accepts_neutral_person() -> None:
+    """Verify backup rows can land without inventing a business role."""
+
+    payload = build_linkedin_helper_person_persistence_payload(
+        {
+            "source_payload": {"backup_person_id": 42},
+            "source_record_id": "lhd2-person:42",
+            "record_kind": "person",
+            "full_name": "Neutral Profile",
+            "company_name": "Example Ltd",
+        }
+    )
+
+    assert payload["record_kind"] == "person"
+    assert payload["contact_type"] is None
+    assert payload["is_hiring_manager"] is False

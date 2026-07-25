@@ -129,9 +129,35 @@ context, but should only be imported after agreeing:
 - whether full text or a minimised summary is stored
 - deletion and audit expectations
 
+## Implemented Read-Only Tooling
+
+The native `.lhd2` mapper now:
+
+- opens the ZIP-compatible backup and SQLite database in memory
+- maps bounded person slices without extracting the database to local disk
+- preserves stable upstream IDs, LinkedIn identifiers, contact details, current
+  role, employment history, skills, and connection metadata
+- emits neutral `person` payloads rather than guessing candidate or
+  hiring-manager status
+
+The mandatory `--dry-run` command reconciles mapped people against existing
+canonical source links, LinkedIn profiles, unique emails, unique phones, and
+unique name-plus-company keys. It reports aggregate
+matched/new/ambiguous/skipped counts and performs zero canonical writes.
+
+Two bounded live samples were run against Supabase:
+
+| Backup offset | Profiles | Matched | New | Ambiguous | Skipped |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 100 | 0 | 100 | 0 | 0 |
+| 5,000 | 100 | 4 | 94 | 2 | 0 |
+
+All four deterministic matches in the second sample were direct normalized
+LinkedIn-profile matches. Both runs reported `canonical_writes: 0`.
+
 ## Next Engineering Step
 
-Build a native in-memory `.lhd2` mapper and a mandatory `--dry-run` mode. The
-dry run should output only aggregate matched/new/ambiguous/skipped counts and a
-separate protected review artifact. Run a small bounded sample before enabling
-the full profile import.
+Review the bounded dry-run results, add deterministic company reconciliation,
+and agree the treatment of ambiguous rows. Only then enable a bounded profile
+write path. Chats and messages remain explicitly out of scope until privacy,
+retention, and visibility rules are agreed.
