@@ -24,7 +24,7 @@ def _person_payload(*, source_record_id: str, name: str) -> dict[str, object]:
             "source_name_company_count": 1,
         },
         "import_run_id": "test-run",
-        "record_kind": "person",
+        "record_kind": "candidate",
         "full_name": name,
         "first_name": name,
         "last_name": None,
@@ -184,6 +184,7 @@ def test_execute_import_plan_persists_related_context(monkeypatch) -> None:
     assert result["roles_persisted"] == 1
     assert result["skills_persisted"] == 1
     assert captured_person_payloads[0]["skills"] == ["Python"]
+    assert captured_person_payloads[0]["record_kind"] == "candidate"
     assert captured_person_payloads[0]["employment_roles"][0]["company_id"] == (
         "company-1"
     )

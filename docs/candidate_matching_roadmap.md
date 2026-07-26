@@ -66,9 +66,13 @@ This is the practical engineering backlog as of Friday, July 24, 2026.
   - [ ] saveable searches or saved briefs
   - [ ] lightweight feedback capture on good/bad shortlist results
 - [ ] LinkedHelper ingestion path:
-  - [ ] CSV ingest normalizer
-  - [ ] deterministic matching/upsert rules
-  - [ ] provenance for LinkedHelper refresh data
+  - [x] CSV ingest normalizer
+  - [x] deterministic person/company matching and candidate upsert rules
+  - [x] provenance for LinkedHelper refresh data
+  - [x] bounded native-backup importer with ambiguous-row safeguards
+  - [x] candidate-context policy with person/candidate skill links
+  - [ ] promote the remaining native-backup profiles in controlled slices
+  - [ ] run semantic refresh for imported candidates after each slice
   - [ ] webhook path if the vendor payload shape is good enough
 - [ ] Finish the next Recruitly ingestion slice:
   - [ ] jobs into canonical `jobs`

@@ -125,6 +125,7 @@ def persist_linkedin_helper_person_snapshot(
                 _upsert_person_skill(
                     cursor,
                     person_id=person_id,
+                    candidate_id=candidate_id,
                     skill_name=skill_name,
                     source_record_id=source_record["id"],
                 )
@@ -694,12 +695,23 @@ def _upsert_candidate(
         """
         update candidates
         set
-            current_title = coalesce(%(current_title)s, current_title),
-            current_company_id = coalesce(%(current_company_id)s, current_company_id),
-            candidate_status = coalesce(%(candidate_status)s, candidate_status),
-            availability_status = coalesce(%(availability_status)s, availability_status),
-            last_contacted_at = coalesce(%(last_contacted_at)s, last_contacted_at),
-            resume_updated_at = coalesce(%(resume_updated_at)s, resume_updated_at)
+            current_title = coalesce(current_title, %(current_title)s),
+            current_company_id = coalesce(current_company_id, %(current_company_id)s),
+            candidate_status = coalesce(candidate_status, %(candidate_status)s),
+            availability_status = coalesce(
+                availability_status,
+                %(availability_status)s
+            ),
+            last_contacted_at = case
+                when %(last_contacted_at)s is null then last_contacted_at
+                when last_contacted_at is null then %(last_contacted_at)s
+                else greatest(last_contacted_at, %(last_contacted_at)s)
+            end,
+            resume_updated_at = case
+                when %(resume_updated_at)s is null then resume_updated_at
+                when resume_updated_at is null then %(resume_updated_at)s
+                else greatest(resume_updated_at, %(resume_updated_at)s)
+            end
         where id = %(candidate_id)s
         """,
         {
@@ -910,6 +922,7 @@ def _upsert_person_skill(
     cursor: Cursor[Any],
     *,
     person_id: str,
+    candidate_id: str | None,
     skill_name: str,
     source_record_id: str,
 ) -> str:
@@ -962,6 +975,44 @@ def _upsert_person_skill(
     row = cursor.fetchone()
     if row is None:
         raise RuntimeError("Failed to upsert person skill link.")
+
+    if candidate_id is not None:
+        cursor.execute(
+            """
+            insert into candidate_skills (
+                candidate_id,
+                skill_id,
+                source_record_id,
+                confidence,
+                evidence_text
+            )
+            values (
+                %(candidate_id)s,
+                %(skill_id)s,
+                %(source_record_id)s,
+                1.0,
+                %(evidence_text)s
+            )
+            on conflict (candidate_id, skill_id)
+            do update set
+                source_record_id = excluded.source_record_id,
+                confidence = greatest(
+                    coalesce(candidate_skills.confidence, 0),
+                    excluded.confidence
+                ),
+                evidence_text = coalesce(
+                    candidate_skills.evidence_text,
+                    excluded.evidence_text
+                )
+            """,
+            {
+                "candidate_id": candidate_id,
+                "skill_id": skill_row["id"],
+                "source_record_id": source_record_id,
+                "evidence_text": "Linked Helper profile skill",
+            },
+        )
+
     return row["id"]
 
 

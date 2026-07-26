@@ -342,7 +342,7 @@ def map_linkedin_helper_people_from_connection(
                 "source_record_id": source_record_id,
                 "source_payload": source_payload,
                 "import_run_id": import_run_id,
-                "record_kind": "person",
+                "record_kind": "candidate",
                 "full_name": full_name,
                 "first_name": first_name,
                 "last_name": last_name,

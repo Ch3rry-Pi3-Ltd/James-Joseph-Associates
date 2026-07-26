@@ -11,7 +11,7 @@ The route:
 - preserves the raw upstream payload in `source_records`
 - upserts canonical `people`
 - upserts canonical `companies`
-- supports neutral person rows without inventing a candidate/contact role
+- supports neutral person rows for generic integrations
 - upserts canonical `contacts` for `contact` / `hiring_manager`
 - upserts canonical `candidates` for `candidate`
 - upserts `person_company_roles`
@@ -24,9 +24,17 @@ The route:
 - `contact`
 - `hiring_manager`
 
-Use `person` for native Linked Helper backup profiles unless a separate,
-reliable source establishes that the person is a candidate, contact, or hiring
-manager.
+Native Linked Helper backup profiles are treated as candidates by operator
+decision. Deterministic reconciliation updates the candidate already attached
+to the matched person; otherwise it creates a candidate for the new person.
+Ambiguous identities remain skipped rather than creating duplicates. Generic
+webhook and CSV integrations may still use `person` where their source context
+is genuinely unknown.
+
+For an existing candidate, Linked Helper fills missing candidate context and
+adds person/company/role/skill provenance. It does not replace an already
+populated current title, current company, status, or availability with an older
+backup value. Timestamp fields only move forward.
 
 ## Operator script
 
@@ -116,8 +124,13 @@ After reviewing the aggregate plan, execute that same bounded slice:
 The command skips ambiguous identities, persists only deterministic matched or
 new profiles, resolves linked organisations against the complete backup,
 retains connection metadata in provenance, and writes canonical employment
-roles and neutral person skills. It finishes with a provenance-link audit and
+roles plus person- and candidate-level skills. It finishes with a provenance-link audit and
 fails if any expected source row lacks exactly one canonical entity link.
+
+Candidate semantic backfill also accepts candidate profiles without a linked
+CV, so Linked Helper-only candidates can receive profile/focus/skill embeddings.
+When a CV is linked later, rebuilding that candidate adds resume-derived
+semantic blocks without reingesting the Linked Helper source.
 
 Apply migration `0010_person_skills.sql` before the first committed run.
 

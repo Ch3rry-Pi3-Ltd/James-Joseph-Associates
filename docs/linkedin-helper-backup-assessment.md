@@ -151,10 +151,12 @@ collection is an internal skipped-person list, so collections and tags do not
 provide useful business classification.
 
 Campaign membership is therefore useful evidence that a person was sourced for
-a particular vacancy or talent search. It should support a derived
-`likely_candidate` classification and graph edges between people, campaigns,
-roles, skills, clients, and vacancy references. It must not by itself overwrite
-an explicit CRM candidate/contact classification.
+a particular vacancy or talent search. The agreed import policy now treats all
+native Linked Helper profiles as candidates, while retaining campaign, role,
+skill, client, and vacancy signals as provenance for later graph edges. A
+deterministic person match updates that person's existing candidate record; a
+new person receives a new candidate record. Ambiguous identities remain
+unwritten.
 
 Job title and seniority remain useful for derived `likely_hiring_manager` and
 `likely_recruitment_contact` classifications. These should carry confidence and
@@ -184,8 +186,7 @@ The native `.lhd2` mapper now:
   domains, websites, size, location, and source metadata
 - preserves stable upstream IDs, LinkedIn identifiers, contact details, current
   role, employment history, skills, and connection metadata
-- emits neutral `person` payloads rather than guessing candidate or
-  hiring-manager status
+- emits `candidate` payloads under the agreed native-backup import policy
 
 The mandatory `--dry-run` command supports `people`, `companies`, or both.
 People are reconciled against existing canonical source links, LinkedIn

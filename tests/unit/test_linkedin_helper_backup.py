@@ -229,7 +229,7 @@ def _archive_database(connection: sqlite3.Connection) -> bytes:
     return archive_buffer.getvalue()
 
 
-def test_map_linkedin_helper_people_maps_neutral_profile_and_details() -> None:
+def test_map_linkedin_helper_people_maps_candidate_profile_and_details() -> None:
     connection = _build_linkedin_helper_database()
     try:
         payloads = map_linkedin_helper_people_from_connection(
@@ -243,7 +243,7 @@ def test_map_linkedin_helper_people_maps_neutral_profile_and_details() -> None:
 
     assert len(payloads) == 1
     payload = payloads[0]
-    assert payload["record_kind"] == "person"
+    assert payload["record_kind"] == "candidate"
     assert payload["source_record_id"] == "lhd2-person:member-123"
     assert payload["full_name"] == "Ada Lovelace"
     assert payload["primary_email"] == "ada@example.com"

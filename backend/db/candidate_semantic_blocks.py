@@ -63,7 +63,7 @@ def list_candidates_for_semantic_block_backfill(
           on p.id = c.person_id
         left join companies co
           on co.id = c.current_company_id
-        join lateral (
+        left join lateral (
             select
                 d.id,
                 d.title,
