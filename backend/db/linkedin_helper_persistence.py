@@ -703,14 +703,24 @@ def _upsert_candidate(
                 %(availability_status)s
             ),
             last_contacted_at = case
-                when %(last_contacted_at)s is null then last_contacted_at
-                when last_contacted_at is null then %(last_contacted_at)s
-                else greatest(last_contacted_at, %(last_contacted_at)s)
+                when %(last_contacted_at)s::timestamptz is null
+                    then last_contacted_at
+                when last_contacted_at is null
+                    then %(last_contacted_at)s::timestamptz
+                else greatest(
+                    last_contacted_at,
+                    %(last_contacted_at)s::timestamptz
+                )
             end,
             resume_updated_at = case
-                when %(resume_updated_at)s is null then resume_updated_at
-                when resume_updated_at is null then %(resume_updated_at)s
-                else greatest(resume_updated_at, %(resume_updated_at)s)
+                when %(resume_updated_at)s::timestamptz is null
+                    then resume_updated_at
+                when resume_updated_at is null
+                    then %(resume_updated_at)s::timestamptz
+                else greatest(
+                    resume_updated_at,
+                    %(resume_updated_at)s::timestamptz
+                )
             end
         where id = %(candidate_id)s
         """,
