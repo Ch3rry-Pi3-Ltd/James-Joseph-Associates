@@ -77,12 +77,11 @@ latest agreed priority order.
   - [x] native in-memory `.lhd2` backup-to-canonical person payload mapper
   - [x] deterministic matching to existing canonical people through provenance,
     LinkedIn profile, email, phone, and unique name-plus-company keys
-  - [ ] deterministic company reconciliation using provenance, LinkedIn
+  - [x] deterministic company reconciliation using provenance, LinkedIn
     organisation identity, domain, and unambiguous company name
   - [x] provenance tracking
-  - [x] read-only dry-run report separating matched, new, ambiguous, and skipped
-    people
-    before any bulk write
+  - [x] read-only dry-run reports separating matched, new, ambiguous, and
+    skipped people and companies before any bulk write
   - [ ] bounded import of profiles, current roles, employment history, skills,
     and connection metadata
   - [ ] decide privacy and retention rules before importing chats/messages as

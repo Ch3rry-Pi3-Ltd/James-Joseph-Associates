@@ -9,7 +9,9 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import pytest
 
 from backend.services.linkedin_helper_backup import (
+    map_linkedin_helper_backup_companies,
     map_linkedin_helper_backup_people,
+    map_linkedin_helper_companies_from_connection,
     map_linkedin_helper_people_from_connection,
     open_linkedin_helper_backup,
 )
@@ -112,6 +114,43 @@ def _build_linkedin_helper_database() -> sqlite3.Connection:
             person_id integer,
             skill_id integer
         );
+        create table organizations (
+            id integer primary key,
+            original_id integer,
+            created_at text,
+            updated_at text
+        );
+        create table organization_mini_profile (
+            id integer primary key,
+            organization_id integer,
+            name text,
+            actual_at text
+        );
+        create table organization_external_ids (
+            id integer primary key,
+            organization_id integer,
+            external_id text,
+            type_group text
+        );
+        create table organization_extra (
+            id integer primary key,
+            organization_id integer,
+            description text,
+            website text,
+            phone text,
+            staff_count integer,
+            staff_count_start integer,
+            staff_count_end integer,
+            follower_count integer,
+            founded_on integer,
+            actual_at text
+        );
+        create table organization_headquarter_address (
+            id integer primary key,
+            organization_id integer,
+            full_address text,
+            actual_at text
+        );
 
         insert into people values (1, 'member-123', '2026-07-10T12:00:00Z');
         insert into person_original_mini_profile values (
@@ -157,6 +196,27 @@ def _build_linkedin_helper_database() -> sqlite3.Connection:
         insert into skills values (2, 'SQL');
         insert into person_skill values (1, 1, 1);
         insert into person_skill values (2, 1, 2);
+
+        insert into organizations values (
+            1, 987654, '2026-07-01T12:00:00Z', '2026-07-10T12:00:00Z'
+        );
+        insert into organization_mini_profile values (
+            1, 1, 'Analytical Engines Ltd', '2026-07-10T12:00:00Z'
+        );
+        insert into organization_external_ids values (
+            1, 1, 'analytical-engines', 'public'
+        );
+        insert into organization_external_ids values (
+            2, 1, '987654', 'company'
+        );
+        insert into organization_extra values (
+            1, 1, 'Analytical systems company.', 'https://www.example.com/about',
+            '+44 20 7000 0000', 120, 101, 200, 1500, 2020,
+            '2026-07-10T12:00:00Z'
+        );
+        insert into organization_headquarter_address values (
+            1, 1, 'London, United Kingdom', '2026-07-10T12:00:00Z'
+        );
         """
     )
     return connection
@@ -194,6 +254,7 @@ def test_map_linkedin_helper_people_maps_neutral_profile_and_details() -> None:
     assert payload["location"] == "London, United Kingdom"
     assert payload["source_payload"]["skills"] == ["Python", "SQL"]
     assert payload["source_payload"]["employment_history"][0]["is_default"] == 1
+    assert payload["source_payload"]["source_name_company_count"] == 1
 
 
 def test_open_and_map_linkedin_helper_archive_without_disk_extraction() -> None:
@@ -224,3 +285,42 @@ def test_open_linkedin_helper_backup_rejects_non_archive_content() -> None:
     with pytest.raises(RuntimeError, match="not ZIP-compatible"):
         open_linkedin_helper_backup(b"not a linked helper backup")
 
+
+def test_map_linkedin_helper_companies_maps_stable_company_identity() -> None:
+    connection = _build_linkedin_helper_database()
+    try:
+        payloads = map_linkedin_helper_companies_from_connection(
+            connection,
+            limit=10,
+            import_run_id="company-test-run",
+        )
+    finally:
+        connection.close()
+
+    assert len(payloads) == 1
+    payload = payloads[0]
+    assert payload["source_record_id"] == "lhd2-organization:987654"
+    assert payload["name"] == "Analytical Engines Ltd"
+    assert payload["domain"] == "example.com"
+    assert payload["website_url"] == "https://www.example.com/about"
+    assert (
+        payload["linkedin_url"]
+        == "https://www.linkedin.com/company/analytical-engines/"
+    )
+    assert payload["size_range"] == "101-200"
+    assert payload["location"] == "London, United Kingdom"
+    assert payload["source_payload"]["company_identifiers"] == ["987654"]
+    assert payload["source_payload"]["source_name_count"] == 1
+
+
+def test_map_linkedin_helper_company_archive_without_disk_extraction() -> None:
+    source_connection = _build_linkedin_helper_database()
+    try:
+        archive_bytes = _archive_database(source_connection)
+    finally:
+        source_connection.close()
+
+    mapped = map_linkedin_helper_backup_companies(archive_bytes, limit=1)
+
+    assert mapped[0]["name"] == "Analytical Engines Ltd"
+    assert mapped[0]["source_payload"]["backup_organization_id"] == 1

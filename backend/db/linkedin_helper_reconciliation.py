@@ -8,6 +8,44 @@ from typing import Any
 from backend.db.connection import postgres_connection
 
 
+def load_canonical_companies_for_linkedin_helper() -> dict[str, Any]:
+    """Load canonical companies and existing Linked Helper links without writing."""
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                select
+                    id::text as company_id,
+                    name,
+                    domain,
+                    website_url,
+                    linkedin_url
+                from companies
+                order by id
+                """
+            )
+            company_rows = [dict(row) for row in cursor.fetchall()]
+
+            cursor.execute(
+                """
+                select
+                    sr.source_record_id,
+                    srl.company_id::text as company_id
+                from source_records sr
+                join source_record_links srl on srl.source_record_id = sr.id
+                where sr.source_system = 'linkedin_helper'
+                  and srl.company_id is not null
+                """
+            )
+            source_link_rows = [dict(row) for row in cursor.fetchall()]
+
+    return {
+        "companies": company_rows,
+        "source_links": source_link_rows,
+    }
+
+
 def load_canonical_people_for_linkedin_helper() -> dict[str, Any]:
     """Load canonical people and existing Linked Helper links without writing."""
 
@@ -78,4 +116,7 @@ def load_canonical_people_for_linkedin_helper() -> dict[str, Any]:
     }
 
 
-__all__ = ["load_canonical_people_for_linkedin_helper"]
+__all__ = [
+    "load_canonical_companies_for_linkedin_helper",
+    "load_canonical_people_for_linkedin_helper",
+]

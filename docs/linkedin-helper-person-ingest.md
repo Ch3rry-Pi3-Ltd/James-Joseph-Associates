@@ -83,6 +83,7 @@ The `.lhd2` backup path is intentionally read-only:
 ```powershell
 .\.venv\Scripts\python.exe -m scripts.dry_run_linkedin_helper_backup `
   --dry-run `
+  --entity people `
   --limit 100
 ```
 
@@ -90,11 +91,16 @@ This downloads the latest backup to memory, maps a bounded profile slice, and
 reports aggregate reconciliation counts. It does not extract the SQLite
 database to disk and does not write canonical data.
 
+Use `--entity companies` for the equivalent organisation report, or
+`--entity both` to report both entities. Name-based matching is only
+deterministic when the normalised identity is unique across the complete
+backup, regardless of the selected offset and limit.
+
 ## Next step
 
-After reviewing the native-backup dry run and agreeing how ambiguous identities
-should be handled, add a bounded write command. Webhook/CSV paths can continue
-to use the same normalized persistence shape:
+After reviewing the native-backup people and company reports and agreeing how
+ambiguous identities should be handled, add a bounded write command.
+Webhook/CSV paths can continue to use the same normalized persistence shape:
 
 - a webhook adapter route
 - or a batch CSV-to-JSON import path

@@ -135,15 +135,24 @@ The native `.lhd2` mapper now:
 
 - opens the ZIP-compatible backup and SQLite database in memory
 - maps bounded person slices without extracting the database to local disk
+- maps bounded organisation slices with stable LinkedIn organisation IDs,
+  domains, websites, size, location, and source metadata
 - preserves stable upstream IDs, LinkedIn identifiers, contact details, current
   role, employment history, skills, and connection metadata
 - emits neutral `person` payloads rather than guessing candidate or
   hiring-manager status
 
-The mandatory `--dry-run` command reconciles mapped people against existing
-canonical source links, LinkedIn profiles, unique emails, unique phones, and
-unique name-plus-company keys. It reports aggregate
-matched/new/ambiguous/skipped counts and performs zero canonical writes.
+The mandatory `--dry-run` command supports `people`, `companies`, or both.
+People are reconciled against existing canonical source links, LinkedIn
+profiles, unique emails, unique phones, and unique name-plus-company keys.
+Companies are reconciled against source links, LinkedIn organisation identity,
+domain, and unique normalised name.
+
+Name uniqueness is calculated across the entire Linked Helper backup, not only
+the bounded slice being inspected. This prevents a duplicate identity elsewhere
+in the backup from being treated as an automatic match. The command reports
+aggregate matched/new/ambiguous/skipped counts and performs zero canonical
+writes.
 
 Two bounded live samples were run against Supabase:
 
@@ -155,9 +164,21 @@ Two bounded live samples were run against Supabase:
 All four deterministic matches in the second sample were direct normalized
 LinkedIn-profile matches. Both runs reported `canonical_writes: 0`.
 
+Two bounded company samples were also run against Supabase after applying
+full-backup name-uniqueness checks:
+
+| Backup offset | Organisations | Matched | New | Ambiguous | Skipped |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 100 | 43 | 46 | 11 | 0 |
+| 5,000 | 100 | 2 | 98 | 0 | 0 |
+
+All 45 company matches used an exact, source-unique normalised company name.
+No company or person dry run wrote canonical data.
+
 ## Next Engineering Step
 
-Review the bounded dry-run results, add deterministic company reconciliation,
-and agree the treatment of ambiguous rows. Only then enable a bounded profile
-write path. Chats and messages remain explicitly out of scope until privacy,
-retention, and visibility rules are agreed.
+Review the bounded person and company reports and agree the treatment of
+ambiguous rows. Only then enable a bounded, auditable write path for profiles,
+companies, roles, employment history, skills, and connection metadata. Chats
+and messages remain explicitly out of scope until privacy, retention, and
+visibility rules are agreed.

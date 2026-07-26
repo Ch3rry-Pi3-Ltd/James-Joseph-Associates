@@ -11,14 +11,18 @@ from pathlib import Path
 from typing import Any
 
 from backend.db.linkedin_helper_reconciliation import (
+    load_canonical_companies_for_linkedin_helper,
     load_canonical_people_for_linkedin_helper,
 )
 from backend.services.dropbox_api import download_dropbox_file
 from backend.services.linkedin_helper_backup import (
+    map_linkedin_helper_backup_companies,
     map_linkedin_helper_backup_people,
 )
 from backend.services.linkedin_helper_reconciliation import (
+    build_canonical_company_identity_index,
     build_canonical_identity_index,
+    reconcile_linkedin_helper_companies,
     reconcile_linkedin_helper_people,
 )
 from scripts.persist_recruiterflow_initial_chunks import (
@@ -48,6 +52,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--dropbox-path",
         default=DEFAULT_BACKUP_PATH,
         help="Dropbox path to the latest Linked Helper .lhd2 backup.",
+    )
+    parser.add_argument(
+        "--entity",
+        choices=("people", "companies", "both"),
+        default="people",
+        help="Backup entity to reconcile. Defaults to people.",
     )
     parser.add_argument(
         "--limit",
@@ -86,6 +96,30 @@ def run_dry_run(
         source_links=canonical_snapshot["source_links"],
     )
     return reconcile_linkedin_helper_people(
+        payloads=payloads,
+        canonical_index=canonical_index,
+    )
+
+
+def run_company_dry_run(
+    *,
+    content_bytes: bytes,
+    limit: int,
+    offset: int,
+    canonical_snapshot: dict[str, Any],
+    import_run_id: str,
+) -> dict[str, Any]:
+    payloads = map_linkedin_helper_backup_companies(
+        content_bytes,
+        limit=limit,
+        offset=offset,
+        import_run_id=import_run_id,
+    )
+    canonical_index = build_canonical_company_identity_index(
+        companies=canonical_snapshot["companies"],
+        source_links=canonical_snapshot["source_links"],
+    )
+    return reconcile_linkedin_helper_companies(
         payloads=payloads,
         canonical_index=canonical_index,
     )
@@ -132,17 +166,28 @@ def main() -> None:
         path=args.dropbox_path,
         timeout_seconds=120,
     )
-    report = run_dry_run(
-        content_bytes=downloaded_file["content_bytes"],
-        limit=args.limit,
-        offset=args.offset,
-        canonical_snapshot=load_canonical_people_for_linkedin_helper(),
-        import_run_id=import_run_id,
-    )
+    reports: dict[str, dict[str, Any]] = {}
+    if args.entity in {"people", "both"}:
+        reports["people"] = run_dry_run(
+            content_bytes=downloaded_file["content_bytes"],
+            limit=args.limit,
+            offset=args.offset,
+            canonical_snapshot=load_canonical_people_for_linkedin_helper(),
+            import_run_id=import_run_id,
+        )
+    if args.entity in {"companies", "both"}:
+        reports["companies"] = run_company_dry_run(
+            content_bytes=downloaded_file["content_bytes"],
+            limit=args.limit,
+            offset=args.offset,
+            canonical_snapshot=load_canonical_companies_for_linkedin_helper(),
+            import_run_id=import_run_id,
+        )
 
     summary = {
         "mode": "dry_run",
         "canonical_writes": 0,
+        "entity": args.entity,
         "dropbox_path": args.dropbox_path,
         "downloaded_mib": round(
             len(downloaded_file["content_bytes"]) / 1_048_576,
@@ -150,6 +195,34 @@ def main() -> None:
         ),
         "offset": args.offset,
         "limit": args.limit,
+    }
+    if len(reports) == 1:
+        report = next(iter(reports.values()))
+        summary.update(_report_summary(report))
+    else:
+        summary["reports"] = {
+            entity_name: _report_summary(report)
+            for entity_name, report in reports.items()
+        }
+    if args.review_artifact:
+        review_report = (
+            next(iter(reports.values()))
+            if len(reports) == 1
+            else {
+                "results": [
+                    {"entity": entity_name, **result}
+                    for entity_name, entity_report in reports.items()
+                    for result in entity_report["results"]
+                ]
+            }
+        )
+        artifact_path = write_review_artifact(args.review_artifact, review_report)
+        summary["review_artifact"] = str(artifact_path)
+    print(json.dumps(summary, indent=2))
+
+
+def _report_summary(report: dict[str, Any]) -> dict[str, Any]:
+    return {
         "total": report["total"],
         "matched": report["matched"],
         "new": report["new"],
@@ -157,10 +230,6 @@ def main() -> None:
         "skipped": report["skipped"],
         "match_methods": report["match_methods"],
     }
-    if args.review_artifact:
-        artifact_path = write_review_artifact(args.review_artifact, report)
-        summary["review_artifact"] = str(artifact_path)
-    print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
