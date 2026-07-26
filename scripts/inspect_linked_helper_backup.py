@@ -46,10 +46,22 @@ def build_parser() -> argparse.ArgumentParser:
             "Requires --compare-dropbox-path."
         ),
     )
+    parser.add_argument(
+        "--classification-signals",
+        action="store_true",
+        help=(
+            "Include aggregate campaign, collection, and tag coverage plus "
+            "the most populated campaign and collection labels."
+        ),
+    )
     return parser
 
 
-def inspect_linked_helper_backup(content_bytes: bytes) -> dict[str, Any]:
+def inspect_linked_helper_backup(
+    content_bytes: bytes,
+    *,
+    include_classification_signals: bool = False,
+) -> dict[str, Any]:
     database_member_name, database_bytes, member_count = (
         _read_linked_helper_database(content_bytes)
     )
@@ -77,10 +89,15 @@ def inspect_linked_helper_backup(content_bytes: bytes) -> dict[str, Any]:
             for table_name in table_names
         ]
         safe_statistics = _build_safe_statistics(connection)
+        classification_signals = (
+            _build_classification_signal_statistics(connection)
+            if include_classification_signals
+            else None
+        )
     finally:
         connection.close()
 
-    return {
+    result = {
         "downloaded_bytes": len(content_bytes),
         "downloaded_mib": round(len(content_bytes) / 1_048_576, 2),
         "archive_member_count": member_count,
@@ -91,6 +108,9 @@ def inspect_linked_helper_backup(content_bytes: bytes) -> dict[str, Any]:
         "tables": tables,
         "safe_statistics": safe_statistics,
     }
+    if classification_signals is not None:
+        result["classification_signals"] = classification_signals
+    return result
 
 
 def compare_linked_helper_backups(
@@ -343,6 +363,156 @@ def _build_safe_statistics(connection: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
+def _build_classification_signal_statistics(
+    connection: sqlite3.Connection,
+) -> dict[str, Any]:
+    people_total = _safe_table_count(connection, "people")
+    distinct_campaign_people = _safe_distinct_count(
+        connection,
+        table_name="person_in_campaigns_history",
+        column_name="person_id",
+    )
+    return {
+        "people_total": people_total,
+        "campaigns_total": _safe_table_count(connection, "campaigns"),
+        "campaign_history_rows": _safe_table_count(
+            connection,
+            "person_in_campaigns_history",
+        ),
+        "distinct_people_in_campaign_history": distinct_campaign_people,
+        "campaign_people_coverage_percent": (
+            round((distinct_campaign_people / people_total) * 100, 2)
+            if people_total
+            else 0.0
+        ),
+        "action_target_rows": _safe_table_count(
+            connection,
+            "action_target_people",
+        ),
+        "distinct_action_target_people": _safe_distinct_count(
+            connection,
+            table_name="action_target_people",
+            column_name="person_id",
+        ),
+        "collections_total": _safe_table_count(connection, "collections"),
+        "collection_people_rows": _safe_table_count(
+            connection,
+            "collection_people",
+        ),
+        "distinct_collection_people": _safe_distinct_count(
+            connection,
+            table_name="collection_people",
+            column_name="person_id",
+        ),
+        "tags_total": _safe_table_count(connection, "tags"),
+        "person_tag_rows": _safe_table_count(connection, "person_tag"),
+        "top_campaigns": _top_campaign_memberships(connection),
+        "top_collections": _top_collection_memberships(connection),
+    }
+
+
+def _safe_table_count(
+    connection: sqlite3.Connection,
+    table_name: str,
+) -> int:
+    if not _table_exists(connection, table_name):
+        return 0
+    return _count_table_rows(connection, table_name)
+
+
+def _safe_distinct_count(
+    connection: sqlite3.Connection,
+    *,
+    table_name: str,
+    column_name: str,
+) -> int:
+    if not _column_exists(connection, table_name, column_name):
+        return 0
+    quoted_table = _quote_identifier(table_name)
+    quoted_column = _quote_identifier(column_name)
+    row = connection.execute(
+        f"select count(distinct {quoted_column}) from {quoted_table}"
+    ).fetchone()
+    return int(row[0]) if row is not None else 0
+
+
+def _top_campaign_memberships(
+    connection: sqlite3.Connection,
+    *,
+    limit: int = 30,
+) -> list[dict[str, Any]]:
+    required_columns = (
+        ("campaigns", "id"),
+        ("campaigns", "name"),
+        ("person_in_campaigns_history", "campaign_id"),
+        ("person_in_campaigns_history", "person_id"),
+    )
+    if not all(
+        _column_exists(connection, table_name, column_name)
+        for table_name, column_name in required_columns
+    ):
+        return []
+    return [
+        {
+            "campaign_name": str(row[0] or "").strip(),
+            "distinct_people": int(row[1]),
+        }
+        for row in connection.execute(
+            """
+            select
+                c.name as campaign_name,
+                count(distinct h.person_id) as distinct_people
+            from campaigns c
+            left join person_in_campaigns_history h
+                on h.campaign_id = c.id
+            group by c.id, c.name
+            order by distinct_people desc, campaign_name asc
+            limit ?
+            """,
+            (limit,),
+        )
+    ]
+
+
+def _top_collection_memberships(
+    connection: sqlite3.Connection,
+    *,
+    limit: int = 30,
+) -> list[dict[str, Any]]:
+    required_columns = (
+        ("collections", "id"),
+        ("collections", "name"),
+        ("collection_people", "collection_id"),
+        ("collection_people", "person_id"),
+    )
+    if not all(
+        _column_exists(connection, table_name, column_name)
+        for table_name, column_name in required_columns
+    ):
+        return []
+    return [
+        {
+            "collection_name": str(row[0] or "").strip(),
+            "distinct_people": int(row[1]),
+        }
+        for row in connection.execute(
+            """
+            select
+                c.name as collection_name,
+                count(distinct cp.person_id) as distinct_people
+            from collections c
+            left join collection_people cp
+                on cp.collection_id = c.id
+            group by c.id, c.name
+            having count(distinct cp.person_id) > 0
+            order by distinct_people desc, collection_name asc
+            limit ?
+            """,
+            (limit,),
+        )
+    ]
+
+
 def _column_exists(
     connection: sqlite3.Connection,
     table_name: str,
@@ -484,7 +654,10 @@ def main() -> None:
         ),
     }
     if not args.compare_only:
-        result = inspect_linked_helper_backup(downloaded_file["content_bytes"])
+        result = inspect_linked_helper_backup(
+            downloaded_file["content_bytes"],
+            include_classification_signals=args.classification_signals,
+        )
 
     if args.compare_dropbox_path:
         comparison_file = download_dropbox_file(

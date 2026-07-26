@@ -129,6 +129,51 @@ context, but should only be imported after agreeing:
 - whether full text or a minimised summary is stored
 - deletion and audit expectations
 
+## Campaign And Classification Signals
+
+A read-only aggregate inspection of the newer backup found:
+
+| Signal | Coverage |
+| --- | ---: |
+| Campaigns | 124 |
+| Person-campaign history rows | 23,759 |
+| Distinct people in campaign history | 9,336 of 10,862 (85.95%) |
+| Action-target rows | 37,025 |
+| Distinct action-target people | 10,264 of 10,862 (94.50%) |
+| Tags / person-tag rows | 0 / 0 |
+| Collections / current person memberships | 323 / 18 |
+
+The populated campaign names overwhelmingly describe vacancy and candidate
+sourcing searches, including role, client, technology, market, and `tw` vacancy
+references. Examples include Rust, C++ trading-platform, DeFi engineering,
+actuarial, pricing, and trust-officer searches. The only populated current
+collection is an internal skipped-person list, so collections and tags do not
+provide useful business classification.
+
+Campaign membership is therefore useful evidence that a person was sourced for
+a particular vacancy or talent search. It should support a derived
+`likely_candidate` classification and graph edges between people, campaigns,
+roles, skills, clients, and vacancy references. It must not by itself overwrite
+an explicit CRM candidate/contact classification.
+
+Job title and seniority remain useful for derived `likely_hiring_manager` and
+`likely_recruitment_contact` classifications. These should carry confidence and
+supporting evidence because a manager or director can also be a candidate.
+Campaign labels containing managerial titles are not automatically
+hiring-manager campaigns; many are searches for candidates to fill managerial
+roles.
+
+The next classification slice should:
+
+1. Preserve campaign identity and person-campaign membership as provenance.
+2. Parse role, technology, client, market, connection-degree, and `tw` vacancy
+   signals from campaign labels.
+3. Store derived classifications separately from confirmed candidate/contact
+   roles.
+4. Make confidence and evidence available to graph retrieval and operator
+   review.
+5. Keep chats and message bodies outside this pass.
+
 ## Implemented Read-Only Tooling
 
 The native `.lhd2` mapper now:
