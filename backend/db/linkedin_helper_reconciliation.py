@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Literal
+
+from psycopg import sql
 
 from backend.db.connection import postgres_connection
 
@@ -116,7 +118,95 @@ def load_canonical_people_for_linkedin_helper() -> dict[str, Any]:
     }
 
 
+def verify_linkedin_helper_import(
+    *,
+    person_source_record_ids: list[str],
+    company_source_record_ids: list[str],
+) -> dict[str, Any]:
+    """Verify imported provenance has exactly one canonical entity link."""
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            person_rows = _load_link_audit_rows(
+                cursor,
+                source_record_type="linkedin_helper_person_export",
+                source_record_ids=person_source_record_ids,
+                entity_column="person_id",
+            )
+            company_rows = _load_link_audit_rows(
+                cursor,
+                source_record_type="linkedin_helper_company_export",
+                source_record_ids=company_source_record_ids,
+                entity_column="company_id",
+            )
+
+    return {
+        "people": _summarize_link_audit(
+            rows=person_rows,
+            expected_source_record_ids=person_source_record_ids,
+        ),
+        "companies": _summarize_link_audit(
+            rows=company_rows,
+            expected_source_record_ids=company_source_record_ids,
+        ),
+    }
+
+
+def _load_link_audit_rows(
+    cursor: Any,
+    *,
+    source_record_type: str,
+    source_record_ids: list[str],
+    entity_column: Literal["person_id", "company_id"],
+) -> list[dict[str, Any]]:
+    if not source_record_ids:
+        return []
+    cursor.execute(
+        sql.SQL(
+            """
+        select
+            sr.source_record_id,
+            count(distinct srl.{entity_column}) as entity_links
+        from source_records sr
+        left join source_record_links srl on srl.source_record_id = sr.id
+        where sr.source_system = 'linkedin_helper'
+          and sr.source_record_type = %(source_record_type)s
+          and sr.source_record_id = any(%(source_record_ids)s)
+        group by sr.source_record_id
+        order by sr.source_record_id
+        """
+        ).format(entity_column=sql.Identifier(entity_column)),
+        {
+            "source_record_type": source_record_type,
+            "source_record_ids": source_record_ids,
+        },
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def _summarize_link_audit(
+    *,
+    rows: list[dict[str, Any]],
+    expected_source_record_ids: list[str],
+) -> dict[str, Any]:
+    found = {str(row["source_record_id"]): int(row["entity_links"]) for row in rows}
+    missing = sorted(set(expected_source_record_ids) - set(found))
+    invalid = sorted(
+        source_record_id
+        for source_record_id, link_count in found.items()
+        if link_count != 1
+    )
+    return {
+        "expected": len(expected_source_record_ids),
+        "found": len(found),
+        "missing": missing,
+        "invalid_link_counts": invalid,
+        "passed": not missing and not invalid,
+    }
+
+
 __all__ = [
     "load_canonical_companies_for_linkedin_helper",
     "load_canonical_people_for_linkedin_helper",
+    "verify_linkedin_helper_import",
 ]

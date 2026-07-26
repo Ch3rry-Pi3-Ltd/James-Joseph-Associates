@@ -96,10 +96,31 @@ Use `--entity companies` for the equivalent organisation report, or
 deterministic when the normalised identity is unique across the complete
 backup, regardless of the selected offset and limit.
 
-## Next step
+## Controlled native backup import
 
-After reviewing the native-backup people and company reports and agreeing how
-ambiguous identities should be handled, add a bounded write command.
+Preview a bounded 20-profile plan without writes:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.run_linkedin_helper_backup_import `
+  --limit 20
+```
+
+After reviewing the aggregate plan, execute that same bounded slice:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.run_linkedin_helper_backup_import `
+  --limit 20 `
+  --commit
+```
+
+The command skips ambiguous identities, persists only deterministic matched or
+new profiles, resolves linked organisations against the complete backup,
+retains connection metadata in provenance, and writes canonical employment
+roles and neutral person skills. It finishes with a provenance-link audit and
+fails if any expected source row lacks exactly one canonical entity link.
+
+Apply migration `0010_person_skills.sql` before the first committed run.
+
 Webhook/CSV paths can continue to use the same normalized persistence shape:
 
 - a webhook adapter route

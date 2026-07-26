@@ -97,6 +97,13 @@ def build_linkedin_helper_person_persistence_payload(
         "availability_status": _clean_optional_string(payload.get("availability_status")),
         "resume_updated_at": payload.get("resume_updated_at"),
         "last_contacted_at": payload.get("last_contacted_at"),
+        "employment_roles": payload.get("employment_roles", []),
+        "skills": [
+            skill
+            for value in payload.get("skills", [])
+            for skill in [_clean_optional_string(value)]
+            if skill is not None
+        ],
     }
 
 

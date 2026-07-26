@@ -22,6 +22,9 @@ LinkedHelperRecordKind = Literal["person", "candidate", "contact", "hiring_manag
 
 def persist_linkedin_helper_person_snapshot(
     persistence_payload: dict[str, Any],
+    *,
+    canonical_person_id: str | None = None,
+    canonical_company_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Persist one Linked Helper person/contact snapshot.
@@ -46,6 +49,7 @@ def persist_linkedin_helper_person_snapshot(
                 domain=persistence_payload.get("company_domain"),
                 website_url=persistence_payload.get("company_website_url"),
                 linkedin_url=persistence_payload.get("company_linkedin_url"),
+                canonical_company_id=canonical_company_id,
             )
 
             person_id = _upsert_person(
@@ -60,6 +64,7 @@ def persist_linkedin_helper_person_snapshot(
                 location=persistence_payload.get("location"),
                 headline=persistence_payload.get("headline"),
                 summary=persistence_payload.get("summary"),
+                canonical_person_id=canonical_person_id,
             )
 
             candidate_id: str | None = None
@@ -103,6 +108,29 @@ def persist_linkedin_helper_person_snapshot(
                     source_record_id=source_record["id"],
                 )
 
+            employment_role_ids = [
+                _upsert_person_company_role(
+                    cursor,
+                    person_id=person_id,
+                    company_id=str(role["company_id"]),
+                    role_title=role.get("role_title"),
+                    start_date=role.get("start_date"),
+                    end_date=role.get("end_date"),
+                    is_current=bool(role.get("is_current")),
+                    source_record_id=source_record["id"],
+                )
+                for role in persistence_payload.get("employment_roles", [])
+            ]
+            skill_ids = [
+                _upsert_person_skill(
+                    cursor,
+                    person_id=person_id,
+                    skill_name=skill_name,
+                    source_record_id=source_record["id"],
+                )
+                for skill_name in persistence_payload.get("skills", [])
+            ]
+
             _ensure_source_record_link(
                 cursor,
                 source_record_id=source_record["id"],
@@ -138,7 +166,59 @@ def persist_linkedin_helper_person_snapshot(
             "candidate_id": candidate_id,
             "contact_id": contact_id,
             "person_company_role_id": person_company_role_id,
+            "employment_role_ids": employment_role_ids,
+            "person_skill_ids": skill_ids,
             "record_kind": persistence_payload["record_kind"],
+        }
+    )
+
+
+def persist_linkedin_helper_company_snapshot(
+    persistence_payload: dict[str, Any],
+    *,
+    canonical_company_id: str | None = None,
+) -> dict[str, Any]:
+    """Persist one reconciled Linked Helper organisation snapshot."""
+
+    persisted_at = datetime.now(timezone.utc)
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            source_record = _upsert_source_record(
+                cursor,
+                source_record_id=str(persistence_payload["source_record_id"]),
+                source_record_type="linkedin_helper_company_export",
+                source_payload=persistence_payload["source_payload"],
+                source_payload_hash=str(persistence_payload["source_payload_hash"]),
+                import_run_id=persistence_payload.get("import_run_id"),
+                processed_at=persisted_at,
+            )
+            company_id = _upsert_company(
+                cursor,
+                company_name=persistence_payload.get("name"),
+                domain=persistence_payload.get("domain"),
+                website_url=persistence_payload.get("website_url"),
+                linkedin_url=persistence_payload.get("linkedin_url"),
+                industry=persistence_payload.get("industry"),
+                size_range=persistence_payload.get("size_range"),
+                location=persistence_payload.get("location"),
+                description=persistence_payload.get("description"),
+                status=persistence_payload.get("status"),
+                canonical_company_id=canonical_company_id,
+            )
+            if company_id is None:
+                raise RuntimeError("Linked Helper company payload had no usable identity.")
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=source_record["id"],
+                company_id=company_id,
+            )
+        connection.commit()
+
+    return _make_json_safe_summary(
+        {
+            "persisted_at": persisted_at.isoformat(),
+            "source_record_id": source_record["id"],
+            "company_id": company_id,
         }
     )
 
@@ -147,6 +227,7 @@ def _upsert_source_record(
     cursor: Cursor[Any],
     *,
     source_record_id: str,
+    source_record_type: str = "linkedin_helper_person_export",
     source_payload: dict[str, Any],
     source_payload_hash: str,
     import_run_id: str | None,
@@ -167,7 +248,7 @@ def _upsert_source_record(
         )
         values (
             'linkedin_helper',
-            'linkedin_helper_person_export',
+            %(source_record_type)s,
             %(source_record_id)s,
             %(source_payload)s,
             %(source_payload_hash)s,
@@ -188,6 +269,7 @@ def _upsert_source_record(
         """,
         {
             "source_record_id": source_record_id,
+            "source_record_type": source_record_type,
             "source_payload": Jsonb(source_payload),
             "source_payload_hash": source_payload_hash,
             "import_run_id": import_run_id,
@@ -207,9 +289,36 @@ def _upsert_company(
     domain: str | None,
     website_url: str | None,
     linkedin_url: str | None,
+    industry: str | None = None,
+    size_range: str | None = None,
+    location: str | None = None,
+    description: str | None = None,
+    status: str | None = None,
+    canonical_company_id: str | None = None,
 ) -> str | None:
     if not any((company_name, domain, website_url, linkedin_url)):
         return None
+
+    if canonical_company_id is not None:
+        _require_entity(
+            cursor,
+            table_name="companies",
+            entity_id=canonical_company_id,
+        )
+        _refresh_company(
+            cursor,
+            company_id=canonical_company_id,
+            company_name=company_name,
+            domain=domain,
+            website_url=website_url,
+            linkedin_url=linkedin_url,
+            industry=industry,
+            size_range=size_range,
+            location=location,
+            description=description,
+            status=status,
+        )
+        return canonical_company_id
 
     if linkedin_url is not None:
         cursor.execute(
@@ -231,6 +340,11 @@ def _upsert_company(
                 domain=domain,
                 website_url=website_url,
                 linkedin_url=linkedin_url,
+                industry=industry,
+                size_range=size_range,
+                location=location,
+                description=description,
+                status=status,
             )
             return company_id
 
@@ -254,6 +368,11 @@ def _upsert_company(
                 domain=domain,
                 website_url=website_url,
                 linkedin_url=linkedin_url,
+                industry=industry,
+                size_range=size_range,
+                location=location,
+                description=description,
+                status=status,
             )
             return company_id
 
@@ -277,6 +396,11 @@ def _upsert_company(
                 domain=domain,
                 website_url=website_url,
                 linkedin_url=linkedin_url,
+                industry=industry,
+                size_range=size_range,
+                location=location,
+                description=description,
+                status=status,
             )
             return company_id
 
@@ -286,13 +410,23 @@ def _upsert_company(
             name,
             domain,
             website_url,
-            linkedin_url
+            linkedin_url,
+            industry,
+            size_range,
+            location,
+            description,
+            status
         )
         values (
             %(company_name)s,
             %(domain)s,
             %(website_url)s,
-            %(linkedin_url)s
+            %(linkedin_url)s,
+            %(industry)s,
+            %(size_range)s,
+            %(location)s,
+            %(description)s,
+            %(status)s
         )
         returning id
         """,
@@ -301,6 +435,11 @@ def _upsert_company(
             "domain": domain,
             "website_url": website_url,
             "linkedin_url": linkedin_url,
+            "industry": industry,
+            "size_range": size_range,
+            "location": location,
+            "description": description,
+            "status": status,
         },
     )
     row = cursor.fetchone()
@@ -317,6 +456,11 @@ def _refresh_company(
     domain: str | None,
     website_url: str | None,
     linkedin_url: str | None,
+    industry: str | None = None,
+    size_range: str | None = None,
+    location: str | None = None,
+    description: str | None = None,
+    status: str | None = None,
 ) -> None:
     cursor.execute(
         """
@@ -325,7 +469,12 @@ def _refresh_company(
             name = coalesce(%(company_name)s, name),
             domain = coalesce(%(domain)s, domain),
             website_url = coalesce(%(website_url)s, website_url),
-            linkedin_url = coalesce(%(linkedin_url)s, linkedin_url)
+            linkedin_url = coalesce(%(linkedin_url)s, linkedin_url),
+            industry = coalesce(%(industry)s, industry),
+            size_range = coalesce(%(size_range)s, size_range),
+            location = coalesce(%(location)s, location),
+            description = coalesce(%(description)s, description),
+            status = coalesce(%(status)s, status)
         where id = %(company_id)s
         """,
         {
@@ -334,6 +483,11 @@ def _refresh_company(
             "domain": domain,
             "website_url": website_url,
             "linkedin_url": linkedin_url,
+            "industry": industry,
+            "size_range": size_range,
+            "location": location,
+            "description": description,
+            "status": status,
         },
     )
 
@@ -351,12 +505,17 @@ def _upsert_person(
     location: str | None,
     headline: str | None,
     summary: str | None,
+    canonical_person_id: str | None = None,
 ) -> str:
-    existing_person_id = _find_linked_entity_id(
-        cursor,
-        source_record_id=source_record_id,
-        entity_column="person_id",
-    )
+    existing_person_id = canonical_person_id
+    if existing_person_id is not None:
+        _require_entity(cursor, table_name="people", entity_id=existing_person_id)
+    else:
+        existing_person_id = _find_linked_entity_id(
+            cursor,
+            source_record_id=source_record_id,
+            entity_column="person_id",
+        )
 
     if existing_person_id is None and linkedin_url is not None:
         cursor.execute(
@@ -747,6 +906,83 @@ def _upsert_person_company_role(
     return row["id"]
 
 
+def _upsert_person_skill(
+    cursor: Cursor[Any],
+    *,
+    person_id: str,
+    skill_name: str,
+    source_record_id: str,
+) -> str:
+    cursor.execute(
+        """
+        select id
+        from skills
+        where lower(name) = lower(%(skill_name)s)
+        order by id
+        limit 1
+        """,
+        {"skill_name": skill_name},
+    )
+    skill_row = cursor.fetchone()
+    if skill_row is None:
+        cursor.execute(
+            """
+            insert into skills (name, canonical_name)
+            values (%(skill_name)s, lower(%(skill_name)s))
+            returning id
+            """,
+            {"skill_name": skill_name},
+        )
+        skill_row = cursor.fetchone()
+        if skill_row is None:
+            raise RuntimeError("Failed to upsert Linked Helper skill.")
+
+    cursor.execute(
+        """
+        insert into person_skills (
+            person_id,
+            skill_id,
+            source_record_id
+        )
+        values (
+            %(person_id)s,
+            %(skill_id)s,
+            %(source_record_id)s
+        )
+        on conflict (person_id, skill_id)
+        do update set source_record_id = excluded.source_record_id
+        returning id
+        """,
+        {
+            "person_id": person_id,
+            "skill_id": skill_row["id"],
+            "source_record_id": source_record_id,
+        },
+    )
+    row = cursor.fetchone()
+    if row is None:
+        raise RuntimeError("Failed to upsert person skill link.")
+    return row["id"]
+
+
+def _require_entity(
+    cursor: Cursor[Any],
+    *,
+    table_name: Literal["people", "companies"],
+    entity_id: str,
+) -> None:
+    cursor.execute(
+        sql.SQL("select id from {table_name} where id = %(entity_id)s").format(
+            table_name=sql.Identifier(table_name)
+        ),
+        {"entity_id": entity_id},
+    )
+    if cursor.fetchone() is None:
+        raise ValueError(
+            f"Reconciled {table_name} entity does not exist: {entity_id}"
+        )
+
+
 def _find_linked_entity_id(
     cursor: Cursor[Any],
     *,
@@ -875,4 +1111,7 @@ def _make_json_safe_summary(value: Any) -> Any:
     return value
 
 
-__all__ = ["persist_linkedin_helper_person_snapshot"]
+__all__ = [
+    "persist_linkedin_helper_company_snapshot",
+    "persist_linkedin_helper_person_snapshot",
+]
