@@ -44,8 +44,11 @@ _TEXT_QUERY_STOP_WORDS = {
     "current",
     "description",
     "do",
+    "essential",
+    "experience",
     "for",
     "from",
+    "grade",
     "has",
     "have",
     "how",
@@ -57,6 +60,9 @@ _TEXT_QUERY_STOP_WORDS = {
     "it",
     "its",
     "just",
+    "key",
+    "large",
+    "location",
     "looking",
     "modern",
     "more",
@@ -66,8 +72,14 @@ _TEXT_QUERY_STOP_WORDS = {
     "on",
     "or",
     "production",
+    "qualification",
+    "qualifications",
+    "reporting",
+    "requirements",
     "role",
+    "salary",
     "search",
+    "senior",
     "should",
     "show",
     "someone",
@@ -80,9 +92,11 @@ _TEXT_QUERY_STOP_WORDS = {
     "them",
     "there",
     "this",
+    "title",
     "to",
     "use",
     "we",
+    "week",
     "what",
     "when",
     "where",
@@ -92,12 +106,92 @@ _TEXT_QUERY_STOP_WORDS = {
     "workflow",
 }
 _TEXT_QUERY_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9+#./-]+")
+_TEXT_QUERY_BOOSTED_TERMS = {
+    "analyst",
+    "analytics",
+    "aws",
+    "c#",
+    "c++",
+    "cloud",
+    "cognos",
+    "data",
+    "developer",
+    "docker",
+    "etl",
+    "finance",
+    "financial",
+    "hft",
+    "ibm",
+    "java",
+    "kdb",
+    "kubernetes",
+    "otc",
+    "planning",
+    "pricing",
+    "python",
+    "quant",
+    "quantitative",
+    "q/kdb+",
+    "rust",
+    "sql",
+    "tm1",
+    "trading",
+    "turbointegrator",
+}
+_TEXT_QUERY_LOW_SIGNAL_TERMS = {
+    "business",
+    "company",
+    "customer",
+    "customers",
+    "delivery",
+    "global",
+    "group",
+    "industry",
+    "information",
+    "lead",
+    "management",
+    "manager",
+    "market",
+    "markets",
+    "office",
+    "partner",
+    "project",
+    "projects",
+    "support",
+    "team",
+    "working",
+}
+
+
+def _score_retrieval_term(*, original_term: str, canonical_term: str) -> int:
+    score = 0
+
+    if canonical_term in _TEXT_QUERY_BOOSTED_TERMS:
+        score += 8
+    if canonical_term in _TEXT_QUERY_LOW_SIGNAL_TERMS:
+        score -= 4
+    if any(character.isdigit() for character in canonical_term):
+        score += 5
+    if any(character in canonical_term for character in "+#/."):
+        score += 4
+    if original_term.isupper() and len(original_term) >= 2:
+        score += 2
+
+    term_length = len(canonical_term)
+    if term_length >= 12:
+        score += 3
+    elif term_length >= 8:
+        score += 2
+    elif term_length >= 5:
+        score += 1
+
+    return score
 
 
 def derive_text_retrieval_query(
     query: str,
     *,
-    max_terms: int = 8,
+    max_terms: int = 9,
 ) -> str:
     """
     Return a tighter keyword-oriented query for the FTS side of hybrid search.
@@ -107,10 +201,12 @@ def derive_text_retrieval_query(
     if normalized_query == "":
         return ""
 
-    selected_terms: list[str] = []
+    candidate_terms: list[tuple[int, int, str]] = []
     seen_terms: set[str] = set()
 
-    for original_term in _TEXT_QUERY_TOKEN_PATTERN.findall(normalized_query):
+    for index, original_term in enumerate(
+        _TEXT_QUERY_TOKEN_PATTERN.findall(normalized_query),
+    ):
         canonical_term = (
             original_term.lower().strip().strip(".,;:!?()[]{}<>\"'")
         )
@@ -122,12 +218,27 @@ def derive_text_retrieval_query(
             continue
 
         seen_terms.add(canonical_term)
-        selected_terms.append(canonical_term)
+        candidate_terms.append(
+            (
+                _score_retrieval_term(
+                    original_term=original_term,
+                    canonical_term=canonical_term,
+                ),
+                index,
+                canonical_term,
+            ),
+        )
 
-        if len(selected_terms) >= max(1, min(int(max_terms), 32)):
-            break
-
-    if selected_terms:
+    bounded_max_terms = max(1, min(int(max_terms), 32))
+    if candidate_terms:
+        ranked_terms = sorted(
+            candidate_terms,
+            key=lambda row: (-row[0], row[1]),
+        )[:bounded_max_terms]
+        selected_terms = [
+            canonical_term
+            for _, _, canonical_term in sorted(ranked_terms, key=lambda row: row[1])
+        ]
         return " ".join(selected_terms)
 
     return normalized_query
@@ -136,7 +247,7 @@ def derive_text_retrieval_query(
 def build_text_retrieval_query_variants(
     query: str,
     *,
-    max_terms: int = 8,
+    max_terms: int = 9,
 ) -> list[str]:
     """
     Return progressively broader keyword queries for the FTS side.
@@ -154,7 +265,7 @@ def build_text_retrieval_query_variants(
     tokens = primary_query.split()
     candidate_lengths: list[int] = []
 
-    for length in (len(tokens), 6, 4, 3):
+    for length in (len(tokens), 8, 6, 4, 3):
         bounded_length = max(1, min(length, len(tokens)))
         if bounded_length not in candidate_lengths:
             candidate_lengths.append(bounded_length)

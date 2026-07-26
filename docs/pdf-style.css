@@ -1,0 +1,140 @@
+@page {
+  margin: 18mm 16mm 18mm 16mm;
+}
+
+html {
+  font-size: 11pt;
+}
+
+body {
+  font-family: Inter, Aptos, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #14212b;
+  line-height: 1.55;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+header#title-block-header {
+  margin: 0 0 1.6rem 0;
+  padding: 0 0 1rem 0;
+}
+
+.title {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin: 0 0 0.35rem 0;
+  color: #13212d;
+}
+
+.subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f7b6c;
+  margin: 0 0 0.35rem 0;
+}
+
+.author,
+.date {
+  color: #5b6670;
+  font-size: 0.95rem;
+  margin: 0.1rem 0;
+}
+
+nav#TOC,
+#TOC {
+  background: #f5fbf9;
+  border: 1px solid #d8ece7;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin: 0 0 1.75rem 0;
+  break-inside: avoid;
+}
+
+#TOC > ul,
+#TOC ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.4rem 0 0 0;
+}
+
+#TOC ul ul {
+  padding-left: 1rem;
+  margin-top: 0.25rem;
+}
+
+#TOC li {
+  margin: 0.28rem 0;
+}
+
+#TOC a {
+  color: #0f7b6c;
+  text-decoration: none;
+}
+
+#TOC a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+h1 {
+  font-size: 1.55rem;
+  color: #13212d;
+  margin: 1.8rem 0 0.75rem 0;
+}
+
+h2 {
+  font-size: 1.18rem;
+  color: #0f7b6c;
+  margin: 1.25rem 0 0.55rem 0;
+}
+
+h3 {
+  font-size: 1rem;
+  color: #13212d;
+  margin: 0.9rem 0 0.4rem 0;
+}
+
+p,
+ul,
+ol {
+  margin: 0.45rem 0 0.7rem 0;
+}
+
+li + li {
+  margin-top: 0.16rem;
+}
+
+strong {
+  color: #13212d;
+}
+
+code {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.93em;
+  background: #f4f6f8;
+  border-radius: 6px;
+  padding: 0.08rem 0.3rem;
+}
+
+a {
+  color: #0f7b6c;
+}
+
+blockquote {
+  margin: 0.8rem 0;
+  padding: 0.7rem 0.9rem;
+  background: #f7fafc;
+  border-left: 4px solid #0f7b6c;
+  border-radius: 6px;
+}
+
+hr {
+  display: none;
+}

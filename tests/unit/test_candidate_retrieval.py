@@ -54,7 +54,20 @@ def test_derive_text_retrieval_query_compacts_role_brief_into_keywords() -> None
 
     result = derive_text_retrieval_query(query)
 
-    assert result == "senior data engineer python sql cloud platform etl"
+    assert result == "data engineer python sql cloud platform etl datasets"
+
+
+def test_derive_text_retrieval_query_prioritizes_skill_terms_over_label_noise() -> None:
+    query = (
+        "Job Description FINANCIAL SYSTEMS ANALYST Grade 3 Reporting to Head of BMI "
+        "Location London IBM Planning Analytics TM1 TurboIntegrator SQL finance systems"
+    )
+
+    result = derive_text_retrieval_query(query)
+
+    assert result == (
+        "financial analyst ibm planning analytics tm1 turbointegrator sql finance"
+    )
 
 
 def test_build_text_retrieval_query_variants_returns_progressive_backoff() -> None:
@@ -66,10 +79,10 @@ def test_build_text_retrieval_query_variants_returns_progressive_backoff() -> No
     result = build_text_retrieval_query_variants(query)
 
     assert result == [
-        "senior data engineer python sql cloud platform etl",
-        "senior data engineer python sql cloud",
-        "senior data engineer python",
-        "senior data engineer",
+        "data engineer python sql cloud platform etl datasets",
+        "data engineer python sql cloud platform",
+        "data engineer python sql",
+        "data engineer python",
     ]
 
 
@@ -108,7 +121,7 @@ def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_quer
     )
 
     assert result == []
-    assert captured["text_query"] == "senior data engineer"
+    assert captured["text_query"] == "data engineer python"
     assert captured["semantic_query"] == (
         "Senior data engineer with strong Python, SQL, cloud platform, and ETL experience."
     )
@@ -121,7 +134,7 @@ def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
 
     def fake_text_search(*, query: str, limit: int) -> list[dict[str, object]]:
         attempted_queries.append(query)
-        if query == "senior data engineer python sql cloud":
+        if query == "data engineer python sql cloud platform etl":
             return [
                 {
                     "candidate_id": "cand-1",
@@ -156,6 +169,5 @@ def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
 
     assert [row["candidate_id"] for row in result] == ["cand-1"]
     assert attempted_queries == [
-        "senior data engineer python sql cloud platform etl",
-        "senior data engineer python sql cloud",
+        "data engineer python sql cloud platform etl",
     ]

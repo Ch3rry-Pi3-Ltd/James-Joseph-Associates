@@ -320,8 +320,11 @@ const RETRIEVAL_STOP_WORDS = new Set([
   "current",
   "description",
   "do",
+  "essential",
+  "experience",
   "for",
   "from",
+  "grade",
   "has",
   "have",
   "how",
@@ -332,6 +335,9 @@ const RETRIEVAL_STOP_WORDS = new Set([
   "is",
   "it",
   "just",
+  "key",
+  "large",
+  "location",
   "looking",
   "modern",
   "more",
@@ -341,8 +347,14 @@ const RETRIEVAL_STOP_WORDS = new Set([
   "on",
   "or",
   "production",
+  "qualification",
+  "qualifications",
+  "reporting",
+  "requirements",
   "role",
   "search",
+  "salary",
+  "senior",
   "should",
   "show",
   "someone",
@@ -355,9 +367,11 @@ const RETRIEVAL_STOP_WORDS = new Set([
   "them",
   "there",
   "this",
+  "title",
   "to",
   "use",
   "we",
+  "week",
   "what",
   "when",
   "where",
@@ -365,6 +379,63 @@ const RETRIEVAL_STOP_WORDS = new Set([
   "with",
   "worked",
   "workflow",
+]);
+
+const RETRIEVAL_BOOSTED_TERMS = new Set([
+  "analyst",
+  "analytics",
+  "aws",
+  "c#",
+  "c++",
+  "cloud",
+  "cognos",
+  "data",
+  "developer",
+  "docker",
+  "etl",
+  "finance",
+  "financial",
+  "hft",
+  "ibm",
+  "java",
+  "kdb",
+  "kubernetes",
+  "otc",
+  "planning",
+  "pricing",
+  "python",
+  "quant",
+  "quantitative",
+  "q/kdb+",
+  "rust",
+  "sql",
+  "tm1",
+  "trading",
+  "turbointegrator",
+]);
+
+const RETRIEVAL_LOW_SIGNAL_TERMS = new Set([
+  "business",
+  "company",
+  "customer",
+  "customers",
+  "delivery",
+  "global",
+  "group",
+  "industry",
+  "information",
+  "lead",
+  "management",
+  "manager",
+  "market",
+  "markets",
+  "office",
+  "partner",
+  "project",
+  "projects",
+  "support",
+  "team",
+  "working",
 ]);
 
 function isApiErrorResponse(payload: unknown): payload is ApiErrorResponse {
@@ -504,9 +575,13 @@ function deriveRetrievalFocusTerms(jobDescription: string): string {
     jobDescription.match(/[A-Za-z0-9+#./-]+/g)?.map((term) => term.trim()) ?? [];
 
   const seenTerms = new Set<string>();
-  const selectedTerms: string[] = [];
+  const scoredTerms: Array<{
+    canonicalTerm: string;
+    index: number;
+    score: number;
+  }> = [];
 
-  for (const originalTerm of normalizedTerms) {
+  for (const [index, originalTerm] of normalizedTerms.entries()) {
     const canonicalTerm = originalTerm
       .toLowerCase()
       .replace(/^[^a-z0-9+#]+|[^a-z0-9+#]+$/g, "");
@@ -524,12 +599,48 @@ function deriveRetrievalFocusTerms(jobDescription: string): string {
     }
 
     seenTerms.add(canonicalTerm);
-    selectedTerms.push(canonicalTerm);
+    let score = 0;
 
-    if (selectedTerms.length >= 8) {
-      break;
+    if (RETRIEVAL_BOOSTED_TERMS.has(canonicalTerm)) {
+      score += 8;
     }
+    if (RETRIEVAL_LOW_SIGNAL_TERMS.has(canonicalTerm)) {
+      score -= 4;
+    }
+    if (/\d/.test(canonicalTerm)) {
+      score += 5;
+    }
+    if (/[+#./]/.test(canonicalTerm)) {
+      score += 4;
+    }
+    if (originalTerm === originalTerm.toUpperCase() && originalTerm.length >= 2) {
+      score += 2;
+    }
+    if (canonicalTerm.length >= 12) {
+      score += 3;
+    } else if (canonicalTerm.length >= 8) {
+      score += 2;
+    } else if (canonicalTerm.length >= 5) {
+      score += 1;
+    }
+
+    scoredTerms.push({
+      canonicalTerm,
+      index,
+      score,
+    });
   }
+
+  const selectedTerms = scoredTerms
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+      return left.index - right.index;
+    })
+    .slice(0, 9)
+    .sort((left, right) => left.index - right.index)
+    .map((term) => term.canonicalTerm);
 
   return selectedTerms.join(" ");
 }
@@ -717,7 +828,7 @@ export function CandidateMatchWorkspace() {
     deriveRetrievalFocusTerms(DEFAULT_JOB_DESCRIPTION),
   );
   const [isFocusTermsAuto, setIsFocusTermsAuto] = useState(true);
-  const [searchResultLimit, setSearchResultLimit] = useState("10");
+  const [searchResultLimit, setSearchResultLimit] = useState("5");
   const [retrievalLimit, setRetrievalLimit] = useState("25");
   const [shortlistLimit, setShortlistLimit] = useState("3");
   const [isSearchLoading, setIsSearchLoading] = useState(false);
@@ -734,6 +845,8 @@ export function CandidateMatchWorkspace() {
     CandidateJobDescriptionShortlistItem[]
   >([]);
   const [isSearchResultsExpanded, setIsSearchResultsExpanded] = useState(false);
+  const [isSearchQueryDetailsExpanded, setIsSearchQueryDetailsExpanded] =
+    useState(false);
   const [submittedSearchQuery, setSubmittedSearchQuery] = useState<string | null>(
     null,
   );
@@ -1029,6 +1142,12 @@ export function CandidateMatchWorkspace() {
       const searchResponse = payload as CandidateResumeSearchResponse;
       setSearchResults(searchResponse.results);
       setSubmittedSearchQuery(searchResponse.query);
+      setIsSearchResultsExpanded(true);
+      setIsSearchQueryDetailsExpanded(false);
+      if (detectedTargetCompanyName) {
+        setCompanyNameQuery(detectedTargetCompanyName);
+        void fetchCompanyContext(detectedTargetCompanyName);
+      }
       searchResultsSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -1058,6 +1177,7 @@ export function CandidateMatchWorkspace() {
     setIsSearchLoading(true);
     setActiveRunMode("search");
     setUploadedJobDescriptionErrorMessage(null);
+    const currentScrollY = window.scrollY;
 
     try {
       const contentBase64 = await encodeFileAsBase64(uploadedJobDescriptionFile);
@@ -1099,6 +1219,14 @@ export function CandidateMatchWorkspace() {
       setShortlistErrorMessage(null);
       setSubmittedSearchQuery(null);
       setSubmittedJobDescription(null);
+      setIsSearchResultsExpanded(false);
+      setIsSearchQueryDetailsExpanded(false);
+      window.requestAnimationFrame(() => {
+        window.scrollTo({
+          top: currentScrollY,
+          behavior: "auto",
+        });
+      });
     } catch (error) {
       setUploadedJobDescriptionResult(null);
       setUploadedJobDescriptionErrorMessage(
@@ -1210,7 +1338,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
         setCompanyDiscoveryResults([]);
@@ -1236,7 +1364,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const contactsPayload = (await contactsResponse.json()) as unknown;
+      const contactsPayload = await readJsonResponse(contactsResponse);
 
       if (!contactsResponse.ok) {
         setCompanyContactResults([]);
@@ -1263,7 +1391,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const interactionsPayload = (await interactionsResponse.json()) as unknown;
+      const interactionsPayload = await readJsonResponse(interactionsResponse);
 
       if (!interactionsResponse.ok) {
         setCompanyInteractionResults([]);
@@ -1290,7 +1418,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const jobsPayload = (await jobsResponse.json()) as unknown;
+      const jobsPayload = await readJsonResponse(jobsResponse);
 
       if (!jobsResponse.ok) {
         setCompanyJobResults([]);
@@ -1314,7 +1442,7 @@ export function CandidateMatchWorkspace() {
         },
       );
 
-      const opportunitiesPayload = (await opportunitiesResponse.json()) as unknown;
+      const opportunitiesPayload = await readJsonResponse(opportunitiesResponse);
 
       if (!opportunitiesResponse.ok) {
         setCompanyOpportunityResults([]);
@@ -1408,6 +1536,8 @@ export function CandidateMatchWorkspace() {
     setCompanyOpportunityResults([]);
     setCompanyOpportunitiesErrorMessage(null);
     setSubmittedCompanyName(null);
+    setIsSearchResultsExpanded(false);
+    setIsSearchQueryDetailsExpanded(false);
     setUploadedJobDescriptionFile(null);
     setUploadedJobDescriptionResult(null);
     setUploadedJobDescriptionErrorMessage(null);
@@ -3341,21 +3471,53 @@ export function CandidateMatchWorkspace() {
 
         {isSearchResultsExpanded ? (
           <div id="corpus-search-panel" className="grid gap-6">
-        {submittedSearchQuery ? (
-          <div className="grid gap-1 rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-600">
-            <p>
-              Retrieval terms:{" "}
-              <span className="font-medium text-zinc-900">
-                {submittedSearchQuery}
-              </span>
-            </p>
-            {submittedJobDescription ? (
-              <p>Shortlist reasoning still uses the full brief above.</p>
-            ) : null}
-          </div>
-        ) : null}
+            {submittedSearchQuery ? (
+              <div className="grid gap-3 rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsSearchQueryDetailsExpanded((current) => !current)
+                  }
+                  className="flex items-center justify-between text-left"
+                  aria-expanded={isSearchQueryDetailsExpanded}
+                  aria-controls="corpus-search-query-details"
+                >
+                  <div className="grid gap-1">
+                    <span className="text-sm font-semibold text-zinc-950">
+                      Retrieval query details
+                    </span>
+                    <span className="text-sm leading-6 text-zinc-600">
+                      Expand this to inspect the exact terms used for the first
+                      pass over the CV corpus.
+                    </span>
+                  </div>
+                  <span className="text-lg text-zinc-500" aria-hidden="true">
+                    {isSearchQueryDetailsExpanded ? "▾" : "▸"}
+                  </span>
+                </button>
 
-        {submittedSearchQuery && searchResults.length === 0 && !searchErrorMessage ? (
+                {isSearchQueryDetailsExpanded ? (
+                  <div
+                    id="corpus-search-query-details"
+                    className="grid gap-1 text-sm leading-6 text-zinc-600"
+                  >
+                    <p>
+                      Retrieval terms:{" "}
+                      <span className="font-medium text-zinc-900">
+                        {submittedSearchQuery}
+                      </span>
+                    </p>
+                    {submittedJobDescription ? (
+                      <p>Shortlist reasoning still uses the full brief above.</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {submittedSearchQuery &&
+            searchResults.length === 0 &&
+            !searchErrorMessage ? (
           <div className="grid gap-3 border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             <p>
               Corpus search returned no CV matches for that retrieval query.

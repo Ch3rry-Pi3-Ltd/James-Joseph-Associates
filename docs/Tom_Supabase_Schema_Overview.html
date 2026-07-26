@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="James Joseph Associates" />
+  <meta name="dcterms.date" content="2026-07-20" />
+  <title>Current Supabase Data Model and Extracted Information</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="pdf-style.css" />
+  
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Current Supabase Data Model and Extracted
+Information</h1>
+<p class="subtitle">Recruitment Intelligence Platform</p>
+<p class="author">James Joseph Associates</p>
+<p class="date">20 July 2026</p>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#overview" id="toc-overview"><span
+class="toc-section-number">1</span> Overview</a></li>
+<li><a href="#candidate-and-cv-data"
+id="toc-candidate-and-cv-data"><span class="toc-section-number">2</span>
+Candidate and CV Data</a>
+<ul>
+<li><a href="#people" id="toc-people"><span
+class="toc-section-number">2.1</span> <code>people</code></a></li>
+<li><a href="#candidates" id="toc-candidates"><span
+class="toc-section-number">2.2</span> <code>candidates</code></a></li>
+<li><a href="#structured-information-extracted-from-cvs"
+id="toc-structured-information-extracted-from-cvs"><span
+class="toc-section-number">2.3</span> Structured Information Extracted
+from CVs</a></li>
+<li><a href="#what-is-currently-persisted-from-cvs"
+id="toc-what-is-currently-persisted-from-cvs"><span
+class="toc-section-number">2.4</span> What Is Currently Persisted from
+CVs</a></li>
+</ul></li>
+<li><a href="#company-data" id="toc-company-data"><span
+class="toc-section-number">3</span> Company Data</a>
+<ul>
+<li><a href="#companies" id="toc-companies"><span
+class="toc-section-number">3.1</span> <code>companies</code></a></li>
+<li><a href="#current-population-status"
+id="toc-current-population-status"><span
+class="toc-section-number">3.2</span> Current Population Status</a></li>
+</ul></li>
+<li><a href="#company-contacts-and-hiring-managers"
+id="toc-company-contacts-and-hiring-managers"><span
+class="toc-section-number">4</span> Company Contacts and Hiring
+Managers</a>
+<ul>
+<li><a href="#contacts" id="toc-contacts"><span
+class="toc-section-number">4.1</span> <code>contacts</code></a></li>
+<li><a href="#what-can-be-stored-for-contacts"
+id="toc-what-can-be-stored-for-contacts"><span
+class="toc-section-number">4.2</span> What Can Be Stored for
+Contacts</a></li>
+</ul></li>
+<li><a href="#jobs-and-vacancies" id="toc-jobs-and-vacancies"><span
+class="toc-section-number">5</span> Jobs and Vacancies</a>
+<ul>
+<li><a href="#jobs" id="toc-jobs"><span
+class="toc-section-number">5.1</span> <code>jobs</code></a></li>
+</ul></li>
+<li><a href="#opportunities-and-commercial-pipeline"
+id="toc-opportunities-and-commercial-pipeline"><span
+class="toc-section-number">6</span> Opportunities and Commercial
+Pipeline</a>
+<ul>
+<li><a href="#opportunities" id="toc-opportunities"><span
+class="toc-section-number">6.1</span>
+<code>opportunities</code></a></li>
+</ul></li>
+<li><a href="#skills" id="toc-skills"><span
+class="toc-section-number">7</span> Skills</a>
+<ul>
+<li><a href="#skills-1" id="toc-skills-1"><span
+class="toc-section-number">7.1</span> <code>skills</code></a></li>
+<li><a href="#candidate_skills" id="toc-candidate_skills"><span
+class="toc-section-number">7.2</span>
+<code>candidate_skills</code></a></li>
+<li><a href="#job_required_skills" id="toc-job_required_skills"><span
+class="toc-section-number">7.3</span>
+<code>job_required_skills</code></a></li>
+</ul></li>
+<li><a href="#documents-and-cv-files"
+id="toc-documents-and-cv-files"><span
+class="toc-section-number">8</span> Documents and CV Files</a>
+<ul>
+<li><a href="#documents" id="toc-documents"><span
+class="toc-section-number">8.1</span> <code>documents</code></a></li>
+</ul></li>
+<li><a href="#notes-calls-meetings-emails-and-interaction-evidence"
+id="toc-notes-calls-meetings-emails-and-interaction-evidence"><span
+class="toc-section-number">9</span> Notes, Calls, Meetings, Emails, and
+Interaction Evidence</a>
+<ul>
+<li><a href="#interactions" id="toc-interactions"><span
+class="toc-section-number">9.1</span> <code>interactions</code></a></li>
+<li><a href="#interaction_participants"
+id="toc-interaction_participants"><span
+class="toc-section-number">9.2</span>
+<code>interaction_participants</code></a></li>
+</ul></li>
+<li><a href="#relationship-tables" id="toc-relationship-tables"><span
+class="toc-section-number">10</span> Relationship Tables</a>
+<ul>
+<li><a href="#person_company_roles" id="toc-person_company_roles"><span
+class="toc-section-number">10.1</span>
+<code>person_company_roles</code></a></li>
+<li><a href="#document_links" id="toc-document_links"><span
+class="toc-section-number">10.2</span>
+<code>document_links</code></a></li>
+</ul></li>
+<li><a href="#provenance-and-source-tracking"
+id="toc-provenance-and-source-tracking"><span
+class="toc-section-number">11</span> Provenance and Source Tracking</a>
+<ul>
+<li><a href="#source_records" id="toc-source_records"><span
+class="toc-section-number">11.1</span>
+<code>source_records</code></a></li>
+<li><a href="#source_record_links" id="toc-source_record_links"><span
+class="toc-section-number">11.2</span>
+<code>source_record_links</code></a></li>
+</ul></li>
+<li><a href="#retrieval-and-graphrag-support"
+id="toc-retrieval-and-graphrag-support"><span
+class="toc-section-number">12</span> Retrieval and GraphRAG Support</a>
+<ul>
+<li><a href="#document_chunks" id="toc-document_chunks"><span
+class="toc-section-number">12.1</span>
+<code>document_chunks</code></a></li>
+<li><a href="#candidate_semantic_blocks"
+id="toc-candidate_semantic_blocks"><span
+class="toc-section-number">12.2</span>
+<code>candidate_semantic_blocks</code></a></li>
+</ul></li>
+<li><a href="#what-the-system-already-supports"
+id="toc-what-the-system-already-supports"><span
+class="toc-section-number">13</span> What the System Already
+Supports</a></li>
+<li><a href="#practical-caveat" id="toc-practical-caveat"><span
+class="toc-section-number">14</span> Practical Caveat</a></li>
+<li><a href="#summary" id="toc-summary"><span
+class="toc-section-number">15</span> Summary</a></li>
+</ul>
+</nav>
+<h1 data-number="1" id="overview"><span
+class="header-section-number">1</span> Overview</h1>
+<p>This document summarises the current implemented structure of the
+Supabase database behind the recruitment intelligence platform.</p>
+<p>The model is designed around four layers:</p>
+<ol type="1">
+<li><strong>Canonical records</strong> such as candidates, companies,
+contacts, jobs, opportunities, documents, and interactions.</li>
+<li><strong>Relationship records</strong> that link those entities
+together.</li>
+<li><strong>Provenance records</strong> that preserve where each row
+came from originally.</li>
+<li><strong>Retrieval records</strong> such as chunks and embeddings
+used for semantic and GraphRAG-style search.</li>
+</ol>
+<p>The key point is that the schema is broader than any single ingestion
+path. Some source pipelines populate only part of the model, but the
+overall structure is already in place.</p>
+<h1 data-number="2" id="candidate-and-cv-data"><span
+class="header-section-number">2</span> Candidate and CV Data</h1>
+<h2 data-number="2.1" id="people"><span
+class="header-section-number">2.1</span> <code>people</code></h2>
+<p>This is the person-level identity record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>full_name</code></li>
+<li><code>first_name</code></li>
+<li><code>last_name</code></li>
+<li><code>primary_email</code></li>
+<li><code>primary_phone</code></li>
+<li><code>linkedin_url</code></li>
+<li><code>location</code></li>
+<li><code>headline</code></li>
+<li><code>summary</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="2.2" id="candidates"><span
+class="header-section-number">2.2</span> <code>candidates</code></h2>
+<p>This is the candidate-specific record linked to a person.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>person_id</code></li>
+<li><code>current_title</code></li>
+<li><code>current_company_id</code></li>
+<li><code>candidate_status</code></li>
+<li><code>availability_status</code></li>
+<li><code>salary_expectation</code></li>
+<li><code>notice_period</code></li>
+<li><code>last_contacted_at</code></li>
+<li><code>resume_updated_at</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="2.3"
+id="structured-information-extracted-from-cvs"><span
+class="header-section-number">2.3</span> Structured Information
+Extracted from CVs</h2>
+<p>The CV extraction layer currently pulls out structured information
+such as:</p>
+<ul>
+<li>full name</li>
+<li>first name</li>
+<li>last name</li>
+<li>current employer</li>
+<li>current title</li>
+<li>professional summary</li>
+<li>location</li>
+<li>email addresses</li>
+<li>phone numbers</li>
+<li>LinkedIn URL</li>
+<li>core skills</li>
+<li>tools and platforms</li>
+<li>certifications</li>
+<li>portfolio references</li>
+<li>education history</li>
+<li>employment history</li>
+<li>project experience</li>
+<li>evidence notes</li>
+<li>ambiguity notes</li>
+</ul>
+<h2 data-number="2.4" id="what-is-currently-persisted-from-cvs"><span
+class="header-section-number">2.4</span> What Is Currently Persisted
+from CVs</h2>
+<p>From CV ingestion, the current write paths persist:</p>
+<ul>
+<li>person identity and contact fields</li>
+<li>candidate role and status fields</li>
+<li>current company link where available</li>
+<li>resume updated date</li>
+<li>extracted skills</li>
+<li>full extracted resume text</li>
+<li>provenance back to the original file and source</li>
+</ul>
+<h1 data-number="3" id="company-data"><span
+class="header-section-number">3</span> Company Data</h1>
+<h2 data-number="3.1" id="companies"><span
+class="header-section-number">3.1</span> <code>companies</code></h2>
+<p>This is the canonical company record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>name</code></li>
+<li><code>domain</code></li>
+<li><code>website_url</code></li>
+<li><code>linkedin_url</code></li>
+<li><code>industry</code></li>
+<li><code>size_range</code></li>
+<li><code>location</code></li>
+<li><code>description</code></li>
+<li><code>status</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="3.2" id="current-population-status"><span
+class="header-section-number">3.2</span> Current Population Status</h2>
+<p>Depending on source, we currently populate some or all of:</p>
+<ul>
+<li>company name</li>
+<li>website and domain</li>
+<li>LinkedIn URL</li>
+<li>industry or sector</li>
+<li>location</li>
+<li>description</li>
+<li>status</li>
+</ul>
+<p>For CV-only ingestion, company population is still narrower. For
+Recruitly and LinkedIn Helper style sources, company records are
+richer.</p>
+<h1 data-number="4" id="company-contacts-and-hiring-managers"><span
+class="header-section-number">4</span> Company Contacts and Hiring
+Managers</h1>
+<h2 data-number="4.1" id="contacts"><span
+class="header-section-number">4.1</span> <code>contacts</code></h2>
+<p>This is the canonical client contact or hiring manager record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>person_id</code></li>
+<li><code>company_id</code></li>
+<li><code>role_title</code></li>
+<li><code>contact_type</code></li>
+<li><code>seniority</code></li>
+<li><code>is_hiring_manager</code></li>
+<li><code>postcode</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="4.2" id="what-can-be-stored-for-contacts"><span
+class="header-section-number">4.2</span> What Can Be Stored for
+Contacts</h2>
+<p>We can currently hold:</p>
+<ul>
+<li>name</li>
+<li>email</li>
+<li>phone</li>
+<li>LinkedIn URL</li>
+<li>location</li>
+<li>role title</li>
+<li>seniority</li>
+<li>hiring-manager flag</li>
+<li>linked company</li>
+<li>postcode</li>
+<li>source provenance</li>
+</ul>
+<h1 data-number="5" id="jobs-and-vacancies"><span
+class="header-section-number">5</span> Jobs and Vacancies</h1>
+<h2 data-number="5.1" id="jobs"><span
+class="header-section-number">5.1</span> <code>jobs</code></h2>
+<p>This is the canonical job or vacancy record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>company_id</code></li>
+<li><code>hiring_manager_contact_id</code></li>
+<li><code>title</code></li>
+<li><code>description</code></li>
+<li><code>location</code></li>
+<li><code>workplace_type</code></li>
+<li><code>employment_type</code></li>
+<li><code>work_type</code></li>
+<li><code>source</code></li>
+<li><code>owner_name</code></li>
+<li><code>salary_min</code></li>
+<li><code>salary_max</code></li>
+<li><code>currency</code></li>
+<li><code>status</code></li>
+<li><code>opened_at</code></li>
+<li><code>closed_at</code></li>
+<li><code>updated_from_source_at</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<p>This supports the “find candidates for a role” workflows.</p>
+<h1 data-number="6" id="opportunities-and-commercial-pipeline"><span
+class="header-section-number">6</span> Opportunities and Commercial
+Pipeline</h1>
+<h2 data-number="6.1" id="opportunities"><span
+class="header-section-number">6.1</span> <code>opportunities</code></h2>
+<p>This is the canonical opportunity or client-opportunity record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>title</code></li>
+<li><code>smart_summary</code></li>
+<li><code>company_id</code></li>
+<li><code>contact_id</code></li>
+<li><code>stage</code></li>
+<li><code>last_contact_at</code></li>
+<li><code>next_task_at</code></li>
+<li><code>value</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<p>This supports workflows around target companies, prior commercial
+context, and hiring activity.</p>
+<h1 data-number="7" id="skills"><span
+class="header-section-number">7</span> Skills</h1>
+<h2 data-number="7.1" id="skills-1"><span
+class="header-section-number">7.1</span> <code>skills</code></h2>
+<p>This is the normalised master list of skills.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>name</code></li>
+<li><code>canonical_name</code></li>
+<li><code>skill_type</code></li>
+<li><code>description</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="7.2" id="candidate_skills"><span
+class="header-section-number">7.2</span>
+<code>candidate_skills</code></h2>
+<p>This links candidates to skills.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>candidate_id</code></li>
+<li><code>skill_id</code></li>
+<li><code>source_record_id</code></li>
+<li><code>confidence</code></li>
+<li><code>evidence_text</code></li>
+<li><code>created_at</code></li>
+</ul>
+<h2 data-number="7.3" id="job_required_skills"><span
+class="header-section-number">7.3</span>
+<code>job_required_skills</code></h2>
+<p>This links jobs to required or preferred skills.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>job_id</code></li>
+<li><code>skill_id</code></li>
+<li><code>requirement_type</code></li>
+<li><code>importance</code></li>
+<li><code>source_record_id</code></li>
+<li><code>created_at</code></li>
+</ul>
+<h1 data-number="8" id="documents-and-cv-files"><span
+class="header-section-number">8</span> Documents and CV Files</h1>
+<h2 data-number="8.1" id="documents"><span
+class="header-section-number">8.1</span> <code>documents</code></h2>
+<p>This stores the document-level record, including CVs.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>document_type</code></li>
+<li><code>title</code></li>
+<li><code>source_uri</code></li>
+<li><code>storage_path</code></li>
+<li><code>mime_type</code></li>
+<li><code>content_hash</code></li>
+<li><code>extracted_text</code></li>
+<li><code>resume_updated_at</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<p>For CVs this means we keep:</p>
+<ul>
+<li>the file identity</li>
+<li>the source path or URI</li>
+<li>the extracted text</li>
+<li>the content hash</li>
+<li>the document type</li>
+<li>the last updated date where available</li>
+</ul>
+<h1 data-number="9"
+id="notes-calls-meetings-emails-and-interaction-evidence"><span
+class="header-section-number">9</span> Notes, Calls, Meetings, Emails,
+and Interaction Evidence</h1>
+<h2 data-number="9.1" id="interactions"><span
+class="header-section-number">9.1</span> <code>interactions</code></h2>
+<p>This stores first-class interaction history.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>interaction_type</code></li>
+<li><code>occurred_at</code></li>
+<li><code>subject</code></li>
+<li><code>body</code></li>
+<li><code>summary</code></li>
+<li><code>source_system</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<h2 data-number="9.2" id="interaction_participants"><span
+class="header-section-number">9.2</span>
+<code>interaction_participants</code></h2>
+<p>This links an interaction to the relevant entities.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>interaction_id</code></li>
+<li><code>person_id</code></li>
+<li><code>candidate_id</code></li>
+<li><code>contact_id</code></li>
+<li><code>company_id</code></li>
+<li><code>job_id</code></li>
+<li><code>role_in_interaction</code></li>
+<li><code>created_at</code></li>
+</ul>
+<p>This is what allows the system to support questions such as:</p>
+<ul>
+<li>who have we spoken to at this company?</li>
+<li>when did we last speak to them?</li>
+<li>which candidate, contact, company, or job was that interaction tied
+to?</li>
+</ul>
+<h1 data-number="10" id="relationship-tables"><span
+class="header-section-number">10</span> Relationship Tables</h1>
+<h2 data-number="10.1" id="person_company_roles"><span
+class="header-section-number">10.1</span>
+<code>person_company_roles</code></h2>
+<p>This stores who worked where, and when.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>person_id</code></li>
+<li><code>company_id</code></li>
+<li><code>role_title</code></li>
+<li><code>start_date</code></li>
+<li><code>end_date</code></li>
+<li><code>is_current</code></li>
+<li><code>source_record_id</code></li>
+<li><code>created_at</code></li>
+</ul>
+<h2 data-number="10.2" id="document_links"><span
+class="header-section-number">10.2</span>
+<code>document_links</code></h2>
+<p>This links a document to one or more entities.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>document_id</code></li>
+<li><code>person_id</code></li>
+<li><code>candidate_id</code></li>
+<li><code>contact_id</code></li>
+<li><code>company_id</code></li>
+<li><code>job_id</code></li>
+<li><code>application_id</code></li>
+<li><code>placement_id</code></li>
+<li><code>source_record_id</code></li>
+<li><code>relationship_type</code></li>
+<li><code>created_at</code></li>
+</ul>
+<p>This is how a CV is linked back to the right candidate and
+person.</p>
+<h1 data-number="11" id="provenance-and-source-tracking"><span
+class="header-section-number">11</span> Provenance and Source
+Tracking</h1>
+<h2 data-number="11.1" id="source_records"><span
+class="header-section-number">11.1</span>
+<code>source_records</code></h2>
+<p>This stores the original upstream source record.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>source_system</code></li>
+<li><code>source_record_type</code></li>
+<li><code>source_record_id</code></li>
+<li><code>source_payload</code></li>
+<li><code>source_payload_hash</code></li>
+<li><code>import_run_id</code></li>
+<li><code>received_at</code></li>
+<li><code>processed_at</code></li>
+<li><code>sync_status</code></li>
+<li><code>error_message</code></li>
+<li><code>created_at</code></li>
+</ul>
+<h2 data-number="11.2" id="source_record_links"><span
+class="header-section-number">11.2</span>
+<code>source_record_links</code></h2>
+<p>This links each source record to whichever canonical rows it created
+or updated.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>source_record_id</code></li>
+<li><code>person_id</code></li>
+<li><code>candidate_id</code></li>
+<li><code>contact_id</code></li>
+<li><code>company_id</code></li>
+<li><code>job_id</code></li>
+<li><code>application_id</code></li>
+<li><code>placement_id</code></li>
+<li><code>opportunity_id</code></li>
+<li><code>document_id</code></li>
+<li><code>linked_at</code></li>
+</ul>
+<p>This layer is critical because it gives us:</p>
+<ul>
+<li>deduplication support</li>
+<li>audit trail</li>
+<li>source-system traceability</li>
+<li>safer updates later</li>
+</ul>
+<h1 data-number="12" id="retrieval-and-graphrag-support"><span
+class="header-section-number">12</span> Retrieval and GraphRAG
+Support</h1>
+<h2 data-number="12.1" id="document_chunks"><span
+class="header-section-number">12.1</span>
+<code>document_chunks</code></h2>
+<p>This stores chunked text from documents for retrieval.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>document_id</code></li>
+<li><code>source_record_id</code></li>
+<li><code>chunk_index</code></li>
+<li><code>chunk_text</code></li>
+<li><code>embedding</code></li>
+<li><code>token_count</code></li>
+<li><code>created_at</code></li>
+</ul>
+<h2 data-number="12.2" id="candidate_semantic_blocks"><span
+class="header-section-number">12.2</span>
+<code>candidate_semantic_blocks</code></h2>
+<p>This stores structured candidate retrieval blocks.</p>
+<p><strong>Fields</strong></p>
+<ul>
+<li><code>id</code></li>
+<li><code>candidate_id</code></li>
+<li><code>person_id</code></li>
+<li><code>document_id</code></li>
+<li><code>block_type</code></li>
+<li><code>block_index</code></li>
+<li><code>block_label</code></li>
+<li><code>block_text</code></li>
+<li><code>embedding</code></li>
+<li><code>token_count</code></li>
+<li><code>created_at</code></li>
+<li><code>updated_at</code></li>
+</ul>
+<p>These blocks are built from candidate profile facts such as:</p>
+<ul>
+<li>name</li>
+<li>current title</li>
+<li>current company</li>
+<li>location</li>
+<li>headline</li>
+<li>summary</li>
+<li>candidate status</li>
+<li>availability</li>
+<li>notice period</li>
+<li>resume updated date</li>
+<li>linked skills</li>
+<li>resume context excerpt</li>
+</ul>
+<p>This is what powers the semantic retrieval layer behind the matching
+workflow.</p>
+<h1 data-number="13" id="what-the-system-already-supports"><span
+class="header-section-number">13</span> What the System Already
+Supports</h1>
+<p>In practical terms, the current platform already stores and
+links:</p>
+<ul>
+<li>candidates</li>
+<li>their CV files and extracted text</li>
+<li>their skills</li>
+<li>their current role and company</li>
+<li>companies</li>
+<li>company contacts and hiring managers</li>
+<li>jobs</li>
+<li>opportunities</li>
+<li>interaction evidence and notes</li>
+<li>source provenance</li>
+<li>semantic retrieval blocks for matching and GraphRAG-style
+search</li>
+</ul>
+<h1 data-number="14" id="practical-caveat"><span
+class="header-section-number">14</span> Practical Caveat</h1>
+<p>The schema is broader than any one ingestion path.</p>
+<p>So the correct description is:</p>
+<ul>
+<li>the <strong>database structure already supports</strong> all of the
+above</li>
+<li>different source pipelines currently populate different subsets</li>
+<li>CV ingestion is strongest on candidate, document, skill, and
+provenance data</li>
+<li>Recruitly and LinkedIn-style ingestion is stronger for company,
+contact, job, and opportunity context</li>
+<li>the platform is designed so those sources can be linked together in
+one canonical graph</li>
+</ul>
+<h1 data-number="15" id="summary"><span
+class="header-section-number">15</span> Summary</h1>
+<p>The current Supabase design is already set up to support Tom’s core
+workflows:</p>
+<ul>
+<li>finding candidates for jobs</li>
+<li>finding known people and context around target companies</li>
+<li>linking CV evidence back to candidates</li>
+<li>preserving provenance from external systems</li>
+<li>supporting semantic retrieval and future graph-style reasoning</li>
+</ul>
+<p>The important operational distinction is not whether the schema can
+hold the data. It can. The distinction is which ingestion paths are
+already writing which parts of that schema today.</p>
+</body>
+</html>
