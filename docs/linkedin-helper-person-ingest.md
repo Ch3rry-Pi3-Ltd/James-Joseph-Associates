@@ -134,6 +134,22 @@ semantic blocks without reingesting the Linked Helper source.
 
 Apply migration `0010_person_skills.sql` before the first committed run.
 
+### Production proof
+
+The first committed production slice was run on 27 July 2026 with
+`--offset 880 --limit 20`. It persisted:
+
+- 20 canonical people/candidates
+- 114 deterministically reconciled companies
+- 171 employment-role links
+- 767 person/candidate skill links
+
+Four ambiguous company identities were deliberately excluded. The post-write
+audit found exactly one canonical provenance link for all 20 expected people
+and all 114 expected companies. A read-only rerun classified all 20 people and
+all 114 safe companies as existing matches, confirming idempotent source-link
+recognition.
+
 Webhook/CSV paths can continue to use the same normalized persistence shape:
 
 - a webhook adapter route

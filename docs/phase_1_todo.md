@@ -112,8 +112,11 @@ latest agreed priority order.
   - [x] provenance tracking
   - [x] read-only dry-run reports separating matched, new, ambiguous, and
     skipped people and companies before any bulk write
-  - [ ] bounded import of profiles, current roles, employment history, skills,
-    and connection metadata
+  - [x] production-proof a bounded import of 20 new profiles with current
+    roles, employment history, skills, connection metadata, and exact
+    provenance-link audits
+  - [ ] run the remaining native backup through controlled, restartable
+    batches after reviewing aggregate reconciliation and storage impact
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
   - [ ] webhook path if payload support is good enough
