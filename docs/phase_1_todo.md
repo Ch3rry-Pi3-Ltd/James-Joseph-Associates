@@ -64,6 +64,36 @@ latest agreed priority order.
   - [ ] real-brief search tuning
   - [ ] shortlist quality checks
   - [ ] better evidence presentation for recruiter trust
+- [ ] Build a repeatable recruiter-quality and AI-workflow evaluation harness:
+  - [ ] create a versioned set of real role briefs with recruiter-labelled
+    relevant, borderline, and unsuitable candidates
+  - [ ] measure first-pass retrieval with recall at the shortlist-pool cutoff,
+    reciprocal rank, and ranking quality rather than text-generation metrics
+    such as BLEU or ROUGE
+  - [ ] measure final-shortlist precision, ordering, evidence coverage, and
+    whether known strong candidates were missed
+  - [ ] capture structured recruiter UAT feedback and promote reviewed examples
+    into regression fixtures
+  - [ ] use LLM-as-judge only as a secondary, rubric-based check alongside
+    deterministic checks and human review
+  - [ ] add groundedness, unsupported-claim, sensitive-data, authentication,
+    and future write-action safety tests
+  - [ ] add trajectory and stop-condition evaluations when LangGraph workflows
+    begin using multi-step loops
+- [ ] Performance and scalability hardening:
+  - [ ] record response times and database timings for the Review, Company,
+    Match search, and Match shortlist workflows
+  - [ ] identify and remove repeated database queries and avoidable API round
+    trips
+  - [ ] batch high-volume database reads and writes where this preserves
+    reconciliation, provenance, and audit guarantees
+  - [ ] add selective caching for stable or slow-changing data such as company
+    directories, dashboard counts, and bounded lookup results
+  - [ ] inspect slow SQL with query plans and add only evidence-backed indexes,
+    accounting for their Supabase storage cost
+  - [ ] move long-running imports, embedding backfills, and other bulk work into
+    background jobs with progress reporting, safe retries, and idempotency
+  - [ ] add performance regression checks for the main operator workflows
 - [ ] Add operator output tools:
   - [ ] shortlist export/share
   - [ ] saved searches / saved briefs
@@ -637,6 +667,13 @@ LangChain and LangGraph should support controlled backend workflows, not unconst
   - [ ] Evidence assembly.
   - [ ] Action proposal workflow.
   - [ ] Human approval checkpoints.
+- [ ] Define bounded workflow-loop behaviour:
+  - [ ] explicit plan, retrieve, verify, and stop states
+  - [ ] retry and iteration budgets
+  - [ ] deterministic completion and failure conditions
+  - [ ] persisted trajectory metadata for debugging and evaluation
+- [ ] Introduce multiple specialised agents only where separate tool access,
+  data ownership, or approval boundaries justify the added complexity.
 - [x] Define foundation graph/workflow state.
 - [ ] Define Phase 1 graph/workflow states.
 - [ ] Define allowed tools.
@@ -852,11 +889,30 @@ LLM evaluation should be designed before model outputs become business-critical.
   - [ ] Entity ID validity.
   - [ ] Relationship integrity.
   - [ ] Idempotency.
-- [ ] Define retrieval quality fixtures.
-- [ ] Define matching quality fixtures.
+- [ ] Define retrieval quality fixtures:
+  - [ ] versioned real role briefs
+  - [ ] recruiter-labelled relevant, borderline, and unsuitable candidates
+  - [ ] known strong candidates that retrieval must not miss
+- [ ] Define retrieval measures:
+  - [ ] recall at the candidate-pool cutoff
+  - [ ] reciprocal rank
+  - [ ] ranking quality such as nDCG
+- [ ] Define matching quality fixtures and measures:
+  - [ ] precision and ordering of the final shortlist
+  - [ ] strengths, gaps, and evidence coverage
+  - [ ] false-positive and missed-candidate review
 - [ ] Define groundedness checks.
 - [ ] Define hallucination checks.
 - [ ] Define action-safety checks.
+- [ ] Define authentication, sensitive-data exposure, and future write-action
+  safety checks.
+- [ ] Define a rubric-based LLM-as-judge check as secondary evidence only.
+- [ ] Define human recruiter review and disagreement handling as the primary
+  business-quality evaluation.
+- [ ] Define multi-turn conversation and LangGraph trajectory evaluations once
+  those workflows are active.
+- [ ] Explicitly exclude BLEU and ROUGE as primary candidate-matching metrics;
+  they measure text overlap rather than recruiter relevance.
 - [ ] Define minimum acceptable output format.
 - [ ] Define CI pass/fail thresholds for initial evaluations.
 - [ ] Define how recruiter feedback becomes evaluation data later.
