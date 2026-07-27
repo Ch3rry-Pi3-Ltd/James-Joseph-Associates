@@ -12,7 +12,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Literal
 from uuid import UUID
 
-from psycopg import Cursor, sql
+from psycopg import Connection, Cursor, sql
 from psycopg.types.json import Jsonb
 
 from backend.db.connection import postgres_connection
@@ -30,133 +30,150 @@ def persist_linkedin_helper_person_snapshot(
     Persist one Linked Helper person/contact snapshot.
     """
 
+    with postgres_connection() as connection:
+        result = persist_linkedin_helper_person_snapshot_in_transaction(
+            connection,
+            persistence_payload,
+            canonical_person_id=canonical_person_id,
+            canonical_company_id=canonical_company_id,
+        )
+        connection.commit()
+    return result
+
+
+def persist_linkedin_helper_person_snapshot_in_transaction(
+    connection: Connection[Any],
+    persistence_payload: dict[str, Any],
+    *,
+    canonical_person_id: str | None = None,
+    canonical_company_id: str | None = None,
+) -> dict[str, Any]:
+    """Persist one person snapshot using a caller-managed transaction."""
+
     persisted_at = datetime.now(timezone.utc)
 
-    with postgres_connection() as connection:
-        with connection.cursor() as cursor:
-            source_record = _upsert_source_record(
-                cursor,
-                source_record_id=str(persistence_payload["source_record_id"]),
-                source_payload=persistence_payload["source_payload"],
-                source_payload_hash=str(persistence_payload["source_payload_hash"]),
-                import_run_id=persistence_payload.get("import_run_id"),
-                processed_at=persisted_at,
-            )
+    with connection.cursor() as cursor:
+        source_record = _upsert_source_record(
+            cursor,
+            source_record_id=str(persistence_payload["source_record_id"]),
+            source_payload=persistence_payload["source_payload"],
+            source_payload_hash=str(persistence_payload["source_payload_hash"]),
+            import_run_id=persistence_payload.get("import_run_id"),
+            processed_at=persisted_at,
+        )
 
-            company_id = _upsert_company(
-                cursor,
-                company_name=persistence_payload.get("company_name"),
-                domain=persistence_payload.get("company_domain"),
-                website_url=persistence_payload.get("company_website_url"),
-                linkedin_url=persistence_payload.get("company_linkedin_url"),
-                canonical_company_id=canonical_company_id,
-            )
+        company_id = _upsert_company(
+            cursor,
+            company_name=persistence_payload.get("company_name"),
+            domain=persistence_payload.get("company_domain"),
+            website_url=persistence_payload.get("company_website_url"),
+            linkedin_url=persistence_payload.get("company_linkedin_url"),
+            canonical_company_id=canonical_company_id,
+        )
 
-            person_id = _upsert_person(
-                cursor,
-                source_record_id=source_record["id"],
-                full_name=str(persistence_payload["full_name"]),
-                first_name=persistence_payload.get("first_name"),
-                last_name=persistence_payload.get("last_name"),
-                primary_email=persistence_payload.get("primary_email"),
-                primary_phone=persistence_payload.get("primary_phone"),
-                linkedin_url=persistence_payload.get("linkedin_url"),
-                location=persistence_payload.get("location"),
-                headline=persistence_payload.get("headline"),
-                summary=persistence_payload.get("summary"),
-                canonical_person_id=canonical_person_id,
-            )
+        person_id = _upsert_person(
+            cursor,
+            source_record_id=source_record["id"],
+            full_name=str(persistence_payload["full_name"]),
+            first_name=persistence_payload.get("first_name"),
+            last_name=persistence_payload.get("last_name"),
+            primary_email=persistence_payload.get("primary_email"),
+            primary_phone=persistence_payload.get("primary_phone"),
+            linkedin_url=persistence_payload.get("linkedin_url"),
+            location=persistence_payload.get("location"),
+            headline=persistence_payload.get("headline"),
+            summary=persistence_payload.get("summary"),
+            canonical_person_id=canonical_person_id,
+        )
 
-            candidate_id: str | None = None
-            if persistence_payload["record_kind"] == "candidate":
-                candidate_id = _upsert_candidate(
-                    cursor,
-                    source_record_id=source_record["id"],
-                    person_id=person_id,
-                    current_title=persistence_payload.get("role_title"),
-                    current_company_id=company_id,
-                    candidate_status=persistence_payload.get("candidate_status"),
-                    availability_status=persistence_payload.get("availability_status"),
-                    last_contacted_at=persistence_payload.get("last_contacted_at"),
-                    resume_updated_at=persistence_payload.get("resume_updated_at"),
-                )
-
-            contact_id: str | None = None
-            if persistence_payload["record_kind"] in {"contact", "hiring_manager"}:
-                contact_id = _upsert_contact(
-                    cursor,
-                    source_record_id=source_record["id"],
-                    person_id=person_id,
-                    company_id=company_id,
-                    role_title=persistence_payload.get("role_title"),
-                    contact_type=persistence_payload.get("contact_type"),
-                    seniority=persistence_payload.get("seniority"),
-                    is_hiring_manager=bool(persistence_payload.get("is_hiring_manager")),
-                    postcode=persistence_payload.get("postcode"),
-                )
-
-            person_company_role_id: str | None = None
-            if company_id is not None:
-                person_company_role_id = _upsert_person_company_role(
-                    cursor,
-                    person_id=person_id,
-                    company_id=company_id,
-                    role_title=persistence_payload.get("role_title"),
-                    start_date=persistence_payload.get("role_start_date"),
-                    end_date=persistence_payload.get("role_end_date"),
-                    is_current=bool(persistence_payload.get("is_current_company")),
-                    source_record_id=source_record["id"],
-                )
-
-            employment_role_ids = [
-                _upsert_person_company_role(
-                    cursor,
-                    person_id=person_id,
-                    company_id=str(role["company_id"]),
-                    role_title=role.get("role_title"),
-                    start_date=role.get("start_date"),
-                    end_date=role.get("end_date"),
-                    is_current=bool(role.get("is_current")),
-                    source_record_id=source_record["id"],
-                )
-                for role in persistence_payload.get("employment_roles", [])
-            ]
-            skill_ids = [
-                _upsert_person_skill(
-                    cursor,
-                    person_id=person_id,
-                    candidate_id=candidate_id,
-                    skill_name=skill_name,
-                    source_record_id=source_record["id"],
-                )
-                for skill_name in persistence_payload.get("skills", [])
-            ]
-
-            _ensure_source_record_link(
+        candidate_id: str | None = None
+        if persistence_payload["record_kind"] == "candidate":
+            candidate_id = _upsert_candidate(
                 cursor,
                 source_record_id=source_record["id"],
                 person_id=person_id,
+                current_title=persistence_payload.get("role_title"),
+                current_company_id=company_id,
+                candidate_status=persistence_payload.get("candidate_status"),
+                availability_status=persistence_payload.get("availability_status"),
+                last_contacted_at=persistence_payload.get("last_contacted_at"),
+                resume_updated_at=persistence_payload.get("resume_updated_at"),
             )
-            if company_id is not None:
-                _ensure_source_record_link(
-                    cursor,
-                    source_record_id=source_record["id"],
-                    company_id=company_id,
-                )
-            if candidate_id is not None:
-                _ensure_source_record_link(
-                    cursor,
-                    source_record_id=source_record["id"],
-                    candidate_id=candidate_id,
-                )
-            if contact_id is not None:
-                _ensure_source_record_link(
-                    cursor,
-                    source_record_id=source_record["id"],
-                    contact_id=contact_id,
-                )
 
-        connection.commit()
+        contact_id: str | None = None
+        if persistence_payload["record_kind"] in {"contact", "hiring_manager"}:
+            contact_id = _upsert_contact(
+                cursor,
+                source_record_id=source_record["id"],
+                person_id=person_id,
+                company_id=company_id,
+                role_title=persistence_payload.get("role_title"),
+                contact_type=persistence_payload.get("contact_type"),
+                seniority=persistence_payload.get("seniority"),
+                is_hiring_manager=bool(persistence_payload.get("is_hiring_manager")),
+                postcode=persistence_payload.get("postcode"),
+            )
+
+        person_company_role_id: str | None = None
+        if company_id is not None:
+            person_company_role_id = _upsert_person_company_role(
+                cursor,
+                person_id=person_id,
+                company_id=company_id,
+                role_title=persistence_payload.get("role_title"),
+                start_date=persistence_payload.get("role_start_date"),
+                end_date=persistence_payload.get("role_end_date"),
+                is_current=bool(persistence_payload.get("is_current_company")),
+                source_record_id=source_record["id"],
+            )
+
+        employment_role_ids = [
+            _upsert_person_company_role(
+                cursor,
+                person_id=person_id,
+                company_id=str(role["company_id"]),
+                role_title=role.get("role_title"),
+                start_date=role.get("start_date"),
+                end_date=role.get("end_date"),
+                is_current=bool(role.get("is_current")),
+                source_record_id=source_record["id"],
+            )
+            for role in persistence_payload.get("employment_roles", [])
+        ]
+        skill_ids = [
+            _upsert_person_skill(
+                cursor,
+                person_id=person_id,
+                candidate_id=candidate_id,
+                skill_name=skill_name,
+                source_record_id=source_record["id"],
+            )
+            for skill_name in persistence_payload.get("skills", [])
+        ]
+
+        _ensure_source_record_link(
+            cursor,
+            source_record_id=source_record["id"],
+            person_id=person_id,
+        )
+        if company_id is not None:
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=source_record["id"],
+                company_id=company_id,
+            )
+        if candidate_id is not None:
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=source_record["id"],
+                candidate_id=candidate_id,
+            )
+        if contact_id is not None:
+            _ensure_source_record_link(
+                cursor,
+                source_record_id=source_record["id"],
+                contact_id=contact_id,
+            )
 
     return _make_json_safe_summary(
         {
@@ -181,39 +198,55 @@ def persist_linkedin_helper_company_snapshot(
 ) -> dict[str, Any]:
     """Persist one reconciled Linked Helper organisation snapshot."""
 
-    persisted_at = datetime.now(timezone.utc)
     with postgres_connection() as connection:
-        with connection.cursor() as cursor:
-            source_record = _upsert_source_record(
-                cursor,
-                source_record_id=str(persistence_payload["source_record_id"]),
-                source_record_type="linkedin_helper_company_export",
-                source_payload=persistence_payload["source_payload"],
-                source_payload_hash=str(persistence_payload["source_payload_hash"]),
-                import_run_id=persistence_payload.get("import_run_id"),
-                processed_at=persisted_at,
-            )
-            company_id = _upsert_company(
-                cursor,
-                company_name=persistence_payload.get("name"),
-                domain=persistence_payload.get("domain"),
-                website_url=persistence_payload.get("website_url"),
-                linkedin_url=persistence_payload.get("linkedin_url"),
-                industry=persistence_payload.get("industry"),
-                size_range=persistence_payload.get("size_range"),
-                location=persistence_payload.get("location"),
-                description=persistence_payload.get("description"),
-                status=persistence_payload.get("status"),
-                canonical_company_id=canonical_company_id,
-            )
-            if company_id is None:
-                raise RuntimeError("Linked Helper company payload had no usable identity.")
-            _ensure_source_record_link(
-                cursor,
-                source_record_id=source_record["id"],
-                company_id=company_id,
-            )
+        result = persist_linkedin_helper_company_snapshot_in_transaction(
+            connection,
+            persistence_payload,
+            canonical_company_id=canonical_company_id,
+        )
         connection.commit()
+    return result
+
+
+def persist_linkedin_helper_company_snapshot_in_transaction(
+    connection: Connection[Any],
+    persistence_payload: dict[str, Any],
+    *,
+    canonical_company_id: str | None = None,
+) -> dict[str, Any]:
+    """Persist one organisation snapshot using a caller-managed transaction."""
+
+    persisted_at = datetime.now(timezone.utc)
+    with connection.cursor() as cursor:
+        source_record = _upsert_source_record(
+            cursor,
+            source_record_id=str(persistence_payload["source_record_id"]),
+            source_record_type="linkedin_helper_company_export",
+            source_payload=persistence_payload["source_payload"],
+            source_payload_hash=str(persistence_payload["source_payload_hash"]),
+            import_run_id=persistence_payload.get("import_run_id"),
+            processed_at=persisted_at,
+        )
+        company_id = _upsert_company(
+            cursor,
+            company_name=persistence_payload.get("name"),
+            domain=persistence_payload.get("domain"),
+            website_url=persistence_payload.get("website_url"),
+            linkedin_url=persistence_payload.get("linkedin_url"),
+            industry=persistence_payload.get("industry"),
+            size_range=persistence_payload.get("size_range"),
+            location=persistence_payload.get("location"),
+            description=persistence_payload.get("description"),
+            status=persistence_payload.get("status"),
+            canonical_company_id=canonical_company_id,
+        )
+        if company_id is None:
+            raise RuntimeError("Linked Helper company payload had no usable identity.")
+        _ensure_source_record_link(
+            cursor,
+            source_record_id=source_record["id"],
+            company_id=company_id,
+        )
 
     return _make_json_safe_summary(
         {
@@ -1174,5 +1207,7 @@ def _make_json_safe_summary(value: Any) -> Any:
 
 __all__ = [
     "persist_linkedin_helper_company_snapshot",
+    "persist_linkedin_helper_company_snapshot_in_transaction",
     "persist_linkedin_helper_person_snapshot",
+    "persist_linkedin_helper_person_snapshot_in_transaction",
 ]

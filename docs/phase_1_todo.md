@@ -115,8 +115,13 @@ latest agreed priority order.
   - [x] production-proof a bounded import of 20 new profiles with current
     roles, employment history, skills, connection metadata, and exact
     provenance-link audits
-  - [ ] run the remaining native backup through controlled, restartable
-    batches after reviewing aggregate reconciliation and storage impact
+  - [x] add a restartable native-backup batch runner with one transaction per
+    batch, exact post-write provenance audits, an ignored local checkpoint,
+    and a conservative database-size ceiling
+  - [x] production-proof the restartable runner through source offset 200
+    across ten audited batches
+  - [ ] resume the remaining 10,662 native-backup profiles in controlled
+    batches while monitoring reconciliation and Supabase storage
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
   - [ ] webhook path if payload support is good enough

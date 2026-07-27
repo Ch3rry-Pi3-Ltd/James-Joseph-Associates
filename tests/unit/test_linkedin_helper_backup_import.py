@@ -188,3 +188,22 @@ def test_execute_import_plan_persists_related_context(monkeypatch) -> None:
     assert captured_person_payloads[0]["employment_roles"][0]["company_id"] == (
         "company-1"
     )
+
+
+def test_build_import_plan_from_mapped_payloads_uses_supplied_rows() -> None:
+    person = _person_payload(source_record_id="lhd2-person:1", name="Ada")
+    company = _company_payload()
+
+    plan = subject.build_linkedin_helper_import_plan_from_mapped_payloads(
+        people=[person],
+        all_companies=[company],
+        limit=20,
+        offset=40,
+        people_snapshot={"people": [], "source_links": []},
+        companies_snapshot={"companies": [], "source_links": []},
+    )
+
+    assert plan["offset"] == 40
+    assert plan["people_report"]["new"] == 1
+    assert plan["company_report"]["new"] == 1
+    assert len(plan["people"]) == 1

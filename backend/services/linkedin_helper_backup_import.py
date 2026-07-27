@@ -8,9 +8,12 @@ import hashlib
 import json
 from typing import Any
 
+from backend.db.connection import postgres_connection
 from backend.db.linkedin_helper_persistence import (
     persist_linkedin_helper_company_snapshot,
+    persist_linkedin_helper_company_snapshot_in_transaction,
     persist_linkedin_helper_person_snapshot,
+    persist_linkedin_helper_person_snapshot_in_transaction,
 )
 from backend.services.linkedin_helper_backup import (
     map_linkedin_helper_backup_companies,
@@ -54,6 +57,40 @@ def build_linkedin_helper_backup_import_plan(
         include_profile_details=True,
         import_run_id=import_run_id,
     )
+    all_companies = map_linkedin_helper_backup_companies(
+        content_bytes,
+        limit=None,
+        offset=0,
+        import_run_id=import_run_id,
+    )
+    return build_linkedin_helper_import_plan_from_mapped_payloads(
+        people=people,
+        all_companies=all_companies,
+        limit=limit,
+        offset=offset,
+        people_snapshot=people_snapshot,
+        companies_snapshot=companies_snapshot,
+    )
+
+
+def build_linkedin_helper_import_plan_from_mapped_payloads(
+    *,
+    people: list[dict[str, Any]],
+    all_companies: list[dict[str, Any]],
+    limit: int,
+    offset: int,
+    people_snapshot: dict[str, Any],
+    companies_snapshot: dict[str, Any],
+) -> dict[str, Any]:
+    """Plan one pre-mapped slice without reopening the backup database."""
+
+    if limit <= 0 or limit > MAX_IMPORT_LIMIT:
+        raise ValueError(f"limit must be between 1 and {MAX_IMPORT_LIMIT}.")
+    if offset < 0:
+        raise ValueError("offset must be zero or greater.")
+    if len(people) > limit:
+        raise ValueError("Mapped people cannot exceed the declared batch limit.")
+
     people_report = reconcile_linkedin_helper_people(
         payloads=people,
         canonical_index=build_canonical_identity_index(
@@ -65,12 +102,6 @@ def build_linkedin_helper_backup_import_plan(
         str(payload["source_record_id"]): payload for payload in people
     }
 
-    all_companies = map_linkedin_helper_backup_companies(
-        content_bytes,
-        limit=None,
-        offset=0,
-        import_run_id=import_run_id,
-    )
     company_name_index: dict[str, list[dict[str, Any]]] = defaultdict(list)
     company_original_id_index: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for company in all_companies:
@@ -161,6 +192,48 @@ def execute_linkedin_helper_backup_import_plan(
 ) -> dict[str, Any]:
     """Execute only safe rows from a previously reconciled bounded plan."""
 
+    return _execute_linkedin_helper_backup_import_plan(
+        plan,
+        persist_company=persist_linkedin_helper_company_snapshot,
+        persist_person=persist_linkedin_helper_person_snapshot,
+    )
+
+
+def execute_linkedin_helper_backup_import_plan_transactional(
+    plan: dict[str, Any],
+) -> dict[str, Any]:
+    """Execute one bounded plan in a single caller-visible transaction."""
+
+    with postgres_connection() as connection:
+        result = _execute_linkedin_helper_backup_import_plan(
+            plan,
+            persist_company=lambda payload, canonical_company_id=None: (
+                persist_linkedin_helper_company_snapshot_in_transaction(
+                    connection,
+                    payload,
+                    canonical_company_id=canonical_company_id,
+                )
+            ),
+            persist_person=lambda payload, **kwargs: (
+                persist_linkedin_helper_person_snapshot_in_transaction(
+                    connection,
+                    payload,
+                    **kwargs,
+                )
+            ),
+        )
+        connection.commit()
+    return result
+
+
+def _execute_linkedin_helper_backup_import_plan(
+    plan: dict[str, Any],
+    *,
+    persist_company: Any,
+    persist_person: Any,
+) -> dict[str, Any]:
+    """Execute a plan through the supplied persistence functions."""
+
     company_ids: dict[str, str] = {}
     company_results: list[dict[str, Any]] = []
     skipped_companies = Counter()
@@ -174,7 +247,7 @@ def execute_linkedin_helper_backup_import_plan(
             **payload,
             "source_payload_hash": _hash_json(payload["source_payload"]),
         }
-        result = persist_linkedin_helper_company_snapshot(
+        result = persist_company(
             persistence_payload,
             canonical_company_id=_single_id(
                 decision.get("canonical_company_ids")
@@ -206,7 +279,7 @@ def execute_linkedin_helper_backup_import_plan(
             payload["company_linkedin_url"] = None
             payload["is_current_company"] = False
         persistence_payload = build_linkedin_helper_person_persistence_payload(payload)
-        result = persist_linkedin_helper_person_snapshot(
+        result = persist_person(
             persistence_payload,
             canonical_person_id=row["canonical_person_id"],
             canonical_company_id=current_company_id,
@@ -341,5 +414,7 @@ def _clean_string(value: Any) -> str | None:
 __all__ = [
     "MAX_IMPORT_LIMIT",
     "build_linkedin_helper_backup_import_plan",
+    "build_linkedin_helper_import_plan_from_mapped_payloads",
     "execute_linkedin_helper_backup_import_plan",
+    "execute_linkedin_helper_backup_import_plan_transactional",
 ]

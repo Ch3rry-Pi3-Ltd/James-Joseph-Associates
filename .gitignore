@@ -63,3 +63,5 @@ supabase/remote_public_schema.sql
 
 # locally pulled secret snapshots
 temp/*_env.tmp
+temp/*.checkpoint.json
+temp/*_checkpoint.json

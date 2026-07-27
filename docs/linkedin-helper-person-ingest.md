@@ -150,6 +150,60 @@ and all 114 expected companies. A read-only rerun classified all 20 people and
 all 114 safe companies as existing matches, confirming idempotent source-link
 recognition.
 
+## Restartable backup batches
+
+Use the batch runner for the complete native backup. It downloads and maps the
+backup in memory, writes one bounded batch per transaction, audits every
+expected provenance link, and advances an ignored local checkpoint only after
+the audit passes.
+
+Start a new run:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.run_linkedin_helper_backup_batches `
+  --batch-size 20 `
+  --max-batches 5 `
+  --reset-checkpoint `
+  --commit
+```
+
+Resume from the last audited offset:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.run_linkedin_helper_backup_batches `
+  --resume `
+  --batch-size 20 `
+  --max-batches 5 `
+  --commit
+```
+
+Omit `--commit` to preview the next batches without database writes or
+checkpoint changes. The runner validates the Dropbox path, backup hash, and
+profile count before resuming. Its default `2.5 GiB` database-size ceiling
+stops new batches before the current Supabase database grows beyond the
+conservative operating limit; change that ceiling only after reviewing the
+active Supabase plan.
+
+The checkpoint contains offsets and aggregate counts only. It is stored at
+`temp/linkedin_helper_backup_import_checkpoint.json` and excluded from Git.
+If a database transaction or audit fails, the checkpoint does not advance, so
+the same batch can be rerun safely.
+
+### Batch-run proof
+
+The first ten restartable production batches were completed on 27 July 2026.
+The checkpoint advanced through source offset `200` and recorded:
+
+- 199 deterministic people/candidates persisted
+- 159 reconciled companies persisted
+- 189 employment roles persisted
+- 843 skill links persisted
+- exact people and company provenance audits passing after every batch
+
+The database remained below the configured size ceiling. The full backup has
+10,862 source profiles, so the checkpointed run leaves 10,662 profiles to
+review and process in further controlled batches.
+
 Webhook/CSV paths can continue to use the same normalized persistence shape:
 
 - a webhook adapter route
