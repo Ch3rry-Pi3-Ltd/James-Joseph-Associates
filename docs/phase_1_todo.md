@@ -120,7 +120,9 @@ latest agreed priority order.
     and a conservative database-size ceiling
   - [x] production-proof the restartable runner through source offset 200
     across ten audited batches
-  - [ ] resume the remaining 10,662 native-backup profiles in controlled
+  - [x] complete a further controlled run of 1,000 source profiles through
+    offset 1,400 with exact audits and storage monitoring
+  - [ ] resume the remaining 9,462 native-backup profiles in controlled
     batches while monitoring reconciliation and Supabase storage
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
