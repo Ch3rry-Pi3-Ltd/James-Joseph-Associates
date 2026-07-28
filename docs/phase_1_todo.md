@@ -126,8 +126,8 @@ latest agreed priority order.
     offset 4,400 with exact audits and storage monitoring
   - [x] complete the next controlled run of 3,000 source profiles through
     offset 7,400 with exact audits and storage monitoring
-  - [ ] resume the remaining 3,462 native-backup profiles in controlled
-    batches while monitoring reconciliation and Supabase storage
+  - [x] complete the remaining 3,462 native-backup profiles through final
+    offset 10,862 with exact audits and storage monitoring
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
   - [ ] webhook path if payload support is good enough

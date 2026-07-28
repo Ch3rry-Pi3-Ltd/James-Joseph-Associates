@@ -196,13 +196,14 @@ the same batch can be rerun safely.
 
 ### Batch-run proof
 
-Restartable production batches completed through source offset `7,400` on
+Restartable production batches completed the full native backup through source
+offset `10,862` on
 28 July 2026. The checkpoint records:
 
-- 7,036 deterministic people/candidates persisted
-- 24,569 reconciled companies persisted
-- 38,395 employment roles persisted
-- 43,409 skill links persisted
+- 10,273 deterministic people/candidates persisted
+- 34,838 reconciled companies persisted
+- 54,746 employment roles persisted
+- 46,141 skill links persisted
 - exact people and company provenance audits passing after every batch
 
 The 3,000-profile run from offset `1,400` to `4,400` persisted 2,875
@@ -216,8 +217,14 @@ persisted 9,313 reconciled companies, 15,100 employment roles, and 6,063 skill
 links. All 30 batch audits passed. The database grew by approximately 22.9 MiB
 to 2.307 GiB, remaining below the configured ceiling.
 
-The full backup has 10,862 source profiles, so the checkpointed run leaves
-3,462 profiles to review and process in further controlled batches.
+The final 3,462-profile run from offset `7,400` to `10,862` persisted 3,237
+deterministic people and safely excluded 225 ambiguous identities. It also
+persisted 10,269 reconciled companies, 16,351 employment roles, and 2,732 skill
+links. All 35 batch audits passed. The database grew by approximately 18.7 MiB
+to 2.325 GiB, remaining below the configured ceiling.
+
+The full backup contained 10,862 source profiles. The audited checkpoint is at
+the final offset with zero profiles remaining.
 
 Webhook/CSV paths can continue to use the same normalized persistence shape:
 
