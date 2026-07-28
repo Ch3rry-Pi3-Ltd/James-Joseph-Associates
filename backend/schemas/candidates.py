@@ -134,7 +134,7 @@ class CandidateResumeSearchResult(BaseModel):
     candidate_status: str | None = None
     current_company_name: str | None = None
     resume_updated_at: str | None = None
-    document_id: str
+    document_id: str | None = None
     document_title: str | None = None
     document_source_uri: str | None = None
     match_score: float
@@ -578,7 +578,7 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     candidate_status: str | None = None
     current_company_name: str | None = None
     resume_updated_at: str | None = None
-    document_id: str
+    document_id: str | None = None
     document_title: str | None = None
     document_source_uri: str | None = None
     retrieval_score: float

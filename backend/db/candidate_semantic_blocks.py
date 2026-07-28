@@ -344,7 +344,7 @@ def search_candidates_by_semantic_blocks(
               on p.id = sb.person_id
             left join companies co
               on co.id = c.current_company_id
-            join documents d
+            left join documents d
               on d.id = sb.document_id
         )
         select

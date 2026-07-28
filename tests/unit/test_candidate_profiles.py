@@ -311,6 +311,39 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
     )
 
 
+def test_search_candidate_resumes_keeps_profile_only_results() -> None:
+    """
+    Verify Linked Helper profiles can surface without a linked CV document.
+    """
+
+    with patch(
+        "backend.services.candidate_profiles.search_candidates_hybrid",
+        return_value=[
+            {
+                "candidate_id": "candidate-1",
+                "person_id": "person-1",
+                "full_name": "Profile Only",
+                "document_id": None,
+                "match_score": 0.91,
+                "retrieval_sources": ["semantic"],
+                "semantic_rank": 1,
+                "semantic_score": 0.91,
+                "block_type": "profile",
+                "block_label": "Candidate profile",
+                "match_excerpt": "Rust low latency engineer",
+            }
+        ],
+    ):
+        result = search_candidate_resumes(
+            query="rust low latency engineer",
+            limit=5,
+        )
+
+    assert result["results"][0]["document_id"] is None
+    assert result["results"][0]["document_title"] is None
+    assert result["results"][0]["retrieval_sources"] == ["semantic"]
+
+
 def test_discover_candidates_by_company_normalizes_raw_rows() -> None:
     """
     Verify that company-discovery results are normalized into the public API shape.

@@ -391,7 +391,7 @@ def _normalize_candidate_resume_search_result(
         "resume_updated_at": _normalize_optional_datetime_value(
             result.get("resume_updated_at")
         ),
-        "document_id": _normalize_string_value(result.get("document_id")),
+        "document_id": _normalize_optional_string_value(result.get("document_id")),
         "document_title": _normalize_optional_string_value(
             result.get("document_title")
         ),

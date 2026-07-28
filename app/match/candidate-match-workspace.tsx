@@ -27,7 +27,7 @@ type CandidateResumeSearchResult = {
   candidate_status: string | null;
   current_company_name: string | null;
   resume_updated_at: string | null;
-  document_id: string;
+  document_id: string | null;
   document_title: string | null;
   document_source_uri: string | null;
   match_score: number;
@@ -206,7 +206,7 @@ type CandidateJobDescriptionShortlistItem = {
   candidate_status: string | null;
   current_company_name: string | null;
   resume_updated_at: string | null;
-  document_id: string;
+  document_id: string | null;
   document_title: string | null;
   document_source_uri: string | null;
   retrieval_score: number;
@@ -3087,14 +3087,20 @@ export function CandidateMatchWorkspace() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3 lg:w-[15rem] lg:grid-cols-1">
-                  <a
-                    href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                  >
-                    Open CV
-                  </a>
+                  {result.document_id ? (
+                    <a
+                      href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      Open CV
+                    </a>
+                  ) : (
+                    <span className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 px-4 text-sm font-semibold text-zinc-500">
+                      No CV on file
+                    </span>
+                  )}
 
                   <button
                     type="button"
@@ -3150,7 +3156,9 @@ export function CandidateMatchWorkspace() {
                     Resume document
                   </dt>
                   <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
-                    {result.document_title ?? result.document_id}
+                    {result.document_title ??
+                      result.document_id ??
+                      "Profile data only"}
                   </dd>
                 </div>
 
@@ -3608,14 +3616,20 @@ export function CandidateMatchWorkspace() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3 lg:w-[15rem] lg:grid-cols-1">
-                  <a
-                    href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                  >
-                    Open CV
-                  </a>
+                  {result.document_id ? (
+                    <a
+                      href={`/api/v1/candidates/${result.candidate_id}/current-resume`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                    >
+                      Open CV
+                    </a>
+                  ) : (
+                    <span className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-200 bg-zinc-100 px-4 text-sm font-semibold text-zinc-500">
+                      No CV on file
+                    </span>
+                  )}
 
                   <button
                     type="button"
@@ -3660,7 +3674,9 @@ export function CandidateMatchWorkspace() {
                     Resume document
                   </dt>
                   <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
-                    {result.document_title ?? result.document_id}
+                    {result.document_title ??
+                      result.document_id ??
+                      "Profile data only"}
                   </dd>
                 </div>
 

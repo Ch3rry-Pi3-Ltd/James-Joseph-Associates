@@ -170,7 +170,9 @@ def build_candidate_job_description_shortlist(
                 "resume_updated_at": _json_safe_value(
                     matched_candidate.get("resume_updated_at")
                 ),
-                "document_id": _json_safe_value(matched_candidate["document_id"]),
+                "document_id": _json_safe_value(
+                    matched_candidate.get("document_id")
+                ),
                 "document_title": _json_safe_value(
                     matched_candidate.get("document_title")
                 ),
