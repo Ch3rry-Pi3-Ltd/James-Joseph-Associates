@@ -42,6 +42,7 @@ def build_linkedin_helper_backup_import_plan(
     people_snapshot: dict[str, Any],
     companies_snapshot: dict[str, Any],
     import_run_id: str,
+    max_related_companies: int = MAX_RELATED_COMPANIES,
 ) -> dict[str, Any]:
     """Build a bounded plan that excludes every ambiguous canonical identity."""
 
@@ -70,6 +71,7 @@ def build_linkedin_helper_backup_import_plan(
         offset=offset,
         people_snapshot=people_snapshot,
         companies_snapshot=companies_snapshot,
+        max_related_companies=max_related_companies,
     )
 
 
@@ -81,6 +83,7 @@ def build_linkedin_helper_import_plan_from_mapped_payloads(
     offset: int,
     people_snapshot: dict[str, Any],
     companies_snapshot: dict[str, Any],
+    max_related_companies: int = MAX_RELATED_COMPANIES,
 ) -> dict[str, Any]:
     """Plan one pre-mapped slice without reopening the backup database."""
 
@@ -90,6 +93,8 @@ def build_linkedin_helper_import_plan_from_mapped_payloads(
         raise ValueError("offset must be zero or greater.")
     if len(people) > limit:
         raise ValueError("Mapped people cannot exceed the declared batch limit.")
+    if max_related_companies <= 0:
+        raise ValueError("max_related_companies must be greater than zero.")
 
     people_report = reconcile_linkedin_helper_people(
         payloads=people,
@@ -130,10 +135,10 @@ def build_linkedin_helper_import_plan_from_mapped_payloads(
                 continue
             related_companies[str(company["source_record_id"])] = company
 
-    if len(related_companies) > MAX_RELATED_COMPANIES:
+    if len(related_companies) > max_related_companies:
         raise ValueError(
             "Bounded people slice references too many companies "
-            f"({len(related_companies)} > {MAX_RELATED_COMPANIES})."
+            f"({len(related_companies)} > {max_related_companies})."
         )
 
     company_payloads = list(related_companies.values())

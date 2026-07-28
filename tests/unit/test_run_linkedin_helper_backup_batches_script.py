@@ -97,3 +97,11 @@ def test_add_persistence_counts_accumulates_completed_batch() -> None:
         "skills_persisted": 120,
         "batches_completed": 1,
     }
+
+
+def test_parser_accepts_larger_related_company_limit() -> None:
+    args = subject.build_parser().parse_args(
+        ["--max-related-companies", "500"]
+    )
+
+    assert args.max_related_companies == 500

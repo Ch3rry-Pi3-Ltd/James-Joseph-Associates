@@ -207,3 +207,23 @@ def test_build_import_plan_from_mapped_payloads_uses_supplied_rows() -> None:
     assert plan["people_report"]["new"] == 1
     assert plan["company_report"]["new"] == 1
     assert len(plan["people"]) == 1
+
+
+def test_build_import_plan_respects_configurable_company_limit() -> None:
+    person = _person_payload(source_record_id="lhd2-person:1", name="Ada")
+    company = _company_payload()
+
+    try:
+        subject.build_linkedin_helper_import_plan_from_mapped_payloads(
+            people=[person],
+            all_companies=[company],
+            limit=20,
+            offset=0,
+            people_snapshot={"people": [], "source_links": []},
+            companies_snapshot={"companies": [], "source_links": []},
+            max_related_companies=0,
+        )
+    except ValueError as exc:
+        assert str(exc) == "max_related_companies must be greater than zero."
+    else:
+        raise AssertionError("Expected invalid company limit to be rejected.")

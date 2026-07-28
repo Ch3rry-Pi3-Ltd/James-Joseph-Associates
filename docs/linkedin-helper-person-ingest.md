@@ -184,6 +184,11 @@ stops new batches before the current Supabase database grows beyond the
 conservative operating limit; change that ceiling only after reviewing the
 active Supabase plan.
 
+The default related-company limit is `250` per transaction. For a reviewed
+larger batch, `--max-related-companies 500` can raise that memory and write
+boundary explicitly; the plan is rejected before writes if the selected slice
+exceeds it.
+
 The checkpoint contains offsets and aggregate counts only. It is stored at
 `temp/linkedin_helper_backup_import_checkpoint.json` and excluded from Git.
 If a database transaction or audit fails, the checkpoint does not advance, so

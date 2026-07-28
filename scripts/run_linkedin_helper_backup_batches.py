@@ -76,6 +76,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--max-related-companies",
+        type=int,
+        default=250,
+        help=(
+            "Reject a transaction before writes when its people reference more "
+            "than this many source companies. Defaults to 250."
+        ),
+    )
+    parser.add_argument(
         "--commit",
         action="store_true",
         help="Perform writes. Without this flag every batch is read-only.",
@@ -149,6 +158,7 @@ def main() -> None:
             offset=offset,
             people_snapshot=people_snapshot,
             companies_snapshot=companies_snapshot,
+            max_related_companies=args.max_related_companies,
         )
         batch_output: dict[str, Any] = {
             "mode": "commit" if args.commit else "plan",
@@ -272,6 +282,8 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--max-batches must be greater than zero.")
     if args.max_database_size_gib <= 0:
         raise SystemExit("--max-database-size-gib must be greater than zero.")
+    if args.max_related_companies <= 0:
+        raise SystemExit("--max-related-companies must be greater than zero.")
     if args.resume and args.reset_checkpoint:
         raise SystemExit("--resume and --reset-checkpoint cannot be combined.")
 
