@@ -61,10 +61,14 @@ latest agreed priority order.
   - [ ] more intuitive flow labels
   - [ ] more professional presentation of search, shortlist, and company evidence
 - [ ] Continue retrieval quality work:
-  - [ ] real-brief search tuning
-  - [ ] shortlist quality checks
+  - [x] first four-role real-brief retrieval and shortlist benchmark
+  - [ ] tune profile-only evidence handling based on benchmark findings
+  - [ ] recruiter-labelled real-brief search tuning
+  - [ ] recruiter-validated shortlist quality checks
   - [ ] better evidence presentation for recruiter trust
 - [ ] Build a repeatable recruiter-quality and AI-workflow evaluation harness:
+  - [x] add the first versioned four-role brief fixture, compact JSON artifact,
+    source-mix audit, previous-shortlist comparison, and written findings
   - [ ] create a versioned set of real role briefs with recruiter-labelled
     relevant, borderline, and unsuitable candidates
   - [ ] measure first-pass retrieval with recall at the shortlist-pool cutoff,
@@ -587,9 +591,9 @@ This is the vector-store part of the GraphRAG foundation.
   - [ ] Source-system text exports.
 - [ ] Define document metadata fields.
 - [ ] Define document chunking strategy.
-- [ ] Define embedding model/provider for Phase 1.
-- [ ] Define embedding dimensions and storage format.
-- [ ] Define pgvector index approach for the first dataset size.
+- [x] Define embedding model/provider for Phase 1.
+- [x] Define embedding dimensions and storage format.
+- [x] Define pgvector index approach for the first dataset size.
 - [x] Define whether Phase 1 needs vector-only search or hybrid retrieval.
   - [x] Decision: use hybrid retrieval, not vector-only retrieval.
   - [x] Reason: recruiter search needs both exact keyword matching and semantic recall.
@@ -599,32 +603,32 @@ This is the vector-store part of the GraphRAG foundation.
   - [ ] Source record.
   - [ ] Import run.
 - [ ] Add the first practical hybrid retrieval implementation slice:
-  - [ ] enable `pgvector` in Supabase environments
+  - [x] enable `pgvector` in Supabase environments
   - [x] define raw resume chunking policy for existing canonical CV text
   - [x] define job-spec chunking policy
   - [x] decide that structured candidate semantic blocks should be the primary semantic retrieval unit
-  - [ ] add a dedicated `candidate_semantic_blocks` table for candidate-level semantic retrieval
-  - [ ] define the first structured block set from canonical data:
-    - [ ] profile block
-    - [ ] skills block
-    - [ ] experience/summary block
+  - [x] add a dedicated `candidate_semantic_blocks` table for candidate-level semantic retrieval
+  - [x] define the first structured block set from canonical data:
+    - [x] profile block
+    - [x] skills block
+    - [x] experience/summary block
   - [x] choose first embedding runtime:
     - [x] OpenAI `text-embedding-3-large`
     - [x] shortened to `1536` dimensions to match the existing pgvector column
-  - [ ] backfill structured candidate semantic blocks from canonical stored fields
-  - [ ] embed those structured blocks without source reingestion
-  - [ ] keep raw `document_chunks` embeddings as secondary evidence rather than the main recruiter-facing retrieval surface
-  - [ ] merge full-text and vector retrieval with reciprocal rank fusion or equivalent
-  - [ ] keep LLM reranking as the final shortlist stage
+  - [x] backfill structured candidate semantic blocks from canonical stored fields
+  - [x] embed those structured blocks without source reingestion
+  - [x] keep raw `document_chunks` embeddings as secondary evidence rather than the main recruiter-facing retrieval surface
+  - [x] merge full-text and vector retrieval with reciprocal rank fusion or equivalent
+  - [x] keep LLM reranking as the final shortlist stage
   - [ ] benchmark hybrid retrieval against current FTS-only retrieval on real role briefs
   - [x] run a first tiny live semantic sample before broad rollout:
     - [x] chunk one real resume document
     - [x] generate embeddings for those chunks
     - [x] run one vector-search query against the sample
-  - [ ] run the first tiny live structured semantic-block sample before broad rollout:
-    - [ ] build blocks for a small handful of real candidates
-    - [ ] generate embeddings for those blocks
-    - [ ] run one semantic candidate query against the sample
+  - [x] run the first tiny live structured semantic-block sample before broad rollout:
+    - [x] build blocks for a small handful of real candidates
+    - [x] generate embeddings for those blocks
+    - [x] run one semantic candidate query against the sample
 
 </details>
 
@@ -743,10 +747,10 @@ Phase 1 should prove one useful GraphRAG workflow rather than trying to solve ev
 - [x] Canonical current resumes are now downloadable through the backend/UI route.
 - [x] Outlook CV archive is ingested into the canonical Dropbox-backed resume path.
 - [x] Resume chunks and embeddings are backfilled across the current searchable corpus.
-- [ ] Add structured candidate semantic blocks for retrieval beyond raw resume text.
-- [ ] Add the first company-to-candidate discovery slice.
-- [ ] Add the first "who works there / who has spoken to them before" lookup slice.
-- [ ] Add the first relationship-context evidence surface for outreach support.
+- [x] Add structured candidate semantic blocks for retrieval beyond raw resume text.
+- [x] Add the first company-to-candidate discovery slice.
+- [x] Add the first "who works there / who has spoken to them before" lookup slice.
+- [x] Add the first relationship-context evidence surface for outreach support.
 
 </details>
 

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "starr-financial-systems-analyst-2026",
+    "company": "Starr Insurance",
+    "title": "Financial Systems Analyst",
+    "source_file": "Starr Insurance - Financial Systems Analayst - 2026.pdf",
+    "brief": "Financial Systems Analyst in London supporting the Head of Business Management Information at Starr Insurance. The role requires strong IBM Planning Analytics and Cognos TM1 experience, including Rules, Feeders, TurboIntegrator, financial models, management information and reporting solutions. The person should be able to maintain controlled and scalable finance systems, work with Finance, Underwriting and Technology, improve reporting processes and data quality, support users, deliver training, document systems and contribute to business transformation. Strong Excel and financial or management accounting knowledge are important; SQL and insurance experience are desirable.",
+    "previous_shortlist": [
+      "Fabio Hernandez",
+      "Saba Minhas",
+      "Erskine Peters",
+      "Yinghua (Jessica) Wang",
+      "Gavin Werth"
+    ]
+  },
+  {
+    "id": "b2c2-quant-developer-otc-pricing",
+    "company": "B2C2",
+    "title": "Senior Quant Developer - OTC Pricing",
+    "source_file": "B2C2 - Quant Developer - OTC Pricing.pdf",
+    "brief": "Senior Quant Developer for B2C2's London OTC pricing function. Seek an experienced quantitative developer with strong Java and Python, quantitative analytics, option and derivatives pricing, stochastic modelling, machine learning and algorithmic trading experience. Relevant digital-assets, cryptocurrency or electronic-trading knowledge is valuable. The role needs production engineering for resilient pricing services, distributed or multi-region systems, quantitative research implementation, performance awareness and close collaboration with traders and researchers.",
+    "previous_shortlist": [
+      "Leonid Merkin Janson",
+      "Martin Sewell",
+      "Marek Oleksiewicz",
+      "Hoang Vu",
+      "Victor Houlet"
+    ]
+  },
+  {
+    "id": "b2c2-rust-developer-electronic-trading-2026",
+    "company": "B2C2",
+    "title": "Rust Developer - Electronic Trading",
+    "source_file": "B2C2 - Rust Developer - Electronic Trading - 2026.pdf",
+    "brief": "Rust developer for an electronic-trading platform at B2C2. The role requires commercial Rust, low-latency and high-throughput systems, distributed architecture and experience with electronic or high-frequency trading. Strong systems engineering, concurrency, performance optimisation, market-data or execution infrastructure and production reliability are important. Python or SQL, Linux, Docker, Kubernetes and cloud experience are useful. Prefer candidates who can work closely with quantitative researchers and traders and who understand derivatives, market making or digital assets.",
+    "previous_shortlist": [
+      "Christopher W",
+      "Jad Salfiti",
+      "Benjamin Johannes Scharpf",
+      "Dimitrios Panagiotis Mastrogiannopoulos",
+      "Sean Hughes"
+    ]
+  },
+  {
+    "id": "gsr-quantitative-developer-rust-2025",
+    "company": "GSR Markets",
+    "title": "Quantitative Developer - Rust",
+    "source_file": "GSR Markets - Quantitative Developer [Rust] - 2025.pdf",
+    "brief": "Quantitative Developer at GSR building high-performance cryptocurrency market-making and trading systems in Rust. Design, develop and maintain low-latency systems that drive strategy execution and profitability; collaborate with traders, engineers and quants; build research, analytics and optimisation infrastructure; deploy and monitor trading strategies; and troubleshoot real-time production issues. Require at least one year of Rust, algorithms and data structures, low-level systems knowledge, and familiarity with trading strategies. Strong evidence includes market microstructure or pricing, real-time data processing, IPC or shared memory, low-allocation or zero-copy design, and prior high-frequency, market-making or electronic-trading work.",
+    "previous_shortlist": [
+      "Christopher W",
+      "Bohdan Zhuravel",
+      "Dimitrios Panagiotis Mastrogiannopoulos",
+      "Renze(Oscar) Sun",
+      "Martin Sewell"
+    ]
+  }
+]
