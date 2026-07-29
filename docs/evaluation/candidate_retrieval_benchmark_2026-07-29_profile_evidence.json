@@ -1,0 +1,2660 @@
+{
+  "fixture": "docs\\evaluation\\recruiter_role_briefs.json",
+  "retrieval_limit": 25,
+  "shortlist_limit": 5,
+  "roles": [
+    {
+      "id": "starr-financial-systems-analyst-2026",
+      "company": "Starr Insurance",
+      "title": "Financial Systems Analyst",
+      "source_file": "Starr Insurance - Financial Systems Analayst - 2026.pdf",
+      "brief": "Financial Systems Analyst in London supporting the Head of Business Management Information at Starr Insurance. The role requires strong IBM Planning Analytics and Cognos TM1 experience, including Rules, Feeders, TurboIntegrator, financial models, management information and reporting solutions. The person should be able to maintain controlled and scalable finance systems, work with Finance, Underwriting and Technology, improve reporting processes and data quality, support users, deliver training, document systems and contribute to business transformation. Strong Excel and financial or management accounting knowledge are important; SQL and insurance experience are desirable.",
+      "previous_shortlist": [
+        "Fabio Hernandez",
+        "Saba Minhas",
+        "Erskine Peters",
+        "Yinghua (Jessica) Wang",
+        "Gavin Werth"
+      ],
+      "retrieved_candidate_count": 25,
+      "retrieval": [
+        {
+          "rank": 1,
+          "candidate_id": "a0a50e30-96dc-4157-a411-7b03aba70353",
+          "full_name": "Nunya Lotsu",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 2,
+          "candidate_id": "e06392ba-a542-42bb-bd7d-e6bd5cf36948",
+          "full_name": "Thays Abdou August",
+          "current_title": "Financial Analyst & Master Data Manager \u2013 SAP S/4HANA (Maternity Cover)",
+          "current_company_name": "OKI Europe HQ",
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 3,
+          "candidate_id": "4456b73b-68d0-4511-9e77-4e0f3fb5d73b",
+          "full_name": "Musharaf Hussain",
+          "current_title": "Application Support Analyst (1st Line)",
+          "current_company_name": "Trace ISYS",
+          "retrieval_score": 0.983871,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 4,
+          "candidate_id": "2bac90a3-5c69-4e2e-b3a5-a397fa247e56",
+          "full_name": "Chetan Kharatmal",
+          "current_title": "Data Analyst",
+          "current_company_name": "Nottingham Trent University",
+          "retrieval_score": 0.983871,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 5,
+          "candidate_id": "8146f8e3-b87c-4508-aa2c-2d56e9eb61d4",
+          "full_name": "Iquw Infor Sunsystems Administrator",
+          "current_title": "Infor Sunsystems Administrator",
+          "current_company_name": "IQUW",
+          "retrieval_score": 0.968254,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 6,
+          "candidate_id": "bb115059-40be-4440-b980-4bd11dbc72fc",
+          "full_name": "Ayae Nagataki",
+          "current_title": "Financial Analyst, Financial Planning Department",
+          "current_company_name": "Infrastructure Information Control",
+          "retrieval_score": 0.953125,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 7,
+          "candidate_id": "07143cfc-4a26-4a58-9ebc-a890d69e7b76",
+          "full_name": "Cheryl Kong",
+          "current_title": "Chief Financial Officer",
+          "current_company_name": "Fineqia",
+          "retrieval_score": 0.938462,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 8,
+          "candidate_id": "68714027-288b-43d4-8285-a6f12a0d291a",
+          "full_name": "Dan Furneaux",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 0.924242,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 9,
+          "candidate_id": "a57950f4-102e-4bc5-9e3c-cd5f2f61939f",
+          "full_name": "Harshit Shah",
+          "current_title": "Senior Systems Analyst",
+          "current_company_name": "Inmarsat (Contract with ISN Solutions Ltd)",
+          "retrieval_score": 0.910448,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 10,
+          "candidate_id": "a789f3ad-9e03-4636-bbd9-66caa4125942",
+          "full_name": "Paul Chorley",
+          "current_title": "Finance Systems Analyst",
+          "current_company_name": "Lightsource bp",
+          "retrieval_score": 0.897059,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 11,
+          "candidate_id": "5db71622-e980-4164-9d2e-1d9b82eb9016",
+          "full_name": "Karl Choi",
+          "current_title": "Business Analyst",
+          "current_company_name": "HSBC",
+          "retrieval_score": 0.884058,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 12,
+          "candidate_id": "9fc880fe-4971-4bff-a980-e5a3097d3d5e",
+          "full_name": "Kesley Barnes",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 0.871429,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 13,
+          "candidate_id": "e5f1dc14-382a-46cc-8d0b-0599f425ed78",
+          "full_name": "Vimal Chavda",
+          "current_title": "Operations Director",
+          "current_company_name": "Greencroft Property Development",
+          "retrieval_score": 0.859155,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 14,
+          "candidate_id": "f200e5ed-91c5-4764-9473-f4d31952dbe8",
+          "full_name": "Steve Walsh",
+          "current_title": "BSS Operational Support",
+          "current_company_name": "Relish Broadband",
+          "retrieval_score": 0.847222,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 15,
+          "candidate_id": "6eb3f5d6-535e-441e-979a-64d67d86e5cb",
+          "full_name": "Stanley Chan",
+          "current_title": "Lead Infrastructure & Systems Engineering",
+          "current_company_name": "Caxton Associates",
+          "retrieval_score": 0.835616,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 16,
+          "candidate_id": "c9c1d55a-e20a-4046-a30e-7c5bf839db63",
+          "full_name": "Faisal Saleem",
+          "current_title": "Group Finance Director (Global)",
+          "current_company_name": "NexantECA (formerly Nexant)",
+          "retrieval_score": 0.824324,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 17,
+          "candidate_id": "2d03555f-689e-4370-8a6c-4a0b70cd167b",
+          "full_name": "Tina Akinssennoh",
+          "current_title": "Finance Control Analyst - Payroll & Pensions",
+          "current_company_name": "EQUINTI",
+          "retrieval_score": 0.813333,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 18,
+          "candidate_id": "ea8bb3ba-b125-4ccf-be5e-7f4e4c7d2d7e",
+          "full_name": "Finlay Dyer",
+          "current_title": "Junior Pricing Analyst",
+          "current_company_name": "Markel International",
+          "retrieval_score": 0.802632,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 19,
+          "candidate_id": "9ad73979-efed-4ed9-a6c6-d4c0a1b2319a",
+          "full_name": "James Bal",
+          "current_title": "Application Support Analyst",
+          "current_company_name": "UKME",
+          "retrieval_score": 0.792208,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 20,
+          "candidate_id": "2f3dfd47-1ad2-4806-af9b-6ae8a5dee352",
+          "full_name": "Javid Ahmed",
+          "current_title": "Senior Server Systems Engineer",
+          "current_company_name": "Sungard Availability Systems",
+          "retrieval_score": 0.782051,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 21,
+          "candidate_id": "1938968a-31d1-4785-ac51-d0f0190b50ae",
+          "full_name": "David Farmer",
+          "current_title": "Financial Controller",
+          "current_company_name": "G Plan Upholstery Limited - part of SBI International",
+          "retrieval_score": 0.772152,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 22,
+          "candidate_id": "854a2b89-79d8-4a93-9b85-4aeed6fc094d",
+          "full_name": "Samson Ana",
+          "current_title": "Senior Trading Support Analyst",
+          "current_company_name": "TS Imagine",
+          "retrieval_score": 0.7625,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 23,
+          "candidate_id": "8f40e044-fc49-49cc-b8e7-8c09f3933ced",
+          "full_name": "Tyler Thomson",
+          "current_title": "Pricing Analyst",
+          "current_company_name": "Hastings Direct",
+          "retrieval_score": 0.753086,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 24,
+          "candidate_id": "91b0d5f5-0c9a-4df2-87a5-135e6fb2f70a",
+          "full_name": "Mauro Fonseca Romaldini",
+          "current_title": "Senior Finance Business Partner",
+          "current_company_name": "DXC Technology",
+          "retrieval_score": 0.743902,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 25,
+          "candidate_id": "b6091bc9-318b-4dde-9635-f16dbac1da69",
+          "full_name": "Laxmi Vithal Jilka",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 0.73494,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        }
+      ],
+      "shortlist": [
+        {
+          "rank": 1,
+          "candidate_id": "e06392ba-a542-42bb-bd7d-e6bd5cf36948",
+          "full_name": "Thays Abdou August",
+          "current_title": "Financial Analyst & Master Data Manager \u2013 SAP S/4HANA (Maternity Cover)",
+          "current_company_name": "OKI Europe HQ",
+          "retrieval_score": 1.0,
+          "fit_score": 95,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Experienced Financial Analyst with 15 years in financial reporting and forecasting, strong IBM Cognos TM1 and Planning Analytics skills, SQL knowledge, and financial expertise, currently working in a relevant role.",
+          "strengths": [
+            "15 years experience in financial reporting, analysis, and forecasting",
+            "Proficient in IBM Cognos TM1 and IBM Cognos Analytics",
+            "Experience with SQL and Microsoft Excel",
+            "Strong financial reporting and planning skills",
+            "Experience in process improvement and business analysis"
+          ],
+          "gaps": [
+            "No explicit mention of insurance industry experience"
+          ]
+        },
+        {
+          "rank": 2,
+          "candidate_id": "2bac90a3-5c69-4e2e-b3a5-a397fa247e56",
+          "full_name": "Chetan Kharatmal",
+          "current_title": "Data Analyst",
+          "current_company_name": "Nottingham Trent University",
+          "retrieval_score": 0.983871,
+          "fit_score": 90,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Data Analyst specializing in IBM TM1/Planning Analytics and Cognos Analytics with experience delivering finance BI reporting solutions and using TurboIntegrator ETL tools.",
+          "strengths": [
+            "Specializes in IBM TM1/Planning Analytics and Cognos Analytics",
+            "Experience delivering BI reporting solutions within finance",
+            "Knowledge of TurboIntegrator (TI) ETL tools",
+            "Strong Microsoft Excel skills",
+            "Experience in data quality and financial budgeting"
+          ],
+          "gaps": [
+            "No explicit insurance industry experience mentioned",
+            "No direct mention of Rules or Feeders in TM1"
+          ]
+        },
+        {
+          "rank": 3,
+          "candidate_id": "8146f8e3-b87c-4508-aa2c-2d56e9eb61d4",
+          "full_name": "Iquw Infor Sunsystems Administrator",
+          "current_title": "Infor Sunsystems Administrator",
+          "current_company_name": "IQUW",
+          "retrieval_score": 0.968254,
+          "fit_score": 85,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Infor Sunsystems Administrator supporting finance team at a specialty (re)insurer with IBM Planning Analytics (TM1) skills, SQL, and management information experience.",
+          "strengths": [
+            "Experience supporting finance team at a specialty (re)insurer",
+            "Skills in IBM Planning Analytics (TM1)",
+            "Experience with SQL and management information",
+            "Strong Microsoft Excel skills",
+            "Experience in system support and development"
+          ],
+          "gaps": [
+            "No explicit mention of Cognos TM1 Rules, Feeders, or TurboIntegrator"
+          ]
+        },
+        {
+          "rank": 4,
+          "candidate_id": "a0a50e30-96dc-4157-a411-7b03aba70353",
+          "full_name": "Nunya Lotsu",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 1.0,
+          "fit_score": 80,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Finance and systems analyst with expertise in TM1 and Cognos Planning, financial processes, and reporting across multiple industries including finance, with strong Excel skills and process improvement experience.",
+          "strengths": [
+            "Expertise in TM1 and Cognos Planning",
+            "Experience in financial processes and reporting",
+            "Strong Microsoft Excel skills including Macros and Pivot Tables",
+            "Experience in process improvement and data validation",
+            "Background in finance and intercompany accounting"
+          ],
+          "gaps": [
+            "No explicit mention of TM1 Rules, Feeders, or TurboIntegrator",
+            "No clear insurance industry experience"
+          ]
+        },
+        {
+          "rank": 5,
+          "candidate_id": "a789f3ad-9e03-4636-bbd9-66caa4125942",
+          "full_name": "Paul Chorley",
+          "current_title": "Finance Systems Analyst",
+          "current_company_name": "Lightsource bp",
+          "retrieval_score": 0.897059,
+          "fit_score": 75,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Finance Systems Analyst with experience in finance systems analysis, SQL Server, Oracle, and project management, based in London, but no explicit TM1 or Cognos experience found.",
+          "strengths": [
+            "Experience in finance systems analysis",
+            "Skills in SQL Server and Oracle",
+            "Project management experience",
+            "Based in London"
+          ],
+          "gaps": [
+            "No explicit IBM Planning Analytics or Cognos TM1 experience",
+            "No mention of financial modeling or insurance experience"
+          ]
+        }
+      ],
+      "previous_shortlist_retrieval_hits": [],
+      "previous_shortlist_retrieval_count": 0,
+      "previous_shortlist_overlap": [],
+      "previous_shortlist_overlap_count": 0,
+      "linkedin_helper_only_retrieval_count": 4,
+      "linkedin_helper_only_shortlist_count": 0,
+      "cross_source_retrieval_count": 0,
+      "cross_source_shortlist_count": 0
+    },
+    {
+      "id": "b2c2-quant-developer-otc-pricing",
+      "company": "B2C2",
+      "title": "Senior Quant Developer - OTC Pricing",
+      "source_file": "B2C2 - Quant Developer - OTC Pricing.pdf",
+      "brief": "Senior Quant Developer for B2C2's London OTC pricing function. Seek an experienced quantitative developer with strong Java and Python, quantitative analytics, option and derivatives pricing, stochastic modelling, machine learning and algorithmic trading experience. Relevant digital-assets, cryptocurrency or electronic-trading knowledge is valuable. The role needs production engineering for resilient pricing services, distributed or multi-region systems, quantitative research implementation, performance awareness and close collaboration with traders and researchers.",
+      "previous_shortlist": [
+        "Leonid Merkin Janson",
+        "Martin Sewell",
+        "Marek Oleksiewicz",
+        "Hoang Vu",
+        "Victor Houlet"
+      ],
+      "retrieved_candidate_count": 25,
+      "retrieval": [
+        {
+          "rank": 1,
+          "candidate_id": "eb592af4-f858-41ad-b044-3cdd94a5c67d",
+          "full_name": "Jamil Rzayev",
+          "current_title": "Sr. Quant Developer | FX Options Volatility",
+          "current_company_name": null,
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 2,
+          "candidate_id": "67256a77-e880-40e7-8643-54c9e0abcefa",
+          "full_name": "Erik Pimentel de Morais",
+          "current_title": "Azure Cloud Full Stack Developer for Multi-Tenant Microservices and applications",
+          "current_company_name": "Supporting Educational Group",
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 3,
+          "candidate_id": "4942c07e-4bf6-47e4-94c8-9876362bb7d7",
+          "full_name": "Daniel yuen",
+          "current_title": "Director, Quant Research",
+          "current_company_name": "Crypto.com",
+          "retrieval_score": 0.983871,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 4,
+          "candidate_id": "54f91a86-6315-45b8-8340-9ab1ffe340a7",
+          "full_name": "Zahid Hossain",
+          "current_title": "SVP, Algo team lead (hands-on), Fixed Income Quant Tech",
+          "current_company_name": "Jefferies",
+          "retrieval_score": 0.983871,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 5,
+          "candidate_id": "101c7724-8cc4-4cca-b94c-04ee9b94412c",
+          "full_name": "Bhairav Singh Champawat",
+          "current_title": "Equities Algo Developer",
+          "current_company_name": null,
+          "retrieval_score": 0.968254,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 6,
+          "candidate_id": "1835f9b2-7527-411d-bf76-9d46bf8d1361",
+          "full_name": "Plamen Stilyianov",
+          "current_title": "Python Risk Developer",
+          "current_company_name": "Nomura",
+          "retrieval_score": 0.968254,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 7,
+          "candidate_id": "410c8b61-b6dc-4815-9ee4-930e620e8fb7",
+          "full_name": "Alan Chan",
+          "current_title": "Developer - Centralised Pricing",
+          "current_company_name": null,
+          "retrieval_score": 0.953125,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 8,
+          "candidate_id": "06e1495d-b0a5-4352-b19a-1e2faf9bc0ea",
+          "full_name": "Yeyun Chen",
+          "current_title": "Quantitative Researcher",
+          "current_company_name": "Ripple",
+          "retrieval_score": 0.953125,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 9,
+          "candidate_id": "0f2fe468-305c-4b8e-b53b-c0fab37e10cf",
+          "full_name": "Oscar Thorne",
+          "current_title": "Algorithmic Trading & Technology Consultant",
+          "current_company_name": "Selby Jennings",
+          "retrieval_score": 0.938462,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 10,
+          "candidate_id": "5c8dbd47-8a2c-478c-a2ef-101f78e36c01",
+          "full_name": "Yogesh Mehta",
+          "current_title": "Head of Electronic Trading/Senior Quant Developer",
+          "current_company_name": "Bainbridge Partners Ltd",
+          "retrieval_score": 0.938462,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 11,
+          "candidate_id": "074052ff-87eb-492e-aee9-11f0a3c99132",
+          "full_name": "Nilesh Ramnarain",
+          "current_title": "Rates Volatility Index Structuring",
+          "current_company_name": null,
+          "retrieval_score": 0.924242,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 12,
+          "candidate_id": "d549a9f0-5042-4dd6-a341-eab045bef5b2",
+          "full_name": "Arif Jaffer",
+          "current_title": "Senior Java Developer, Front Office",
+          "current_company_name": "Westpac Bank",
+          "retrieval_score": 0.924242,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 13,
+          "candidate_id": "90d2aab9-e91d-461b-b3f6-9d853152e3cf",
+          "full_name": "Mistry Devendra Ramesh",
+          "current_title": "Lead Technical BA",
+          "current_company_name": "Citibank N.A., London",
+          "retrieval_score": 0.910448,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 14,
+          "candidate_id": "2fbb9cca-996d-421f-8baf-13b2f3f331b2",
+          "full_name": "Alex Yan",
+          "current_title": "Portfolio Quantitative Analyst, Global Market",
+          "current_company_name": "UBS",
+          "retrieval_score": 0.910448,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 15,
+          "candidate_id": "1bebd13b-aa67-4115-8336-cfabbd09d1be",
+          "full_name": "Christopher Marshall",
+          "current_title": "Senior Manager, Machine Learning Engineering",
+          "current_company_name": "Capital One",
+          "retrieval_score": 0.897059,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 16,
+          "candidate_id": "5a32d796-43d1-4dad-bc75-556c92033245",
+          "full_name": "Ash Sinha",
+          "current_title": "Research | Developer | Trader",
+          "current_company_name": "Private fund",
+          "retrieval_score": 0.897059,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 17,
+          "candidate_id": "a3e7d4c4-0a1f-4b4a-825d-4771dbc2d537",
+          "full_name": "Mike Chaplee",
+          "current_title": "Head of Europe Tech",
+          "current_company_name": null,
+          "retrieval_score": 0.884058,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 18,
+          "candidate_id": "c9bfd77e-5439-41da-ab59-845d6578f728",
+          "full_name": "Robin Sewoke",
+          "current_title": "Technical manager",
+          "current_company_name": "IG Group",
+          "retrieval_score": 0.884058,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 19,
+          "candidate_id": "6c7b36b7-7a26-4e12-a323-3d3ce25dfb2e",
+          "full_name": "Vikram Naicker",
+          "current_title": "Vice President",
+          "current_company_name": null,
+          "retrieval_score": 0.871429,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 20,
+          "candidate_id": "6b9d7666-c7e8-4fc6-b90c-11c9e3f74593",
+          "full_name": "Francesc Xavier CALLE MASSISIMO",
+          "current_title": "Senior Developer",
+          "current_company_name": "BayernLB/CFS",
+          "retrieval_score": 0.871429,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 21,
+          "candidate_id": "76553da0-9bd3-48a4-a9be-7990d918bae6",
+          "full_name": "Riaz Khanmohamed",
+          "current_title": "Senior Java/Python Developer",
+          "current_company_name": "Bank of America",
+          "retrieval_score": 0.859155,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 22,
+          "candidate_id": "38d3937b-5481-4c94-985d-157ab0fe063a",
+          "full_name": "Akash Goswami",
+          "current_title": "Co-founder, Head Product/Technology",
+          "current_company_name": "AIML Startup",
+          "retrieval_score": 0.859155,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 23,
+          "candidate_id": "d3d932f3-32d5-495e-9faa-499759a05410",
+          "full_name": "Sami Bessadi",
+          "current_title": "Fix client onboarding and support",
+          "current_company_name": "BNP Paribas",
+          "retrieval_score": 0.847222,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 24,
+          "candidate_id": "a68467b2-1629-4f5b-9eb5-b17f15259d9f",
+          "full_name": "Prasant Sarangi",
+          "current_title": "Senior C++/Python Developer, Tech Lead",
+          "current_company_name": "London Stock Exchange Group (LSEG)",
+          "retrieval_score": 0.847222,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 25,
+          "candidate_id": "686c1092-af16-42b3-ba3c-67d86afc7c38",
+          "full_name": "Mike Vorozhtsov",
+          "current_title": "Senior Software Developer",
+          "current_company_name": null,
+          "retrieval_score": 0.835616,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        }
+      ],
+      "shortlist": [
+        {
+          "rank": 1,
+          "candidate_id": "54f91a86-6315-45b8-8340-9ab1ffe340a7",
+          "full_name": "Zahid Hossain",
+          "current_title": "SVP, Algo team lead (hands-on), Fixed Income Quant Tech",
+          "current_company_name": "Jefferies",
+          "retrieval_score": 0.983871,
+          "fit_score": 95,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Experienced quant developer with 18+ years in financial industry, skilled in Java, Python, algorithmic trading, pricing and analytics, with leadership in tier 1 banks and hedge funds.",
+          "strengths": [
+            "Java and Python programming expertise",
+            "Experience in algorithmic trading and pricing analytics",
+            "Leadership role as SVP and algo team lead",
+            "Worked on trading desk microservices including pricing and analytics",
+            "Strong quantitative and production engineering skills"
+          ],
+          "gaps": [
+            "No explicit mention of stochastic modelling or machine learning"
+          ]
+        },
+        {
+          "rank": 2,
+          "candidate_id": "5c8dbd47-8a2c-478c-a2ef-101f78e36c01",
+          "full_name": "Yogesh Mehta",
+          "current_title": "Head of Electronic Trading/Senior Quant Developer",
+          "current_company_name": "Bainbridge Partners Ltd",
+          "retrieval_score": 0.938462,
+          "fit_score": 92,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Senior quant developer and head of electronic trading with expertise in C#, Java, Python, building fault-tolerant, low latency trading platforms and execution engines for Futures, FX, and Equities.",
+          "strengths": [
+            "Strong experience in electronic and algorithmic trading",
+            "Expertise in C#, Java, Python for multi-threaded, high throughput systems",
+            "Experience with distributed systems and execution management",
+            "Quant engineering supporting signal research and back-testing",
+            "Experience with OTC options trading flow and pricing"
+          ],
+          "gaps": [
+            "No explicit mention of stochastic modelling or derivatives pricing models"
+          ]
+        },
+        {
+          "rank": 3,
+          "candidate_id": "4942c07e-4bf6-47e4-94c8-9876362bb7d7",
+          "full_name": "Daniel yuen",
+          "current_title": "Director, Quant Research",
+          "current_company_name": "Crypto.com",
+          "retrieval_score": 0.983871,
+          "fit_score": 90,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Director of Quant Research with expertise in quantitative research and development for equity derivatives pricing and risk models, strong programming skills in Python, C#, C++, and experience building quant platforms.",
+          "strengths": [
+            "Expertise in equity derivatives pricing and risk models",
+            "Strong programming skills in Python, C#, C++",
+            "Experience in client-server system design and frontend development",
+            "Involvement in trading strategy development for Rates and Equity Volatility",
+            "Experience building quant research and trading platforms"
+          ],
+          "gaps": [
+            "No explicit mention of Java",
+            "No explicit mention of cryptocurrency or digital assets"
+          ]
+        },
+        {
+          "rank": 4,
+          "candidate_id": "06e1495d-b0a5-4352-b19a-1e2faf9bc0ea",
+          "full_name": "Yeyun Chen",
+          "current_title": "Quantitative Researcher",
+          "current_company_name": "Ripple",
+          "retrieval_score": 0.953125,
+          "fit_score": 88,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Quantitative researcher with experience in systematic trading, trading strategy design, predictive modeling, and analytical platform development in crypto, FX, and equity derivatives markets using Java and Python.",
+          "strengths": [
+            "Experience in quantitative research and trading strategy design",
+            "Proficient in Java and Python programming",
+            "Experience with OTC client analytics and market insights platforms",
+            "Background in crypto and FX trading markets",
+            "Experience in automated trading strategy development"
+          ],
+          "gaps": [
+            "No explicit mention of stochastic modelling or derivatives pricing models"
+          ]
+        },
+        {
+          "rank": 5,
+          "candidate_id": "1835f9b2-7527-411d-bf76-9d46bf8d1361",
+          "full_name": "Plamen Stilyianov",
+          "current_title": "Python Risk Developer",
+          "current_company_name": "Nomura",
+          "retrieval_score": 0.968254,
+          "fit_score": 85,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Python and Java developer with experience in financial markets, quantitative trading, risk management, and derivatives pricing analytics at Nomura.",
+          "strengths": [
+            "Experience in Java and Python development",
+            "Involved in quantitative trading, pricing and risk analytics",
+            "Worked with derivatives pricing theories and Basel II",
+            "Experience in full development lifecycle in financial markets",
+            "Exposure to quantitative trading and risk management"
+          ],
+          "gaps": [
+            "No explicit mention of stochastic modelling or machine learning",
+            "No explicit mention of cryptocurrency or digital assets"
+          ]
+        }
+      ],
+      "previous_shortlist_retrieval_hits": [],
+      "previous_shortlist_retrieval_count": 0,
+      "previous_shortlist_overlap": [],
+      "previous_shortlist_overlap_count": 0,
+      "linkedin_helper_only_retrieval_count": 9,
+      "linkedin_helper_only_shortlist_count": 0,
+      "cross_source_retrieval_count": 1,
+      "cross_source_shortlist_count": 0
+    },
+    {
+      "id": "b2c2-rust-developer-electronic-trading-2026",
+      "company": "B2C2",
+      "title": "Rust Developer - Electronic Trading",
+      "source_file": "B2C2 - Rust Developer - Electronic Trading - 2026.pdf",
+      "brief": "Rust developer for an electronic-trading platform at B2C2. The role requires commercial Rust, low-latency and high-throughput systems, distributed architecture and experience with electronic or high-frequency trading. Strong systems engineering, concurrency, performance optimisation, market-data or execution infrastructure and production reliability are important. Python or SQL, Linux, Docker, Kubernetes and cloud experience are useful. Prefer candidates who can work closely with quantitative researchers and traders and who understand derivatives, market making or digital assets.",
+      "previous_shortlist": [
+        "Christopher W",
+        "Jad Salfiti",
+        "Benjamin Johannes Scharpf",
+        "Dimitrios Panagiotis Mastrogiannopoulos",
+        "Sean Hughes"
+      ],
+      "retrieved_candidate_count": 25,
+      "retrieval": [
+        {
+          "rank": 1,
+          "candidate_id": "8ebd063c-d884-4d15-adce-0554aeac089a",
+          "full_name": "Ronnie Chowdhury",
+          "current_title": "Founder and CTO/CFO",
+          "current_company_name": "AARC Capital",
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text",
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 2,
+          "candidate_id": "0656712d-681f-4a74-8147-d0968367f330",
+          "full_name": "Faizaan P.",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Flowdesk",
+          "retrieval_score": 0.592859,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 3,
+          "candidate_id": "51efb247-0d4e-495a-ae8e-1d8eff991d4f",
+          "full_name": "Moussa Oumarou",
+          "current_title": "Senior Software Developer",
+          "current_company_name": "Hamatek Ltd",
+          "retrieval_score": 0.592859,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 4,
+          "candidate_id": "4d94fb0d-f19a-474b-a3c7-b9bd0b289da3",
+          "full_name": "Bohdan Zhuravel",
+          "current_title": "Quantitative Researcher (Research Ownership)",
+          "current_company_name": "Aspira Limited",
+          "retrieval_score": 0.583297,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 5,
+          "candidate_id": "d3a244ec-319b-4689-b5cd-30dabcaf048e",
+          "full_name": "Yuriy Zatuchnyy",
+          "current_title": "Quant Developer",
+          "current_company_name": "Scotia Bank",
+          "retrieval_score": 0.583297,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 6,
+          "candidate_id": "fe63a2dc-5c08-42b6-a9b7-791bcfa7d2b2",
+          "full_name": "Sean Hughes",
+          "current_title": "Head of Engineering",
+          "current_company_name": "Yellow Trading",
+          "retrieval_score": 0.574038,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 7,
+          "candidate_id": "f8262571-e731-4122-9e2a-ac87b3e169ef",
+          "full_name": "Stuart Mc Nellan",
+          "current_title": "Quantitative Analyst",
+          "current_company_name": "CMC Markets",
+          "retrieval_score": 0.574038,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 8,
+          "candidate_id": "122853cf-0f0e-4ef6-ad5c-a78f0fa467a4",
+          "full_name": "Christopher W",
+          "current_title": "Head of Development Pods",
+          "current_company_name": "Leading High Frequency Trading Firm",
+          "retrieval_score": 0.565068,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 9,
+          "candidate_id": "ca67b770-8cda-4459-9820-0d8b613ec69f",
+          "full_name": "Richard M.",
+          "current_title": "Senior KDB+ Python AI Developer",
+          "current_company_name": "Syneos Health",
+          "retrieval_score": 0.565068,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 10,
+          "candidate_id": "0864cbc4-43d0-4252-b48b-3dddb1d10dd4",
+          "full_name": "Ricardo Xu",
+          "current_title": "Quant Intern",
+          "current_company_name": "TECHBLOX London",
+          "retrieval_score": 0.556375,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 11,
+          "candidate_id": "cfedf3cd-fd72-4a4a-98ac-32d8194e80b0",
+          "full_name": "Francesco Ciuci",
+          "current_title": "Founder & CEO",
+          "current_company_name": "Mizar",
+          "retrieval_score": 0.556375,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 12,
+          "candidate_id": "db26ee8b-33d2-4b94-83d3-847081bf54f0",
+          "full_name": "Philasande Siphamandla Hadebe",
+          "current_title": "Contractor Software Engineer",
+          "current_company_name": "Pink Panther Technologies Ltd",
+          "retrieval_score": 0.547945,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 13,
+          "candidate_id": "7a23735e-b3de-4bcf-89cd-684bfca9c41b",
+          "full_name": "Renze(Oscar) Sun",
+          "current_title": "Rust High Frequency Trading",
+          "current_company_name": "Proprietary Trading Firm",
+          "retrieval_score": 0.539767,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 14,
+          "candidate_id": "946b8277-7a65-4792-95c8-a83eb0a8f682",
+          "full_name": "Jan Rock Ph.D.",
+          "current_title": "Senior Vice President \u2013 Senior Engineering Manager \u2013 Engineering Excellence",
+          "current_company_name": "Citi Bank",
+          "retrieval_score": 0.539767,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 15,
+          "candidate_id": "04f4c1a2-bd05-498a-bb52-0f5ad708fdbf",
+          "full_name": "Parthiban D",
+          "current_title": "Senior Technical Architect",
+          "current_company_name": "Standard Chartered Bank",
+          "retrieval_score": 0.531829,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 16,
+          "candidate_id": "e3129e8a-ec0f-4a96-bf8a-131823917b9d",
+          "full_name": "Alexander L. Mologoko",
+          "current_title": "Director, Head of Digital Assets & Markets Research",
+          "current_company_name": "CipherTrace, Inc.",
+          "retrieval_score": 0.531829,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 17,
+          "candidate_id": "29ee7769-d64f-40f8-b171-1eea8246116e",
+          "full_name": "Dimitrios Panagiotis Mastrogiannopoulos",
+          "current_title": "Senior Software Engineer",
+          "current_company_name": "Blockchain Ltd",
+          "retrieval_score": 0.524122,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 18,
+          "candidate_id": "216d74b7-48be-463b-9a67-22d69cad765d",
+          "full_name": "George Bott",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 0.516634,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 19,
+          "candidate_id": "a5f8c665-c7a4-4d88-ac30-d571b7779026",
+          "full_name": "Jad Salfiti",
+          "current_title": "Founder - CTO - Tech Lead",
+          "current_company_name": "FluxGeko",
+          "retrieval_score": 0.509358,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 20,
+          "candidate_id": "0afdcd97-6090-40bd-bdff-bdc3cc781d0a",
+          "full_name": "Zsolt Ban",
+          "current_title": "Interim CTO",
+          "current_company_name": "Ethersys",
+          "retrieval_score": 0.502283,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 21,
+          "candidate_id": "b542d051-a824-4b89-a4f7-bf46345818fe",
+          "full_name": "Kurt Reynolds",
+          "current_title": "Quant Trader Developer",
+          "current_company_name": "Tibra",
+          "retrieval_score": 0.495403,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 22,
+          "candidate_id": "34ae5c61-1909-492a-aee3-7a3327f13ecb",
+          "full_name": "Man Hong Yuen Qt",
+          "current_title": "Quantitative trader",
+          "current_company_name": "Self-employed",
+          "retrieval_score": 0.488708,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 23,
+          "candidate_id": "00ed6103-4092-40ba-a835-f01fe76f8b4f",
+          "full_name": "Alex Galkin",
+          "current_title": "Principal Engineer, Director",
+          "current_company_name": "Deutsche Bank",
+          "retrieval_score": 0.482192,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 24,
+          "candidate_id": "b73cf728-3beb-4e66-a2b3-300c7146d5ed",
+          "full_name": "Andrey Rodin",
+          "current_title": "Quantitative Developer, Contractor",
+          "current_company_name": "MUFG UK",
+          "retrieval_score": 0.475847,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 25,
+          "candidate_id": "3bc36512-8510-4949-bb67-8dee45022eaa",
+          "full_name": "Malko Bravi",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Baylyasny Asset Management",
+          "retrieval_score": 0.469667,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        }
+      ],
+      "shortlist": [
+        {
+          "rank": 1,
+          "candidate_id": "8ebd063c-d884-4d15-adce-0554aeac089a",
+          "full_name": "Ronnie Chowdhury",
+          "current_title": "Founder and CTO/CFO",
+          "current_company_name": "AARC Capital",
+          "retrieval_score": 1.0,
+          "fit_score": 85,
+          "retrieval_sources": [
+            "text",
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Founder and CTO/CFO with expertise in Rust, algorithmic trading, financial derivatives, Kubernetes, Docker, Python, and multithreading, showing strong alignment with low-latency, high-throughput trading systems and distributed architecture.",
+          "strengths": [
+            "Commercial Rust experience",
+            "Algorithmic Trading and Financial Derivatives Trading expertise",
+            "Experience with Kubernetes and Docker",
+            "Multithreading and performance optimization skills",
+            "Python and SQL Server knowledge"
+          ],
+          "gaps": [
+            "No explicit mention of electronic or high-frequency trading experience",
+            "No direct evidence of working closely with quantitative researchers or traders"
+          ]
+        },
+        {
+          "rank": 2,
+          "candidate_id": "4d94fb0d-f19a-474b-a3c7-b9bd0b289da3",
+          "full_name": "Bohdan Zhuravel",
+          "current_title": "Quantitative Researcher (Research Ownership)",
+          "current_company_name": "Aspira Limited",
+          "retrieval_score": 0.583297,
+          "fit_score": 90,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Quantitative Researcher with strong skills in Rust, Python, execution-aware low-latency trading systems, intraday/HFT signal development, and quantitative trading systems engineering, indicating solid experience in electronic and high-frequency trading environments.",
+          "strengths": [
+            "Rust and Python proficiency",
+            "Execution-aware low-latency trading systems experience",
+            "Intraday/HFT signal development",
+            "Quantitative trading systems engineering",
+            "Production research ownership"
+          ],
+          "gaps": [
+            "No explicit mention of Kubernetes, Docker, or cloud experience",
+            "No direct evidence of distributed architecture experience"
+          ]
+        },
+        {
+          "rank": 3,
+          "candidate_id": "7a23735e-b3de-4bcf-89cd-684bfca9c41b",
+          "full_name": "Renze(Oscar) Sun",
+          "current_title": "Rust High Frequency Trading",
+          "current_company_name": "Proprietary Trading Firm",
+          "retrieval_score": 0.539767,
+          "fit_score": 88,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": "Rust High Frequency Trading professional with expertise in Rust, asynchronous programming, market microstructure, systematic trading, and quantitative research, demonstrating strong fit for low-latency, high-throughput electronic trading platform development.",
+          "strengths": [
+            "Proficient in Rust and asynchronous programming",
+            "Experience in high-frequency trading and market microstructure",
+            "Quantitative research and systematic trading skills",
+            "Knowledge of WebSocket and portfolio management"
+          ],
+          "gaps": [
+            "No explicit mention of Docker, Kubernetes, or cloud experience",
+            "No direct evidence of working closely with traders or quantitative researchers"
+          ]
+        },
+        {
+          "rank": 4,
+          "candidate_id": "0656712d-681f-4a74-8147-d0968367f330",
+          "full_name": "Faizaan P.",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Flowdesk",
+          "retrieval_score": 0.592859,
+          "fit_score": 80,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": "Quantitative Developer proficient in Rust with extensive experience building highly performant, scalable, and reliable exchange and trading systems, aligning well with the role's requirements for low-latency and high-throughput systems.",
+          "strengths": [
+            "Proficient in Rust",
+            "Experience building scalable and reliable exchange and trading systems",
+            "Focus on performance and scalability"
+          ],
+          "gaps": [
+            "No explicit mention of Docker, Kubernetes, or cloud experience",
+            "No direct evidence of electronic or high-frequency trading experience",
+            "No mention of collaboration with quantitative researchers or traders"
+          ]
+        },
+        {
+          "rank": 5,
+          "candidate_id": "122853cf-0f0e-4ef6-ad5c-a78f0fa467a4",
+          "full_name": "Christopher W",
+          "current_title": "Head of Development Pods",
+          "current_company_name": "Leading High Frequency Trading Firm",
+          "retrieval_score": 0.565068,
+          "fit_score": 87,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Head of Development Pods at a leading high-frequency trading firm with skills in Rust, C++, Go, Python, market making, low latency systems, and algorithmic trading, indicating strong experience in electronic trading and distributed architectures.",
+          "strengths": [
+            "Rust and C++ expertise",
+            "Experience in high-frequency trading and market making",
+            "Knowledge of low latency systems and algorithmic trading",
+            "Leadership experience in development teams",
+            "Familiarity with Python and machine learning"
+          ],
+          "gaps": [
+            "No explicit mention of Docker, Kubernetes, or cloud experience",
+            "No direct evidence of working closely with quantitative researchers"
+          ]
+        }
+      ],
+      "previous_shortlist_retrieval_hits": [
+        {
+          "full_name": "Christopher W",
+          "rank": 8
+        },
+        {
+          "full_name": "Jad Salfiti",
+          "rank": 19
+        },
+        {
+          "full_name": "Dimitrios Panagiotis Mastrogiannopoulos",
+          "rank": 17
+        },
+        {
+          "full_name": "Sean Hughes",
+          "rank": 6
+        }
+      ],
+      "previous_shortlist_retrieval_count": 4,
+      "previous_shortlist_overlap": [
+        "christopher w"
+      ],
+      "previous_shortlist_overlap_count": 1,
+      "linkedin_helper_only_retrieval_count": 1,
+      "linkedin_helper_only_shortlist_count": 1,
+      "cross_source_retrieval_count": 5,
+      "cross_source_shortlist_count": 1
+    },
+    {
+      "id": "gsr-quantitative-developer-rust-2025",
+      "company": "GSR Markets",
+      "title": "Quantitative Developer - Rust",
+      "source_file": "GSR Markets - Quantitative Developer [Rust] - 2025.pdf",
+      "brief": "Quantitative Developer at GSR building high-performance cryptocurrency market-making and trading systems in Rust. Design, develop and maintain low-latency systems that drive strategy execution and profitability; collaborate with traders, engineers and quants; build research, analytics and optimisation infrastructure; deploy and monitor trading strategies; and troubleshoot real-time production issues. Require at least one year of Rust, algorithms and data structures, low-level systems knowledge, and familiarity with trading strategies. Strong evidence includes market microstructure or pricing, real-time data processing, IPC or shared memory, low-allocation or zero-copy design, and prior high-frequency, market-making or electronic-trading work.",
+      "previous_shortlist": [
+        "Christopher W",
+        "Bohdan Zhuravel",
+        "Dimitrios Panagiotis Mastrogiannopoulos",
+        "Renze(Oscar) Sun",
+        "Martin Sewell"
+      ],
+      "retrieved_candidate_count": 25,
+      "retrieval": [
+        {
+          "rank": 1,
+          "candidate_id": "4d94fb0d-f19a-474b-a3c7-b9bd0b289da3",
+          "full_name": "Bohdan Zhuravel",
+          "current_title": "Quantitative Researcher (Research Ownership)",
+          "current_company_name": "Aspira Limited",
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 2,
+          "candidate_id": "52da9308-cb27-401c-9efc-812dde451d03",
+          "full_name": "John Lupton",
+          "current_title": "Senior AWS Systems Developer and Architect (Cyber Security)",
+          "current_company_name": "UK Government - Cyber Directorate DSIT-London",
+          "retrieval_score": 1.0,
+          "fit_score": null,
+          "retrieval_sources": [
+            "text"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 3,
+          "candidate_id": "122853cf-0f0e-4ef6-ad5c-a78f0fa467a4",
+          "full_name": "Christopher W",
+          "current_title": "Head of Development Pods",
+          "current_company_name": "Leading High Frequency Trading Firm",
+          "retrieval_score": 0.983871,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 4,
+          "candidate_id": "32256637-0303-459e-a883-0648c226a55d",
+          "full_name": "Karun Matharu",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "K\u014dan Trading",
+          "retrieval_score": 0.968254,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 5,
+          "candidate_id": "3bc36512-8510-4949-bb67-8dee45022eaa",
+          "full_name": "Malko Bravi",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Baylyasny Asset Management",
+          "retrieval_score": 0.953125,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 6,
+          "candidate_id": "0864cbc4-43d0-4252-b48b-3dddb1d10dd4",
+          "full_name": "Ricardo Xu",
+          "current_title": "Quant Intern",
+          "current_company_name": "TECHBLOX London",
+          "retrieval_score": 0.938462,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 7,
+          "candidate_id": "7a23735e-b3de-4bcf-89cd-684bfca9c41b",
+          "full_name": "Renze(Oscar) Sun",
+          "current_title": "Rust High Frequency Trading",
+          "current_company_name": "Proprietary Trading Firm",
+          "retrieval_score": 0.924242,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 8,
+          "candidate_id": "34ae5c61-1909-492a-aee3-7a3327f13ecb",
+          "full_name": "Man Hong Yuen Qt",
+          "current_title": "Quantitative trader",
+          "current_company_name": "Self-employed",
+          "retrieval_score": 0.910448,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 9,
+          "candidate_id": "fe63a2dc-5c08-42b6-a9b7-791bcfa7d2b2",
+          "full_name": "Sean Hughes",
+          "current_title": "Head of Engineering",
+          "current_company_name": "Yellow Trading",
+          "retrieval_score": 0.897059,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 10,
+          "candidate_id": "9a0c9dba-fd9c-4384-ae22-e527a8618842",
+          "full_name": "Eyraudj",
+          "current_title": "Senior Quantitative Developer",
+          "current_company_name": "Gresham Quant",
+          "retrieval_score": 0.884058,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 11,
+          "candidate_id": "194ca8c6-dc22-428c-9a7b-b10bb25052fc",
+          "full_name": "Ilias Kasoumis",
+          "current_title": "FX/IR Hybrids Quant",
+          "current_company_name": "Mitsubishi UFG Securities",
+          "retrieval_score": 0.871429,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 12,
+          "candidate_id": "f00120f1-c767-4583-84dc-ae31bf6ae24f",
+          "full_name": "Laurent Schadeck",
+          "current_title": "Quantitative researcher",
+          "current_company_name": "EngineersGate",
+          "retrieval_score": 0.859155,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 13,
+          "candidate_id": "df561a93-c756-4a2c-8c61-92020aa0c546",
+          "full_name": "Dmitry Rusakov",
+          "current_title": "Head of Crypto Trading",
+          "current_company_name": "Magic Carpet AI",
+          "retrieval_score": 0.847222,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 14,
+          "candidate_id": "216d74b7-48be-463b-9a67-22d69cad765d",
+          "full_name": "George Bott",
+          "current_title": null,
+          "current_company_name": null,
+          "retrieval_score": 0.835616,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 15,
+          "candidate_id": "0656712d-681f-4a74-8147-d0968367f330",
+          "full_name": "Faizaan P.",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Flowdesk",
+          "retrieval_score": 0.824324,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "linkedin_helper"
+          ],
+          "source_category": "linkedin_helper_only",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 16,
+          "candidate_id": "ae625fac-c01e-46be-ace8-d296e645aa7a",
+          "full_name": "Bin Zhang",
+          "current_title": "Head of eFX Quant and Data Science (Executive Director, efx/commodities desk strategist)",
+          "current_company_name": "CIBC",
+          "retrieval_score": 0.813333,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 17,
+          "candidate_id": "727a6411-8d19-4ac8-99b8-fbbf24b7c7c8",
+          "full_name": "Mirza Kanlic V",
+          "current_title": "Consultant and MD",
+          "current_company_name": "Output-Sensitive Ltd",
+          "retrieval_score": 0.802632,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 18,
+          "candidate_id": "88b6a6d0-7d45-4ded-9cd4-9a7e518c514e",
+          "full_name": "Adam Haeems",
+          "current_title": "Proprietary Quant Trader & Researcher",
+          "current_company_name": "Independent / Self-Funded",
+          "retrieval_score": 0.792208,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 19,
+          "candidate_id": "5ce653c1-335f-49de-ab11-b2b99a838874",
+          "full_name": "Victor Houlet",
+          "current_title": "Senior Quantitative Developer",
+          "current_company_name": "Private HFT Project",
+          "retrieval_score": 0.782051,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 20,
+          "candidate_id": "c9de4e18-cf52-40c3-8303-2f0772de334a",
+          "full_name": "Rickee Wong",
+          "current_title": "Quant. development team leader",
+          "current_company_name": "WaveRider Capital",
+          "retrieval_score": 0.772152,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 21,
+          "candidate_id": "db26ee8b-33d2-4b94-83d3-847081bf54f0",
+          "full_name": "Philasande Siphamandla Hadebe",
+          "current_title": "Contractor Software Engineer",
+          "current_company_name": "Pink Panther Technologies Ltd",
+          "retrieval_score": 0.7625,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 22,
+          "candidate_id": "0afdcd97-6090-40bd-bdff-bdc3cc781d0a",
+          "full_name": "Zsolt Ban",
+          "current_title": "Interim CTO",
+          "current_company_name": "Ethersys",
+          "retrieval_score": 0.753086,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 23,
+          "candidate_id": "00ed6103-4092-40ba-a835-f01fe76f8b4f",
+          "full_name": "Alex Galkin",
+          "current_title": "Principal Engineer, Director",
+          "current_company_name": "Deutsche Bank",
+          "retrieval_score": 0.743902,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 24,
+          "candidate_id": "29ee7769-d64f-40f8-b171-1eea8246116e",
+          "full_name": "Dimitrios Panagiotis Mastrogiannopoulos",
+          "current_title": "Senior Software Engineer",
+          "current_company_name": "Blockchain Ltd",
+          "retrieval_score": 0.73494,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        },
+        {
+          "rank": 25,
+          "candidate_id": "b209ccc8-05bb-4214-9fc3-a0aa8c19fcf7",
+          "full_name": "Soukaina Mansour",
+          "current_title": "Associate, Credit SMM Strat",
+          "current_company_name": "Goldman Sachs",
+          "retrieval_score": 0.72619,
+          "fit_score": null,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": null,
+          "strengths": [],
+          "gaps": []
+        }
+      ],
+      "shortlist": [
+        {
+          "rank": 1,
+          "candidate_id": "4d94fb0d-f19a-474b-a3c7-b9bd0b289da3",
+          "full_name": "Bohdan Zhuravel",
+          "current_title": "Quantitative Researcher (Research Ownership)",
+          "current_company_name": "Aspira Limited",
+          "retrieval_score": 1.0,
+          "fit_score": 90,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Quantitative Researcher with strong experience in Rust, low-latency trading systems, market microstructure, and HFT signal development, matching key job requirements.",
+          "strengths": [
+            "Rust programming experience",
+            "Execution-aware low-latency trading systems",
+            "Intraday/HFT signal development",
+            "Market microstructure and order book dynamics knowledge",
+            "Quantitative trading systems engineering"
+          ],
+          "gaps": []
+        },
+        {
+          "rank": 2,
+          "candidate_id": "122853cf-0f0e-4ef6-ad5c-a78f0fa467a4",
+          "full_name": "Christopher W",
+          "current_title": "Head of Development Pods",
+          "current_company_name": "Leading High Frequency Trading Firm",
+          "retrieval_score": 0.983871,
+          "fit_score": 88,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Head of Development Pods at a leading HFT firm with expertise in Rust, low latency systems, market making, and algorithmic trading, aligning well with the role.",
+          "strengths": [
+            "Rust programming",
+            "Low latency systems development",
+            "High frequency trading and market making experience",
+            "Algorithmic trading expertise",
+            "Team management experience"
+          ],
+          "gaps": [
+            "No explicit mention of cryptocurrency experience"
+          ]
+        },
+        {
+          "rank": 3,
+          "candidate_id": "7a23735e-b3de-4bcf-89cd-684bfca9c41b",
+          "full_name": "Renze(Oscar) Sun",
+          "current_title": "Rust High Frequency Trading",
+          "current_company_name": "Proprietary Trading Firm",
+          "retrieval_score": 0.924242,
+          "fit_score": 85,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "linkedin_helper",
+            "recruiterflow"
+          ],
+          "source_category": "cross_source",
+          "fit_summary": "Rust High Frequency Trading developer with skills in asynchronous programming, market microstructure, and systematic trading, suitable for building low-latency crypto trading systems.",
+          "strengths": [
+            "Rust programming",
+            "High frequency trading experience",
+            "Market microstructure knowledge",
+            "Asynchronous programming",
+            "Systematic trading"
+          ],
+          "gaps": [
+            "No explicit mention of cryptocurrency market-making or trading strategies"
+          ]
+        },
+        {
+          "rank": 4,
+          "candidate_id": "3bc36512-8510-4949-bb67-8dee45022eaa",
+          "full_name": "Malko Bravi",
+          "current_title": "Quantitative Developer",
+          "current_company_name": "Baylyasny Asset Management",
+          "retrieval_score": 0.953125,
+          "fit_score": 80,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox",
+            "recruiterflow"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Quantitative Developer experienced in low latency programming, option market making, and systematic trading with C/C++ and Python, relevant to the role's requirements.",
+          "strengths": [
+            "Low latency programming",
+            "Option market making experience",
+            "Systematic trading",
+            "C/C++ and Python skills",
+            "Algorithm optimisation"
+          ],
+          "gaps": [
+            "No explicit Rust experience mentioned",
+            "No direct cryptocurrency trading experience noted"
+          ]
+        },
+        {
+          "rank": 5,
+          "candidate_id": "0864cbc4-43d0-4252-b48b-3dddb1d10dd4",
+          "full_name": "Ricardo Xu",
+          "current_title": "Quant Intern",
+          "current_company_name": "TECHBLOX London",
+          "retrieval_score": 0.938462,
+          "fit_score": 78,
+          "retrieval_sources": [
+            "semantic"
+          ],
+          "source_systems": [
+            "dropbox"
+          ],
+          "source_category": "other_source",
+          "fit_summary": "Quant Intern with experience in crypto market making, probabilistic modeling in Rust, and low-latency trading engine development, showing potential for the role.",
+          "strengths": [
+            "Rust programming",
+            "Crypto market making experience",
+            "Low-latency trading engine development",
+            "Probabilistic modeling",
+            "Systematic trading"
+          ],
+          "gaps": [
+            "Intern level experience may imply less than 1 year Rust or production experience"
+          ]
+        }
+      ],
+      "previous_shortlist_retrieval_hits": [
+        {
+          "full_name": "Christopher W",
+          "rank": 3
+        },
+        {
+          "full_name": "Bohdan Zhuravel",
+          "rank": 1
+        },
+        {
+          "full_name": "Dimitrios Panagiotis Mastrogiannopoulos",
+          "rank": 24
+        },
+        {
+          "full_name": "Renze(Oscar) Sun",
+          "rank": 7
+        }
+      ],
+      "previous_shortlist_retrieval_count": 4,
+      "previous_shortlist_overlap": [
+        "bohdan zhuravel",
+        "christopher w",
+        "renze(oscar) sun"
+      ],
+      "previous_shortlist_overlap_count": 3,
+      "linkedin_helper_only_retrieval_count": 2,
+      "linkedin_helper_only_shortlist_count": 0,
+      "cross_source_retrieval_count": 2,
+      "cross_source_shortlist_count": 1
+    }
+  ],
+  "summary": {
+    "roles": 4,
+    "retrieved_candidates": 100,
+    "shortlisted_candidates": 20,
+    "linkedin_helper_only_retrieval": 16,
+    "linkedin_helper_only_shortlist": 1,
+    "cross_source_retrieval": 8,
+    "cross_source_shortlist": 2,
+    "previous_shortlist_overlap": 4,
+    "previous_shortlist_retrieval_hits": 8
+  }
+}

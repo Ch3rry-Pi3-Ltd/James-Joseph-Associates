@@ -36,6 +36,11 @@ from backend.services.candidate_profiles import (
 from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
+_PROFILE_SUMMARY_CHARACTER_LIMIT = 1200
+_PROFILE_HEADLINE_CHARACTER_LIMIT = 400
+_PROFILE_SKILL_LIMIT = 24
+
+
 class CandidateMatchingError(RuntimeError):
     """
     Raised when candidate shortlisting fails after retrieval.
@@ -248,6 +253,10 @@ def _rank_retrieved_candidates_for_job_description(
         "Base your decision on the provided candidate data only. "
         "Do not invent missing experience. "
         "Prefer concrete evidence over generic recruiter language. "
+        "Structured profile evidence and CV evidence are both valid evidence. "
+        "Do not penalize a candidate merely because no CV document is attached; "
+        "assess profile-only candidates on the supplied headline, summary, role, "
+        "company, skills, and retrieval evidence. "
         f"{UNTRUSTED_CONTENT_POLICY} "
         "Return no more than the requested shortlist limit."
     )
@@ -446,6 +455,9 @@ def _build_candidate_graph_evidence(
             "candidate_id": candidate_id,
             "current_company_name": candidate.get("current_company_name"),
             "skill_names": [],
+            "evidence_kind": _candidate_evidence_kind(candidate),
+            "has_resume_document": bool(candidate.get("document_id")),
+            "profile_evidence": {},
             "contacts_count": 0,
             "interactions_count": 0,
             "jobs_count": 0,
@@ -456,10 +468,13 @@ def _build_candidate_graph_evidence(
             "opportunities": [],
         }
 
-    skill_names = _extract_skill_names(profile.get("skills") or [])
+    profile_candidate = profile["candidate"]
+    skill_names = _extract_skill_names(profile.get("skills") or [])[
+        :_PROFILE_SKILL_LIMIT
+    ]
     current_company_name = (
         candidate.get("current_company_name")
-        or profile["candidate"].get("current_company_name")
+        or profile_candidate.get("current_company_name")
         or ""
     ).strip()
 
@@ -467,6 +482,29 @@ def _build_candidate_graph_evidence(
         "candidate_id": candidate_id,
         "current_company_name": current_company_name or None,
         "skill_names": skill_names,
+        "evidence_kind": _candidate_evidence_kind(candidate),
+        "has_resume_document": bool(candidate.get("document_id")),
+        "profile_evidence": {
+            "current_title": _bounded_optional_text(
+                candidate.get("current_title")
+                or profile_candidate.get("current_title"),
+                limit=_PROFILE_HEADLINE_CHARACTER_LIMIT,
+            ),
+            "headline": _bounded_optional_text(
+                profile_candidate.get("headline"),
+                limit=_PROFILE_HEADLINE_CHARACTER_LIMIT,
+            ),
+            "summary": _bounded_optional_text(
+                profile_candidate.get("summary"),
+                limit=_PROFILE_SUMMARY_CHARACTER_LIMIT,
+            ),
+            "location": _bounded_optional_text(
+                profile_candidate.get("location"),
+                limit=_PROFILE_HEADLINE_CHARACTER_LIMIT,
+            ),
+            "current_company_name": current_company_name or None,
+            "skill_names": skill_names,
+        },
         "contacts_count": 0,
         "interactions_count": 0,
         "jobs_count": 0,
@@ -558,6 +596,21 @@ def _extract_skill_names(skills: list[dict[str, Any]]) -> list[str]:
         skill_names.append(skill_name)
 
     return skill_names
+
+
+def _candidate_evidence_kind(candidate: dict[str, Any]) -> str:
+    if candidate.get("document_id"):
+        return "resume_and_structured_profile"
+    return "structured_profile_only"
+
+
+def _bounded_optional_text(value: Any, *, limit: int) -> str | None:
+    normalized_value = " ".join(str(value or "").split())
+    if normalized_value == "":
+        return None
+    if len(normalized_value) <= limit:
+        return normalized_value
+    return normalized_value[:limit].rstrip() + "..."
 
 
 __all__ = [

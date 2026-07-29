@@ -26,6 +26,9 @@ not byte-for-byte copies of the original PDF files.
 The machine-readable output is in
 `docs/evaluation/candidate_retrieval_benchmark_2026-07-29.json`.
 
+The profile-evidence tuning re-run is in
+`docs/evaluation/candidate_retrieval_benchmark_2026-07-29_profile_evidence.json`.
+
 ## Aggregate Results
 
 | Measure | Result |
@@ -39,6 +42,38 @@ The machine-readable output is in
 | Cross-source Linked Helper profiles in final top-five lists | 3 |
 | Earlier shortlist names retained in new final lists | 4 |
 | Earlier shortlist names present anywhere in new top-25 pools | 8 |
+
+## Profile-Evidence Tuning Re-run
+
+The reranker was updated to receive a bounded canonical profile evidence
+bundle for every candidate:
+
+- current title
+- headline
+- summary
+- location
+- up to 24 linked skills
+- whether the evidence is profile-only or also CV-backed
+
+Email addresses, telephone numbers, LinkedIn URLs and full raw profile payloads
+remain excluded. The ranking instruction now states that absence of an attached
+CV is not itself a fit gap.
+
+The exact four-role benchmark was then re-run:
+
+| Measure | Before | After |
+| --- | ---: | ---: |
+| Linked Helper-only profiles in final top-five lists | 0 | 1 |
+| Cross-source Linked Helper profiles in final top-five lists | 3 | 2 |
+| Earlier shortlist names retained in new final lists | 4 | 4 |
+
+`Faizaan P.`, a Linked Helper-only quantitative developer at Flowdesk, reached
+rank four for the B2C2 Rust role with a fit score of 80. This proves that
+profile-only evidence can now survive both retrieval and final reranking.
+
+The result is directionally positive, but four roles and one model run are too
+small to establish a general quality improvement. Recruiter labels and repeated
+runs are still required before setting a regression threshold.
 
 ## Results By Role
 
@@ -166,8 +201,9 @@ Interpretation:
 
 1. Show the operator whether each candidate is CV-backed, Linked Helper-only
    or cross-source.
-2. Expand the evidence supplied to the reranker for profile-only candidates:
-   current role, recent employment history, skills and updated-at provenance.
+2. Extend the new bounded profile evidence with canonical recent-employment
+   history and updated-at provenance when those fields are exposed cleanly by
+   the canonical read layer.
 3. Add deterministic must-have coverage for role-specific requirements before
    LLM ranking, without turning it into a brittle keyword-only filter.
 4. Capture recruiter accept/reject feedback and promote validated examples

@@ -329,7 +329,9 @@ Goal: improve recall and relevance before full graph-style expansion.
   - title keywords
   - company background
   - skill keywords
-- [ ] Evaluate retrieval quality against real Tom role briefs before moving deeper into GraphRAG
+- [x] Evaluate retrieval quality against four real supplied role briefs before
+  moving deeper into GraphRAG, including a source-mix audit and a profile-only
+  reranking comparison
 
 ## Milestone 6: GraphRAG-Style Expansion
 

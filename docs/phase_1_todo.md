@@ -62,7 +62,10 @@ latest agreed priority order.
   - [ ] more professional presentation of search, shortlist, and company evidence
 - [ ] Continue retrieval quality work:
   - [x] first four-role real-brief retrieval and shortlist benchmark
-  - [ ] tune profile-only evidence handling based on benchmark findings
+  - [x] tune profile-only evidence handling based on benchmark findings:
+    bounded headline, summary, current-role, location and skill evidence now
+    reaches reranking without contact details; the exact re-run promoted one
+    Linked Helper-only profile into a final top-five list
   - [ ] recruiter-labelled real-brief search tuning
   - [ ] recruiter-validated shortlist quality checks
   - [ ] better evidence presentation for recruiter trust

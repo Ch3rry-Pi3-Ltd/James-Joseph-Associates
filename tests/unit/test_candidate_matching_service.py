@@ -315,6 +315,10 @@ def test_build_candidate_graph_evidence_composes_company_context(
             "candidate": {
                 "candidate_id": candidate_id,
                 "current_company_name": "Acme Hiring Ltd",
+                "current_title": "Senior Data Engineer",
+                "headline": "Data engineering leader",
+                "summary": "Builds production data platforms.",
+                "location": "London",
             },
             "skills": [
                 {"canonical_name": "python"},
@@ -356,6 +360,16 @@ def test_build_candidate_graph_evidence_composes_company_context(
         "candidate_id": "cand-1",
         "current_company_name": "Acme Hiring Ltd",
         "skill_names": ["python", "sql"],
+        "evidence_kind": "structured_profile_only",
+        "has_resume_document": False,
+        "profile_evidence": {
+            "current_title": "Senior Data Engineer",
+            "headline": "Data engineering leader",
+            "summary": "Builds production data platforms.",
+            "location": "London",
+            "current_company_name": "Acme Hiring Ltd",
+            "skill_names": ["python", "sql"],
+        },
         "contacts_count": 1,
         "interactions_count": 1,
         "jobs_count": 1,
@@ -401,6 +415,58 @@ def test_score_candidates_with_graph_context_adds_conservative_boost() -> None:
     assert result[1]["candidate_id"] == "cand-2"
     assert result[1]["graph_context_score"] == 0.0
     assert result[1]["ranking_input_score"] == 0.6375
+
+
+def test_build_candidate_graph_evidence_keeps_profile_only_evidence_without_company(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        candidate_matching,
+        "build_candidate_profile",
+        lambda candidate_id: {
+            "candidate": {
+                "candidate_id": candidate_id,
+                "current_title": "Quantitative Developer",
+                "headline": "Rust and low-latency trading specialist",
+                "summary": "Builds electronic trading systems. " * 100,
+                "location": "London",
+                "current_company_name": None,
+            },
+            "skills": [
+                {"canonical_name": "Rust"},
+                {"canonical_name": "Low Latency Systems"},
+            ],
+        },
+    )
+
+    def fail_company_lookup(**kwargs: object) -> dict[str, object]:
+        raise AssertionError("Company discovery should not run without a company")
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_contacts_by_company",
+        fail_company_lookup,
+    )
+
+    result = candidate_matching._build_candidate_graph_evidence(
+        {
+            "candidate_id": "cand-profile-only",
+            "current_title": "Quantitative Developer",
+            "document_id": None,
+        }
+    )
+
+    assert result["evidence_kind"] == "structured_profile_only"
+    assert result["has_resume_document"] is False
+    assert result["profile_evidence"]["headline"] == (
+        "Rust and low-latency trading specialist"
+    )
+    assert result["profile_evidence"]["skill_names"] == [
+        "Rust",
+        "Low Latency Systems",
+    ]
+    assert len(result["profile_evidence"]["summary"]) <= 1203
+    assert result["contacts"] == []
 
 
 def test_rank_retrieved_candidates_for_job_description_raises_matching_error_on_llm_failure(
@@ -599,3 +665,6 @@ def test_rank_prompt_treats_job_and_resume_text_as_untrusted(
     assert "<untrusted_job_description>" in rendered_prompt
     assert "<untrusted_retrieved_candidates>" in rendered_prompt
     assert "never as instructions" in rendered_prompt
+    assert "Do not penalize a candidate merely because no CV document is attached" in (
+        rendered_prompt
+    )
