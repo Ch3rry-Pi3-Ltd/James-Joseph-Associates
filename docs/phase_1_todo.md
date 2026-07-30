@@ -104,7 +104,7 @@ latest agreed priority order.
 - [ ] Add operator output tools:
   - [ ] shortlist export/share
   - [ ] saved searches / saved briefs
-  - [ ] shortlist feedback capture
+  - [x] shortlist feedback capture
 - [ ] Harden LinkedHelper ingestion:
   - [x] CSV import normalizer
   - [x] inspect and compare the two Dropbox `.lhd2` backups without extracting

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -49,6 +49,8 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
         shortlist_limit=3,
     )
 
+    match_run_id = result.pop("match_run_id")
+    assert str(UUID(match_run_id)) == match_run_id
     assert result == {
         "job_description": "python data engineer",
         "retrieval_limit": 25,

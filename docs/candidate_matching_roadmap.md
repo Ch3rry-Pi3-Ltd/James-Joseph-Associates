@@ -66,7 +66,7 @@ This is the practical engineering backlog as of Thursday, July 30, 2026.
 - [ ] Add operator-friendly output actions:
   - [ ] shortlist export/share
   - [ ] saveable searches or saved briefs
-  - [ ] lightweight feedback capture on good/bad shortlist results
+  - [x] lightweight feedback capture on good/bad shortlist results
 - [ ] LinkedHelper ingestion path:
   - [x] CSV ingest normalizer
   - [x] deterministic person/company matching and candidate upsert rules
@@ -366,7 +366,7 @@ Goal: turn the demo into something closer to a working internal tool.
 - [ ] Add side-by-side candidate comparison
 - [ ] Add “why this candidate” explanations
 - [ ] Add export/share of shortlist output
-- [ ] Add feedback loop for good/bad matches
+- [x] Add feedback loop for good/bad matches
 
 ## What Is Already Underway
 

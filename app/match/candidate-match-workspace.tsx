@@ -244,11 +244,30 @@ type CandidateJobDescriptionShortlistItem = {
 };
 
 type CandidateJobDescriptionMatchResponse = {
+  match_run_id: string;
   job_description: string;
   retrieval_limit: number;
   shortlist_limit: number;
   retrieved_candidate_count: number;
   shortlisted_candidates: CandidateJobDescriptionShortlistItem[];
+};
+
+type CandidateMatchFeedbackValue = "good_match" | "not_suitable";
+
+type CandidateMatchFeedbackState = {
+  value: CandidateMatchFeedbackValue | null;
+  reason: string;
+  status: "idle" | "saving" | "saved" | "error";
+  message: string | null;
+};
+
+type CandidateMatchFeedbackResponse = {
+  feedback_id: string;
+  match_run_id: string;
+  candidate_id: string;
+  feedback_value: CandidateMatchFeedbackValue;
+  feedback_reason: string | null;
+  updated_at: string;
 };
 
 type ApiErrorResponse = {
@@ -880,6 +899,10 @@ export function CandidateMatchWorkspace() {
   const [shortlistResults, setShortlistResults] = useState<
     CandidateJobDescriptionShortlistItem[]
   >([]);
+  const [matchRunId, setMatchRunId] = useState<string | null>(null);
+  const [feedbackByCandidateId, setFeedbackByCandidateId] = useState<
+    Record<string, CandidateMatchFeedbackState>
+  >({});
   const [isSearchResultsExpanded, setIsSearchResultsExpanded] = useState(false);
   const [isSearchQueryDetailsExpanded, setIsSearchQueryDetailsExpanded] =
     useState(false);
@@ -1251,6 +1274,8 @@ export function CandidateMatchWorkspace() {
       setUploadedJobDescriptionResult(uploadResponse);
       setSearchResults([]);
       setShortlistResults([]);
+      setMatchRunId(null);
+      setFeedbackByCandidateId({});
       setSearchErrorMessage(null);
       setShortlistErrorMessage(null);
       setSubmittedSearchQuery(null);
@@ -1308,6 +1333,8 @@ export function CandidateMatchWorkspace() {
 
       if (!response.ok) {
         setShortlistResults([]);
+        setMatchRunId(null);
+        setFeedbackByCandidateId({});
         setSubmittedJobDescription(trimmedDescription);
         setShortlistErrorMessage(
           (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
@@ -1319,6 +1346,8 @@ export function CandidateMatchWorkspace() {
 
       const shortlistResponse = payload as CandidateJobDescriptionMatchResponse;
       setShortlistResults(shortlistResponse.shortlisted_candidates);
+      setMatchRunId(shortlistResponse.match_run_id);
+      setFeedbackByCandidateId({});
       setRetrievedCandidateCount(shortlistResponse.retrieved_candidate_count);
       setSubmittedJobDescription(shortlistResponse.job_description);
 
@@ -1333,6 +1362,8 @@ export function CandidateMatchWorkspace() {
       });
     } catch (error) {
       setShortlistResults([]);
+      setMatchRunId(null);
+      setFeedbackByCandidateId({});
       setSubmittedJobDescription(trimmedDescription);
       setShortlistErrorMessage(
         error instanceof Error
@@ -1342,6 +1373,109 @@ export function CandidateMatchWorkspace() {
     } finally {
       setIsShortlistLoading(false);
       setActiveRunMode(null);
+    }
+  }
+
+  function updateCandidateFeedback(
+    candidateId: string,
+    update: Partial<CandidateMatchFeedbackState>,
+  ): void {
+    setFeedbackByCandidateId((current) => {
+      const previous = current[candidateId] ?? {
+        value: null,
+        reason: "",
+        status: "idle",
+        message: null,
+      };
+
+      return {
+        ...current,
+        [candidateId]: {
+          ...previous,
+          ...update,
+        },
+      };
+    });
+  }
+
+  async function submitCandidateFeedback(
+    result: CandidateJobDescriptionShortlistItem,
+    shortlistRank: number,
+  ): Promise<void> {
+    const feedback = feedbackByCandidateId[result.candidate_id];
+    const activeJobDescription =
+      submittedJobDescription?.trim() || jobDescription.trim();
+
+    if (!matchRunId || activeJobDescription === "") {
+      updateCandidateFeedback(result.candidate_id, {
+        status: "error",
+        message: "Run the shortlist again before saving feedback.",
+      });
+      return;
+    }
+
+    if (!feedback?.value) {
+      updateCandidateFeedback(result.candidate_id, {
+        status: "error",
+        message: "Choose Good match or Not suitable first.",
+      });
+      return;
+    }
+
+    updateCandidateFeedback(result.candidate_id, {
+      status: "saving",
+      message: null,
+    });
+
+    try {
+      const response = await fetch("/api/v1/candidates/match-feedback", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          match_run_id: matchRunId,
+          candidate_id: result.candidate_id,
+          document_id: result.document_id,
+          feedback_value: feedback.value,
+          feedback_reason: feedback.reason.trim() || null,
+          job_description: activeJobDescription,
+          shortlist_rank: shortlistRank,
+          fit_score: result.fit_score,
+          retrieval_score: result.retrieval_score,
+          graph_context_score: result.graph_context_score,
+          ranking_input_score: result.ranking_input_score,
+          source_category: result.source_category,
+        }),
+      });
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        updateCandidateFeedback(result.candidate_id, {
+          status: "error",
+          message:
+            (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Feedback could not be saved (${response.status}).`,
+        });
+        return;
+      }
+
+      const savedFeedback = payload as CandidateMatchFeedbackResponse;
+      updateCandidateFeedback(result.candidate_id, {
+        value: savedFeedback.feedback_value,
+        reason: savedFeedback.feedback_reason ?? "",
+        status: "saved",
+        message: "Feedback saved.",
+      });
+    } catch (error) {
+      updateCandidateFeedback(result.candidate_id, {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Feedback could not be saved.",
+      });
     }
   }
 
@@ -1549,6 +1683,8 @@ export function CandidateMatchWorkspace() {
     setIsFocusTermsAuto(true);
     setSearchResults([]);
     setShortlistResults([]);
+    setMatchRunId(null);
+    setFeedbackByCandidateId({});
     setSearchErrorMessage(null);
     setShortlistErrorMessage(null);
     setSubmittedSearchQuery(null);
@@ -3277,6 +3413,120 @@ export function CandidateMatchWorkspace() {
                     )}
                   </ul>
                 </div>
+              </div>
+
+              <div className="mt-6 border-t border-zinc-200 pt-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-zinc-500">
+                      Recruiter feedback
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-700">
+                      Record whether this result is useful. Saved judgements build
+                      the labelled evidence needed to evaluate and tune matching.
+                    </p>
+                  </div>
+                  {feedbackByCandidateId[result.candidate_id]?.message ? (
+                    <p
+                      className={`text-sm font-semibold ${
+                        feedbackByCandidateId[result.candidate_id]?.status ===
+                        "error"
+                          ? "text-rose-700"
+                          : "text-emerald-700"
+                      }`}
+                      role="status"
+                    >
+                      {feedbackByCandidateId[result.candidate_id]?.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    aria-pressed={
+                      feedbackByCandidateId[result.candidate_id]?.value ===
+                      "good_match"
+                    }
+                    onClick={() =>
+                      updateCandidateFeedback(result.candidate_id, {
+                        value: "good_match",
+                        status: "idle",
+                        message: null,
+                      })
+                    }
+                    className={`inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition ${
+                      feedbackByCandidateId[result.candidate_id]?.value ===
+                      "good_match"
+                        ? "border-emerald-700 bg-emerald-700 text-white"
+                        : "border-zinc-300 bg-white text-zinc-900 hover:border-emerald-600"
+                    }`}
+                  >
+                    Good match
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={
+                      feedbackByCandidateId[result.candidate_id]?.value ===
+                      "not_suitable"
+                    }
+                    onClick={() =>
+                      updateCandidateFeedback(result.candidate_id, {
+                        value: "not_suitable",
+                        status: "idle",
+                        message: null,
+                      })
+                    }
+                    className={`inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition ${
+                      feedbackByCandidateId[result.candidate_id]?.value ===
+                      "not_suitable"
+                        ? "border-rose-700 bg-rose-700 text-white"
+                        : "border-zinc-300 bg-white text-zinc-900 hover:border-rose-600"
+                    }`}
+                  >
+                    Not suitable
+                  </button>
+                </div>
+
+                {feedbackByCandidateId[result.candidate_id]?.value ? (
+                  <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                    <label className="grid gap-2 text-sm font-semibold text-zinc-800">
+                      Reason or note (optional)
+                      <textarea
+                        value={
+                          feedbackByCandidateId[result.candidate_id]?.reason ?? ""
+                        }
+                        maxLength={1000}
+                        rows={2}
+                        onChange={(event) =>
+                          updateCandidateFeedback(result.candidate_id, {
+                            reason: event.target.value,
+                            status: "idle",
+                            message: null,
+                          })
+                        }
+                        placeholder="For example: strong technical fit, but location is unsuitable."
+                        className="min-h-20 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 font-normal text-zinc-950 outline-none transition focus:border-emerald-600"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={
+                        feedbackByCandidateId[result.candidate_id]?.status ===
+                        "saving"
+                      }
+                      onClick={() => {
+                        void submitCandidateFeedback(result, index + 1);
+                      }}
+                      className="inline-flex h-11 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-wait disabled:bg-zinc-400"
+                    >
+                      {feedbackByCandidateId[result.candidate_id]?.status ===
+                      "saving"
+                        ? "Saving..."
+                        : "Save feedback"}
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               {result.graph_evidence ? (

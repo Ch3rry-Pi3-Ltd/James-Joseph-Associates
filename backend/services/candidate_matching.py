@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from datetime import date, datetime
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -119,6 +119,7 @@ def build_candidate_job_description_shortlist(
 
     bounded_retrieval_limit = max(1, min(int(retrieval_limit), 100))
     bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
+    match_run_id = str(uuid4())
 
     retrieved_candidates = search_candidates_hybrid(
         query=normalized_job_description,
@@ -128,6 +129,7 @@ def build_candidate_job_description_shortlist(
     )
     if not retrieved_candidates:
         return {
+            "match_run_id": match_run_id,
             "job_description": normalized_job_description,
             "retrieval_limit": bounded_retrieval_limit,
             "shortlist_limit": bounded_shortlist_limit,
@@ -238,6 +240,7 @@ def build_candidate_job_description_shortlist(
             break
 
     return {
+        "match_run_id": match_run_id,
         "job_description": normalized_job_description,
         "retrieval_limit": bounded_retrieval_limit,
         "shortlist_limit": bounded_shortlist_limit,

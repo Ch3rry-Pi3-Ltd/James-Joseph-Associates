@@ -1278,6 +1278,7 @@ def test_match_job_description_route_returns_shortlist() -> None:
     """
 
     service_result = {
+        "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
         "job_description": "python data engineer",
         "retrieval_limit": 25,
         "shortlist_limit": 3,
@@ -1337,6 +1338,103 @@ def test_match_job_description_route_returns_shortlist() -> None:
         retrieval_limit=25,
         shortlist_limit=3,
     )
+
+
+def test_match_feedback_route_stores_authenticated_reviewer_judgement() -> None:
+    """Verify that shortlist feedback uses the trusted upstream identity."""
+
+    service_result = {
+        "id": "04cc6f54-d357-4d7b-ab8c-93ab68c90ae9",
+        "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+        "reviewer_user_id": "user_123",
+        "reviewer_email": "reviewer@example.com",
+        "feedback_value": "good_match",
+        "feedback_reason": "Strong evidence for the core skills.",
+        "created_at": "2026-07-30T14:30:00Z",
+        "updated_at": "2026-07-30T14:30:00Z",
+    }
+
+    with patch(
+        "backend.api.v1.candidates.save_candidate_match_feedback",
+        return_value=service_result,
+    ) as mock_save_candidate_match_feedback:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/match-feedback",
+            headers={
+                "X-Workspace-User-Id": "user_123",
+                "X-Workspace-User-Email": "Reviewer@Example.com",
+            },
+            json={
+                "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+                "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+                "document_id": "c173ab33-8fbf-4436-b20c-984cf8d05512",
+                "feedback_value": "good_match",
+                "feedback_reason": "Strong evidence for the core skills.",
+                "job_description": "Senior Python engineer",
+                "shortlist_rank": 1,
+                "fit_score": 94,
+                "retrieval_score": 0.91,
+                "graph_context_score": 0.2,
+                "ranking_input_score": 0.78,
+                "source_category": "cross_source",
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {
+        "feedback_id": "04cc6f54-d357-4d7b-ab8c-93ab68c90ae9",
+        "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+        "reviewer_user_id": "user_123",
+        "reviewer_email": "reviewer@example.com",
+        "feedback_value": "good_match",
+        "feedback_reason": "Strong evidence for the core skills.",
+        "created_at": "2026-07-30T14:30:00Z",
+        "updated_at": "2026-07-30T14:30:00Z",
+    }
+    mock_save_candidate_match_feedback.assert_called_once_with(
+        match_run_id="61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        candidate_id="2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+        document_id="c173ab33-8fbf-4436-b20c-984cf8d05512",
+        reviewer_user_id="user_123",
+        reviewer_email="Reviewer@Example.com",
+        feedback_value="good_match",
+        feedback_reason="Strong evidence for the core skills.",
+        job_description="Senior Python engineer",
+        shortlist_rank=1,
+        fit_score=94,
+        retrieval_score=0.91,
+        graph_context_score=0.2,
+        ranking_input_score=0.78,
+        source_category="cross_source",
+    )
+
+
+def test_match_feedback_route_requires_authenticated_reviewer_identity() -> None:
+    """Verify that direct backend calls cannot submit anonymous feedback."""
+
+    with patch(
+        "backend.api.v1.candidates.save_candidate_match_feedback",
+    ) as mock_save_candidate_match_feedback:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/match-feedback",
+            json={
+                "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+                "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+                "feedback_value": "not_suitable",
+                "job_description": "Senior Python engineer",
+                "shortlist_rank": 2,
+                "fit_score": 72,
+                "retrieval_score": 0.65,
+            },
+        )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()["error"]["code"] == "unauthorized"
+    mock_save_candidate_match_feedback.assert_not_called()
 
 
 def test_match_job_description_route_rejects_blank_description() -> None:

@@ -35,7 +35,7 @@ import re
 from typing import Any
 from urllib.parse import quote
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Header, Query, status
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 
@@ -44,6 +44,8 @@ from backend.schemas.candidates import (
     CandidateCompanyLeadDiscoveryResponse,
     CandidateJobDescriptionMatchRequest,
     CandidateJobDescriptionMatchResponse,
+    CandidateMatchFeedbackRequest,
+    CandidateMatchFeedbackResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
     CompanyDirectoryResponse,
@@ -62,6 +64,7 @@ from backend.services.candidate_matching import (
     CandidateMatchingError,
     build_candidate_job_description_shortlist,
 )
+from backend.services.candidate_match_feedback import save_candidate_match_feedback
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
@@ -846,6 +849,83 @@ def match_job_description_route(
             message="Candidate shortlisting response validation failed.",
             details=[{"error_type": exc.__class__.__name__}],
         )
+
+
+@router.post(
+    "/match-feedback",
+    response_model=CandidateMatchFeedbackResponse,
+    responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "Authenticated reviewer identity was not available.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Candidate match feedback could not be stored.",
+        },
+    },
+)
+def save_candidate_match_feedback_route(
+    request: CandidateMatchFeedbackRequest,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+    workspace_user_email: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Email",
+    ),
+) -> CandidateMatchFeedbackResponse | JSONResponse:
+    """Store one authenticated recruiter's judgement on a shortlist result."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated reviewer identity is required.",
+        )
+
+    try:
+        result = save_candidate_match_feedback(
+            match_run_id=str(request.match_run_id),
+            candidate_id=str(request.candidate_id),
+            document_id=(
+                str(request.document_id)
+                if request.document_id is not None
+                else None
+            ),
+            reviewer_user_id=normalized_user_id,
+            reviewer_email=workspace_user_email,
+            feedback_value=request.feedback_value,
+            feedback_reason=request.feedback_reason,
+            job_description=request.job_description,
+            shortlist_rank=request.shortlist_rank,
+            fit_score=request.fit_score,
+            retrieval_score=request.retrieval_score,
+            graph_context_score=request.graph_context_score,
+            ranking_input_score=request.ranking_input_score,
+            source_category=request.source_category,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            message="Candidate match feedback could not be stored.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateMatchFeedbackResponse(
+        feedback_id=result["id"],
+        match_run_id=result["match_run_id"],
+        candidate_id=result["candidate_id"],
+        reviewer_user_id=result["reviewer_user_id"],
+        reviewer_email=result.get("reviewer_email"),
+        feedback_value=result["feedback_value"],
+        feedback_reason=result.get("feedback_reason"),
+        created_at=result["created_at"],
+        updated_at=result["updated_at"],
+    )
 
 
 __all__ = ["router"]

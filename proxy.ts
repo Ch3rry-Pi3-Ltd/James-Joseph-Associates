@@ -59,18 +59,27 @@ export default clerkMiddleware(async (auth, request) => {
     );
   }
 
-  if (allowedEmails.size === 0) {
-    return;
-  }
-
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const emailAddress = getPrimaryEmailAddress(user)?.toLowerCase() ?? null;
 
-    if (!isAuthorizedEmail(emailAddress, allowedEmails)) {
+    if (
+      allowedEmails.size > 0 &&
+      !isAuthorizedEmail(emailAddress, allowedEmails)
+    ) {
       return apiAccessError(403, "forbidden", "This account is not authorized.");
     }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-workspace-user-id", userId);
+    requestHeaders.set("x-workspace-user-email", emailAddress ?? "");
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   } catch {
     return apiAccessError(
       503,

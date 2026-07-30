@@ -31,7 +31,9 @@ In plain language:
 - it does not decide how candidate data is fetched
 """
 
-from typing import Any
+from datetime import datetime
+from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -617,6 +619,9 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    match_run_id: str = Field(
+        description="Unique identifier for this retrieval and reranking run.",
+    )
     job_description: str = Field(
         description="Normalized job description used for retrieval and ranking.",
     )
@@ -635,6 +640,44 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
     )
 
 
+class CandidateMatchFeedbackRequest(BaseModel):
+    """Recruiter judgement on one candidate returned by a shortlist run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    match_run_id: UUID
+    candidate_id: UUID
+    document_id: UUID | None = None
+    feedback_value: Literal["good_match", "not_suitable"]
+    feedback_reason: str | None = Field(default=None, max_length=1000)
+    job_description: str = Field(
+        min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
+    )
+    shortlist_rank: int = Field(ge=1, le=10)
+    fit_score: int = Field(ge=0, le=100)
+    retrieval_score: float = Field(ge=0)
+    graph_context_score: float | None = Field(default=None, ge=0)
+    ranking_input_score: float | None = Field(default=None, ge=0)
+    source_category: str = Field(default="unknown", max_length=100)
+
+
+class CandidateMatchFeedbackResponse(BaseModel):
+    """Stored recruiter judgement returned after an idempotent upsert."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    feedback_id: UUID
+    match_run_id: UUID
+    candidate_id: UUID
+    reviewer_user_id: str
+    reviewer_email: str | None = None
+    feedback_value: Literal["good_match", "not_suitable"]
+    feedback_reason: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 __all__ = [
     "CandidateCompanyDiscoveryResponse",
     "CandidateCompanyDiscoveryResult",
@@ -651,6 +694,8 @@ __all__ = [
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",
     "CandidateJobDescriptionShortlistItem",
+    "CandidateMatchFeedbackRequest",
+    "CandidateMatchFeedbackResponse",
     "UploadedResumeSearchRequest",
     "UploadedJobDescriptionExtractRequest",
     "CandidateResumeSearchResponse",
