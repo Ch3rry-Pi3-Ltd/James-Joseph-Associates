@@ -103,7 +103,7 @@ latest agreed priority order.
   - [ ] add performance regression checks for the main operator workflows
 - [ ] Add operator output tools:
   - [x] downloadable Word shortlist plus retrievable CV ZIP package
-  - [ ] shareable shortlist links
+  - [x] authenticated, expiring, revocable shortlist links
   - [ ] saved searches / saved briefs
   - [x] shortlist feedback capture
 - [ ] Harden LinkedHelper ingestion:

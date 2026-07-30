@@ -61,8 +61,14 @@ ApiErrorCode = Literal[
     "integration_connection_missing",
     "integration_connection_invalid",
     "upload_too_large",
+    "shortlist_share_not_found",
+    "shortlist_share_revoked",
+    "shortlist_share_expired",
+    "shortlist_share_forbidden",
+    "shortlist_share_failed",
     "internal_error",
 ]
+
 
 class ApiError(BaseModel):
     """

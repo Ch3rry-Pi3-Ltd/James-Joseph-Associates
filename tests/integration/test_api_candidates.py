@@ -1411,6 +1411,142 @@ def test_export_shortlist_route_returns_zip_package() -> None:
     )
 
 
+def _shortlist_share_candidate_payload() -> dict[str, object]:
+    return {
+        "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+        "person_id": "0b96822c-b713-4c3c-869f-b36d98066628",
+        "full_name": "Sarah Jones",
+        "current_title": "Senior Data Engineer",
+        "candidate_status": "active",
+        "current_company_name": "Acme Hiring Ltd",
+        "resume_updated_at": "2026-04-20T12:00:00+00:00",
+        "document_id": "c173ab33-8fbf-4436-b20c-984cf8d05512",
+        "document_title": "Sarah-Jones-CV.pdf",
+        "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+        "retrieval_score": 0.812345,
+        "retrieval_sources": ["text", "semantic"],
+        "text_rank": 2,
+        "semantic_rank": 1,
+        "text_score": 0.712345,
+        "semantic_score": 0.9321,
+        "semantic_block_type": "skills",
+        "semantic_block_label": "Core skills",
+        "source_systems": ["dropbox"],
+        "source_category": "dropbox_only",
+        "graph_context_score": 0.42,
+        "ranking_input_score": 0.753493,
+        "fit_score": 92,
+        "fit_summary": "Excellent match for the role.",
+        "strengths": ["Python", "Cloud data pipelines"],
+        "gaps": ["Leadership scope not explicit"],
+        "match_excerpt": "Python pipelines",
+        "graph_evidence": None,
+    }
+
+
+def _shortlist_share_service_result() -> dict[str, object]:
+    return {
+        "share_id": "4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+        "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        "role_title": "Senior Data Engineer",
+        "job_description": "Senior Python data engineer",
+        "shortlisted_candidates": [_shortlist_share_candidate_payload()],
+        "created_by_email": "reviewer@example.com",
+        "created_at": "2026-07-30T15:00:00Z",
+        "updated_at": "2026-07-30T15:00:00Z",
+        "expires_at": "2026-08-13T15:00:00Z",
+        "revoked_at": None,
+        "can_revoke": True,
+    }
+
+
+def test_create_shortlist_share_route_uses_authenticated_operator() -> None:
+    """Verify that secure links store the trusted upstream Clerk identity."""
+
+    service_result = _shortlist_share_service_result()
+    with patch(
+        "backend.api.v1.candidates.create_candidate_shortlist_share",
+        return_value=service_result,
+    ) as mock_create_share:
+        response = make_client().post(
+            "/api/v1/candidates/shortlist-shares",
+            headers={
+                "X-Workspace-User-Id": "user_123",
+                "X-Workspace-User-Email": "Reviewer@Example.com",
+            },
+            json={
+                "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+                "role_title": "Senior Data Engineer",
+                "job_description": "Senior Python data engineer",
+                "shortlisted_candidates": [_shortlist_share_candidate_payload()],
+                "expires_in_days": 14,
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["share_id"] == service_result["share_id"]
+    mock_create_share.assert_called_once_with(
+        match_run_id="61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        created_by_user_id="user_123",
+        created_by_email="Reviewer@Example.com",
+        role_title="Senior Data Engineer",
+        job_description="Senior Python data engineer",
+        shortlisted_candidates=[_shortlist_share_candidate_payload()],
+        expires_in_days=14,
+    )
+
+
+def test_get_shortlist_share_route_returns_controlled_gone_error() -> None:
+    """Verify that expired links produce the stable API error shape."""
+
+    from backend.services.candidate_shortlist_shares import (
+        CandidateShortlistShareError,
+    )
+
+    with patch(
+        "backend.api.v1.candidates.load_candidate_shortlist_share",
+        side_effect=CandidateShortlistShareError(
+            "This shortlist link has expired.",
+            code="shortlist_share_expired",
+            status_code=410,
+        ),
+    ):
+        response = make_client().get(
+            "/api/v1/candidates/shortlist-shares/"
+            "4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+            headers={"X-Workspace-User-Id": "user_123"},
+        )
+
+    assert response.status_code == status.HTTP_410_GONE
+    assert response.json()["error"]["code"] == "shortlist_share_expired"
+
+
+def test_revoke_shortlist_share_route_uses_authenticated_creator() -> None:
+    """Verify that revocation forwards the authenticated operator identity."""
+
+    service_result = {
+        **_shortlist_share_service_result(),
+        "revoked_at": "2026-07-30T16:00:00Z",
+        "can_revoke": False,
+    }
+    with patch(
+        "backend.api.v1.candidates.revoke_shortlist_share",
+        return_value=service_result,
+    ) as mock_revoke_share:
+        response = make_client().delete(
+            "/api/v1/candidates/shortlist-shares/"
+            "4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+            headers={"X-Workspace-User-Id": "user_123"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["can_revoke"] is False
+    mock_revoke_share.assert_called_once_with(
+        share_id="4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+        requesting_user_id="user_123",
+    )
+
+
 def test_match_feedback_route_stores_authenticated_reviewer_judgement() -> None:
     """Verify that shortlist feedback uses the trusted upstream identity."""
 

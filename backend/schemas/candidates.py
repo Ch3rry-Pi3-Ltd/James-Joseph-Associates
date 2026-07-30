@@ -657,6 +657,42 @@ class CandidateShortlistExportRequest(BaseModel):
     )
 
 
+class CandidateShortlistShareCreateRequest(BaseModel):
+    """Request body for an authenticated, expiring shortlist share."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    match_run_id: UUID
+    role_title: str | None = Field(default=None, max_length=200)
+    job_description: str = Field(
+        min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
+    )
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem] = Field(
+        min_length=1,
+        max_length=10,
+    )
+    expires_in_days: int = Field(default=14, ge=1, le=90)
+
+
+class CandidateShortlistShareResponse(BaseModel):
+    """Stored shortlist snapshot returned to approved workspace operators."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    share_id: UUID
+    match_run_id: UUID
+    role_title: str | None = None
+    job_description: str
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem]
+    created_by_email: str | None = None
+    created_at: datetime
+    updated_at: datetime
+    expires_at: datetime
+    revoked_at: datetime | None = None
+    can_revoke: bool
+
+
 class CandidateMatchFeedbackRequest(BaseModel):
     """Recruiter judgement on one candidate returned by a shortlist run."""
 
@@ -712,6 +748,8 @@ __all__ = [
     "CandidateJobDescriptionMatchResponse",
     "CandidateJobDescriptionShortlistItem",
     "CandidateShortlistExportRequest",
+    "CandidateShortlistShareCreateRequest",
+    "CandidateShortlistShareResponse",
     "CandidateMatchFeedbackRequest",
     "CandidateMatchFeedbackResponse",
     "UploadedResumeSearchRequest",

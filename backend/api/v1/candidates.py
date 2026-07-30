@@ -34,6 +34,7 @@ import base64
 import re
 from typing import Any
 from urllib.parse import quote
+from uuid import UUID
 
 from fastapi import APIRouter, Header, Query, status
 from fastapi.responses import JSONResponse, Response
@@ -46,9 +47,11 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateMatchFeedbackRequest,
     CandidateMatchFeedbackResponse,
-    CandidateShortlistExportRequest,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    CandidateShortlistExportRequest,
+    CandidateShortlistShareCreateRequest,
+    CandidateShortlistShareResponse,
     CompanyDirectoryResponse,
     CompanyContactDiscoveryResponse,
     CompanyInteractionDiscoveryResponse,
@@ -83,6 +86,12 @@ from backend.services.candidate_resume_files import (
 )
 from backend.services.candidate_shortlist_export import (
     build_candidate_shortlist_export_package,
+)
+from backend.services.candidate_shortlist_shares import (
+    CandidateShortlistShareError,
+    create_candidate_shortlist_share,
+    load_candidate_shortlist_share,
+    revoke_shortlist_share,
 )
 from backend.services.uploaded_resume_matching import (
     UploadedResumeSearchError,
@@ -901,6 +910,161 @@ def export_candidate_shortlist_route(
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+@router.post(
+    "/shortlist-shares",
+    response_model=CandidateShortlistShareResponse,
+    responses={
+        401: {
+            "model": ApiErrorResponse,
+            "description": "Authenticated operator identity was not available.",
+        },
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Shortlist share could not be stored.",
+        },
+    },
+)
+def create_candidate_shortlist_share_route(
+    request: CandidateShortlistShareCreateRequest,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+    workspace_user_email: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Email",
+    ),
+) -> CandidateShortlistShareResponse | JSONResponse:
+    """Persist an expiring shortlist snapshot for approved operators."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = create_candidate_shortlist_share(
+            match_run_id=str(request.match_run_id),
+            created_by_user_id=normalized_user_id,
+            created_by_email=workspace_user_email,
+            role_title=request.role_title,
+            job_description=request.job_description,
+            shortlisted_candidates=[
+                candidate.model_dump()
+                for candidate in request.shortlisted_candidates
+            ],
+            expires_in_days=request.expires_in_days,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="shortlist_share_failed",
+            message="Shortlist share could not be stored.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateShortlistShareResponse(**result)
+
+
+@router.get(
+    "/shortlist-shares/{share_id}",
+    response_model=CandidateShortlistShareResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        404: {"model": ApiErrorResponse},
+        410: {"model": ApiErrorResponse},
+    },
+)
+def get_candidate_shortlist_share_route(
+    share_id: UUID,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+) -> CandidateShortlistShareResponse | JSONResponse:
+    """Return one active share to an approved signed-in operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = load_candidate_shortlist_share(
+            share_id=str(share_id),
+            requesting_user_id=normalized_user_id,
+        )
+    except CandidateShortlistShareError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="shortlist_share_failed",
+            message="Shortlist share could not be loaded.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateShortlistShareResponse(**result)
+
+
+@router.delete(
+    "/shortlist-shares/{share_id}",
+    response_model=CandidateShortlistShareResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        403: {"model": ApiErrorResponse},
+        404: {"model": ApiErrorResponse},
+    },
+)
+def revoke_candidate_shortlist_share_route(
+    share_id: UUID,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+) -> CandidateShortlistShareResponse | JSONResponse:
+    """Revoke one active share when requested by its creator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = revoke_shortlist_share(
+            share_id=str(share_id),
+            requesting_user_id=normalized_user_id,
+        )
+    except CandidateShortlistShareError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="shortlist_share_failed",
+            message="Shortlist share could not be revoked.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateShortlistShareResponse(**result)
 
 
 @router.post(

@@ -270,6 +270,20 @@ type CandidateMatchFeedbackResponse = {
   updated_at: string;
 };
 
+type CandidateShortlistShareResponse = {
+  share_id: string;
+  match_run_id: string;
+  role_title: string | null;
+  job_description: string;
+  shortlisted_candidates: CandidateJobDescriptionShortlistItem[];
+  created_by_email: string | null;
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  can_revoke: boolean;
+};
+
 type ApiErrorResponse = {
   error?: {
     code?: string;
@@ -912,12 +926,21 @@ export function CandidateMatchWorkspace() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isShortlistLoading, setIsShortlistLoading] = useState(false);
   const [isShortlistExportLoading, setIsShortlistExportLoading] = useState(false);
+  const [isShortlistShareLoading, setIsShortlistShareLoading] = useState(false);
   const [shortlistExportMessage, setShortlistExportMessage] = useState<
     string | null
   >(null);
   const [shortlistExportErrorMessage, setShortlistExportErrorMessage] = useState<
     string | null
   >(null);
+  const [shortlistShareUrl, setShortlistShareUrl] = useState<string | null>(null);
+  const [shortlistShareMessage, setShortlistShareMessage] = useState<string | null>(
+    null,
+  );
+  const [shortlistShareErrorMessage, setShortlistShareErrorMessage] = useState<
+    string | null
+  >(null);
+  const [shortlistShareExpiryDays, setShortlistShareExpiryDays] = useState("14");
   const [activeRunMode, setActiveRunMode] = useState<RunMode>(null);
   const [searchErrorMessage, setSearchErrorMessage] = useState<string | null>(null);
   const [shortlistErrorMessage, setShortlistErrorMessage] = useState<string | null>(
@@ -1310,6 +1333,9 @@ export function CandidateMatchWorkspace() {
       setShortlistErrorMessage(null);
       setShortlistExportMessage(null);
       setShortlistExportErrorMessage(null);
+      setShortlistShareUrl(null);
+      setShortlistShareMessage(null);
+      setShortlistShareErrorMessage(null);
       setSubmittedSearchQuery(null);
       setSubmittedJobDescription(null);
       setIsSearchResultsExpanded(false);
@@ -1348,6 +1374,9 @@ export function CandidateMatchWorkspace() {
     setShortlistErrorMessage(null);
     setShortlistExportMessage(null);
     setShortlistExportErrorMessage(null);
+    setShortlistShareUrl(null);
+    setShortlistShareMessage(null);
+    setShortlistShareErrorMessage(null);
 
     try {
       const response = await fetch("/api/v1/candidates/match-job-description", {
@@ -1483,6 +1512,92 @@ export function CandidateMatchWorkspace() {
       );
     } finally {
       setIsShortlistExportLoading(false);
+    }
+  }
+
+  async function createShortlistShare(): Promise<void> {
+    const activeJobDescription =
+      submittedJobDescription?.trim() || jobDescription.trim();
+
+    if (
+      !matchRunId ||
+      activeJobDescription === "" ||
+      shortlistResults.length === 0
+    ) {
+      setShortlistShareErrorMessage(
+        "Run the recruiter shortlist before creating a secure link.",
+      );
+      return;
+    }
+
+    setIsShortlistShareLoading(true);
+    setShortlistShareMessage(null);
+    setShortlistShareErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/candidates/shortlist-shares", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          match_run_id: matchRunId,
+          role_title: uploadedJobDescriptionResult?.file_name ?? null,
+          job_description: activeJobDescription,
+          shortlisted_candidates: shortlistResults,
+          expires_in_days: Number(shortlistShareExpiryDays),
+        }),
+      });
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setShortlistShareErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Secure link creation failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      const share = payload as CandidateShortlistShareResponse;
+      const shareUrl = `${window.location.origin}/shortlists/${share.share_id}`;
+      setShortlistShareUrl(shareUrl);
+      setShortlistShareMessage(
+        `Secure link created. It expires ${formatTimestamp(share.expires_at)}.`,
+      );
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShortlistShareMessage(
+          `Secure link copied. It expires ${formatTimestamp(share.expires_at)}.`,
+        );
+      } catch {
+        // The visible link remains available when browser clipboard access is blocked.
+      }
+    } catch (error) {
+      setShortlistShareErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Secure link creation failed unexpectedly.",
+      );
+    } finally {
+      setIsShortlistShareLoading(false);
+    }
+  }
+
+  async function copyShortlistShareUrl(): Promise<void> {
+    if (!shortlistShareUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(shortlistShareUrl);
+      setShortlistShareMessage("Secure shortlist link copied.");
+      setShortlistShareErrorMessage(null);
+    } catch {
+      setShortlistShareErrorMessage(
+        "Clipboard access was blocked. Select and copy the link manually.",
+      );
     }
   }
 
@@ -3072,22 +3187,98 @@ export function CandidateMatchWorkspace() {
                 ? shortlistCountLabel
                 : "Run shortlist to see the top fit."}
             </div>
-            <button
-              type="button"
-              onClick={() => void exportShortlistPackage()}
-              disabled={
-                isShortlistExportLoading ||
-                !matchRunId ||
-                shortlistResults.length === 0
-              }
-              className="inline-flex h-11 items-center justify-center rounded-md border border-emerald-800 bg-emerald-800 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
-            >
-              {isShortlistExportLoading
-                ? "Preparing package..."
-                : "Download shortlist + CVs"}
-            </button>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="grid gap-1 text-xs font-semibold uppercase text-zinc-500">
+                Link expiry
+                <select
+                  value={shortlistShareExpiryDays}
+                  onChange={(event) =>
+                    setShortlistShareExpiryDays(event.target.value)
+                  }
+                  className="workspace-select h-11 min-w-28 px-3 text-sm font-semibold normal-case text-zinc-950"
+                >
+                  <option value="7">7 days</option>
+                  <option value="14">14 days</option>
+                  <option value="30">30 days</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() => void createShortlistShare()}
+                disabled={
+                  isShortlistShareLoading ||
+                  !matchRunId ||
+                  shortlistResults.length === 0
+                }
+                className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:border-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"
+              >
+                {isShortlistShareLoading ? "Creating link..." : "Create secure link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void exportShortlistPackage()}
+                disabled={
+                  isShortlistExportLoading ||
+                  !matchRunId ||
+                  shortlistResults.length === 0
+                }
+                className="inline-flex h-11 items-center justify-center rounded-md border border-emerald-800 bg-emerald-800 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+              >
+                {isShortlistExportLoading
+                  ? "Preparing package..."
+                  : "Download shortlist + CVs"}
+              </button>
+            </div>
           </div>
         </div>
+
+        {shortlistShareUrl ? (
+          <div className="grid gap-3 rounded-md border border-sky-200 bg-sky-50 p-4">
+            <p className="text-sm font-semibold text-sky-950">
+              Secure shortlist link
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                readOnly
+                value={shortlistShareUrl}
+                onFocus={(event) => event.currentTarget.select()}
+                className="workspace-input h-11 min-w-0 flex-1 px-3 text-sm text-zinc-800"
+                aria-label="Secure shortlist link"
+              />
+              <button
+                type="button"
+                onClick={() => void copyShortlistShareUrl()}
+                className="inline-flex h-11 items-center justify-center rounded-md border border-sky-300 bg-white px-4 text-sm font-semibold text-sky-900 transition hover:bg-sky-100"
+              >
+                Copy link
+              </button>
+              <a
+                href={shortlistShareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-sky-900 px-4 text-sm font-semibold text-white transition hover:bg-sky-950"
+              >
+                Open link
+              </a>
+            </div>
+            <p className="text-xs leading-5 text-sky-800">
+              Only approved signed-in workspace accounts can open this link.
+            </p>
+          </div>
+        ) : null}
+
+        {shortlistShareMessage ? (
+          <div className="rounded-md border border-sky-200 bg-white p-4 text-sm leading-6 text-sky-800">
+            {shortlistShareMessage}
+          </div>
+        ) : null}
+
+        {shortlistShareErrorMessage ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+            {shortlistShareErrorMessage}
+          </div>
+        ) : null}
 
         {shortlistExportMessage ? (
           <div className="rounded-md border border-emerald-200 bg-white p-4 text-sm leading-6 text-emerald-800">
