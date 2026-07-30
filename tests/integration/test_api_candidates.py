@@ -1340,6 +1340,77 @@ def test_match_job_description_route_returns_shortlist() -> None:
     )
 
 
+def test_export_shortlist_route_returns_zip_package() -> None:
+    """Verify that the shortlist export route returns a downloadable ZIP."""
+
+    service_result = {
+        "content_bytes": b"PK-test-shortlist",
+        "file_name": "Shortlist package - Data Engineer.zip",
+        "exported_cv_count": 1,
+        "unavailable_cv_count": 0,
+    }
+    candidate_payload = {
+        "candidate_id": "2dd8f8d1-4f38-4bc8-8910-37c87384f2f4",
+        "person_id": "0b96822c-b713-4c3c-869f-b36d98066628",
+        "full_name": "Sarah Jones",
+        "current_title": "Senior Data Engineer",
+        "candidate_status": "active",
+        "current_company_name": "Acme Hiring Ltd",
+        "resume_updated_at": "2026-04-20T12:00:00+00:00",
+        "document_id": "c173ab33-8fbf-4436-b20c-984cf8d05512",
+        "document_title": "Sarah-Jones-CV.pdf",
+        "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+        "retrieval_score": 0.812345,
+        "retrieval_sources": ["text", "semantic"],
+        "text_rank": 2,
+        "semantic_rank": 1,
+        "text_score": 0.712345,
+        "semantic_score": 0.9321,
+        "semantic_block_type": "skills",
+        "semantic_block_label": "Core skills",
+        "source_systems": ["dropbox"],
+        "source_category": "dropbox_only",
+        "graph_context_score": 0.42,
+        "ranking_input_score": 0.753493,
+        "fit_score": 92,
+        "fit_summary": "Excellent match for the role.",
+        "strengths": ["Python", "Cloud data pipelines"],
+        "gaps": ["Leadership scope not explicit"],
+        "match_excerpt": "Python pipelines",
+        "graph_evidence": None,
+    }
+
+    with patch(
+        "backend.api.v1.candidates.build_candidate_shortlist_export_package",
+        return_value=service_result,
+    ) as mock_build_candidate_shortlist_export_package:
+        client = make_client()
+        response = client.post(
+            "/api/v1/candidates/export-shortlist",
+            json={
+                "match_run_id": "61b18a15-0ca1-42c6-80c2-4800b002c17b",
+                "role_title": "Data Engineer.pdf",
+                "job_description": "Senior Python data engineer",
+                "shortlisted_candidates": [candidate_payload],
+            },
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.content == b"PK-test-shortlist"
+    assert response.headers["content-type"] == "application/zip"
+    assert response.headers["x-exported-cv-count"] == "1"
+    assert response.headers["x-unavailable-cv-count"] == "0"
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="Shortlist package - Data Engineer.zip"'
+    )
+    mock_build_candidate_shortlist_export_package.assert_called_once_with(
+        match_run_id="61b18a15-0ca1-42c6-80c2-4800b002c17b",
+        role_title="Data Engineer.pdf",
+        job_description="Senior Python data engineer",
+        shortlisted_candidates=[candidate_payload],
+    )
+
+
 def test_match_feedback_route_stores_authenticated_reviewer_judgement() -> None:
     """Verify that shortlist feedback uses the trusted upstream identity."""
 

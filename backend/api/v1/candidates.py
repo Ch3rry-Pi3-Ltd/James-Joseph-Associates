@@ -46,6 +46,7 @@ from backend.schemas.candidates import (
     CandidateJobDescriptionMatchResponse,
     CandidateMatchFeedbackRequest,
     CandidateMatchFeedbackResponse,
+    CandidateShortlistExportRequest,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
     CompanyDirectoryResponse,
@@ -79,6 +80,9 @@ from backend.services.candidate_profiles import (
 from backend.services.candidate_resume_files import (
     CandidateResumeFileAccessError,
     fetch_candidate_current_resume_file,
+)
+from backend.services.candidate_shortlist_export import (
+    build_candidate_shortlist_export_package,
 )
 from backend.services.uploaded_resume_matching import (
     UploadedResumeSearchError,
@@ -849,6 +853,54 @@ def match_job_description_route(
             message="Candidate shortlisting response validation failed.",
             details=[{"error_type": exc.__class__.__name__}],
         )
+
+
+@router.post(
+    "/export-shortlist",
+    response_model=None,
+    responses={
+        500: {
+            "model": ApiErrorResponse,
+            "description": "Shortlist export package could not be generated.",
+        }
+    },
+)
+def export_candidate_shortlist_route(
+    request: CandidateShortlistExportRequest,
+) -> Response:
+    """Return a Word shortlist and retrievable CV files in one ZIP package."""
+
+    try:
+        package = build_candidate_shortlist_export_package(
+            match_run_id=str(request.match_run_id),
+            role_title=request.role_title,
+            job_description=request.job_description,
+            shortlisted_candidates=[
+                candidate.model_dump()
+                for candidate in request.shortlisted_candidates
+            ],
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="shortlist_export_failed",
+            message="Shortlist export package could not be generated.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return Response(
+        content=package["content_bytes"],
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": _build_content_disposition(
+                "attachment",
+                package["file_name"],
+            ),
+            "X-Exported-CV-Count": str(package["exported_cv_count"]),
+            "X-Unavailable-CV-Count": str(package["unavailable_cv_count"]),
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.post(

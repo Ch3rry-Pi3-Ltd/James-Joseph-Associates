@@ -64,7 +64,8 @@ This is the practical engineering backlog as of Thursday, July 30, 2026.
   - [ ] verify better recall for non-keyword-exact briefs
   - [ ] reduce obvious false negatives before wider UAT
 - [ ] Add operator-friendly output actions:
-  - [ ] shortlist export/share
+  - [x] downloadable Word shortlist plus retrievable CV ZIP package
+  - [ ] shareable shortlist links
   - [ ] saveable searches or saved briefs
   - [x] lightweight feedback capture on good/bad shortlist results
 - [ ] LinkedHelper ingestion path:
@@ -365,7 +366,8 @@ Goal: turn the demo into something closer to a working internal tool.
 - [ ] Add saveable searches
 - [ ] Add side-by-side candidate comparison
 - [ ] Add “why this candidate” explanations
-- [ ] Add export/share of shortlist output
+- [x] Add downloadable Word shortlist and CV package
+- [ ] Add shareable shortlist links
 - [x] Add feedback loop for good/bad matches
 
 ## What Is Already Underway

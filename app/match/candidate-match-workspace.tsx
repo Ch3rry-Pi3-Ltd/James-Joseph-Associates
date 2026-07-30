@@ -482,6 +482,29 @@ async function readJsonResponse(response: Response): Promise<unknown> {
   }
 }
 
+function getAttachmentFileName(
+  contentDisposition: string | null,
+  fallback: string,
+): string {
+  if (!contentDisposition) {
+    return fallback;
+  }
+
+  const encodedMatch = contentDisposition.match(
+    /filename\*=UTF-8''([^;]+)/i,
+  );
+  if (encodedMatch?.[1]) {
+    try {
+      return decodeURIComponent(encodedMatch[1]);
+    } catch {
+      return fallback;
+    }
+  }
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  return quotedMatch?.[1] || fallback;
+}
+
 function formatTimestamp(value: string | null): string {
   if (!value) {
     return "Unknown";
@@ -888,6 +911,13 @@ export function CandidateMatchWorkspace() {
   const [shortlistLimit, setShortlistLimit] = useState("3");
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isShortlistLoading, setIsShortlistLoading] = useState(false);
+  const [isShortlistExportLoading, setIsShortlistExportLoading] = useState(false);
+  const [shortlistExportMessage, setShortlistExportMessage] = useState<
+    string | null
+  >(null);
+  const [shortlistExportErrorMessage, setShortlistExportErrorMessage] = useState<
+    string | null
+  >(null);
   const [activeRunMode, setActiveRunMode] = useState<RunMode>(null);
   const [searchErrorMessage, setSearchErrorMessage] = useState<string | null>(null);
   const [shortlistErrorMessage, setShortlistErrorMessage] = useState<string | null>(
@@ -1278,6 +1308,8 @@ export function CandidateMatchWorkspace() {
       setFeedbackByCandidateId({});
       setSearchErrorMessage(null);
       setShortlistErrorMessage(null);
+      setShortlistExportMessage(null);
+      setShortlistExportErrorMessage(null);
       setSubmittedSearchQuery(null);
       setSubmittedJobDescription(null);
       setIsSearchResultsExpanded(false);
@@ -1314,6 +1346,8 @@ export function CandidateMatchWorkspace() {
     setIsShortlistLoading(true);
     setActiveRunMode("shortlist");
     setShortlistErrorMessage(null);
+    setShortlistExportMessage(null);
+    setShortlistExportErrorMessage(null);
 
     try {
       const response = await fetch("/api/v1/candidates/match-job-description", {
@@ -1373,6 +1407,82 @@ export function CandidateMatchWorkspace() {
     } finally {
       setIsShortlistLoading(false);
       setActiveRunMode(null);
+    }
+  }
+
+  async function exportShortlistPackage(): Promise<void> {
+    const activeJobDescription =
+      submittedJobDescription?.trim() || jobDescription.trim();
+
+    if (
+      !matchRunId ||
+      activeJobDescription === "" ||
+      shortlistResults.length === 0
+    ) {
+      setShortlistExportErrorMessage(
+        "Run the recruiter shortlist before downloading an export package.",
+      );
+      return;
+    }
+
+    setIsShortlistExportLoading(true);
+    setShortlistExportMessage(null);
+    setShortlistExportErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/candidates/export-shortlist", {
+        method: "POST",
+        headers: {
+          Accept: "application/zip, application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          match_run_id: matchRunId,
+          role_title: uploadedJobDescriptionResult?.file_name ?? null,
+          job_description: activeJobDescription,
+          shortlisted_candidates: shortlistResults,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await readJsonResponse(response);
+        setShortlistExportErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Shortlist export failed with ${response.status}.`,
+        );
+        return;
+      }
+
+      const packageBlob = await response.blob();
+      const packageUrl = window.URL.createObjectURL(packageBlob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = packageUrl;
+      downloadLink.download = getAttachmentFileName(
+        response.headers.get("Content-Disposition"),
+        "recruiter-shortlist-package.zip",
+      );
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.URL.revokeObjectURL(packageUrl);
+
+      const exportedCvCount =
+        response.headers.get("X-Exported-CV-Count") ?? "0";
+      const unavailableCvCount =
+        response.headers.get("X-Unavailable-CV-Count") ?? "0";
+      setShortlistExportMessage(
+        unavailableCvCount === "0"
+          ? `Export downloaded with the Word shortlist and ${exportedCvCount} CVs.`
+          : `Export downloaded with ${exportedCvCount} CVs; ${unavailableCvCount} unavailable CVs are recorded in the manifest.`,
+      );
+    } catch (error) {
+      setShortlistExportErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Shortlist export failed unexpectedly.",
+      );
+    } finally {
+      setIsShortlistExportLoading(false);
     }
   }
 
@@ -2956,12 +3066,40 @@ export function CandidateMatchWorkspace() {
             </p>
           </div>
 
-          <div className="text-sm text-zinc-600">
-            {submittedJobDescription
-              ? shortlistCountLabel
-              : "Run shortlist to see the top fit."}
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <div className="text-sm text-zinc-600">
+              {submittedJobDescription
+                ? shortlistCountLabel
+                : "Run shortlist to see the top fit."}
+            </div>
+            <button
+              type="button"
+              onClick={() => void exportShortlistPackage()}
+              disabled={
+                isShortlistExportLoading ||
+                !matchRunId ||
+                shortlistResults.length === 0
+              }
+              className="inline-flex h-11 items-center justify-center rounded-md border border-emerald-800 bg-emerald-800 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+            >
+              {isShortlistExportLoading
+                ? "Preparing package..."
+                : "Download shortlist + CVs"}
+            </button>
           </div>
         </div>
+
+        {shortlistExportMessage ? (
+          <div className="rounded-md border border-emerald-200 bg-white p-4 text-sm leading-6 text-emerald-800">
+            {shortlistExportMessage}
+          </div>
+        ) : null}
+
+        {shortlistExportErrorMessage ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
+            {shortlistExportErrorMessage}
+          </div>
+        ) : null}
 
         {submittedJobDescription && retrievedCandidateCount > 0 ? (
           <div className="rounded-md border border-emerald-200 bg-white p-4 text-sm leading-6 text-zinc-700">

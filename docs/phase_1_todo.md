@@ -102,7 +102,8 @@ latest agreed priority order.
     background jobs with progress reporting, safe retries, and idempotency
   - [ ] add performance regression checks for the main operator workflows
 - [ ] Add operator output tools:
-  - [ ] shortlist export/share
+  - [x] downloadable Word shortlist plus retrievable CV ZIP package
+  - [ ] shareable shortlist links
   - [ ] saved searches / saved briefs
   - [x] shortlist feedback capture
 - [ ] Harden LinkedHelper ingestion:

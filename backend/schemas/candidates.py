@@ -640,6 +640,23 @@ class CandidateJobDescriptionMatchResponse(BaseModel):
     )
 
 
+class CandidateShortlistExportRequest(BaseModel):
+    """Request body for a recruiter-ready shortlist and CV export package."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    match_run_id: UUID
+    role_title: str | None = Field(default=None, max_length=200)
+    job_description: str = Field(
+        min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
+    )
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem] = Field(
+        min_length=1,
+        max_length=10,
+    )
+
+
 class CandidateMatchFeedbackRequest(BaseModel):
     """Recruiter judgement on one candidate returned by a shortlist run."""
 
@@ -694,6 +711,7 @@ __all__ = [
     "CandidateJobDescriptionMatchRequest",
     "CandidateJobDescriptionMatchResponse",
     "CandidateJobDescriptionShortlistItem",
+    "CandidateShortlistExportRequest",
     "CandidateMatchFeedbackRequest",
     "CandidateMatchFeedbackResponse",
     "UploadedResumeSearchRequest",
