@@ -31,10 +31,12 @@ The immediate milestone is simple:
 - [x] Structured candidate semantic blocks backfilled and embedded for the live corpus
 - [x] Hybrid retrieval added to the candidate search/shortlist flow
 - [x] Graph-aware shortlist evidence added across linked company/contact/job/opportunity context
+- [x] Candidate results distinguish CV-backed, Linked Helper-only, and cross-source evidence
+- [x] Authenticated candidate previews expose available email, phone, and LinkedIn actions
 
 ## Outstanding Program Backlog
 
-This is the practical engineering backlog as of Friday, July 24, 2026.
+This is the practical engineering backlog as of Thursday, July 30, 2026.
 
 ### Highest Priority
 

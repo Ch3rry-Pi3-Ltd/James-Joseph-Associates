@@ -44,6 +44,9 @@ from backend.db.opportunities import search_opportunities_by_company_name
 from backend.db.skills import get_candidate_skills
 from backend.db.jobs import search_jobs_by_company_name
 from backend.services.candidate_retrieval import search_candidates_hybrid
+from backend.services.candidate_source_metadata import (
+    attach_candidate_source_metadata,
+)
 
 
 def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
@@ -143,6 +146,7 @@ def search_candidate_resumes(
         include_text=True,
         include_semantic=True,
     )
+    results = attach_candidate_source_metadata(results)
     return {
         "query": normalized_query,
         "limit": limit,
@@ -413,6 +417,12 @@ def _normalize_candidate_resume_search_result(
         ),
         "semantic_block_label": _normalize_optional_string_value(
             result.get("semantic_block_label") or result.get("block_label")
+        ),
+        "source_systems": _normalize_string_list_value(
+            result.get("source_systems")
+        ),
+        "source_category": _normalize_string_value(
+            result.get("source_category") or "unknown"
         ),
         "match_excerpt": _normalize_optional_string_value(
             result.get("match_excerpt")

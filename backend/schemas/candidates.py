@@ -145,6 +145,8 @@ class CandidateResumeSearchResult(BaseModel):
     semantic_score: float | None = None
     semantic_block_type: str | None = None
     semantic_block_label: str | None = None
+    source_systems: list[str] = Field(default_factory=list)
+    source_category: str = "unknown"
     match_excerpt: str | None = None
 
 
@@ -589,6 +591,8 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     semantic_score: float | None = None
     semantic_block_type: str | None = None
     semantic_block_label: str | None = None
+    source_systems: list[str] = Field(default_factory=list)
+    source_category: str = "unknown"
     graph_context_score: float | None = None
     ranking_input_score: float | None = None
     fit_score: int

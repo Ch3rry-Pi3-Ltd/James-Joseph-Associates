@@ -267,10 +267,22 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
         "block_label": "Core skills",
     }
 
-    with patch(
-        "backend.services.candidate_profiles.search_candidates_hybrid",
-        return_value=[raw_result],
-    ) as mock_search_candidates_hybrid:
+    with (
+        patch(
+            "backend.services.candidate_profiles.search_candidates_hybrid",
+            return_value=[raw_result],
+        ) as mock_search_candidates_hybrid,
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            return_value=[
+                {
+                    **raw_result,
+                    "source_systems": ["dropbox", "linkedin_helper"],
+                    "source_category": "cross_source",
+                }
+            ],
+        ),
+    ):
         result = search_candidate_resumes(
             query=" python data engineer ",
             limit=5,
@@ -299,6 +311,8 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
                 "semantic_score": 0.9321,
                 "semantic_block_type": "skills",
                 "semantic_block_label": "Core skills",
+                "source_systems": ["dropbox", "linkedin_helper"],
+                "source_category": "cross_source",
                 "match_excerpt": "<mark>python</mark> data engineer",
             }
         ],
@@ -316,23 +330,35 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
     Verify Linked Helper profiles can surface without a linked CV document.
     """
 
-    with patch(
-        "backend.services.candidate_profiles.search_candidates_hybrid",
-        return_value=[
-            {
-                "candidate_id": "candidate-1",
-                "person_id": "person-1",
-                "full_name": "Profile Only",
-                "document_id": None,
-                "match_score": 0.91,
-                "retrieval_sources": ["semantic"],
-                "semantic_rank": 1,
-                "semantic_score": 0.91,
-                "block_type": "profile",
-                "block_label": "Candidate profile",
-                "match_excerpt": "Rust low latency engineer",
-            }
-        ],
+    profile_only_result = {
+        "candidate_id": "candidate-1",
+        "person_id": "person-1",
+        "full_name": "Profile Only",
+        "document_id": None,
+        "match_score": 0.91,
+        "retrieval_sources": ["semantic"],
+        "semantic_rank": 1,
+        "semantic_score": 0.91,
+        "block_type": "profile",
+        "block_label": "Candidate profile",
+        "match_excerpt": "Rust low latency engineer",
+    }
+
+    with (
+        patch(
+            "backend.services.candidate_profiles.search_candidates_hybrid",
+            return_value=[profile_only_result],
+        ),
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            return_value=[
+                {
+                    **profile_only_result,
+                    "source_systems": ["linkedin_helper"],
+                    "source_category": "linkedin_helper_only",
+                }
+            ],
+        ),
     ):
         result = search_candidate_resumes(
             query="rust low latency engineer",
@@ -342,6 +368,7 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
     assert result["results"][0]["document_id"] is None
     assert result["results"][0]["document_title"] is None
     assert result["results"][0]["retrieval_sources"] == ["semantic"]
+    assert result["results"][0]["source_category"] == "linkedin_helper_only"
 
 
 def test_discover_candidates_by_company_normalizes_raw_rows() -> None:

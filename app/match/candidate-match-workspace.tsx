@@ -38,6 +38,8 @@ type CandidateResumeSearchResult = {
   semantic_score: number | null;
   semantic_block_type: string | null;
   semantic_block_label: string | null;
+  source_systems: string[];
+  source_category: string;
   match_excerpt: string | null;
 };
 
@@ -217,6 +219,8 @@ type CandidateJobDescriptionShortlistItem = {
   semantic_score: number | null;
   semantic_block_type: string | null;
   semantic_block_label: string | null;
+  source_systems: string[];
+  source_category: string;
   graph_context_score: number | null;
   ranking_input_score: number | null;
   fit_score: number;
@@ -524,6 +528,38 @@ function formatRetrievalSourceLabel(source: string): string {
   }
 
   return source;
+}
+
+function formatCandidateSourceCategory(sourceCategory: string): string {
+  if (sourceCategory === "cross_source") {
+    return "Cross-source";
+  }
+
+  if (sourceCategory === "linkedin_helper_only") {
+    return "Linked Helper only";
+  }
+
+  if (sourceCategory === "cv_backed") {
+    return "CV-backed";
+  }
+
+  return "Source unconfirmed";
+}
+
+function candidateSourceCategoryClassName(sourceCategory: string): string {
+  if (sourceCategory === "cross_source") {
+    return "border-teal-200 bg-teal-50 text-teal-800";
+  }
+
+  if (sourceCategory === "linkedin_helper_only") {
+    return "border-sky-200 bg-sky-50 text-sky-800";
+  }
+
+  if (sourceCategory === "cv_backed") {
+    return "border-zinc-200 bg-zinc-50 text-zinc-700";
+  }
+
+  return "border-amber-200 bg-amber-50 text-amber-800";
 }
 
 function formatSemanticBlockType(value: string | null): string | null {
@@ -2277,6 +2313,35 @@ export function CandidateMatchWorkspace() {
               </div>
             </dl>
 
+            <div className="flex flex-wrap gap-3">
+              {previewProfile.candidate.primary_email ? (
+                <a
+                  href={`mailto:${previewProfile.candidate.primary_email}`}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                >
+                  Email candidate
+                </a>
+              ) : null}
+              {previewProfile.candidate.primary_phone ? (
+                <a
+                  href={`tel:${previewProfile.candidate.primary_phone}`}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
+                >
+                  Call candidate
+                </a>
+              ) : null}
+              {previewProfile.candidate.linkedin_url ? (
+                <a
+                  href={previewProfile.candidate.linkedin_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-900 transition hover:border-sky-400"
+                >
+                  Open LinkedIn
+                </a>
+              ) : null}
+            </div>
+
             {previewSkillNames.length > 0 ? (
               <div className="workspace-card-soft bg-[#f8faf8] p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
@@ -3068,6 +3133,18 @@ export function CandidateMatchWorkspace() {
                         {formatRetrievalSourceLabel(source)}
                       </span>
                     ))}
+                    <span
+                      title={
+                        result.source_systems.length > 0
+                          ? `Sources: ${result.source_systems.join(", ")}`
+                          : "No linked source provenance found"
+                      }
+                      className={`rounded-md border px-3 py-1 text-xs font-semibold ${candidateSourceCategoryClassName(
+                        result.source_category,
+                      )}`}
+                    >
+                      {formatCandidateSourceCategory(result.source_category)}
+                    </span>
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -3601,6 +3678,18 @@ export function CandidateMatchWorkspace() {
                         {formatRetrievalSourceLabel(source)}
                       </span>
                     ))}
+                    <span
+                      title={
+                        result.source_systems.length > 0
+                          ? `Sources: ${result.source_systems.join(", ")}`
+                          : "No linked source provenance found"
+                      }
+                      className={`rounded-md border px-3 py-1 text-xs font-semibold ${candidateSourceCategoryClassName(
+                        result.source_category,
+                      )}`}
+                    >
+                      {formatCandidateSourceCategory(result.source_category)}
+                    </span>
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">

@@ -161,6 +161,18 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     )
     monkeypatch.setattr(
         candidate_matching,
+        "attach_candidate_source_metadata",
+        lambda candidates: [
+            {
+                **candidate,
+                "source_systems": ["dropbox", "linkedin_helper"],
+                "source_category": "cross_source",
+            }
+            for candidate in candidates
+        ],
+    )
+    monkeypatch.setattr(
+        candidate_matching,
         "_score_candidates_with_graph_context",
         lambda candidates: [
             {
@@ -207,6 +219,7 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["graph_evidence"]["contacts_count"] == 1
     assert result["shortlisted_candidates"][0]["graph_context_score"] == 0.4
     assert result["shortlisted_candidates"][0]["ranking_input_score"] == 0.7
+    assert result["shortlisted_candidates"][0]["source_category"] == "cross_source"
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
 
 
@@ -291,6 +304,18 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
             )
         ],
     )
+    monkeypatch.setattr(
+        candidate_matching,
+        "attach_candidate_source_metadata",
+        lambda candidates: [
+            {
+                **candidate,
+                "source_systems": ["dropbox"],
+                "source_category": "cv_backed",
+            }
+            for candidate in candidates
+        ],
+    )
 
     result = build_candidate_job_description_shortlist(
         job_description="finance systems analyst",
@@ -303,6 +328,7 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
     assert shortlisted["document_id"] == str(document_id)
     assert shortlisted["resume_updated_at"] == resume_updated_at.isoformat()
     assert shortlisted["graph_evidence"]["last_seen_at"] == resume_updated_at.isoformat()
+    assert shortlisted["source_category"] == "cv_backed"
 
 
 def test_build_candidate_graph_evidence_composes_company_context(

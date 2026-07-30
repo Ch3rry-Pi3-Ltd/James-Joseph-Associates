@@ -53,6 +53,79 @@ from typing import Any
 from backend.db.connection import postgres_connection
 
 
+def get_candidate_source_systems(
+    candidate_ids: list[str] | set[str] | tuple[str, ...],
+) -> dict[str, list[str]]:
+    """
+    Return distinct person- and candidate-linked source systems in one batch.
+
+    Source records can be linked directly to a candidate or to the shared
+    canonical person. Reading both link types is required to identify people
+    enriched by Linked Helper after an earlier CV ingest.
+    """
+
+    normalized_candidate_ids = sorted(
+        {
+            str(candidate_id).strip()
+            for candidate_id in candidate_ids
+            if str(candidate_id).strip()
+        }
+    )
+    if not normalized_candidate_ids:
+        return {}
+
+    query = """
+        with requested_candidates as (
+            select id, person_id
+            from candidates
+            where id = any(%(candidate_ids)s::uuid[])
+        ),
+        linked_sources as (
+            select
+                requested.id as candidate_id,
+                source.source_system
+            from requested_candidates requested
+            join source_record_links link
+              on link.candidate_id = requested.id
+            join source_records source
+              on source.id = link.source_record_id
+
+            union
+
+            select
+                requested.id as candidate_id,
+                source.source_system
+            from requested_candidates requested
+            join source_record_links link
+              on link.person_id = requested.person_id
+            join source_records source
+              on source.id = link.source_record_id
+        )
+        select
+            candidate_id,
+            array_agg(distinct source_system order by source_system)
+                as source_systems
+        from linked_sources
+        group by candidate_id
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {"candidate_ids": normalized_candidate_ids},
+            )
+            rows = cursor.fetchall()
+
+    return {
+        str(row["candidate_id"]): [
+            str(source_system)
+            for source_system in (row["source_systems"] or [])
+        ]
+        for row in rows
+    }
+
+
 def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     """
     Return one candidate profile joined to person and company details.
@@ -535,6 +608,7 @@ def search_candidates_by_company_name(
 __all__ = [
     "get_candidate_current_resume_document",
     "get_candidate_profile",
+    "get_candidate_source_systems",
     "search_candidates_by_company_name",
     "search_candidates_by_resume_text",
 ]

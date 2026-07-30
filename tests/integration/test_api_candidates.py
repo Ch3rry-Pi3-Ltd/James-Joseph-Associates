@@ -355,6 +355,8 @@ def test_candidate_resume_search_route_returns_ranked_results() -> None:
                 "semantic_score": 0.9321,
                 "semantic_block_type": "skills",
                 "semantic_block_label": "Core skills",
+                "source_systems": ["dropbox", "linkedin_helper"],
+                "source_category": "cross_source",
                 "match_excerpt": "<mark>python</mark> data engineer",
             }
         ],
@@ -1000,6 +1002,8 @@ def test_uploaded_resume_search_route_returns_ranked_results() -> None:
                 "semantic_score": 0.9123,
                 "semantic_block_type": "resume_context",
                 "semantic_block_label": "Resume context",
+                "source_systems": [],
+                "source_category": "unknown",
                 "match_excerpt": "Python, SQL, AWS, and ETL delivery.",
             }
         ],
@@ -1298,6 +1302,8 @@ def test_match_job_description_route_returns_shortlist() -> None:
                     "semantic_score": 0.9321,
                     "semantic_block_type": "skills",
                     "semantic_block_label": "Core skills",
+                    "source_systems": ["dropbox", "linkedin_helper"],
+                    "source_category": "cross_source",
                     "graph_context_score": 0.42,
                     "ranking_input_score": 0.753493,
                     "fit_score": 92,

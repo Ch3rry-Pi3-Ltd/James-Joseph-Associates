@@ -34,6 +34,9 @@ from backend.services.candidate_profiles import (
     discover_opportunities_by_company,
 )
 from backend.services.candidate_retrieval import search_candidates_hybrid
+from backend.services.candidate_source_metadata import (
+    attach_candidate_source_metadata,
+)
 
 
 _PROFILE_SUMMARY_CHARACTER_LIMIT = 1200
@@ -144,6 +147,7 @@ def build_candidate_job_description_shortlist(
         shortlist_limit=bounded_shortlist_limit,
     )
 
+    retrieved_candidates = attach_candidate_source_metadata(retrieved_candidates)
     candidates_by_id = {
         str(candidate["candidate_id"]): candidate for candidate in retrieved_candidates
     }
@@ -205,6 +209,12 @@ def build_candidate_job_description_shortlist(
                 ),
                 "semantic_block_label": _json_safe_value(
                     matched_candidate.get("semantic_block_label")
+                ),
+                "source_systems": list(
+                    _json_safe_value(matched_candidate.get("source_systems") or [])
+                ),
+                "source_category": _json_safe_value(
+                    matched_candidate.get("source_category") or "unknown"
                 ),
                 "graph_context_score": _json_safe_value(
                     matched_candidate.get("graph_context_score")
