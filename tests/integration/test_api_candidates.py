@@ -1705,3 +1705,149 @@ def test_match_job_description_route_handles_unexpected_failure() -> None:
         retrieval_limit=25,
         shortlist_limit=3,
     )
+
+
+def _saved_brief_request_payload() -> dict[str, object]:
+    return {
+        "title": "Senior Data Engineer",
+        "job_description": "Senior Python data engineer",
+        "target_company_name": "Example Ltd",
+        "retrieval_focus_terms": "python sql data engineer",
+        "search_result_limit": 5,
+        "retrieval_limit": 25,
+        "shortlist_limit": 3,
+        "last_match_run_id": None,
+        "retrieved_candidate_count": 0,
+        "search_results": [],
+        "shortlisted_candidates": [],
+    }
+
+
+def _saved_brief_service_result() -> dict[str, object]:
+    return {
+        "saved_brief_id": "658a5599-7027-4c8c-b4aa-b76f13566525",
+        **_saved_brief_request_payload(),
+        "created_at": "2026-07-31T09:00:00Z",
+        "updated_at": "2026-07-31T09:00:00Z",
+    }
+
+
+def test_saved_brief_routes_require_authenticated_operator() -> None:
+    """Verify that direct anonymous calls cannot access private saved roles."""
+
+    client = make_client()
+    list_response = client.get("/api/v1/candidates/saved-briefs")
+    create_response = client.post(
+        "/api/v1/candidates/saved-briefs",
+        json=_saved_brief_request_payload(),
+    )
+
+    assert list_response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert create_response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert list_response.json()["error"]["code"] == "unauthorized"
+
+
+def test_create_saved_brief_route_uses_authenticated_operator() -> None:
+    """Verify that saved roles use the trusted Clerk identity headers."""
+
+    service_result = _saved_brief_service_result()
+    with patch(
+        "backend.api.v1.candidates.create_saved_brief",
+        return_value=service_result,
+    ) as mock_create_saved_brief:
+        response = make_client().post(
+            "/api/v1/candidates/saved-briefs",
+            headers={
+                "X-Workspace-User-Id": "user_123",
+                "X-Workspace-User-Email": "Reviewer@Example.com",
+            },
+            json=_saved_brief_request_payload(),
+        )
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json()["title"] == "Senior Data Engineer"
+    mock_create_saved_brief.assert_called_once_with(
+        created_by_user_id="user_123",
+        created_by_email="Reviewer@Example.com",
+        payload=_saved_brief_request_payload(),
+    )
+
+
+def test_list_saved_briefs_route_returns_private_library() -> None:
+    """Verify that the saved-role list returns compact operator-owned rows."""
+
+    result = {
+        "saved_briefs": [
+            {
+                "saved_brief_id": "658a5599-7027-4c8c-b4aa-b76f13566525",
+                "title": "Senior Data Engineer",
+                "target_company_name": "Example Ltd",
+                "job_description_preview": "Senior Python data engineer",
+                "last_match_run_id": None,
+                "retrieved_candidate_count": 25,
+                "search_result_count": 5,
+                "shortlist_count": 3,
+                "created_at": "2026-07-31T09:00:00Z",
+                "updated_at": "2026-07-31T09:00:00Z",
+            }
+        ],
+        "count": 1,
+    }
+    with patch(
+        "backend.api.v1.candidates.list_saved_briefs",
+        return_value=result,
+    ) as mock_list_saved_briefs:
+        response = make_client().get(
+            "/api/v1/candidates/saved-briefs?limit=20",
+            headers={"X-Workspace-User-Id": "user_123"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["count"] == 1
+    mock_list_saved_briefs.assert_called_once_with(
+        created_by_user_id="user_123",
+        limit=20,
+    )
+
+
+def test_load_saved_brief_route_returns_controlled_not_found() -> None:
+    """Verify that inaccessible saved roles use one non-enumerating 404."""
+
+    from backend.services.candidate_saved_briefs import CandidateSavedBriefError
+
+    with patch(
+        "backend.api.v1.candidates.load_saved_brief",
+        side_effect=CandidateSavedBriefError(
+            "Saved role brief was not found.",
+            code="saved_brief_not_found",
+            status_code=404,
+        ),
+    ):
+        response = make_client().get(
+            "/api/v1/candidates/saved-briefs/"
+            "658a5599-7027-4c8c-b4aa-b76f13566525",
+            headers={"X-Workspace-User-Id": "different-user"},
+        )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["error"]["code"] == "saved_brief_not_found"
+
+
+def test_delete_saved_brief_route_uses_authenticated_owner() -> None:
+    """Verify that deletion forwards both the saved ID and trusted owner ID."""
+
+    with patch(
+        "backend.api.v1.candidates.remove_saved_brief",
+    ) as mock_remove_saved_brief:
+        response = make_client().delete(
+            "/api/v1/candidates/saved-briefs/"
+            "658a5599-7027-4c8c-b4aa-b76f13566525",
+            headers={"X-Workspace-User-Id": "user_123"},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["deleted"] is True
+    mock_remove_saved_brief.assert_called_once_with(
+        saved_brief_id="658a5599-7027-4c8c-b4aa-b76f13566525",
+        created_by_user_id="user_123",
+    )

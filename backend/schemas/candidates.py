@@ -693,6 +693,94 @@ class CandidateShortlistShareResponse(BaseModel):
     can_revoke: bool
 
 
+class CandidateSavedBriefWriteRequest(BaseModel):
+    """Create or update one private role brief and its latest result snapshots."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=200)
+    job_description: str = Field(
+        min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
+    )
+    target_company_name: str | None = Field(default=None, max_length=300)
+    retrieval_focus_terms: str = Field(
+        min_length=1,
+        max_length=MAX_LLM_INPUT_CHARACTERS,
+    )
+    search_result_limit: int = Field(default=5, ge=1, le=50)
+    retrieval_limit: int = Field(default=25, ge=1, le=100)
+    shortlist_limit: int = Field(default=3, ge=1, le=10)
+    last_match_run_id: UUID | None = None
+    retrieved_candidate_count: int = Field(default=0, ge=0)
+    search_results: list[CandidateResumeSearchResult] = Field(
+        default_factory=list,
+        max_length=50,
+    )
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem] = Field(
+        default_factory=list,
+        max_length=10,
+    )
+
+
+class CandidateSavedBriefSummary(BaseModel):
+    """Compact saved-brief row used by the private operator library."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    saved_brief_id: UUID
+    title: str
+    target_company_name: str | None = None
+    job_description_preview: str
+    last_match_run_id: UUID | None = None
+    retrieved_candidate_count: int
+    search_result_count: int
+    shortlist_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class CandidateSavedBriefListResponse(BaseModel):
+    """Private list of saved role briefs owned by one authenticated operator."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    saved_briefs: list[CandidateSavedBriefSummary] = Field(default_factory=list)
+    count: int
+
+
+class CandidateSavedBriefResponse(BaseModel):
+    """Full saved role brief and its latest retrieval/shortlist snapshots."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    saved_brief_id: UUID
+    title: str
+    job_description: str
+    target_company_name: str | None = None
+    retrieval_focus_terms: str
+    search_result_limit: int
+    retrieval_limit: int
+    shortlist_limit: int
+    last_match_run_id: UUID | None = None
+    retrieved_candidate_count: int
+    search_results: list[CandidateResumeSearchResult] = Field(default_factory=list)
+    shortlisted_candidates: list[CandidateJobDescriptionShortlistItem] = Field(
+        default_factory=list,
+    )
+    created_at: datetime
+    updated_at: datetime
+
+
+class CandidateSavedBriefDeleteResponse(BaseModel):
+    """Confirmation that an operator-owned saved brief was deleted."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    saved_brief_id: UUID
+    deleted: bool
+
+
 class CandidateMatchFeedbackRequest(BaseModel):
     """Recruiter judgement on one candidate returned by a shortlist run."""
 
@@ -750,6 +838,11 @@ __all__ = [
     "CandidateShortlistExportRequest",
     "CandidateShortlistShareCreateRequest",
     "CandidateShortlistShareResponse",
+    "CandidateSavedBriefWriteRequest",
+    "CandidateSavedBriefSummary",
+    "CandidateSavedBriefListResponse",
+    "CandidateSavedBriefResponse",
+    "CandidateSavedBriefDeleteResponse",
     "CandidateMatchFeedbackRequest",
     "CandidateMatchFeedbackResponse",
     "UploadedResumeSearchRequest",

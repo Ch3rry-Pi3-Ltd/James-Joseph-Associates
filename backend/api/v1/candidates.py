@@ -49,6 +49,10 @@ from backend.schemas.candidates import (
     CandidateMatchFeedbackResponse,
     CandidateProfileResponse,
     CandidateResumeSearchResponse,
+    CandidateSavedBriefDeleteResponse,
+    CandidateSavedBriefListResponse,
+    CandidateSavedBriefResponse,
+    CandidateSavedBriefWriteRequest,
     CandidateShortlistExportRequest,
     CandidateShortlistShareCreateRequest,
     CandidateShortlistShareResponse,
@@ -83,6 +87,14 @@ from backend.services.candidate_profiles import (
 from backend.services.candidate_resume_files import (
     CandidateResumeFileAccessError,
     fetch_candidate_current_resume_file,
+)
+from backend.services.candidate_saved_briefs import (
+    CandidateSavedBriefError,
+    create_saved_brief,
+    list_saved_briefs,
+    load_saved_brief,
+    remove_saved_brief,
+    update_saved_brief,
 )
 from backend.services.candidate_shortlist_export import (
     build_candidate_shortlist_export_package,
@@ -1065,6 +1077,248 @@ def revoke_candidate_shortlist_share_route(
         )
 
     return CandidateShortlistShareResponse(**result)
+
+
+@router.get(
+    "/saved-briefs",
+    response_model=CandidateSavedBriefListResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        500: {"model": ApiErrorResponse},
+    },
+)
+def list_candidate_saved_briefs_route(
+    limit: int = Query(default=50, ge=1, le=100),
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+) -> CandidateSavedBriefListResponse | JSONResponse:
+    """List private role briefs owned by the authenticated operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = list_saved_briefs(
+            created_by_user_id=normalized_user_id,
+            limit=limit,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="saved_brief_failed",
+            message="Saved role briefs could not be loaded.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateSavedBriefListResponse(**result)
+
+
+@router.post(
+    "/saved-briefs",
+    response_model=CandidateSavedBriefResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ApiErrorResponse},
+        500: {"model": ApiErrorResponse},
+    },
+)
+def create_candidate_saved_brief_route(
+    request: CandidateSavedBriefWriteRequest,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+    workspace_user_email: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Email",
+    ),
+) -> CandidateSavedBriefResponse | JSONResponse:
+    """Create one private role brief for the authenticated operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = create_saved_brief(
+            created_by_user_id=normalized_user_id,
+            created_by_email=workspace_user_email,
+            payload=request.model_dump(),
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="saved_brief_failed",
+            message="Saved role brief could not be created.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateSavedBriefResponse(**result)
+
+
+@router.get(
+    "/saved-briefs/{saved_brief_id}",
+    response_model=CandidateSavedBriefResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        404: {"model": ApiErrorResponse},
+        500: {"model": ApiErrorResponse},
+    },
+)
+def get_candidate_saved_brief_route(
+    saved_brief_id: UUID,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+) -> CandidateSavedBriefResponse | JSONResponse:
+    """Load one private role brief owned by the authenticated operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = load_saved_brief(
+            saved_brief_id=str(saved_brief_id),
+            created_by_user_id=normalized_user_id,
+        )
+    except CandidateSavedBriefError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="saved_brief_failed",
+            message="Saved role brief could not be loaded.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateSavedBriefResponse(**result)
+
+
+@router.put(
+    "/saved-briefs/{saved_brief_id}",
+    response_model=CandidateSavedBriefResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        404: {"model": ApiErrorResponse},
+        500: {"model": ApiErrorResponse},
+    },
+)
+def update_candidate_saved_brief_route(
+    saved_brief_id: UUID,
+    request: CandidateSavedBriefWriteRequest,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+    workspace_user_email: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Email",
+    ),
+) -> CandidateSavedBriefResponse | JSONResponse:
+    """Update one private role brief owned by the authenticated operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        result = update_saved_brief(
+            saved_brief_id=str(saved_brief_id),
+            created_by_user_id=normalized_user_id,
+            created_by_email=workspace_user_email,
+            payload=request.model_dump(),
+        )
+    except CandidateSavedBriefError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="saved_brief_failed",
+            message="Saved role brief could not be updated.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateSavedBriefResponse(**result)
+
+
+@router.delete(
+    "/saved-briefs/{saved_brief_id}",
+    response_model=CandidateSavedBriefDeleteResponse,
+    responses={
+        401: {"model": ApiErrorResponse},
+        404: {"model": ApiErrorResponse},
+        500: {"model": ApiErrorResponse},
+    },
+)
+def delete_candidate_saved_brief_route(
+    saved_brief_id: UUID,
+    workspace_user_id: str | None = Header(
+        default=None,
+        alias="X-Workspace-User-Id",
+    ),
+) -> CandidateSavedBriefDeleteResponse | JSONResponse:
+    """Delete one private role brief owned by the authenticated operator."""
+
+    normalized_user_id = (workspace_user_id or "").strip()
+    if normalized_user_id == "":
+        return build_error_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="unauthorized",
+            message="Authenticated operator identity is required.",
+        )
+
+    try:
+        remove_saved_brief(
+            saved_brief_id=str(saved_brief_id),
+            created_by_user_id=normalized_user_id,
+        )
+    except CandidateSavedBriefError as exc:
+        return build_error_response(
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+        )
+    except Exception as exc:
+        return build_error_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="saved_brief_failed",
+            message="Saved role brief could not be deleted.",
+            details=[{"error_type": exc.__class__.__name__}],
+        )
+
+    return CandidateSavedBriefDeleteResponse(
+        saved_brief_id=saved_brief_id,
+        deleted=True,
+    )
 
 
 @router.post(

@@ -104,7 +104,8 @@ latest agreed priority order.
 - [ ] Add operator output tools:
   - [x] downloadable Word shortlist plus retrievable CV ZIP package
   - [x] authenticated, expiring, revocable shortlist links
-  - [ ] saved searches / saved briefs
+  - [x] private saved role briefs with retrieval settings, target-company
+    context, and latest search/shortlist snapshots
   - [x] shortlist feedback capture
 - [ ] Harden LinkedHelper ingestion:
   - [x] CSV import normalizer

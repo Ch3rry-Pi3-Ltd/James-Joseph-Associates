@@ -284,6 +284,41 @@ type CandidateShortlistShareResponse = {
   can_revoke: boolean;
 };
 
+type CandidateSavedBriefSummary = {
+  saved_brief_id: string;
+  title: string;
+  target_company_name: string | null;
+  job_description_preview: string;
+  last_match_run_id: string | null;
+  retrieved_candidate_count: number;
+  search_result_count: number;
+  shortlist_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type CandidateSavedBriefListResponse = {
+  saved_briefs: CandidateSavedBriefSummary[];
+  count: number;
+};
+
+type CandidateSavedBriefResponse = {
+  saved_brief_id: string;
+  title: string;
+  job_description: string;
+  target_company_name: string | null;
+  retrieval_focus_terms: string;
+  search_result_limit: number;
+  retrieval_limit: number;
+  shortlist_limit: number;
+  last_match_run_id: string | null;
+  retrieved_candidate_count: number;
+  search_results: CandidateResumeSearchResult[];
+  shortlisted_candidates: CandidateJobDescriptionShortlistItem[];
+  created_at: string;
+  updated_at: string;
+};
+
 type ApiErrorResponse = {
   error?: {
     code?: string;
@@ -1025,6 +1060,20 @@ export function CandidateMatchWorkspace() {
   const [detectedTargetCompanyName, setDetectedTargetCompanyName] = useState<
     string | null
   >(null);
+  const [savedBriefs, setSavedBriefs] = useState<CandidateSavedBriefSummary[]>([]);
+  const [activeSavedBriefId, setActiveSavedBriefId] = useState<string | null>(null);
+  const [savedBriefTitle, setSavedBriefTitle] = useState("");
+  const [isSavedBriefLibraryLoading, setIsSavedBriefLibraryLoading] =
+    useState(true);
+  const [isSavedBriefLoading, setIsSavedBriefLoading] = useState(false);
+  const [isSavedBriefSaving, setIsSavedBriefSaving] = useState(false);
+  const [isSavedBriefDeleting, setIsSavedBriefDeleting] = useState(false);
+  const [isSavedBriefDeleteConfirming, setIsSavedBriefDeleteConfirming] =
+    useState(false);
+  const [savedBriefMessage, setSavedBriefMessage] = useState<string | null>(null);
+  const [savedBriefErrorMessage, setSavedBriefErrorMessage] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!isFocusTermsAuto) {
@@ -1046,6 +1095,10 @@ export function CandidateMatchWorkspace() {
       setCompanyNameQuery(derivedCompanyName);
     }
   }, [companyNameQuery, jobDescription, uploadedJobDescriptionResult]);
+
+  useEffect(() => {
+    void refreshSavedBriefs();
+  }, []);
 
   const loadingMessage = useMemo(
     () => buildLoadingMessage(activeRunMode),
@@ -1104,6 +1157,14 @@ export function CandidateMatchWorkspace() {
   }, [retrievedCandidateCount, shortlistResults.length, submittedJobDescription]);
 
   const activeCompanyContextName = detectedTargetCompanyName;
+
+  const activeSavedBrief = useMemo(
+    () =>
+      savedBriefs.find(
+        (savedBrief) => savedBrief.saved_brief_id === activeSavedBriefId,
+      ) ?? null,
+    [activeSavedBriefId, savedBriefs],
+  );
 
   const companyDiscoveryCountLabel = useMemo(() => {
     if (submittedCompanyName && companyDiscoveryResults.length === 0) {
@@ -1204,6 +1265,256 @@ export function CandidateMatchWorkspace() {
 
     return companyInteractionResults[0];
   }, [companyInteractionResults]);
+
+  async function refreshSavedBriefs(): Promise<void> {
+    setIsSavedBriefLibraryLoading(true);
+
+    try {
+      const response = await fetch("/api/v1/candidates/saved-briefs?limit=50", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSavedBriefs([]);
+        setSavedBriefErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Saved role briefs could not be loaded (${response.status}).`,
+        );
+        return;
+      }
+
+      const savedBriefList = payload as CandidateSavedBriefListResponse;
+      setSavedBriefs(savedBriefList.saved_briefs);
+    } catch (error) {
+      setSavedBriefs([]);
+      setSavedBriefErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Saved role briefs could not be loaded.",
+      );
+    } finally {
+      setIsSavedBriefLibraryLoading(false);
+    }
+  }
+
+  async function loadSavedBrief(savedBriefId: string): Promise<void> {
+    if (savedBriefId === "") {
+      setActiveSavedBriefId(null);
+      setSavedBriefTitle("");
+      setIsSavedBriefDeleteConfirming(false);
+      return;
+    }
+
+    setIsSavedBriefLoading(true);
+    setSavedBriefMessage(null);
+    setSavedBriefErrorMessage(null);
+    setIsSavedBriefDeleteConfirming(false);
+
+    try {
+      const response = await fetch(
+        `/api/v1/candidates/saved-briefs/${savedBriefId}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        },
+      );
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSavedBriefErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Saved role brief could not be opened (${response.status}).`,
+        );
+        return;
+      }
+
+      const savedBrief = payload as CandidateSavedBriefResponse;
+      const hasSearchSnapshot = savedBrief.search_results.length > 0;
+      const hasShortlistSnapshot = savedBrief.shortlisted_candidates.length > 0;
+
+      setActiveSavedBriefId(savedBrief.saved_brief_id);
+      setSavedBriefTitle(savedBrief.title);
+      setJobDescription(savedBrief.job_description);
+      setRetrievalFocusTerms(savedBrief.retrieval_focus_terms);
+      setIsFocusTermsAuto(false);
+      setSearchResultLimit(String(savedBrief.search_result_limit));
+      setRetrievalLimit(String(savedBrief.retrieval_limit));
+      setShortlistLimit(String(savedBrief.shortlist_limit));
+      setMatchRunId(savedBrief.last_match_run_id);
+      setRetrievedCandidateCount(savedBrief.retrieved_candidate_count);
+      setSearchResults(savedBrief.search_results);
+      setShortlistResults(savedBrief.shortlisted_candidates);
+      setSubmittedSearchQuery(
+        hasSearchSnapshot ? savedBrief.retrieval_focus_terms : null,
+      );
+      setSubmittedJobDescription(
+        savedBrief.last_match_run_id || hasShortlistSnapshot
+          ? savedBrief.job_description
+          : null,
+      );
+      setIsSearchResultsExpanded(hasSearchSnapshot);
+      setIsSearchQueryDetailsExpanded(false);
+      setCompanyNameQuery(savedBrief.target_company_name ?? "");
+      setFeedbackByCandidateId({});
+      setSearchErrorMessage(null);
+      setShortlistErrorMessage(null);
+      setShortlistExportMessage(null);
+      setShortlistExportErrorMessage(null);
+      setShortlistShareUrl(null);
+      setShortlistShareMessage(null);
+      setShortlistShareErrorMessage(null);
+      setPreviewCandidateId(null);
+      setPreviewProfile(null);
+      setUploadedJobDescriptionFile(null);
+      setUploadedJobDescriptionResult(null);
+      setUploadedJobDescriptionErrorMessage(null);
+      if (uploadedJobDescriptionInputRef.current) {
+        uploadedJobDescriptionInputRef.current.value = "";
+      }
+      setSavedBriefMessage(`Opened "${savedBrief.title}".`);
+    } catch (error) {
+      setSavedBriefErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Saved role brief could not be opened.",
+      );
+    } finally {
+      setIsSavedBriefLoading(false);
+    }
+  }
+
+  async function saveCurrentBrief(forceCreate = false): Promise<void> {
+    const trimmedTitle = savedBriefTitle.trim();
+    const trimmedDescription = jobDescription.trim();
+    const trimmedFocusTerms = retrievalFocusTerms.trim() || trimmedDescription;
+
+    if (trimmedTitle === "") {
+      setSavedBriefErrorMessage("Add a short title before saving this role.");
+      return;
+    }
+    if (trimmedDescription === "") {
+      setSavedBriefErrorMessage("Add a role brief before saving.");
+      return;
+    }
+
+    const savedBriefId = forceCreate ? null : activeSavedBriefId;
+    setIsSavedBriefSaving(true);
+    setSavedBriefMessage(null);
+    setSavedBriefErrorMessage(null);
+    setIsSavedBriefDeleteConfirming(false);
+
+    try {
+      const response = await fetch(
+        savedBriefId
+          ? `/api/v1/candidates/saved-briefs/${savedBriefId}`
+          : "/api/v1/candidates/saved-briefs",
+        {
+          method: savedBriefId ? "PUT" : "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: trimmedTitle,
+            job_description: trimmedDescription,
+            target_company_name: detectedTargetCompanyName,
+            retrieval_focus_terms: trimmedFocusTerms,
+            search_result_limit: Number(searchResultLimit),
+            retrieval_limit: Number(retrievalLimit),
+            shortlist_limit: Number(shortlistLimit),
+            last_match_run_id: matchRunId,
+            retrieved_candidate_count: retrievedCandidateCount,
+            search_results: searchResults,
+            shortlisted_candidates: shortlistResults,
+          }),
+        },
+      );
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSavedBriefErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Role brief could not be saved (${response.status}).`,
+        );
+        return;
+      }
+
+      const savedBrief = payload as CandidateSavedBriefResponse;
+      setActiveSavedBriefId(savedBrief.saved_brief_id);
+      setSavedBriefTitle(savedBrief.title);
+      setSavedBriefMessage(
+        savedBriefId
+          ? `"${savedBrief.title}" was updated.`
+          : `"${savedBrief.title}" was saved.`,
+      );
+      await refreshSavedBriefs();
+    } catch (error) {
+      setSavedBriefErrorMessage(
+        error instanceof Error ? error.message : "Role brief could not be saved.",
+      );
+    } finally {
+      setIsSavedBriefSaving(false);
+    }
+  }
+
+  async function deleteActiveSavedBrief(): Promise<void> {
+    if (!activeSavedBriefId) {
+      return;
+    }
+    if (!isSavedBriefDeleteConfirming) {
+      setIsSavedBriefDeleteConfirming(true);
+      setSavedBriefMessage("Select delete again to confirm.");
+      return;
+    }
+
+    setIsSavedBriefDeleting(true);
+    setSavedBriefMessage(null);
+    setSavedBriefErrorMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/v1/candidates/saved-briefs/${activeSavedBriefId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+      const payload = await readJsonResponse(response);
+
+      if (!response.ok) {
+        setSavedBriefErrorMessage(
+          (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
+            `Saved role brief could not be deleted (${response.status}).`,
+        );
+        return;
+      }
+
+      const deletedTitle = savedBriefTitle;
+      setActiveSavedBriefId(null);
+      setSavedBriefTitle("");
+      setIsSavedBriefDeleteConfirming(false);
+      setSavedBriefMessage(`"${deletedTitle}" was deleted.`);
+      await refreshSavedBriefs();
+    } catch (error) {
+      setSavedBriefErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Saved role brief could not be deleted.",
+      );
+    } finally {
+      setIsSavedBriefDeleting(false);
+    }
+  }
 
   async function runSearch(options?: { focusQueryOverride?: string }): Promise<void> {
     const trimmedDescription = jobDescription.trim();
@@ -1325,6 +1636,14 @@ export function CandidateMatchWorkspace() {
       setJobDescription(uploadResponse.job_description_text);
       setIsFocusTermsAuto(true);
       setUploadedJobDescriptionResult(uploadResponse);
+      if (!activeSavedBriefId && savedBriefTitle.trim() === "") {
+        setSavedBriefTitle(
+          (uploadResponse.file_name ?? "Uploaded role brief").replace(
+            /\.[^.]+$/,
+            "",
+          ),
+        );
+      }
       setSearchResults([]);
       setShortlistResults([]);
       setMatchRunId(null);
@@ -1897,12 +2216,22 @@ export function CandidateMatchWorkspace() {
   }
 
   function resetToExampleBrief(): void {
+    setActiveSavedBriefId(null);
+    setSavedBriefTitle("Example data engineer role");
+    setSavedBriefMessage(null);
+    setSavedBriefErrorMessage(null);
+    setIsSavedBriefDeleteConfirming(false);
     setJobDescription(DEFAULT_JOB_DESCRIPTION);
     setIsFocusTermsAuto(true);
     setRetrievalFocusTerms(deriveRetrievalFocusTerms(DEFAULT_JOB_DESCRIPTION));
   }
 
   function clearWorkspace(): void {
+    setActiveSavedBriefId(null);
+    setSavedBriefTitle("");
+    setSavedBriefMessage(null);
+    setSavedBriefErrorMessage(null);
+    setIsSavedBriefDeleteConfirming(false);
     setJobDescription("");
     setRetrievalFocusTerms("");
     setIsFocusTermsAuto(true);
@@ -2148,6 +2477,145 @@ export function CandidateMatchWorkspace() {
           <div className="text-sm text-zinc-600">
             Full brief in, ranked shortlist out.
           </div>
+        </div>
+
+        <div className="workspace-card-soft grid gap-4 p-4 sm:p-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Saved role library
+              </p>
+              <h3 className="mt-1 text-xl font-semibold text-zinc-950">
+                Reopen a role without rebuilding the search
+              </h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
+                A saved role keeps the full brief, retrieval settings, target
+                company, and latest search and shortlist evidence. Reopen it,
+                then use the live search buttons below whenever you want fresh
+                results from the current database.
+              </p>
+            </div>
+            <p className="text-sm text-zinc-600">
+              {isSavedBriefLibraryLoading
+                ? "Loading saved roles..."
+                : `${savedBriefs.length} saved ${savedBriefs.length === 1 ? "role" : "roles"}`}
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="grid gap-2">
+              <label
+                className="text-sm font-semibold text-zinc-800"
+                htmlFor="saved-role-brief"
+              >
+                Open a saved role
+              </label>
+              <select
+                id="saved-role-brief"
+                value={activeSavedBriefId ?? ""}
+                disabled={isSavedBriefLibraryLoading || isSavedBriefLoading}
+                onChange={(event) => {
+                  void loadSavedBrief(event.target.value);
+                }}
+                className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-emerald-600 disabled:bg-zinc-100"
+              >
+                <option value="">Choose a saved role</option>
+                {savedBriefs.map((savedBrief) => (
+                  <option
+                    key={savedBrief.saved_brief_id}
+                    value={savedBrief.saved_brief_id}
+                  >
+                    {savedBrief.title}
+                    {savedBrief.target_company_name
+                      ? ` - ${savedBrief.target_company_name}`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <label
+                className="text-sm font-semibold text-zinc-800"
+                htmlFor="saved-role-title"
+              >
+                Saved role title
+              </label>
+              <input
+                id="saved-role-title"
+                value={savedBriefTitle}
+                onChange={(event) => setSavedBriefTitle(event.target.value)}
+                className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none transition focus:border-emerald-600"
+                placeholder="e.g. Starr Financial Systems Analyst"
+                maxLength={200}
+              />
+            </div>
+          </div>
+
+          {activeSavedBrief ? (
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs leading-5 text-zinc-600">
+              <span>Updated {formatTimestamp(activeSavedBrief.updated_at)}</span>
+              <span>{activeSavedBrief.search_result_count} saved search results</span>
+              <span>{activeSavedBrief.shortlist_count} saved shortlist results</span>
+              <span>
+                {activeSavedBrief.retrieved_candidate_count} candidates considered
+              </span>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={isSavedBriefSaving || isSavedBriefLoading}
+              onClick={() => {
+                void saveCurrentBrief(false);
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+            >
+              {isSavedBriefSaving
+                ? "Saving..."
+                : activeSavedBriefId
+                  ? "Update saved role"
+                  : "Save role"}
+            </button>
+            {activeSavedBriefId ? (
+              <button
+                type="button"
+                disabled={isSavedBriefSaving || isSavedBriefLoading}
+                onClick={() => {
+                  void saveCurrentBrief(true);
+                }}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-900 transition hover:border-zinc-500 disabled:cursor-not-allowed disabled:bg-zinc-100"
+              >
+                Save as copy
+              </button>
+            ) : null}
+            {activeSavedBriefId ? (
+              <button
+                type="button"
+                disabled={isSavedBriefDeleting || isSavedBriefLoading}
+                onClick={() => {
+                  void deleteActiveSavedBrief();
+                }}
+                className="inline-flex h-10 items-center justify-center rounded-md border border-rose-300 bg-white px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+              >
+                {isSavedBriefDeleting
+                  ? "Deleting..."
+                  : isSavedBriefDeleteConfirming
+                    ? "Confirm delete"
+                    : "Delete"}
+              </button>
+            ) : null}
+          </div>
+
+          {savedBriefMessage ? (
+            <p className="text-sm leading-6 text-emerald-800">{savedBriefMessage}</p>
+          ) : null}
+          {savedBriefErrorMessage ? (
+            <p className="text-sm leading-6 text-rose-700">
+              {savedBriefErrorMessage}
+            </p>
+          ) : null}
         </div>
 
         <form className="grid gap-6" onSubmit={handleSubmit}>

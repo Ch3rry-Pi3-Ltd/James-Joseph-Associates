@@ -66,6 +66,8 @@ ApiErrorCode = Literal[
     "shortlist_share_expired",
     "shortlist_share_forbidden",
     "shortlist_share_failed",
+    "saved_brief_not_found",
+    "saved_brief_failed",
     "internal_error",
 ]
 

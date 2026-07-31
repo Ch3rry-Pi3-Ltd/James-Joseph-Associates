@@ -66,7 +66,8 @@ This is the practical engineering backlog as of Thursday, July 30, 2026.
 - [ ] Add operator-friendly output actions:
   - [x] downloadable Word shortlist plus retrievable CV ZIP package
   - [x] authenticated, expiring, revocable shortlist links
-  - [ ] saveable searches or saved briefs
+  - [x] private saved role briefs that restore role text, retrieval settings,
+    target-company context, and latest search/shortlist evidence
   - [x] lightweight feedback capture on good/bad shortlist results
 - [ ] LinkedHelper ingestion path:
   - [x] CSV ingest normalizer
