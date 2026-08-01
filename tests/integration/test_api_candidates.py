@@ -250,10 +250,7 @@ def test_candidate_current_resume_route_streams_file_bytes() -> None:
         response.headers["content-disposition"]
         == 'inline; filename="Sarah-Jones-CV.pdf"'
     )
-    assert (
-        response.headers["x-document-id"]
-        == "11111111-1111-1111-1111-111111111111"
-    )
+    assert response.headers["x-document-id"] == "11111111-1111-1111-1111-111111111111"
     mock_fetch_candidate_current_resume_file.assert_called_once_with(candidate_id)
 
 
@@ -269,7 +266,7 @@ def test_candidate_current_resume_route_sanitizes_download_filename() -> None:
             "document_title": "candidate.pdf",
             "document_source_uri": "dropbox:///cv/candidate.pdf",
             "document_mime_type": "application/pdf",
-            "file_name": 'candidate\r\nX-Injected: yes.pdf',
+            "file_name": "candidate\r\nX-Injected: yes.pdf",
             "content_type": "application/pdf",
             "content_bytes": b"%PDF-test%",
         },
@@ -796,6 +793,36 @@ def test_company_interaction_discovery_route_rejects_blank_company_name() -> Non
     mock_discover_interactions_by_company.assert_not_called()
 
 
+def test_company_context_route_returns_consolidated_results() -> None:
+    service_result = {
+        "company_name": "Acme Hiring Ltd",
+        "limit": 5,
+        "candidates": [],
+        "contacts": [],
+        "interactions": [],
+        "jobs": [],
+        "opportunities": [],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.discover_company_context",
+        return_value=service_result,
+    ) as mock_discover_company_context:
+        client = make_client()
+        response = client.get(
+            "/api/v1/candidates/discover-company-context"
+            "?company_name=Acme%20Hiring%20Ltd&limit=5&include_opportunities=false"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_discover_company_context.assert_called_once_with(
+        company_name="Acme Hiring Ltd",
+        limit=5,
+        include_opportunities=False,
+    )
+
+
 def test_candidate_company_lead_discovery_route_returns_composed_results() -> None:
     """
     Verify that the candidate-first company-lead route returns the service payload unchanged.
@@ -971,7 +998,9 @@ def test_candidate_company_lead_discovery_route_rejects_blank_company_name() -> 
     mock_discover_company_leads_for_candidate.assert_not_called()
 
 
-def test_candidate_company_lead_discovery_route_returns_not_found_when_candidate_missing() -> None:
+def test_candidate_company_lead_discovery_route_returns_not_found_when_candidate_missing() -> (
+    None
+):
     """
     Verify that the candidate-first company-lead route returns 404 when the candidate is missing.
     """
@@ -1195,9 +1224,7 @@ def test_extract_uploaded_job_description_route_returns_extracted_text() -> None
             json={
                 "file_name": "role-brief.pdf",
                 "content_type": "application/pdf",
-                "content_base64": base64.b64encode(b"%PDF-job-brief%").decode(
-                    "ascii"
-                ),
+                "content_base64": base64.b64encode(b"%PDF-job-brief%").decode("ascii"),
             },
         )
 
@@ -1333,27 +1360,27 @@ def test_match_job_description_route_returns_shortlist() -> None:
                 "retrieval_sources": ["text", "semantic"],
                 "text_rank": 2,
                 "semantic_rank": 1,
-                    "text_score": 0.712345,
-                    "semantic_score": 0.9321,
-                    "semantic_block_type": "skills",
-                    "semantic_block_label": "Core skills",
-                    "source_systems": ["dropbox", "linkedin_helper"],
-                    "source_details": [
-                        {
-                            "source_system": "dropbox",
-                            "latest_record_received_at": "2026-06-10T09:00:00+00:00",
-                        },
-                        {
-                            "source_system": "linkedin_helper",
-                            "latest_record_received_at": "2026-07-20T14:30:00+00:00",
-                        },
-                    ],
-                    "source_category": "cross_source",
-                    "graph_context_score": 0.42,
-                    "ranking_input_score": 0.753493,
-                    "fit_score": 92,
-                    "fit_summary": "Excellent match for the role.",
-                    "strengths": ["Python", "Cloud data pipelines"],
+                "text_score": 0.712345,
+                "semantic_score": 0.9321,
+                "semantic_block_type": "skills",
+                "semantic_block_label": "Core skills",
+                "source_systems": ["dropbox", "linkedin_helper"],
+                "source_details": [
+                    {
+                        "source_system": "dropbox",
+                        "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                    },
+                    {
+                        "source_system": "linkedin_helper",
+                        "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+                    },
+                ],
+                "source_category": "cross_source",
+                "graph_context_score": 0.42,
+                "ranking_input_score": 0.753493,
+                "fit_score": 92,
+                "fit_summary": "Excellent match for the role.",
+                "strengths": ["Python", "Cloud data pipelines"],
                 "gaps": ["Leadership scope not explicit"],
                 "match_excerpt": "<mark>python</mark> pipelines cloud",
                 "graph_evidence": None,
@@ -1558,8 +1585,7 @@ def test_get_shortlist_share_route_returns_controlled_gone_error() -> None:
         ),
     ):
         response = make_client().get(
-            "/api/v1/candidates/shortlist-shares/"
-            "4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+            "/api/v1/candidates/shortlist-shares/4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
             headers={"X-Workspace-User-Id": "user_123"},
         )
 
@@ -1580,8 +1606,7 @@ def test_revoke_shortlist_share_route_uses_authenticated_creator() -> None:
         return_value=service_result,
     ) as mock_revoke_share:
         response = make_client().delete(
-            "/api/v1/candidates/shortlist-shares/"
-            "4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
+            "/api/v1/candidates/shortlist-shares/4fc6ad2a-1fae-4fbb-b8f6-6de16b56e2ea",
             headers={"X-Workspace-User-Id": "user_123"},
         )
 
@@ -1870,8 +1895,7 @@ def test_load_saved_brief_route_returns_controlled_not_found() -> None:
         ),
     ):
         response = make_client().get(
-            "/api/v1/candidates/saved-briefs/"
-            "658a5599-7027-4c8c-b4aa-b76f13566525",
+            "/api/v1/candidates/saved-briefs/658a5599-7027-4c8c-b4aa-b76f13566525",
             headers={"X-Workspace-User-Id": "different-user"},
         )
 
@@ -1886,8 +1910,7 @@ def test_delete_saved_brief_route_uses_authenticated_owner() -> None:
         "backend.api.v1.candidates.remove_saved_brief",
     ) as mock_remove_saved_brief:
         response = make_client().delete(
-            "/api/v1/candidates/saved-briefs/"
-            "658a5599-7027-4c8c-b4aa-b76f13566525",
+            "/api/v1/candidates/saved-briefs/658a5599-7027-4c8c-b4aa-b76f13566525",
             headers={"X-Workspace-User-Id": "user_123"},
         )
 

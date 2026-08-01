@@ -36,7 +36,7 @@ kept in a separate deferred lane so they do not block independent delivery.
 
 - [x] Instrument and improve performance across Review, Company, search, and
   shortlist flows.
-- [ ] Remove repeated database queries and avoidable API calls.
+- [x] Remove repeated database queries and avoidable API calls.
 - [ ] Build automated regression, groundedness, stability, and sensitive-data
   checks that do not depend on recruiter labels:
   - [ ] benchmark full-text, semantic, hybrid, and graph-assisted retrieval as
@@ -188,7 +188,7 @@ approval remain in the deferred lane below.
 - [ ] Performance and scalability hardening:
   - [x] record response times and database timings for the Review, Company,
     Match search, and Match shortlist workflows
-  - [ ] identify and remove repeated database queries and avoidable API round
+  - [x] identify and remove repeated database queries and avoidable API round
     trips
   - [ ] batch high-volume database reads and writes where this preserves
     reconciliation, provenance, and audit guarantees

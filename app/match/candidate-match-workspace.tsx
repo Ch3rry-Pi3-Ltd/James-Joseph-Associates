@@ -80,12 +80,6 @@ type CandidateCompanyDiscoveryResult = {
   match_excerpt: string | null;
 };
 
-type CandidateCompanyDiscoveryResponse = {
-  company_name: string;
-  limit: number;
-  results: CandidateCompanyDiscoveryResult[];
-};
-
 type CompanyJobDiscoveryResult = {
   job_id: string;
   title: string | null;
@@ -105,12 +99,6 @@ type CompanyJobDiscoveryResult = {
   hiring_manager_phone: string | null;
   hiring_manager_role_title: string | null;
   company_match_source: string;
-};
-
-type CompanyJobDiscoveryResponse = {
-  company_name: string;
-  limit: number;
-  results: CompanyJobDiscoveryResult[];
 };
 
 type CompanyContactDiscoveryResult = {
@@ -134,12 +122,6 @@ type CompanyContactDiscoveryResult = {
   company_match_source: string;
 };
 
-type CompanyContactDiscoveryResponse = {
-  company_name: string;
-  limit: number;
-  results: CompanyContactDiscoveryResult[];
-};
-
 type CompanyInteractionDiscoveryResult = {
   interaction_id: string;
   interaction_type: string | null;
@@ -161,12 +143,6 @@ type CompanyInteractionDiscoveryResult = {
   matched_entity_type: string;
 };
 
-type CompanyInteractionDiscoveryResponse = {
-  company_name: string;
-  limit: number;
-  results: CompanyInteractionDiscoveryResult[];
-};
-
 type CompanyOpportunityDiscoveryResult = {
   opportunity_id: string;
   title: string | null;
@@ -186,10 +162,14 @@ type CompanyOpportunityDiscoveryResult = {
   company_match_source: string;
 };
 
-type CompanyOpportunityDiscoveryResponse = {
+type CompanyContextDiscoveryResponse = {
   company_name: string;
   limit: number;
-  results: CompanyOpportunityDiscoveryResult[];
+  candidates: CandidateCompanyDiscoveryResult[];
+  contacts: CompanyContactDiscoveryResult[];
+  interactions: CompanyInteractionDiscoveryResult[];
+  jobs: CompanyJobDiscoveryResult[];
+  opportunities: CompanyOpportunityDiscoveryResult[];
 };
 
 type CandidateCompanyLeadDiscoveryResponse = {
@@ -2171,58 +2151,23 @@ export function CandidateMatchWorkspace() {
         limit: companySearchLimit,
       });
 
-      const requestUrl = searchParams.toString();
-      const requestOptions = {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
+      const response = await fetch(
+        `/api/v1/candidates/discover-company-context?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
         },
-      };
-      const [
-        response,
-        contactsResponse,
-        interactionsResponse,
-        jobsResponse,
-        opportunitiesResponse,
-      ] = await Promise.all([
-        fetch(
-          `/api/v1/candidates/discover-by-company?${requestUrl}`,
-          requestOptions,
-        ),
-        fetch(
-          `/api/v1/candidates/discover-contacts-by-company?${requestUrl}`,
-          requestOptions,
-        ),
-        fetch(
-          `/api/v1/candidates/discover-interactions-by-company?${requestUrl}`,
-          requestOptions,
-        ),
-        fetch(
-          `/api/v1/candidates/discover-jobs-by-company?${requestUrl}`,
-          requestOptions,
-        ),
-        fetch(
-          `/api/v1/candidates/discover-opportunities-by-company?${requestUrl}`,
-          requestOptions,
-        ),
-      ]);
-
-      const [
-        payload,
-        contactsPayload,
-        interactionsPayload,
-        jobsPayload,
-        opportunitiesPayload,
-      ] = await Promise.all([
-        readJsonResponse(response),
-        readJsonResponse(contactsResponse),
-        readJsonResponse(interactionsResponse),
-        readJsonResponse(jobsResponse),
-        readJsonResponse(opportunitiesResponse),
-      ]);
+      );
+      const payload = await readJsonResponse(response);
 
       if (!response.ok) {
         setCompanyDiscoveryResults([]);
+        setCompanyContactResults([]);
+        setCompanyInteractionResults([]);
+        setCompanyJobResults([]);
+        setCompanyOpportunityResults([]);
         setSubmittedCompanyName(trimmedCompanyName);
         setCompanyDiscoveryErrorMessage(
           (isApiErrorResponse(payload) ? payload.error?.message : undefined) ??
@@ -2231,66 +2176,13 @@ export function CandidateMatchWorkspace() {
         return;
       }
 
-      const companyDiscoveryResponse = payload as CandidateCompanyDiscoveryResponse;
-      setCompanyDiscoveryResults(companyDiscoveryResponse.results);
-      setSubmittedCompanyName(companyDiscoveryResponse.company_name);
-
-      if (!contactsResponse.ok) {
-        setCompanyContactResults([]);
-        setCompanyContactsErrorMessage(
-          (isApiErrorResponse(contactsPayload)
-            ? contactsPayload.error?.message
-            : undefined) ??
-            `Company contacts request failed with ${contactsResponse.status}.`,
-        );
-        return;
-      }
-
-      const companyContactsResponse =
-        contactsPayload as CompanyContactDiscoveryResponse;
-      setCompanyContactResults(companyContactsResponse.results);
-
-      if (!interactionsResponse.ok) {
-        setCompanyInteractionResults([]);
-        setCompanyInteractionsErrorMessage(
-          (isApiErrorResponse(interactionsPayload)
-            ? interactionsPayload.error?.message
-            : undefined) ??
-            `Company interactions request failed with ${interactionsResponse.status}.`,
-        );
-        return;
-      }
-
-      const companyInteractionsResponse =
-        interactionsPayload as CompanyInteractionDiscoveryResponse;
-      setCompanyInteractionResults(companyInteractionsResponse.results);
-
-      if (!jobsResponse.ok) {
-        setCompanyJobResults([]);
-        setCompanyJobsErrorMessage(
-          (isApiErrorResponse(jobsPayload) ? jobsPayload.error?.message : undefined) ??
-            `Company jobs request failed with ${jobsResponse.status}.`,
-        );
-        return;
-      }
-
-      const companyJobsResponse = jobsPayload as CompanyJobDiscoveryResponse;
-      setCompanyJobResults(companyJobsResponse.results);
-
-      if (!opportunitiesResponse.ok) {
-        setCompanyOpportunityResults([]);
-        setCompanyOpportunitiesErrorMessage(
-          (isApiErrorResponse(opportunitiesPayload)
-            ? opportunitiesPayload.error?.message
-            : undefined) ??
-            `Company opportunities request failed with ${opportunitiesResponse.status}.`,
-        );
-        return;
-      }
-
-      const companyOpportunitiesResponse =
-        opportunitiesPayload as CompanyOpportunityDiscoveryResponse;
-      setCompanyOpportunityResults(companyOpportunitiesResponse.results);
+      const companyContext = payload as CompanyContextDiscoveryResponse;
+      setCompanyDiscoveryResults(companyContext.candidates);
+      setCompanyContactResults(companyContext.contacts);
+      setCompanyInteractionResults(companyContext.interactions);
+      setCompanyJobResults(companyContext.jobs);
+      setCompanyOpportunityResults(companyContext.opportunities);
+      setSubmittedCompanyName(companyContext.company_name);
     } catch (error) {
       setCompanyDiscoveryResults([]);
       setCompanyContactResults([]);

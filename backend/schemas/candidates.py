@@ -425,6 +425,24 @@ class CompanyOpportunityDiscoveryResponse(BaseModel):
     )
 
 
+class CompanyContextDiscoveryResponse(BaseModel):
+    """One consolidated company lookup used by the recruiter workspaces."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(
+        description="Normalized company name used for every discovery section.",
+    )
+    limit: int = Field(
+        description="Maximum number of rows requested for each section.",
+    )
+    candidates: list[CandidateCompanyDiscoveryResult] = Field(default_factory=list)
+    contacts: list[CompanyContactDiscoveryResult] = Field(default_factory=list)
+    interactions: list[CompanyInteractionDiscoveryResult] = Field(default_factory=list)
+    jobs: list[CompanyJobDiscoveryResult] = Field(default_factory=list)
+    opportunities: list[CompanyOpportunityDiscoveryResult] = Field(default_factory=list)
+
+
 class CandidateCompanyLeadDiscoveryResponse(BaseModel):
     """
     Candidate-first outreach view for one target company.
@@ -841,6 +859,7 @@ __all__ = [
     "CandidateCompanyLeadDiscoveryResponse",
     "CompanyContactDiscoveryResponse",
     "CompanyContactDiscoveryResult",
+    "CompanyContextDiscoveryResponse",
     "CompanyInteractionDiscoveryResponse",
     "CompanyInteractionDiscoveryResult",
     "CompanyJobDiscoveryResponse",

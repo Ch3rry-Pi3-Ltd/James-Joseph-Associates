@@ -50,7 +50,11 @@ from backend.services.candidate_source_metadata import (
 )
 
 
-def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
+def build_candidate_profile(
+    candidate_id: str,
+    *,
+    include_source_metadata: bool = True,
+) -> dict[str, Any] | None:
     """
     Return one combined profile structure.
 
@@ -58,6 +62,9 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     ----------
     candidate_id : str
         Canonical candidate UUID to look up.
+    include_source_metadata : bool, default=True
+        Set to false when the caller has already fetched provenance for a
+        larger candidate batch.
 
     Returns
     -------
@@ -115,7 +122,8 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     if candidate is None:
         return None
 
-    candidate = attach_candidate_source_metadata([candidate])[0]
+    if include_source_metadata:
+        candidate = attach_candidate_source_metadata([candidate])[0]
     skills = get_candidate_skills(candidate_id)
     recent_employment = get_candidate_recent_employment(candidate_id)
 
@@ -190,8 +198,7 @@ def discover_candidates_by_company(
         "company_name": normalized_company_name,
         "limit": limit,
         "results": [
-            _normalize_candidate_company_discovery_result(result)
-            for result in results
+            _normalize_candidate_company_discovery_result(result) for result in results
         ],
     }
 
@@ -290,6 +297,56 @@ def discover_opportunities_by_company(
     }
 
 
+def discover_company_context(
+    *,
+    company_name: str,
+    limit: int = 20,
+    include_candidates: bool = True,
+    include_opportunities: bool = True,
+) -> dict[str, Any]:
+    """Return requested company-workspace sections through one service call."""
+
+    normalized_company_name = company_name.strip()
+    candidates = (
+        discover_candidates_by_company(
+            company_name=normalized_company_name,
+            limit=limit,
+        )["results"]
+        if include_candidates
+        else []
+    )
+    contacts = discover_contacts_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )["results"]
+    interactions = discover_interactions_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )["results"]
+    jobs = discover_jobs_by_company(
+        company_name=normalized_company_name,
+        limit=limit,
+    )["results"]
+    opportunities = (
+        discover_opportunities_by_company(
+            company_name=normalized_company_name,
+            limit=limit,
+        )["results"]
+        if include_opportunities
+        else []
+    )
+
+    return {
+        "company_name": normalized_company_name,
+        "limit": limit,
+        "candidates": candidates,
+        "contacts": contacts,
+        "interactions": interactions,
+        "jobs": jobs,
+        "opportunities": opportunities,
+    }
+
+
 def discover_company_leads_for_candidate(
     *,
     candidate_id: str,
@@ -345,9 +402,7 @@ def discover_company_leads_for_candidate(
     seen_skill_names: set[str] = set()
     for skill in profile["skills"]:
         skill_name = (
-            skill.get("canonical_name")
-            or skill.get("skill_name")
-            or ""
+            skill.get("canonical_name") or skill.get("skill_name") or ""
         ).strip()
         if skill_name == "":
             continue
@@ -387,9 +442,7 @@ def _normalize_candidate_resume_search_result(
         "candidate_id": _normalize_string_value(result.get("candidate_id")),
         "person_id": _normalize_string_value(result.get("person_id")),
         "full_name": _normalize_optional_string_value(result.get("full_name")),
-        "current_title": _normalize_optional_string_value(
-            result.get("current_title")
-        ),
+        "current_title": _normalize_optional_string_value(result.get("current_title")),
         "candidate_status": _normalize_optional_string_value(
             result.get("candidate_status")
         ),
@@ -413,25 +466,19 @@ def _normalize_candidate_resume_search_result(
         "text_rank": _normalize_optional_int_value(result.get("text_rank")),
         "semantic_rank": _normalize_optional_int_value(result.get("semantic_rank")),
         "text_score": _normalize_optional_float_value(result.get("text_score")),
-        "semantic_score": _normalize_optional_float_value(
-            result.get("semantic_score")
-        ),
+        "semantic_score": _normalize_optional_float_value(result.get("semantic_score")),
         "semantic_block_type": _normalize_optional_string_value(
             result.get("semantic_block_type") or result.get("block_type")
         ),
         "semantic_block_label": _normalize_optional_string_value(
             result.get("semantic_block_label") or result.get("block_label")
         ),
-        "source_systems": _normalize_string_list_value(
-            result.get("source_systems")
-        ),
+        "source_systems": _normalize_string_list_value(result.get("source_systems")),
         "source_details": _normalize_source_details(result.get("source_details")),
         "source_category": _normalize_string_value(
             result.get("source_category") or "unknown"
         ),
-        "match_excerpt": _normalize_optional_string_value(
-            result.get("match_excerpt")
-        ),
+        "match_excerpt": _normalize_optional_string_value(result.get("match_excerpt")),
     }
 
 
@@ -446,9 +493,7 @@ def _normalize_candidate_company_discovery_result(
         "candidate_id": _normalize_string_value(result.get("candidate_id")),
         "person_id": _normalize_string_value(result.get("person_id")),
         "full_name": _normalize_optional_string_value(result.get("full_name")),
-        "current_title": _normalize_optional_string_value(
-            result.get("current_title")
-        ),
+        "current_title": _normalize_optional_string_value(result.get("current_title")),
         "candidate_status": _normalize_optional_string_value(
             result.get("candidate_status")
         ),
@@ -469,9 +514,7 @@ def _normalize_candidate_company_discovery_result(
             result.get("company_match_source")
         ),
         "company_match_score": float(result.get("company_match_score") or 0.0),
-        "match_excerpt": _normalize_optional_string_value(
-            result.get("match_excerpt")
-        ),
+        "match_excerpt": _normalize_optional_string_value(result.get("match_excerpt")),
     }
 
 
@@ -535,15 +578,9 @@ def _normalize_company_contact_discovery_result(
         "contact_id": _normalize_string_value(result.get("contact_id")),
         "person_id": _normalize_string_value(result.get("person_id")),
         "full_name": _normalize_optional_string_value(result.get("full_name")),
-        "primary_email": _normalize_optional_string_value(
-            result.get("primary_email")
-        ),
-        "primary_phone": _normalize_optional_string_value(
-            result.get("primary_phone")
-        ),
-        "linkedin_url": _normalize_optional_string_value(
-            result.get("linkedin_url")
-        ),
+        "primary_email": _normalize_optional_string_value(result.get("primary_email")),
+        "primary_phone": _normalize_optional_string_value(result.get("primary_phone")),
+        "linkedin_url": _normalize_optional_string_value(result.get("linkedin_url")),
         "location": _normalize_optional_string_value(result.get("location")),
         "headline": _normalize_optional_string_value(result.get("headline")),
         "company_id": _normalize_optional_string_value(result.get("company_id")),
@@ -614,16 +651,12 @@ def _normalize_company_opportunity_discovery_result(
     return {
         "opportunity_id": _normalize_string_value(result.get("opportunity_id")),
         "title": _normalize_optional_string_value(result.get("title")),
-        "smart_summary": _normalize_optional_string_value(
-            result.get("smart_summary")
-        ),
+        "smart_summary": _normalize_optional_string_value(result.get("smart_summary")),
         "stage": _normalize_optional_string_value(result.get("stage")),
         "last_contact_at": _normalize_optional_datetime_value(
             result.get("last_contact_at")
         ),
-        "next_task_at": _normalize_optional_datetime_value(
-            result.get("next_task_at")
-        ),
+        "next_task_at": _normalize_optional_datetime_value(result.get("next_task_at")),
         "value": _normalize_optional_float_value(result.get("value")),
         "company_id": _normalize_optional_string_value(result.get("company_id")),
         "company_name": _normalize_optional_string_value(result.get("company_name")),
@@ -632,12 +665,8 @@ def _normalize_company_opportunity_discovery_result(
             result.get("contact_person_id")
         ),
         "contact_name": _normalize_optional_string_value(result.get("contact_name")),
-        "contact_email": _normalize_optional_string_value(
-            result.get("contact_email")
-        ),
-        "contact_phone": _normalize_optional_string_value(
-            result.get("contact_phone")
-        ),
+        "contact_email": _normalize_optional_string_value(result.get("contact_email")),
+        "contact_phone": _normalize_optional_string_value(result.get("contact_phone")),
         "contact_role_title": _normalize_optional_string_value(
             result.get("contact_role_title")
         ),
@@ -712,6 +741,7 @@ def _normalize_optional_datetime_value(value: Any) -> str | None:
 __all__ = [
     "build_candidate_profile",
     "discover_candidates_by_company",
+    "discover_company_context",
     "discover_company_leads_for_candidate",
     "discover_contacts_by_company",
     "discover_interactions_by_company",

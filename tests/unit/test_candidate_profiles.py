@@ -54,6 +54,7 @@ from uuid import UUID
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
+    discover_company_context,
     discover_company_leads_for_candidate,
     discover_jobs_by_company,
     discover_opportunities_by_company,
@@ -86,7 +87,7 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
     #
     #   - We are not patching the original source modules directly here.
     #     `with ... as ...` is Python's context-manager form.
-    # 
+    #
     #   - In this case, it means:
     #
     #       - temporarily replace `get_candidate_profile` with a fake object
@@ -114,16 +115,21 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
     #   - The second patched helper is not given a return value on purpose.
     #     We are not interested in its output here.
     #     We only want to check whether the service tried to call it at all.
-    with patch(
-        "backend.services.candidate_profiles.get_candidate_profile",
-        return_value=None,
-    ) as mock_get_candidate_profile, patch(
-        "backend.services.candidate_profiles.attach_candidate_source_metadata",
-    ) as mock_attach_candidate_source_metadata, patch(
-        "backend.services.candidate_profiles.get_candidate_skills",
-    ) as mock_get_candidate_skills, patch(
-        "backend.services.candidate_profiles.get_candidate_recent_employment",
-    ) as mock_get_candidate_recent_employment:
+    with (
+        patch(
+            "backend.services.candidate_profiles.get_candidate_profile",
+            return_value=None,
+        ) as mock_get_candidate_profile,
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+        ) as mock_attach_candidate_source_metadata,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_skills",
+        ) as mock_get_candidate_skills,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_recent_employment",
+        ) as mock_get_candidate_recent_employment,
+    ):
         # Run the service while the two helper functions are still patched.
         #
         # Because the fake `get_candidate_profile(...)` returns `None`,
@@ -141,7 +147,9 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
     mock_get_candidate_recent_employment.assert_not_called()
 
 
-def test_build_candidate_profile_returns_combined_structure_when_candidate_exists() -> None:
+def test_build_candidate_profile_returns_combined_structure_when_candidate_exists() -> (
+    None
+):
     """
     Verify that the service returns the expected combined structure.
 
@@ -216,19 +224,24 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
         "source_category": "cross_source",
     }
 
-    with patch(
-        "backend.services.candidate_profiles.get_candidate_profile",
-        return_value=candidate,
-    ) as mock_get_candidate_profile, patch(
-        "backend.services.candidate_profiles.attach_candidate_source_metadata",
-        return_value=[enriched_candidate],
-    ) as mock_attach_candidate_source_metadata, patch(
-        "backend.services.candidate_profiles.get_candidate_skills",
-        return_value=skills,
-    ) as mock_get_candidate_skills, patch(
-        "backend.services.candidate_profiles.get_candidate_recent_employment",
-        return_value=recent_employment,
-    ) as mock_get_candidate_recent_employment:
+    with (
+        patch(
+            "backend.services.candidate_profiles.get_candidate_profile",
+            return_value=candidate,
+        ) as mock_get_candidate_profile,
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            return_value=[enriched_candidate],
+        ) as mock_attach_candidate_source_metadata,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_skills",
+            return_value=skills,
+        ) as mock_get_candidate_skills,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_recent_employment",
+            return_value=recent_employment,
+        ) as mock_get_candidate_recent_employment,
+    ):
         result = build_candidate_profile(
             "33333333-3333-3333-3333-333333333331",
         )
@@ -250,6 +263,40 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
     )
 
 
+def test_build_candidate_profile_can_skip_repeated_source_lookup() -> None:
+    candidate_id = "33333333-3333-3333-3333-333333333331"
+    candidate = {"candidate_id": candidate_id}
+
+    with (
+        patch(
+            "backend.services.candidate_profiles.get_candidate_profile",
+            return_value=candidate,
+        ),
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+        ) as mock_attach_candidate_source_metadata,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_skills",
+            return_value=[],
+        ),
+        patch(
+            "backend.services.candidate_profiles.get_candidate_recent_employment",
+            return_value=[],
+        ),
+    ):
+        result = build_candidate_profile(
+            candidate_id,
+            include_source_metadata=False,
+        )
+
+    assert result == {
+        "candidate": candidate,
+        "skills": [],
+        "recent_employment": [],
+    }
+    mock_attach_candidate_source_metadata.assert_not_called()
+
+
 def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
     """
     Verify that the same candidate ID is passed through to both helper calls.
@@ -269,26 +316,31 @@ def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
 
     candidate_id = "33333333-3333-3333-3333-333333333331"
 
-    with patch(
-        "backend.services.candidate_profiles.get_candidate_profile",
-        return_value={"candidate_id": candidate_id},
-    ) as mock_get_candidate_profile, patch(
-        "backend.services.candidate_profiles.attach_candidate_source_metadata",
-        return_value=[
-            {
-                "candidate_id": candidate_id,
-                "source_systems": [],
-                "source_details": [],
-                "source_category": "unknown",
-            }
-        ],
-    ) as mock_attach_candidate_source_metadata, patch(
-        "backend.services.candidate_profiles.get_candidate_skills",
-        return_value=[],
-    ) as mock_get_candidate_skills, patch(
-        "backend.services.candidate_profiles.get_candidate_recent_employment",
-        return_value=[],
-    ) as mock_get_candidate_recent_employment:
+    with (
+        patch(
+            "backend.services.candidate_profiles.get_candidate_profile",
+            return_value={"candidate_id": candidate_id},
+        ) as mock_get_candidate_profile,
+        patch(
+            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            return_value=[
+                {
+                    "candidate_id": candidate_id,
+                    "source_systems": [],
+                    "source_details": [],
+                    "source_category": "unknown",
+                }
+            ],
+        ) as mock_attach_candidate_source_metadata,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_skills",
+            return_value=[],
+        ) as mock_get_candidate_skills,
+        patch(
+            "backend.services.candidate_profiles.get_candidate_recent_employment",
+            return_value=[],
+        ) as mock_get_candidate_recent_employment,
+    ):
         build_candidate_profile(candidate_id)
 
     mock_get_candidate_profile.assert_called_once_with(candidate_id)
@@ -335,24 +387,24 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
         patch(
             "backend.services.candidate_profiles.attach_candidate_source_metadata",
             return_value=[
-                    {
-                        **raw_result,
-                        "source_systems": ["dropbox", "linkedin_helper"],
-                        "source_details": [
-                            {
-                                "source_system": "dropbox",
-                                "latest_record_received_at": datetime(
-                                    2026, 6, 10, 9, 0, tzinfo=UTC
-                                ),
-                            },
-                            {
-                                "source_system": "linkedin_helper",
-                                "latest_record_received_at": datetime(
-                                    2026, 7, 20, 14, 30, tzinfo=UTC
-                                ),
-                            },
-                        ],
-                        "source_category": "cross_source",
+                {
+                    **raw_result,
+                    "source_systems": ["dropbox", "linkedin_helper"],
+                    "source_details": [
+                        {
+                            "source_system": "dropbox",
+                            "latest_record_received_at": datetime(
+                                2026, 6, 10, 9, 0, tzinfo=UTC
+                            ),
+                        },
+                        {
+                            "source_system": "linkedin_helper",
+                            "latest_record_received_at": datetime(
+                                2026, 7, 20, 14, 30, tzinfo=UTC
+                            ),
+                        },
+                    ],
+                    "source_category": "cross_source",
                 }
             ],
         ),
@@ -651,7 +703,86 @@ def test_discover_opportunities_by_company_normalizes_raw_rows() -> None:
     )
 
 
-def test_discover_company_leads_for_candidate_returns_none_when_candidate_is_missing() -> None:
+def test_discover_company_context_composes_requested_sections_once() -> None:
+    section_payloads = {
+        "candidates": [{"candidate_id": "candidate-1"}],
+        "contacts": [{"contact_id": "contact-1"}],
+        "interactions": [{"interaction_id": "interaction-1"}],
+        "jobs": [{"job_id": "job-1"}],
+    }
+
+    with (
+        patch(
+            "backend.services.candidate_profiles.discover_candidates_by_company",
+            return_value={"results": section_payloads["candidates"]},
+        ) as mock_candidates,
+        patch(
+            "backend.services.candidate_profiles.discover_contacts_by_company",
+            return_value={"results": section_payloads["contacts"]},
+        ) as mock_contacts,
+        patch(
+            "backend.services.candidate_profiles.discover_interactions_by_company",
+            return_value={"results": section_payloads["interactions"]},
+        ) as mock_interactions,
+        patch(
+            "backend.services.candidate_profiles.discover_jobs_by_company",
+            return_value={"results": section_payloads["jobs"]},
+        ) as mock_jobs,
+        patch(
+            "backend.services.candidate_profiles.discover_opportunities_by_company",
+        ) as mock_opportunities,
+    ):
+        result = discover_company_context(
+            company_name=" Shared Employer ",
+            limit=5,
+            include_opportunities=False,
+        )
+
+    assert result == {
+        "company_name": "Shared Employer",
+        "limit": 5,
+        **section_payloads,
+        "opportunities": [],
+    }
+    for mock_section in (
+        mock_candidates,
+        mock_contacts,
+        mock_interactions,
+        mock_jobs,
+    ):
+        mock_section.assert_called_once_with(company_name="Shared Employer", limit=5)
+    mock_opportunities.assert_not_called()
+
+
+def test_discover_company_context_skips_candidate_query_for_graph_evidence() -> None:
+    with patch(
+        "backend.services.candidate_profiles.discover_candidates_by_company",
+    ) as mock_candidates, patch(
+        "backend.services.candidate_profiles.discover_contacts_by_company",
+        return_value={"results": []},
+    ), patch(
+        "backend.services.candidate_profiles.discover_interactions_by_company",
+        return_value={"results": []},
+    ), patch(
+        "backend.services.candidate_profiles.discover_jobs_by_company",
+        return_value={"results": []},
+    ), patch(
+        "backend.services.candidate_profiles.discover_opportunities_by_company",
+        return_value={"results": []},
+    ):
+        result = discover_company_context(
+            company_name="Shared Employer",
+            limit=3,
+            include_candidates=False,
+        )
+
+    assert result["candidates"] == []
+    mock_candidates.assert_not_called()
+
+
+def test_discover_company_leads_for_candidate_returns_none_when_candidate_is_missing() -> (
+    None
+):
     """
     Verify that candidate-first lead discovery stops when the candidate is missing.
     """
@@ -675,59 +806,82 @@ def test_discover_company_leads_for_candidate_composes_company_views() -> None:
     Verify that candidate-first lead discovery combines candidate, skills, and company evidence.
     """
 
-    with patch(
-        "backend.services.candidate_profiles.build_candidate_profile",
-        return_value={
-            "candidate": {
-                "candidate_id": "candidate-1",
-                "person_id": "person-1",
-                "full_name": "Sarah Jones",
-                "current_company_name": "Other Employer",
+    with (
+        patch(
+            "backend.services.candidate_profiles.build_candidate_profile",
+            return_value={
+                "candidate": {
+                    "candidate_id": "candidate-1",
+                    "person_id": "person-1",
+                    "full_name": "Sarah Jones",
+                    "current_company_name": "Other Employer",
+                },
+                "skills": [
+                    {
+                        "candidate_id": "candidate-1",
+                        "skill_id": "skill-1",
+                        "skill_name": "Python",
+                        "canonical_name": "python",
+                    },
+                    {
+                        "candidate_id": "candidate-1",
+                        "skill_id": "skill-2",
+                        "skill_name": "Python",
+                        "canonical_name": "python",
+                    },
+                    {
+                        "candidate_id": "candidate-1",
+                        "skill_id": "skill-3",
+                        "skill_name": "SQL",
+                        "canonical_name": "sql",
+                    },
+                ],
             },
-            "skills": [
-                {
-                    "candidate_id": "candidate-1",
-                    "skill_id": "skill-1",
-                    "skill_name": "Python",
-                    "canonical_name": "python",
-                },
-                {
-                    "candidate_id": "candidate-1",
-                    "skill_id": "skill-2",
-                    "skill_name": "Python",
-                    "canonical_name": "python",
-                },
-                {
-                    "candidate_id": "candidate-1",
-                    "skill_id": "skill-3",
-                    "skill_name": "SQL",
-                    "canonical_name": "sql",
-                },
-            ],
-        },
-    ) as mock_build_candidate_profile, patch(
-        "backend.services.candidate_profiles.discover_contacts_by_company",
-        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"contact_id": "contact-1"}]},
-    ) as mock_discover_contacts_by_company, patch(
-        "backend.services.candidate_profiles.discover_interactions_by_company",
-        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"interaction_id": "interaction-1"}]},
-    ) as mock_discover_interactions_by_company, patch(
-        "backend.services.candidate_profiles.discover_jobs_by_company",
-        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"job_id": "job-1"}]},
-    ) as mock_discover_jobs_by_company, patch(
-        "backend.services.candidate_profiles.discover_opportunities_by_company",
-        return_value={"company_name": "Acme Hiring Ltd", "limit": 5, "results": [{"opportunity_id": "opp-1"}]},
-    ) as mock_discover_opportunities_by_company, patch(
-        "backend.services.candidate_profiles.discover_candidates_by_company",
-        return_value={
-            "company_name": "Acme Hiring Ltd",
-            "limit": 6,
-            "results": [
-                {"candidate_id": "candidate-1"},
-                {"candidate_id": "candidate-2"},
-            ],
-        },
-    ) as mock_discover_candidates_by_company:
+        ) as mock_build_candidate_profile,
+        patch(
+            "backend.services.candidate_profiles.discover_contacts_by_company",
+            return_value={
+                "company_name": "Acme Hiring Ltd",
+                "limit": 5,
+                "results": [{"contact_id": "contact-1"}],
+            },
+        ) as mock_discover_contacts_by_company,
+        patch(
+            "backend.services.candidate_profiles.discover_interactions_by_company",
+            return_value={
+                "company_name": "Acme Hiring Ltd",
+                "limit": 5,
+                "results": [{"interaction_id": "interaction-1"}],
+            },
+        ) as mock_discover_interactions_by_company,
+        patch(
+            "backend.services.candidate_profiles.discover_jobs_by_company",
+            return_value={
+                "company_name": "Acme Hiring Ltd",
+                "limit": 5,
+                "results": [{"job_id": "job-1"}],
+            },
+        ) as mock_discover_jobs_by_company,
+        patch(
+            "backend.services.candidate_profiles.discover_opportunities_by_company",
+            return_value={
+                "company_name": "Acme Hiring Ltd",
+                "limit": 5,
+                "results": [{"opportunity_id": "opp-1"}],
+            },
+        ) as mock_discover_opportunities_by_company,
+        patch(
+            "backend.services.candidate_profiles.discover_candidates_by_company",
+            return_value={
+                "company_name": "Acme Hiring Ltd",
+                "limit": 6,
+                "results": [
+                    {"candidate_id": "candidate-1"},
+                    {"candidate_id": "candidate-2"},
+                ],
+            },
+        ) as mock_discover_candidates_by_company,
+    ):
         result = discover_company_leads_for_candidate(
             candidate_id="candidate-1",
             company_name=" Acme Hiring Ltd ",

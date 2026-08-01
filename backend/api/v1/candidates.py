@@ -58,6 +58,7 @@ from backend.schemas.candidates import (
     CandidateShortlistShareResponse,
     CompanyDirectoryResponse,
     CompanyContactDiscoveryResponse,
+    CompanyContextDiscoveryResponse,
     CompanyInteractionDiscoveryResponse,
     CompanyJobDiscoveryResponse,
     CompanyOpportunityDiscoveryResponse,
@@ -77,6 +78,7 @@ from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
     discover_company_leads_for_candidate,
+    discover_company_context,
     discover_contacts_by_company,
     discover_interactions_by_company,
     discover_jobs_by_company,
@@ -123,7 +125,7 @@ def _build_content_disposition(disposition_type: str, file_name: str) -> str:
 
     normalized_name = file_name.replace("\r", "_").replace("\n", "_")
     ascii_name = normalized_name.encode("ascii", "ignore").decode("ascii")
-    ascii_name = re.sub(r'[^A-Za-z0-9._ ()\-]', "_", ascii_name).strip()
+    ascii_name = re.sub(r"[^A-Za-z0-9._ ()\-]", "_", ascii_name).strip()
     ascii_name = ascii_name[:180] or "resume"
     header_value = f'{disposition_type}; filename="{ascii_name}"'
 
@@ -215,6 +217,7 @@ def get_company_directory_route() -> CompanyDirectoryResponse:
     """
 
     return CompanyDirectoryResponse(**list_company_directory())
+
 
 # Register a GET endpoint on this router
 #   - `"/{candidate_id}/profile"` means the route expects a path value such as:
@@ -592,6 +595,50 @@ def discover_opportunities_by_company_route(
 
 
 @router.get(
+    "/discover-company-context",
+    response_model=CompanyContextDiscoveryResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Company context query was invalid.",
+        }
+    },
+)
+def discover_company_context_route(
+    company_name: str = Query(
+        description="Company name used for the consolidated recruiter lookup.",
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of rows to return for each section.",
+    ),
+    include_opportunities: bool = Query(
+        default=True,
+        description="Whether to include opportunity rows in the response.",
+    ),
+) -> CompanyContextDiscoveryResponse | JSONResponse:
+    """Return candidates and linked company evidence in one HTTP response."""
+
+    normalized_company_name = company_name.strip()
+    if normalized_company_name == "":
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Company context query must not be blank.",
+            details=[{"company_name": company_name}],
+        )
+
+    result = discover_company_context(
+        company_name=normalized_company_name,
+        limit=limit,
+        include_opportunities=include_opportunities,
+    )
+    return CompanyContextDiscoveryResponse(**result)
+
+
+@router.get(
     "/{candidate_id}/discover-company-leads",
     response_model=CandidateCompanyLeadDiscoveryResponse,
     responses={
@@ -897,8 +944,7 @@ def export_candidate_shortlist_route(
             role_title=request.role_title,
             job_description=request.job_description,
             shortlisted_candidates=[
-                candidate.model_dump()
-                for candidate in request.shortlisted_candidates
+                candidate.model_dump() for candidate in request.shortlisted_candidates
             ],
         )
     except Exception as exc:
@@ -967,8 +1013,7 @@ def create_candidate_shortlist_share_route(
             role_title=request.role_title,
             job_description=request.job_description,
             shortlisted_candidates=[
-                candidate.model_dump()
-                for candidate in request.shortlisted_candidates
+                candidate.model_dump() for candidate in request.shortlisted_candidates
             ],
             expires_in_days=request.expires_in_days,
         )
@@ -1361,9 +1406,7 @@ def save_candidate_match_feedback_route(
             match_run_id=str(request.match_run_id),
             candidate_id=str(request.candidate_id),
             document_id=(
-                str(request.document_id)
-                if request.document_id is not None
-                else None
+                str(request.document_id) if request.document_id is not None else None
             ),
             reviewer_user_id=normalized_user_id,
             reviewer_email=workspace_user_email,

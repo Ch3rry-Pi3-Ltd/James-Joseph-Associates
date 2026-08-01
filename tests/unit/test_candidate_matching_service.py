@@ -138,10 +138,32 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
         "search_candidates_hybrid",
         lambda **kwargs: retrieved_candidates,
     )
-    monkeypatch.setattr(
-        candidate_matching,
-        "_attach_graph_evidence_to_candidates",
-        lambda candidates, **kwargs: [
+
+    source_metadata_calls = 0
+
+    def fake_attach_candidate_source_metadata(
+        candidates: list[dict[str, object]],
+    ) -> list[dict[str, object]]:
+        nonlocal source_metadata_calls
+        source_metadata_calls += 1
+        return [
+            {
+                **candidate,
+                "source_systems": ["dropbox", "linkedin_helper"],
+                "source_category": "cross_source",
+            }
+            for candidate in candidates
+        ]
+
+    def fake_attach_graph_evidence(
+        candidates: list[dict[str, object]],
+        **kwargs: object,
+    ) -> list[dict[str, object]]:
+        assert all(
+            candidate.get("source_category") == "cross_source"
+            for candidate in candidates
+        )
+        return [
             {
                 **candidate,
                 "graph_evidence": {
@@ -159,19 +181,17 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
                 },
             }
             for candidate in candidates
-        ],
+        ]
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "_attach_graph_evidence_to_candidates",
+        fake_attach_graph_evidence,
     )
     monkeypatch.setattr(
         candidate_matching,
         "attach_candidate_source_metadata",
-        lambda candidates: [
-            {
-                **candidate,
-                "source_systems": ["dropbox", "linkedin_helper"],
-                "source_category": "cross_source",
-            }
-            for candidate in candidates
-        ],
+        fake_attach_candidate_source_metadata,
     )
     monkeypatch.setattr(
         candidate_matching,
@@ -223,6 +243,7 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["ranking_input_score"] == 0.7
     assert result["shortlisted_candidates"][0]["source_category"] == "cross_source"
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
+    assert source_metadata_calls == 1
 
 
 def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_fields(
@@ -341,7 +362,9 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
             "latest_record_received_at": resume_updated_at.isoformat(),
         }
     ]
-    assert shortlisted["graph_evidence"]["last_seen_at"] == resume_updated_at.isoformat()
+    assert (
+        shortlisted["graph_evidence"]["last_seen_at"] == resume_updated_at.isoformat()
+    )
     assert shortlisted["source_category"] == "cv_backed"
 
 
@@ -351,7 +374,7 @@ def test_build_candidate_graph_evidence_composes_company_context(
     monkeypatch.setattr(
         candidate_matching,
         "build_candidate_profile",
-        lambda candidate_id: {
+        lambda candidate_id, **kwargs: {
             "candidate": {
                 "candidate_id": candidate_id,
                 "current_company_name": "Acme Hiring Ltd",
@@ -380,23 +403,13 @@ def test_build_candidate_graph_evidence_composes_company_context(
     )
     monkeypatch.setattr(
         candidate_matching,
-        "discover_contacts_by_company",
-        lambda **kwargs: {"results": [{"contact_id": "contact-1"}]},
-    )
-    monkeypatch.setattr(
-        candidate_matching,
-        "discover_interactions_by_company",
-        lambda **kwargs: {"results": [{"interaction_id": "interaction-1"}]},
-    )
-    monkeypatch.setattr(
-        candidate_matching,
-        "discover_jobs_by_company",
-        lambda **kwargs: {"results": [{"job_id": "job-1"}]},
-    )
-    monkeypatch.setattr(
-        candidate_matching,
-        "discover_opportunities_by_company",
-        lambda **kwargs: {"results": [{"opportunity_id": "opp-1"}]},
+        "discover_company_context",
+        lambda **kwargs: {
+            "contacts": [{"contact_id": "contact-1"}],
+            "interactions": [{"interaction_id": "interaction-1"}],
+            "jobs": [{"job_id": "job-1"}],
+            "opportunities": [{"opportunity_id": "opp-1"}],
+        },
     )
 
     result = candidate_matching._build_candidate_graph_evidence(
@@ -490,13 +503,74 @@ def test_score_candidates_with_graph_context_adds_conservative_boost() -> None:
     assert result[1]["ranking_input_score"] == 0.6375
 
 
+def test_attach_graph_evidence_reuses_context_for_shared_company(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile_calls: list[tuple[str, bool]] = []
+    context_calls: list[dict[str, object]] = []
+
+    def fake_build_candidate_profile(
+        candidate_id: str,
+        *,
+        include_source_metadata: bool = True,
+    ) -> dict[str, object]:
+        profile_calls.append((candidate_id, include_source_metadata))
+        return {
+            "candidate": {
+                "candidate_id": candidate_id,
+                "current_company_name": "Shared Employer",
+            },
+            "skills": [],
+            "recent_employment": [],
+        }
+
+    def fake_discover_company_context(**kwargs: object) -> dict[str, object]:
+        context_calls.append(kwargs)
+        return {
+            "contacts": [],
+            "interactions": [],
+            "jobs": [],
+            "opportunities": [],
+        }
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "build_candidate_profile",
+        fake_build_candidate_profile,
+    )
+    monkeypatch.setattr(
+        candidate_matching,
+        "discover_company_context",
+        fake_discover_company_context,
+    )
+
+    result = candidate_matching._attach_graph_evidence_to_candidates(
+        [
+            {"candidate_id": "cand-1", "current_company_name": "Shared Employer"},
+            {"candidate_id": "cand-2", "current_company_name": "shared employer"},
+        ],
+        per_candidate_limit=3,
+    )
+
+    assert len(result) == 2
+    assert profile_calls == [("cand-1", False), ("cand-2", False)]
+    assert context_calls == [
+        {
+            "company_name": "Shared Employer",
+            "limit": 3,
+            "include_candidates": False,
+            "include_opportunities": True,
+        }
+    ]
+
+
 def test_build_candidate_graph_evidence_keeps_profile_only_evidence_without_company(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
         candidate_matching,
         "build_candidate_profile",
-        lambda candidate_id: {
+        lambda candidate_id, **kwargs: {
             "candidate": {
                 "candidate_id": candidate_id,
                 "current_title": "Quantitative Developer",
@@ -517,7 +591,7 @@ def test_build_candidate_graph_evidence_keeps_profile_only_evidence_without_comp
 
     monkeypatch.setattr(
         candidate_matching,
-        "discover_contacts_by_company",
+        "discover_company_context",
         fail_company_lookup,
     )
 

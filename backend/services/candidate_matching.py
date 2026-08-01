@@ -28,10 +28,7 @@ from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.services.candidate_profiles import (
     build_candidate_profile,
-    discover_contacts_by_company,
-    discover_interactions_by_company,
-    discover_jobs_by_company,
-    discover_opportunities_by_company,
+    discover_company_context,
 )
 from backend.services.candidate_retrieval import search_candidates_hybrid
 from backend.services.candidate_source_metadata import (
@@ -137,6 +134,10 @@ def build_candidate_job_description_shortlist(
             "shortlisted_candidates": [],
         }
 
+    # Provenance is one batched read for the whole retrieval pool. Graph
+    # profile assembly reuses it instead of issuing another source lookup per
+    # candidate and then repeating the batch after ranking.
+    retrieved_candidates = attach_candidate_source_metadata(retrieved_candidates)
     retrieved_candidates = _attach_graph_evidence_to_candidates(
         retrieved_candidates,
         per_candidate_limit=3,
@@ -149,7 +150,6 @@ def build_candidate_job_description_shortlist(
         shortlist_limit=bounded_shortlist_limit,
     )
 
-    retrieved_candidates = attach_candidate_source_metadata(retrieved_candidates)
     candidates_by_id = {
         str(candidate["candidate_id"]): candidate for candidate in retrieved_candidates
     }
@@ -181,9 +181,7 @@ def build_candidate_job_description_shortlist(
                 "resume_updated_at": _json_safe_value(
                     matched_candidate.get("resume_updated_at")
                 ),
-                "document_id": _json_safe_value(
-                    matched_candidate.get("document_id")
-                ),
+                "document_id": _json_safe_value(matched_candidate.get("document_id")),
                 "document_title": _json_safe_value(
                     matched_candidate.get("document_title")
                 ),
@@ -201,9 +199,7 @@ def build_candidate_job_description_shortlist(
                 "text_score": float(matched_candidate.get("text_score") or 0.0)
                 if matched_candidate.get("text_score") is not None
                 else None,
-                "semantic_score": float(
-                    matched_candidate.get("semantic_score") or 0.0
-                )
+                "semantic_score": float(matched_candidate.get("semantic_score") or 0.0)
                 if matched_candidate.get("semantic_score") is not None
                 else None,
                 "semantic_block_type": _json_safe_value(
@@ -231,7 +227,9 @@ def build_candidate_job_description_shortlist(
                 "fit_summary": assessment.fit_summary,
                 "strengths": list(assessment.strengths),
                 "gaps": list(assessment.gaps),
-                "match_excerpt": _json_safe_value(matched_candidate.get("match_excerpt")),
+                "match_excerpt": _json_safe_value(
+                    matched_candidate.get("match_excerpt")
+                ),
                 "graph_evidence": _json_safe_value(
                     matched_candidate.get("graph_evidence")
                 ),
@@ -282,15 +280,11 @@ def _rank_retrieved_candidates_for_job_description(
             "candidate_id": _json_safe_value(candidate["candidate_id"]),
             "full_name": _json_safe_value(candidate.get("full_name")),
             "current_title": _json_safe_value(candidate.get("current_title")),
-            "candidate_status": _json_safe_value(
-                candidate.get("candidate_status")
-            ),
+            "candidate_status": _json_safe_value(candidate.get("candidate_status")),
             "current_company_name": _json_safe_value(
                 candidate.get("current_company_name")
             ),
-            "resume_updated_at": _json_safe_value(
-                candidate.get("resume_updated_at")
-            ),
+            "resume_updated_at": _json_safe_value(candidate.get("resume_updated_at")),
             "document_title": _json_safe_value(candidate.get("document_title")),
             "retrieval_score": _json_safe_value(candidate.get("match_score")),
             "retrieval_sources": _json_safe_value(
@@ -379,10 +373,7 @@ def _json_safe_value(value: Any) -> Any:
     if isinstance(value, date):
         return value.isoformat()
     if isinstance(value, dict):
-        return {
-            str(key): _json_safe_value(item)
-            for key, item in value.items()
-        }
+        return {str(key): _json_safe_value(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_json_safe_value(item) for item in value]
     return value
@@ -405,12 +396,14 @@ def _attach_graph_evidence_to_candidates(
 
     enriched_candidates: list[dict[str, Any]] = []
     bounded_limit = max(1, min(int(per_candidate_limit), 10))
+    company_context_cache: dict[str, dict[str, Any]] = {}
 
     for candidate in candidates:
         candidate_copy = dict(candidate)
         candidate_copy["graph_evidence"] = _build_candidate_graph_evidence(
             candidate_copy,
             per_candidate_limit=bounded_limit,
+            company_context_cache=company_context_cache,
         )
         enriched_candidates.append(candidate_copy)
 
@@ -459,13 +452,17 @@ def _build_candidate_graph_evidence(
     candidate: dict[str, Any],
     *,
     per_candidate_limit: int = 3,
+    company_context_cache: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Build one bounded evidence bundle for a retrieved candidate.
     """
 
     candidate_id = str(candidate["candidate_id"])
-    profile = build_candidate_profile(candidate_id)
+    profile = build_candidate_profile(
+        candidate_id,
+        include_source_metadata=False,
+    )
     if profile is None:
         return {
             "candidate_id": candidate_id,
@@ -538,22 +535,26 @@ def _build_candidate_graph_evidence(
     if current_company_name == "":
         return evidence
 
-    contacts = discover_contacts_by_company(
-        company_name=current_company_name,
-        limit=per_candidate_limit,
-    )["results"]
-    interactions = discover_interactions_by_company(
-        company_name=current_company_name,
-        limit=per_candidate_limit,
-    )["results"]
-    jobs = discover_jobs_by_company(
-        company_name=current_company_name,
-        limit=per_candidate_limit,
-    )["results"]
-    opportunities = discover_opportunities_by_company(
-        company_name=current_company_name,
-        limit=per_candidate_limit,
-    )["results"]
+    cache_key = current_company_name.casefold()
+    company_context = (
+        company_context_cache.get(cache_key)
+        if company_context_cache is not None
+        else None
+    )
+    if company_context is None:
+        company_context = discover_company_context(
+            company_name=current_company_name,
+            limit=per_candidate_limit,
+            include_candidates=False,
+            include_opportunities=True,
+        )
+        if company_context_cache is not None:
+            company_context_cache[cache_key] = company_context
+
+    contacts = list(company_context["contacts"])
+    interactions = list(company_context["interactions"])
+    jobs = list(company_context["jobs"])
+    opportunities = list(company_context["opportunities"])
 
     evidence["contacts_count"] = len(contacts)
     evidence["interactions_count"] = len(interactions)
@@ -599,14 +600,9 @@ def _extract_skill_names(skills: list[dict[str, Any]]) -> list[str]:
     seen_skill_names: set[str] = set()
 
     for skill in skills:
-        skill_name = (
-            str(
-                skill.get("canonical_name")
-                or skill.get("skill_name")
-                or ""
-            )
-            .strip()
-        )
+        skill_name = str(
+            skill.get("canonical_name") or skill.get("skill_name") or ""
+        ).strip()
         if skill_name == "":
             continue
         normalized_skill_name = skill_name.lower()
