@@ -113,6 +113,16 @@ def test_candidate_profile_route_returns_combined_profile() -> None:
                 "evidence_text": "Python mentioned in CV and job history.",
             }
         ],
+        "recent_employment": [
+            {
+                "employment_role_id": "role-1",
+                "company_name": "Acme Hiring Ltd",
+                "role_title": "Senior Data Engineer",
+                "start_date": "2024-01-01",
+                "end_date": None,
+                "is_current": True,
+            }
+        ],
     }
 
     # Patch the helper name as `backend.api.v1.candidates` sees it

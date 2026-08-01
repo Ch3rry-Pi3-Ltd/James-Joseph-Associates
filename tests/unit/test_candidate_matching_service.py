@@ -353,6 +353,17 @@ def test_build_candidate_graph_evidence_composes_company_context(
                 {"canonical_name": "sql"},
                 {"canonical_name": "python"},
             ],
+            "recent_employment": [
+                {
+                    "employment_role_id": "role-1",
+                    "company_id": "company-1",
+                    "company_name": "Acme Hiring Ltd",
+                    "role_title": "Senior Data Engineer",
+                    "start_date": "2024-01-01",
+                    "end_date": None,
+                    "is_current": True,
+                }
+            ],
         },
     )
     monkeypatch.setattr(
@@ -390,6 +401,17 @@ def test_build_candidate_graph_evidence_composes_company_context(
         "skill_names": ["python", "sql"],
         "evidence_kind": "structured_profile_only",
         "has_resume_document": False,
+        "recent_employment": [
+            {
+                "employment_role_id": "role-1",
+                "company_id": "company-1",
+                "company_name": "Acme Hiring Ltd",
+                "role_title": "Senior Data Engineer",
+                "start_date": "2024-01-01",
+                "end_date": None,
+                "is_current": True,
+            }
+        ],
         "profile_evidence": {
             "current_title": "Senior Data Engineer",
             "headline": "Data engineering leader",
@@ -397,6 +419,17 @@ def test_build_candidate_graph_evidence_composes_company_context(
             "location": "London",
             "current_company_name": "Acme Hiring Ltd",
             "skill_names": ["python", "sql"],
+            "recent_employment": [
+                {
+                    "employment_role_id": "role-1",
+                    "company_id": "company-1",
+                    "company_name": "Acme Hiring Ltd",
+                    "role_title": "Senior Data Engineer",
+                    "start_date": "2024-01-01",
+                    "end_date": None,
+                    "is_current": True,
+                }
+            ],
         },
         "contacts_count": 1,
         "interactions_count": 1,

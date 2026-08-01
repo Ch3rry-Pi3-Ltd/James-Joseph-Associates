@@ -471,6 +471,7 @@ def _build_candidate_graph_evidence(
             "evidence_kind": _candidate_evidence_kind(candidate),
             "has_resume_document": bool(candidate.get("document_id")),
             "profile_evidence": {},
+            "recent_employment": [],
             "contacts_count": 0,
             "interactions_count": 0,
             "jobs_count": 0,
@@ -485,6 +486,7 @@ def _build_candidate_graph_evidence(
     skill_names = _extract_skill_names(profile.get("skills") or [])[
         :_PROFILE_SKILL_LIMIT
     ]
+    recent_employment = list(profile.get("recent_employment") or [])[:5]
     current_company_name = (
         candidate.get("current_company_name")
         or profile_candidate.get("current_company_name")
@@ -497,6 +499,7 @@ def _build_candidate_graph_evidence(
         "skill_names": skill_names,
         "evidence_kind": _candidate_evidence_kind(candidate),
         "has_resume_document": bool(candidate.get("document_id")),
+        "recent_employment": recent_employment,
         "profile_evidence": {
             "current_title": _bounded_optional_text(
                 candidate.get("current_title")
@@ -517,6 +520,7 @@ def _build_candidate_graph_evidence(
             ),
             "current_company_name": current_company_name or None,
             "skill_names": skill_names,
+            "recent_employment": recent_employment,
         },
         "contacts_count": 0,
         "interactions_count": 0,

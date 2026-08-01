@@ -35,6 +35,7 @@ from typing import Any
 
 from backend.db.candidates import (
     get_candidate_profile,
+    get_candidate_recent_employment,
     search_candidates_by_company_name,
 )
 from backend.db.companies import list_canonical_company_names
@@ -115,10 +116,12 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
         return None
 
     skills = get_candidate_skills(candidate_id)
+    recent_employment = get_candidate_recent_employment(candidate_id)
 
     return {
         "candidate": candidate,
         "skills": skills,
+        "recent_employment": recent_employment,
     }
 
 

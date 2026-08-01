@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import { CandidateComparison } from "./candidate-comparison";
+
 type RetrievalEvidence = {
   retrieval_sources: string[];
   text_rank: number | null;
@@ -232,6 +234,7 @@ type CandidateJobDescriptionShortlistItem = {
     candidate_id: string;
     current_company_name: string | null;
     skill_names: string[];
+    recent_employment?: CandidateEmploymentRole[];
     contacts_count: number;
     interactions_count: number;
     jobs_count: number;
@@ -337,6 +340,16 @@ type CandidateProfileSkill = {
   evidence_text: string | null;
 };
 
+type CandidateEmploymentRole = {
+  employment_role_id?: string | null;
+  company_id?: string | null;
+  company_name: string | null;
+  role_title: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+};
+
 type CandidateProfileCandidate = {
   candidate_id: string;
   person_id: string;
@@ -363,6 +376,7 @@ type CandidateProfileCandidate = {
 type CandidateProfileResponse = {
   candidate: CandidateProfileCandidate;
   skills: CandidateProfileSkill[];
+  recent_employment: CandidateEmploymentRole[];
 };
 
 type RunMode = "search" | "shortlist" | null;
@@ -571,6 +585,39 @@ function formatTimestamp(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatEmploymentPeriod(role: CandidateEmploymentRole): string {
+  const formatDate = (value: string | null): string | null => {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat("en-GB", {
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(parsed);
+  };
+
+  const start = formatDate(role.start_date);
+  const end = role.is_current ? "Present" : formatDate(role.end_date);
+
+  if (start && end) {
+    return `${start} – ${end}`;
+  }
+  if (start) {
+    return `From ${start}`;
+  }
+  if (end) {
+    return role.is_current ? "Current role" : `Until ${end}`;
+  }
+  return role.is_current ? "Current role" : "Dates unavailable";
 }
 
 function renderHighlightedExcerpt(excerpt: string | null): ReactNode {
@@ -3171,23 +3218,83 @@ export function CandidateMatchWorkspace() {
               ) : null}
             </div>
 
-            {previewSkillNames.length > 0 ? (
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="workspace-card-soft bg-white p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Recent employment
+                </p>
+                {previewProfile.recent_employment.length > 0 ? (
+                  <ol className="mt-3 grid gap-3">
+                    {previewProfile.recent_employment.map((role, index) => (
+                      <li
+                        key={
+                          role.employment_role_id ??
+                          `${previewProfile.candidate.candidate_id}-employment-${index}`
+                        }
+                        className="rounded-md border border-zinc-200 bg-white p-3 text-sm leading-6 text-zinc-800"
+                      >
+                        <p className="font-semibold text-zinc-950">
+                          {role.role_title ?? "Role title unavailable"}
+                        </p>
+                        <p>{role.company_name ?? "Company unavailable"}</p>
+                        <p className="text-xs text-zinc-500">
+                          {formatEmploymentPeriod(role)}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-zinc-600">
+                    No canonical employment history is linked yet. The current
+                    title and company above remain the available role evidence.
+                  </p>
+                )}
+              </div>
+
               <div className="workspace-card-soft bg-[#f8faf8] p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  Skills
+                  Skills evidence
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {previewSkillNames.map((skillName) => (
-                    <span
-                      key={skillName}
-                      className="rounded-md border border-zinc-200 px-3 py-1 text-sm text-zinc-900"
-                    >
-                      {skillName}
-                    </span>
-                  ))}
-                </div>
+                {previewSkillNames.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {previewSkillNames.map((skillName) => (
+                      <span
+                        key={skillName}
+                        className="rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm text-zinc-900"
+                      >
+                        {skillName}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-zinc-600">
+                    No structured skills are linked.
+                  </p>
+                )}
+
+                {previewProfile.skills.some((skill) => skill.evidence_text) ? (
+                  <ul className="mt-4 grid gap-3 border-t border-zinc-200 pt-4">
+                    {previewProfile.skills
+                      .filter((skill) => skill.evidence_text)
+                      .slice(0, 8)
+                      .map((skill) => (
+                        <li
+                          key={`${skill.skill_id}-evidence`}
+                          className="text-sm leading-6 text-zinc-700"
+                        >
+                          <span className="font-semibold text-zinc-950">
+                            {skill.canonical_name ??
+                              skill.skill_name ??
+                              "Skill"}
+                            :{" "}
+                          </span>
+                          {skill.evidence_text}
+                        </li>
+                      ))}
+                  </ul>
+                ) : null}
               </div>
-            ) : null}
+            </div>
 
             {previewProfile.candidate.summary ? (
               <div className="workspace-card-soft bg-white p-4">
@@ -4035,6 +4142,8 @@ export function CandidateMatchWorkspace() {
           </div>
         ) : null}
 
+        <CandidateComparison candidates={shortlistResults} />
+
         <div className="grid gap-5">
           {shortlistResults.map((result, index) => (
             <article
@@ -4407,6 +4516,35 @@ export function CandidateMatchWorkspace() {
                             {skillName}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {(result.graph_evidence.recent_employment?.length ?? 0) > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-zinc-500">
+                        Recent employment
+                      </p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {result.graph_evidence.recent_employment
+                          ?.slice(0, 3)
+                          .map((role, roleIndex) => (
+                            <div
+                              key={
+                                role.employment_role_id ??
+                                `${result.candidate_id}-graph-employment-${roleIndex}`
+                              }
+                              className="rounded-md border border-zinc-200 bg-white p-3 text-sm leading-6 text-zinc-800"
+                            >
+                              <p className="font-semibold text-zinc-950">
+                                {role.role_title ?? "Role title unavailable"}
+                              </p>
+                              <p>{role.company_name ?? "Company unavailable"}</p>
+                              <p className="text-xs text-zinc-500">
+                                {formatEmploymentPeriod(role)}
+                              </p>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   ) : null}

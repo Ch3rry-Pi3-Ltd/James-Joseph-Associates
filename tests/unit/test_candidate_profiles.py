@@ -119,7 +119,9 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
         return_value=None,
     ) as mock_get_candidate_profile, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
-    ) as mock_get_candidate_skills:
+    ) as mock_get_candidate_skills, patch(
+        "backend.services.candidate_profiles.get_candidate_recent_employment",
+    ) as mock_get_candidate_recent_employment:
         # Run the service while the two helper functions are still patched.
         #
         # Because the fake `get_candidate_profile(...)` returns `None`,
@@ -133,6 +135,7 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
         "33333333-3333-3333-3333-333333333331",
     )
     mock_get_candidate_skills.assert_not_called()
+    mock_get_candidate_recent_employment.assert_not_called()
 
 
 def test_build_candidate_profile_returns_combined_structure_when_candidate_exists() -> None:
@@ -183,6 +186,16 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
             "evidence_text": "SQL mentioned in CV and project experience.",
         },
     ]
+    recent_employment = [
+        {
+            "employment_role_id": "role-1",
+            "company_name": "Acme Hiring Ltd",
+            "role_title": "Senior Data Engineer",
+            "start_date": "2024-01-01",
+            "end_date": None,
+            "is_current": True,
+        }
+    ]
 
     with patch(
         "backend.services.candidate_profiles.get_candidate_profile",
@@ -190,7 +203,10 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
     ) as mock_get_candidate_profile, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
         return_value=skills,
-    ) as mock_get_candidate_skills:
+    ) as mock_get_candidate_skills, patch(
+        "backend.services.candidate_profiles.get_candidate_recent_employment",
+        return_value=recent_employment,
+    ) as mock_get_candidate_recent_employment:
         result = build_candidate_profile(
             "33333333-3333-3333-3333-333333333331",
         )
@@ -198,11 +214,15 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
     assert result == {
         "candidate": candidate,
         "skills": skills,
+        "recent_employment": recent_employment,
     }
     mock_get_candidate_profile.assert_called_once_with(
         "33333333-3333-3333-3333-333333333331",
     )
     mock_get_candidate_skills.assert_called_once_with(
+        "33333333-3333-3333-3333-333333333331",
+    )
+    mock_get_candidate_recent_employment.assert_called_once_with(
         "33333333-3333-3333-3333-333333333331",
     )
 
@@ -232,11 +252,15 @@ def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
     ) as mock_get_candidate_profile, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
         return_value=[],
-    ) as mock_get_candidate_skills:
+    ) as mock_get_candidate_skills, patch(
+        "backend.services.candidate_profiles.get_candidate_recent_employment",
+        return_value=[],
+    ) as mock_get_candidate_recent_employment:
         build_candidate_profile(candidate_id)
 
     mock_get_candidate_profile.assert_called_once_with(candidate_id)
     mock_get_candidate_skills.assert_called_once_with(candidate_id)
+    mock_get_candidate_recent_employment.assert_called_once_with(candidate_id)
 
 
 def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:

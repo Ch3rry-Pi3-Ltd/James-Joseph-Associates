@@ -121,6 +121,11 @@ class CandidateProfileResponse(BaseModel):
         description="Skills linked to the candidate.",
     )
 
+    recent_employment: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Most recent canonical employment roles linked to the candidate.",
+    )
+
 
 class CandidateResumeSearchResult(BaseModel):
     """

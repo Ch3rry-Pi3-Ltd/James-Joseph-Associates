@@ -52,6 +52,7 @@ from unittest.mock import MagicMock, patch
 from backend.db.candidates import (
     get_candidate_current_resume_document,
     get_candidate_profile,
+    get_candidate_recent_employment,
     search_candidates_by_resume_text,
 )
 
@@ -250,6 +251,41 @@ def test_get_candidate_profile_executes_query_with_candidate_id() -> None:
     assert execute_kwargs == {}
     assert execute_call_args.args[1] == {
         "candidate_id": candidate_id,
+    }
+
+
+def test_get_candidate_recent_employment_returns_ordered_role_rows() -> None:
+    """Verify recent canonical employment is returned as plain dictionaries."""
+
+    mock_rows = [
+        {
+            "employment_role_id": "role-1",
+            "company_id": "company-1",
+            "company_name": "Acme Markets",
+            "role_title": "Senior Quant Developer",
+            "start_date": "2024-01-01",
+            "end_date": None,
+            "is_current": True,
+        }
+    ]
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = mock_rows
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+        result = get_candidate_recent_employment("candidate-1", limit=50)
+
+    assert result == mock_rows
+    execute_call_args = mock_cursor.execute.call_args
+    assert execute_call_args.args[1] == {
+        "candidate_id": "candidate-1",
+        "limit": 10,
     }
 
 

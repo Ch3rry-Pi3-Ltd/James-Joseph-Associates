@@ -1,10 +1,66 @@
 # Phase 1 To-Do List
 
 <details open>
-<summary><strong>Current Outstanding Program Work (24 July 2026)</strong></summary>
+<summary><strong>Current Outstanding Program Work (1 August 2026)</strong></summary>
 
 This is the trimmed engineering backlog that matters most right now, in the
 latest agreed priority order.
+
+### Current Delivery Sequence
+
+The active engineering sequence below excludes work that requires Tom's input,
+workspace-owner access, commercial decisions, or DNS control. Those items are
+kept in a separate deferred lane so they do not block independent delivery.
+
+#### Completed in this delivery
+
+- [x] Add a side-by-side shortlist candidate comparison.
+- [x] Surface clear recent-employment and structured skills evidence in the
+  comparison and candidate profile views.
+
+#### Next delivery priorities, in order
+
+- [ ] Make CV-backed, profile-only, and cross-source indicators clearer.
+- [ ] Surface source provenance and evidence freshness more clearly.
+- [ ] Make candidate contact routes easier to inspect and use.
+- [ ] Improve the presentation of strengths and gaps.
+- [ ] Add a cleaner pre-export review step.
+
+#### Following engineering priorities, in order
+
+- [ ] Instrument and improve performance across Review, Company, search, and
+  shortlist flows.
+- [ ] Remove repeated database queries and avoidable API calls.
+- [ ] Build automated regression, groundedness, stability, and sensitive-data
+  checks that do not depend on recruiter labels.
+- [ ] Finish Recruitly jobs, opportunities, and journal/note ingestion using
+  existing access.
+- [ ] Build and test the database export and restore path.
+- [ ] Harden API rate limiting, caching, Content Security Policy, and database
+  permissions.
+- [ ] Reconcile outdated documentation, environment-variable contracts, and
+  checklist statuses.
+
+#### Deferred pending Tom or another external owner
+
+- [ ] Recruiter-labelled UAT, known-strong-candidate identification, and final
+  shortlist-quality approval.
+- [ ] ChatGPT Business workspace publication and workspace-user validation.
+- [ ] LinkedHelper chat/message privacy and retention decisions.
+- [ ] Supabase ownership, billing, and future client-owned infrastructure decisions.
+- [ ] DNS-backed production domain and Clerk production-instance cutover.
+- [ ] Approval policy for any future write-capable agent or integration actions.
+
+### Delivery Reporting
+
+- [x] Create a reusable CH3RRY PI3 weekly development-report pack with:
+  - [x] commit-backed reporting-window evidence
+  - [x] verified implementation metrics and business benefits
+  - [x] explicit alignment to the North Star architecture
+  - [x] a justified next-week milestone and delivery boundary
+  - [x] branded, editable HTML and validated 3-4 page PDF output
+- [ ] Produce the report at the end of each delivery week and reconcile its
+  next milestone with this priority list.
 
 - [x] Add the conversational operator foundation:
   - [x] grounded answers over canonical candidates, companies, contacts, jobs,
@@ -56,10 +112,10 @@ latest agreed priority order.
     audit review, and incident-disable procedures.
   - [ ] Keep the initial release read-only; define a separate controlled rollout
     for explicitly approved write actions later.
-- [ ] Polish the `/match` UI for UAT:
-  - [ ] clearer instructions
-  - [ ] more intuitive flow labels
-  - [ ] more professional presentation of search, shortlist, and company evidence
+- [x] Polish the `/match` UI for UAT:
+  - [x] clearer instructions
+  - [x] more intuitive flow labels
+  - [x] more professional presentation of search, shortlist, and company evidence
 - [ ] Continue retrieval quality work:
   - [x] first four-role real-brief retrieval and shortlist benchmark
   - [x] tune profile-only evidence handling based on benchmark findings:
@@ -101,7 +157,7 @@ latest agreed priority order.
   - [ ] move long-running imports, embedding backfills, and other bulk work into
     background jobs with progress reporting, safe retries, and idempotency
   - [ ] add performance regression checks for the main operator workflows
-- [ ] Add operator output tools:
+- [x] Add operator output tools:
   - [x] downloadable Word shortlist plus retrievable CV ZIP package
   - [x] authenticated, expiring, revocable shortlist links
   - [x] private saved role briefs with retrieval settings, target-company
@@ -137,6 +193,8 @@ latest agreed priority order.
     offset 7,400 with exact audits and storage monitoring
   - [x] complete the remaining 3,462 native-backup profiles through final
     offset 10,862 with exact audits and storage monitoring
+  - [x] complete semantic coverage across the resulting searchable canonical
+    candidate corpus
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
   - [ ] webhook path if payload support is good enough

@@ -246,6 +246,52 @@ def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     return dict(row)
 
 
+def get_candidate_recent_employment(
+    candidate_id: str,
+    *,
+    limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Return the candidate's most recent canonical employment roles."""
+
+    bounded_limit = max(1, min(int(limit), 10))
+    query = """
+        select
+            pcr.id as employment_role_id,
+            pcr.company_id,
+            co.name as company_name,
+            pcr.role_title,
+            pcr.start_date,
+            pcr.end_date,
+            pcr.is_current
+        from candidates c
+        join person_company_roles pcr
+          on pcr.person_id = c.person_id
+        join companies co
+          on co.id = pcr.company_id
+        where c.id = %(candidate_id)s
+        order by
+            pcr.is_current desc,
+            coalesce(pcr.end_date, pcr.start_date) desc nulls last,
+            pcr.start_date desc nulls last,
+            pcr.created_at desc,
+            pcr.id desc
+        limit %(limit)s
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {
+                    "candidate_id": candidate_id,
+                    "limit": bounded_limit,
+                },
+            )
+            rows = cursor.fetchall()
+
+    return [dict(row) for row in rows]
+
+
 def get_candidate_current_resume_document(
     candidate_id: str,
 ) -> dict[str, Any] | None:
@@ -608,6 +654,7 @@ def search_candidates_by_company_name(
 __all__ = [
     "get_candidate_current_resume_document",
     "get_candidate_profile",
+    "get_candidate_recent_employment",
     "get_candidate_source_systems",
     "search_candidates_by_company_name",
     "search_candidates_by_resume_text",
