@@ -1,3 +1,9 @@
+import {
+  CandidateEvidenceIndicator,
+  CandidateEvidenceProvenance,
+  type CandidateSourceDetail,
+} from "../candidate-evidence-indicator";
+
 type CandidateEmploymentRole = {
   employment_role_id?: string | null;
   company_id?: string | null;
@@ -14,6 +20,11 @@ export type CandidateComparisonItem = {
   current_title: string | null;
   current_company_name: string | null;
   fit_score: number;
+  resume_updated_at: string | null;
+  document_id: string | null;
+  source_systems: string[];
+  source_details: CandidateSourceDetail[];
+  source_category: string;
   graph_evidence: {
     skill_names: string[];
     recent_employment?: CandidateEmploymentRole[];
@@ -132,11 +143,36 @@ export function CandidateComparison({
                       ? ` at ${candidate.current_company_name}`
                       : ""}
                   </span>
+                  <span className="mt-3 block">
+                    <CandidateEvidenceIndicator
+                      sourceCategory={candidate.source_category}
+                      compact
+                    />
+                  </span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <th className="sticky left-0 z-10 border-b border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                Provenance and freshness
+              </th>
+              {candidates.map((candidate) => (
+                <td
+                  key={`${candidate.candidate_id}-comparison-provenance`}
+                  className="border-b border-zinc-200 p-4 align-top"
+                >
+                  <CandidateEvidenceProvenance
+                    sourceDetails={candidate.source_details}
+                    sourceSystems={candidate.source_systems}
+                    resumeUpdatedAt={candidate.resume_updated_at}
+                    hasResumeDocument={Boolean(candidate.document_id)}
+                    compact
+                  />
+                </td>
+              ))}
+            </tr>
             <tr>
               <th className="sticky left-0 z-10 border-b border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                 Recent employment

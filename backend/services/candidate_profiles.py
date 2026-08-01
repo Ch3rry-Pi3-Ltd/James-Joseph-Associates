@@ -115,6 +115,7 @@ def build_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
     if candidate is None:
         return None
 
+    candidate = attach_candidate_source_metadata([candidate])[0]
     skills = get_candidate_skills(candidate_id)
     recent_employment = get_candidate_recent_employment(candidate_id)
 
@@ -424,6 +425,7 @@ def _normalize_candidate_resume_search_result(
         "source_systems": _normalize_string_list_value(
             result.get("source_systems")
         ),
+        "source_details": _normalize_source_details(result.get("source_details")),
         "source_category": _normalize_string_value(
             result.get("source_category") or "unknown"
         ),
@@ -661,6 +663,28 @@ def _normalize_string_list_value(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if item is not None]
     return [str(value)]
+
+
+def _normalize_source_details(value: Any) -> list[dict[str, str | None]]:
+    if not isinstance(value, list):
+        return []
+
+    normalized_details: list[dict[str, str | None]] = []
+    for detail in value:
+        if not isinstance(detail, dict):
+            continue
+        source_system = _normalize_string_value(detail.get("source_system")).strip()
+        if source_system == "":
+            continue
+        normalized_details.append(
+            {
+                "source_system": source_system,
+                "latest_record_received_at": _normalize_optional_datetime_value(
+                    detail.get("latest_record_received_at")
+                ),
+            }
+        )
+    return normalized_details
 
 
 def _normalize_optional_int_value(value: Any) -> int | None:

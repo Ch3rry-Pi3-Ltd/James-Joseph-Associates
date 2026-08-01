@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.db.candidates import get_candidate_source_systems
+from backend.db.candidates import get_candidate_source_details
 
 
 def attach_candidate_source_metadata(
@@ -22,23 +22,33 @@ def attach_candidate_source_metadata(
         for candidate in candidates
         if str(candidate.get("candidate_id") or "").strip()
     }
-    source_systems_by_candidate = get_candidate_source_systems(candidate_ids)
+    source_details_by_candidate = get_candidate_source_details(candidate_ids)
 
     enriched_candidates: list[dict[str, Any]] = []
     for candidate in candidates:
         enriched_candidate = dict(candidate)
         candidate_id = str(candidate.get("candidate_id") or "")
-        source_systems = source_systems_by_candidate.get(candidate_id, [])
+        source_details = source_details_by_candidate.get(candidate_id, [])
+        source_systems = [str(detail["source_system"]) for detail in source_details]
         enriched_candidate["source_systems"] = source_systems
+        enriched_candidate["source_details"] = source_details
         enriched_candidate["source_category"] = classify_candidate_source_category(
-            source_systems
+            source_systems,
+            has_resume_document=bool(
+                candidate.get("document_id")
+                or candidate.get("has_resume_document")
+            ),
         )
         enriched_candidates.append(enriched_candidate)
 
     return enriched_candidates
 
 
-def classify_candidate_source_category(source_systems: list[str]) -> str:
+def classify_candidate_source_category(
+    source_systems: list[str],
+    *,
+    has_resume_document: bool = False,
+) -> str:
     """Return the recruiter-facing provenance category for source systems."""
 
     normalized_systems = {
@@ -48,12 +58,12 @@ def classify_candidate_source_category(source_systems: list[str]) -> str:
     }
     has_linked_helper = "linkedin_helper" in normalized_systems
 
-    if has_linked_helper and len(normalized_systems) > 1:
+    if has_linked_helper and has_resume_document:
         return "cross_source"
-    if has_linked_helper:
-        return "linkedin_helper_only"
-    if normalized_systems:
+    if has_resume_document:
         return "cv_backed"
+    if normalized_systems:
+        return "profile_only"
     return "unknown"
 
 

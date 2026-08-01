@@ -43,6 +43,15 @@ MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_UPLOAD_BASE64_CHARACTERS = ((MAX_UPLOAD_BYTES + 2) // 3) * 4
 
 
+class CandidateSourceDetail(BaseModel):
+    """One provenance source and the latest time its record entered the system."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_system: str
+    latest_record_received_at: str | None = None
+
+
 class CandidateProfileResponse(BaseModel):
     """
     Combined candidate profile response returned by the API.
@@ -153,6 +162,7 @@ class CandidateResumeSearchResult(BaseModel):
     semantic_block_type: str | None = None
     semantic_block_label: str | None = None
     source_systems: list[str] = Field(default_factory=list)
+    source_details: list[CandidateSourceDetail] = Field(default_factory=list)
     source_category: str = "unknown"
     match_excerpt: str | None = None
 
@@ -599,6 +609,7 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     semantic_block_type: str | None = None
     semantic_block_label: str | None = None
     source_systems: list[str] = Field(default_factory=list)
+    source_details: list[CandidateSourceDetail] = Field(default_factory=list)
     source_category: str = "unknown"
     graph_context_score: float | None = None
     ranking_input_score: float | None = None

@@ -118,6 +118,8 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
         "backend.services.candidate_profiles.get_candidate_profile",
         return_value=None,
     ) as mock_get_candidate_profile, patch(
+        "backend.services.candidate_profiles.attach_candidate_source_metadata",
+    ) as mock_attach_candidate_source_metadata, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
     ) as mock_get_candidate_skills, patch(
         "backend.services.candidate_profiles.get_candidate_recent_employment",
@@ -134,6 +136,7 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
     mock_get_candidate_profile.assert_called_once_with(
         "33333333-3333-3333-3333-333333333331",
     )
+    mock_attach_candidate_source_metadata.assert_not_called()
     mock_get_candidate_skills.assert_not_called()
     mock_get_candidate_recent_employment.assert_not_called()
 
@@ -196,11 +199,30 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
             "is_current": True,
         }
     ]
+    enriched_candidate = {
+        **candidate,
+        "has_resume_document": True,
+        "source_systems": ["dropbox", "linkedin_helper"],
+        "source_details": [
+            {
+                "source_system": "dropbox",
+                "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+            },
+            {
+                "source_system": "linkedin_helper",
+                "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+            },
+        ],
+        "source_category": "cross_source",
+    }
 
     with patch(
         "backend.services.candidate_profiles.get_candidate_profile",
         return_value=candidate,
     ) as mock_get_candidate_profile, patch(
+        "backend.services.candidate_profiles.attach_candidate_source_metadata",
+        return_value=[enriched_candidate],
+    ) as mock_attach_candidate_source_metadata, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
         return_value=skills,
     ) as mock_get_candidate_skills, patch(
@@ -212,13 +234,14 @@ def test_build_candidate_profile_returns_combined_structure_when_candidate_exist
         )
 
     assert result == {
-        "candidate": candidate,
+        "candidate": enriched_candidate,
         "skills": skills,
         "recent_employment": recent_employment,
     }
     mock_get_candidate_profile.assert_called_once_with(
         "33333333-3333-3333-3333-333333333331",
     )
+    mock_attach_candidate_source_metadata.assert_called_once_with([candidate])
     mock_get_candidate_skills.assert_called_once_with(
         "33333333-3333-3333-3333-333333333331",
     )
@@ -250,6 +273,16 @@ def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
         "backend.services.candidate_profiles.get_candidate_profile",
         return_value={"candidate_id": candidate_id},
     ) as mock_get_candidate_profile, patch(
+        "backend.services.candidate_profiles.attach_candidate_source_metadata",
+        return_value=[
+            {
+                "candidate_id": candidate_id,
+                "source_systems": [],
+                "source_details": [],
+                "source_category": "unknown",
+            }
+        ],
+    ) as mock_attach_candidate_source_metadata, patch(
         "backend.services.candidate_profiles.get_candidate_skills",
         return_value=[],
     ) as mock_get_candidate_skills, patch(
@@ -259,6 +292,9 @@ def test_build_candidate_profile_passes_candidate_id_to_both_helpers() -> None:
         build_candidate_profile(candidate_id)
 
     mock_get_candidate_profile.assert_called_once_with(candidate_id)
+    mock_attach_candidate_source_metadata.assert_called_once_with(
+        [{"candidate_id": candidate_id}]
+    )
     mock_get_candidate_skills.assert_called_once_with(candidate_id)
     mock_get_candidate_recent_employment.assert_called_once_with(candidate_id)
 
@@ -299,10 +335,24 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
         patch(
             "backend.services.candidate_profiles.attach_candidate_source_metadata",
             return_value=[
-                {
-                    **raw_result,
-                    "source_systems": ["dropbox", "linkedin_helper"],
-                    "source_category": "cross_source",
+                    {
+                        **raw_result,
+                        "source_systems": ["dropbox", "linkedin_helper"],
+                        "source_details": [
+                            {
+                                "source_system": "dropbox",
+                                "latest_record_received_at": datetime(
+                                    2026, 6, 10, 9, 0, tzinfo=UTC
+                                ),
+                            },
+                            {
+                                "source_system": "linkedin_helper",
+                                "latest_record_received_at": datetime(
+                                    2026, 7, 20, 14, 30, tzinfo=UTC
+                                ),
+                            },
+                        ],
+                        "source_category": "cross_source",
                 }
             ],
         ),
@@ -336,6 +386,16 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
                 "semantic_block_type": "skills",
                 "semantic_block_label": "Core skills",
                 "source_systems": ["dropbox", "linkedin_helper"],
+                "source_details": [
+                    {
+                        "source_system": "dropbox",
+                        "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                    },
+                    {
+                        "source_system": "linkedin_helper",
+                        "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+                    },
+                ],
                 "source_category": "cross_source",
                 "match_excerpt": "<mark>python</mark> data engineer",
             }
@@ -379,6 +439,12 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
                 {
                     **profile_only_result,
                     "source_systems": ["linkedin_helper"],
+                    "source_details": [
+                        {
+                            "source_system": "linkedin_helper",
+                            "latest_record_received_at": "2026-07-21T14:30:00+00:00",
+                        }
+                    ],
                     "source_category": "linkedin_helper_only",
                 }
             ],
@@ -392,6 +458,9 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
     assert result["results"][0]["document_id"] is None
     assert result["results"][0]["document_title"] is None
     assert result["results"][0]["retrieval_sources"] == ["semantic"]
+    assert result["results"][0]["source_details"][0]["source_system"] == (
+        "linkedin_helper"
+    )
     assert result["results"][0]["source_category"] == "linkedin_helper_only"
 
 

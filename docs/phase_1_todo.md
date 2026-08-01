@@ -18,11 +18,14 @@ kept in a separate deferred lane so they do not block independent delivery.
 - [x] Surface clear recent-employment and structured skills evidence in the
   comparison and candidate profile views.
 
-#### Next delivery priorities, in order
+#### Immediate UI priorities, in agreed order
 
-- [ ] Make CV-backed, profile-only, and cross-source indicators clearer.
-- [ ] Surface source provenance and evidence freshness more clearly.
-- [ ] Make candidate contact routes easier to inspect and use.
+- [x] Make CV-backed, profile-only, and cross-source indicators clearer across
+  search, shortlist, comparison, profile preview, and shared-shortlist views.
+- [x] Surface source provenance and evidence freshness more clearly across
+  search, shortlist, comparison, profile preview, and shared-shortlist views.
+- [x] Make candidate contact routes easier to inspect and use through a private
+  preview panel with email, phone, LinkedIn, copy actions, and last-contact context.
 - [ ] Improve the presentation of strengths and gaps.
 - [ ] Add a cleaner pre-export review step.
 
@@ -32,14 +35,50 @@ kept in a separate deferred lane so they do not block independent delivery.
   shortlist flows.
 - [ ] Remove repeated database queries and avoidable API calls.
 - [ ] Build automated regression, groundedness, stability, and sensitive-data
-  checks that do not depend on recruiter labels.
+  checks that do not depend on recruiter labels:
+  - [ ] benchmark full-text, semantic, hybrid, and graph-assisted retrieval as
+    separate stages so each layer earns its latency and complexity
+  - [ ] document and test embedding-model objectives, chunking choices, and
+    structured-block boundaries against representative recruitment queries
+  - [ ] build a RAG failure matrix covering missing, stale, conflicting, noisy,
+    or malicious evidence, provider timeouts, and malformed structured outputs
+  - [ ] require every generated strength, gap, summary, and recommendation to
+    map to retrievable evidence
+  - [ ] automate groundedness, stability, schema, and sensitive-data checks
+    independently of recruiter-labelled relevance judgements
+  - [ ] test MCP authentication, tool boundaries, permissions, timeouts, rate
+    limits, and failure responses independently of workspace publication
 - [ ] Finish Recruitly jobs, opportunities, and journal/note ingestion using
   existing access.
 - [ ] Build and test the database export and restore path.
 - [ ] Harden API rate limiting, caching, Content Security Policy, and database
-  permissions.
+  permissions:
+  - [ ] inventory context-window, token, truncation, latency, and cost budgets
+    for every model-backed workflow
+  - [ ] measure end-to-end model latency and, where streaming/provider telemetry
+    permits, time to first token, inter-token latency, token throughput, queue
+    time, and prompt/prefill versus generation/decode time
+  - [ ] benchmark representative short and long prompts, output limits, and
+    concurrency so latency and cost regressions are visible
+  - [ ] evaluate provider prompt caching for repeated system instructions and
+    stable retrieval context, including cache-hit, latency, and cost effects
+  - [ ] add stage-level observability for latency, token usage, cost, model and
+    prompt versions, retrieval inputs, and run identifiers
+  - [ ] exercise retries, fallbacks, idempotency, caching, background jobs, and
+    load behaviour
+  - [ ] record architecture decisions for RAG versus fine-tuning and for
+    bounded workflows versus multi-agent designs before adding either complexity
+  - [ ] define a self-hosted inference decision gate based on privacy, workload,
+    latency, cost, scale, and provider-dependency evidence
+  - [ ] only if that gate is met, benchmark a representative workload across a
+    suitable engine such as vLLM, SGLang, or llama.cpp and document the relevant
+    hardware, quantization, KV-cache, attention, batching, and parallelism choices
 - [ ] Reconcile outdated documentation, environment-variable contracts, and
   checklist statuses.
+
+All immediate UI work and the engineering tasks above can proceed without Tom.
+Recruiter-labelled relevance, disagreement resolution, and final usefulness
+approval remain in the deferred lane below.
 
 #### Deferred pending Tom or another external owner
 

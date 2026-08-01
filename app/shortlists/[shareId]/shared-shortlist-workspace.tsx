@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  CandidateEvidenceIndicator,
+  CandidateEvidenceProvenance,
+  type CandidateSourceDetail,
+} from "../../candidate-evidence-indicator";
+
 type SharedCandidate = {
   candidate_id: string;
   full_name: string | null;
@@ -9,9 +15,12 @@ type SharedCandidate = {
   current_company_name: string | null;
   candidate_status: string | null;
   resume_updated_at: string | null;
+  document_id: string | null;
   document_title: string | null;
   retrieval_score: number;
   retrieval_sources: string[];
+  source_systems?: string[];
+  source_details?: CandidateSourceDetail[];
   source_category: string;
   graph_context_score: number | null;
   fit_score: number;
@@ -258,9 +267,9 @@ export function SharedShortlistWorkspace({ shareId }: { shareId: string }) {
                   <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
                     Retrieval {formatScore(candidate.retrieval_score)}
                   </span>
-                  <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-700">
-                    {candidate.source_category.replaceAll("_", " ")}
-                  </span>
+                  <CandidateEvidenceIndicator
+                    sourceCategory={candidate.source_category}
+                  />
                 </div>
 
                 <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -277,22 +286,37 @@ export function SharedShortlistWorkspace({ shareId }: { shareId: string }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <a
-                  href={`/api/v1/candidates/${candidate.candidate_id}/current-resume`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900"
-                >
-                  Open CV
-                </a>
-                <a
-                  href={`/api/v1/candidates/${candidate.candidate_id}/current-resume?download=true`}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:border-emerald-500"
-                >
-                  Download CV
-                </a>
+                {candidate.document_id ? (
+                  <>
+                    <a
+                      href={`/api/v1/candidates/${candidate.candidate_id}/current-resume`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900"
+                    >
+                      Open CV
+                    </a>
+                    <a
+                      href={`/api/v1/candidates/${candidate.candidate_id}/current-resume?download=true`}
+                      className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-5 text-sm font-semibold text-zinc-950 transition hover:border-emerald-500"
+                    >
+                      Download CV
+                    </a>
+                  </>
+                ) : (
+                  <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-sky-200 bg-sky-50 px-5 text-center text-sm font-semibold text-sky-900">
+                    Profile evidence only — no CV available
+                  </span>
+                )}
               </div>
             </div>
+
+            <CandidateEvidenceProvenance
+              sourceDetails={candidate.source_details}
+              sourceSystems={candidate.source_systems}
+              resumeUpdatedAt={candidate.resume_updated_at}
+              hasResumeDocument={Boolean(candidate.document_id)}
+            />
 
             <dl className="grid gap-4 text-sm sm:grid-cols-3">
               <div>

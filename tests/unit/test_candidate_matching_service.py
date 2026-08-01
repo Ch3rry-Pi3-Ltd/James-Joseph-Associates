@@ -313,6 +313,12 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
             {
                 **candidate,
                 "source_systems": ["dropbox"],
+                "source_details": [
+                    {
+                        "source_system": "dropbox",
+                        "latest_record_received_at": resume_updated_at,
+                    }
+                ],
                 "source_category": "cv_backed",
             }
             for candidate in candidates
@@ -329,6 +335,12 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
     assert shortlisted["person_id"] == str(person_id)
     assert shortlisted["document_id"] == str(document_id)
     assert shortlisted["resume_updated_at"] == resume_updated_at.isoformat()
+    assert shortlisted["source_details"] == [
+        {
+            "source_system": "dropbox",
+            "latest_record_received_at": resume_updated_at.isoformat(),
+        }
+    ]
     assert shortlisted["graph_evidence"]["last_seen_at"] == resume_updated_at.isoformat()
     assert shortlisted["source_category"] == "cv_backed"
 

@@ -9,6 +9,13 @@ import {
   useState,
 } from "react";
 
+import {
+  CandidateEvidenceIndicator,
+  CandidateEvidenceLegend,
+  CandidateEvidenceProvenance,
+  type CandidateSourceDetail,
+} from "../candidate-evidence-indicator";
+import { CandidateContactRoutes } from "../candidate-contact-routes";
 import { CandidateComparison } from "./candidate-comparison";
 
 type RetrievalEvidence = {
@@ -41,6 +48,7 @@ type CandidateResumeSearchResult = {
   semantic_block_type: string | null;
   semantic_block_label: string | null;
   source_systems: string[];
+  source_details: CandidateSourceDetail[];
   source_category: string;
   match_excerpt: string | null;
 };
@@ -222,6 +230,7 @@ type CandidateJobDescriptionShortlistItem = {
   semantic_block_type: string | null;
   semantic_block_label: string | null;
   source_systems: string[];
+  source_details: CandidateSourceDetail[];
   source_category: string;
   graph_context_score: number | null;
   ranking_input_score: number | null;
@@ -371,6 +380,10 @@ type CandidateProfileCandidate = {
   resume_updated_at: string | null;
   current_company_id: string | null;
   current_company_name: string | null;
+  has_resume_document: boolean;
+  source_systems: string[];
+  source_details: CandidateSourceDetail[];
+  source_category: string;
 };
 
 type CandidateProfileResponse = {
@@ -666,38 +679,6 @@ function formatRetrievalSourceLabel(source: string): string {
   }
 
   return source;
-}
-
-function formatCandidateSourceCategory(sourceCategory: string): string {
-  if (sourceCategory === "cross_source") {
-    return "Cross-source";
-  }
-
-  if (sourceCategory === "linkedin_helper_only") {
-    return "Linked Helper only";
-  }
-
-  if (sourceCategory === "cv_backed") {
-    return "CV-backed";
-  }
-
-  return "Source unconfirmed";
-}
-
-function candidateSourceCategoryClassName(sourceCategory: string): string {
-  if (sourceCategory === "cross_source") {
-    return "border-teal-200 bg-teal-50 text-teal-800";
-  }
-
-  if (sourceCategory === "linkedin_helper_only") {
-    return "border-sky-200 bg-sky-50 text-sky-800";
-  }
-
-  if (sourceCategory === "cv_backed") {
-    return "border-zinc-200 bg-zinc-50 text-zinc-700";
-  }
-
-  return "border-amber-200 bg-amber-50 text-amber-800";
 }
 
 function formatSemanticBlockType(value: string | null): string | null {
@@ -3089,6 +3070,21 @@ export function CandidateMatchWorkspace() {
                     ? ` at ${previewProfile.candidate.current_company_name}`
                     : ""}
                 </p>
+                <div className="mt-3">
+                  <CandidateEvidenceIndicator
+                    sourceCategory={previewProfile.candidate.source_category}
+                  />
+                </div>
+                <div className="mt-4">
+                  <CandidateEvidenceProvenance
+                    sourceDetails={previewProfile.candidate.source_details}
+                    sourceSystems={previewProfile.candidate.source_systems}
+                    resumeUpdatedAt={previewProfile.candidate.resume_updated_at}
+                    hasResumeDocument={
+                      previewProfile.candidate.has_resume_document
+                    }
+                  />
+                </div>
                 {previewProfile.candidate.headline ? (
                   <p className="mt-3 text-sm leading-6 text-zinc-900">
                     {previewProfile.candidate.headline}
@@ -3134,53 +3130,6 @@ export function CandidateMatchWorkspace() {
 
               <div className="workspace-card-soft p-4">
                 <dt className="text-xs font-semibold uppercase text-zinc-500">
-                  Last contacted
-                </dt>
-                <dd className="mt-1 text-sm leading-6 text-zinc-900">
-                  {formatTimestamp(previewProfile.candidate.last_contacted_at)}
-                </dd>
-              </div>
-
-              <div className="workspace-card-soft p-4">
-                <dt className="text-xs font-semibold uppercase text-zinc-500">
-                  Email
-                </dt>
-                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
-                  {previewProfile.candidate.primary_email ?? "Not available"}
-                </dd>
-              </div>
-
-              <div className="workspace-card-soft p-4">
-                <dt className="text-xs font-semibold uppercase text-zinc-500">
-                  Phone
-                </dt>
-                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
-                  {previewProfile.candidate.primary_phone ?? "Not available"}
-                </dd>
-              </div>
-
-              <div className="workspace-card-soft p-4">
-                <dt className="text-xs font-semibold uppercase text-zinc-500">
-                  LinkedIn
-                </dt>
-                <dd className="mt-1 break-words text-sm leading-6 text-zinc-900">
-                  {previewProfile.candidate.linkedin_url ? (
-                    <a
-                      href={previewProfile.candidate.linkedin_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline decoration-zinc-400 underline-offset-2"
-                    >
-                      {previewProfile.candidate.linkedin_url}
-                    </a>
-                  ) : (
-                    "Not available"
-                  )}
-                </dd>
-              </div>
-
-              <div className="workspace-card-soft p-4">
-                <dt className="text-xs font-semibold uppercase text-zinc-500">
                   Location
                 </dt>
                 <dd className="mt-1 text-sm leading-6 text-zinc-900">
@@ -3189,34 +3138,13 @@ export function CandidateMatchWorkspace() {
               </div>
             </dl>
 
-            <div className="flex flex-wrap gap-3">
-              {previewProfile.candidate.primary_email ? (
-                <a
-                  href={`mailto:${previewProfile.candidate.primary_email}`}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                >
-                  Email candidate
-                </a>
-              ) : null}
-              {previewProfile.candidate.primary_phone ? (
-                <a
-                  href={`tel:${previewProfile.candidate.primary_phone}`}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
-                >
-                  Call candidate
-                </a>
-              ) : null}
-              {previewProfile.candidate.linkedin_url ? (
-                <a
-                  href={previewProfile.candidate.linkedin_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-sky-200 bg-sky-50 px-4 text-sm font-semibold text-sky-900 transition hover:border-sky-400"
-                >
-                  Open LinkedIn
-                </a>
-              ) : null}
-            </div>
+            <CandidateContactRoutes
+              candidateId={previewProfile.candidate.candidate_id}
+              primaryEmail={previewProfile.candidate.primary_email}
+              primaryPhone={previewProfile.candidate.primary_phone}
+              linkedinUrl={previewProfile.candidate.linkedin_url}
+              lastContactedAt={previewProfile.candidate.last_contacted_at}
+            />
 
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="workspace-card-soft bg-white p-4">
@@ -3807,6 +3735,8 @@ export function CandidateMatchWorkspace() {
           </div>
         </div>
 
+        <CandidateEvidenceLegend />
+
         {shortlistShareUrl ? (
           <div className="grid gap-3 rounded-md border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-semibold text-sky-950">
@@ -4175,18 +4105,9 @@ export function CandidateMatchWorkspace() {
                         {formatRetrievalSourceLabel(source)}
                       </span>
                     ))}
-                    <span
-                      title={
-                        result.source_systems.length > 0
-                          ? `Sources: ${result.source_systems.join(", ")}`
-                          : "No linked source provenance found"
-                      }
-                      className={`rounded-md border px-3 py-1 text-xs font-semibold ${candidateSourceCategoryClassName(
-                        result.source_category,
-                      )}`}
-                    >
-                      {formatCandidateSourceCategory(result.source_category)}
-                    </span>
+                    <CandidateEvidenceIndicator
+                      sourceCategory={result.source_category}
+                    />
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -4228,7 +4149,7 @@ export function CandidateMatchWorkspace() {
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
                   >
-                    Preview candidate
+                    View &amp; contact
                   </button>
 
                   <a
@@ -4238,6 +4159,16 @@ export function CandidateMatchWorkspace() {
                     Open JSON
                   </a>
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <CandidateEvidenceProvenance
+                  sourceDetails={result.source_details}
+                  sourceSystems={result.source_systems}
+                  resumeUpdatedAt={result.resume_updated_at}
+                  hasResumeDocument={Boolean(result.document_id)}
+                  compact
+                />
               </div>
 
               <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -4718,6 +4649,8 @@ export function CandidateMatchWorkspace() {
           </div>
         </div>
 
+        <CandidateEvidenceLegend />
+
         <button
           type="button"
           onClick={() => setIsSearchResultsExpanded((current) => !current)}
@@ -4863,18 +4796,9 @@ export function CandidateMatchWorkspace() {
                         {formatRetrievalSourceLabel(source)}
                       </span>
                     ))}
-                    <span
-                      title={
-                        result.source_systems.length > 0
-                          ? `Sources: ${result.source_systems.join(", ")}`
-                          : "No linked source provenance found"
-                      }
-                      className={`rounded-md border px-3 py-1 text-xs font-semibold ${candidateSourceCategoryClassName(
-                        result.source_category,
-                      )}`}
-                    >
-                      {formatCandidateSourceCategory(result.source_category)}
-                    </span>
+                    <CandidateEvidenceIndicator
+                      sourceCategory={result.source_category}
+                    />
                   </div>
 
                   <h3 className="mt-4 text-2xl font-semibold text-zinc-950">
@@ -4912,7 +4836,7 @@ export function CandidateMatchWorkspace() {
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-950 transition hover:border-zinc-500"
                   >
-                    Preview candidate
+                    View &amp; contact
                   </button>
 
                   <a
@@ -4922,6 +4846,16 @@ export function CandidateMatchWorkspace() {
                     Open JSON
                   </a>
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <CandidateEvidenceProvenance
+                  sourceDetails={result.source_details}
+                  sourceSystems={result.source_systems}
+                  resumeUpdatedAt={result.resume_updated_at}
+                  hasResumeDocument={Boolean(result.document_id)}
+                  compact
+                />
               </div>
 
               <dl className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

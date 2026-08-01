@@ -64,6 +64,19 @@ def get_candidate_source_systems(
     enriched by Linked Helper after an earlier CV ingest.
     """
 
+    return {
+        candidate_id: [str(detail["source_system"]) for detail in source_details]
+        for candidate_id, source_details in get_candidate_source_details(
+            candidate_ids
+        ).items()
+    }
+
+
+def get_candidate_source_details(
+    candidate_ids: list[str] | set[str] | tuple[str, ...],
+) -> dict[str, list[dict[str, Any]]]:
+    """Return source systems and their latest record receipt times in one batch."""
+
     normalized_candidate_ids = sorted(
         {
             str(candidate_id).strip()
@@ -83,7 +96,8 @@ def get_candidate_source_systems(
         linked_sources as (
             select
                 requested.id as candidate_id,
-                source.source_system
+                source.source_system,
+                source.received_at
             from requested_candidates requested
             join source_record_links link
               on link.candidate_id = requested.id
@@ -94,7 +108,8 @@ def get_candidate_source_systems(
 
             select
                 requested.id as candidate_id,
-                source.source_system
+                source.source_system,
+                source.received_at
             from requested_candidates requested
             join source_record_links link
               on link.person_id = requested.person_id
@@ -103,10 +118,11 @@ def get_candidate_source_systems(
         )
         select
             candidate_id,
-            array_agg(distinct source_system order by source_system)
-                as source_systems
+            source_system,
+            max(received_at) as latest_record_received_at
         from linked_sources
-        group by candidate_id
+        group by candidate_id, source_system
+        order by candidate_id, source_system
     """
 
     with postgres_connection() as connection:
@@ -117,13 +133,16 @@ def get_candidate_source_systems(
             )
             rows = cursor.fetchall()
 
-    return {
-        str(row["candidate_id"]): [
-            str(source_system)
-            for source_system in (row["source_systems"] or [])
-        ]
-        for row in rows
-    }
+    source_details_by_candidate: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        candidate_id = str(row["candidate_id"])
+        source_details_by_candidate.setdefault(candidate_id, []).append(
+            {
+                "source_system": str(row["source_system"]),
+                "latest_record_received_at": row["latest_record_received_at"],
+            }
+        )
+    return source_details_by_candidate
 
 
 def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
@@ -220,7 +239,16 @@ def get_candidate_profile(candidate_id: str) -> dict[str, Any] | None:
             c.last_contacted_at,
             c.resume_updated_at,
             co.id AS current_company_id,
-            co.name AS current_company_name
+            co.name AS current_company_name,
+            exists (
+                select 1
+                from document_links dl
+                join documents d
+                  on d.id = dl.document_id
+                 and d.document_type = 'resume'
+                where dl.candidate_id = c.id
+                  and dl.relationship_type = 'current_resume'
+            ) as has_resume_document
         FROM candidates c
         JOIN people p
             ON p.id = c.person_id
@@ -655,6 +683,7 @@ __all__ = [
     "get_candidate_current_resume_document",
     "get_candidate_profile",
     "get_candidate_recent_employment",
+    "get_candidate_source_details",
     "get_candidate_source_systems",
     "search_candidates_by_company_name",
     "search_candidates_by_resume_text",

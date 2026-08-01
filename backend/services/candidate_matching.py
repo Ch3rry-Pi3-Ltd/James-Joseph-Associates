@@ -215,6 +215,9 @@ def build_candidate_job_description_shortlist(
                 "source_systems": list(
                     _json_safe_value(matched_candidate.get("source_systems") or [])
                 ),
+                "source_details": list(
+                    _json_safe_value(matched_candidate.get("source_details") or [])
+                ),
                 "source_category": _json_safe_value(
                     matched_candidate.get("source_category") or "unknown"
                 ),

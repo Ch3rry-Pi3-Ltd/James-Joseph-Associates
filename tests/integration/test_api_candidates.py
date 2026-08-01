@@ -101,6 +101,19 @@ def test_candidate_profile_route_returns_combined_profile() -> None:
             "current_title": "Senior Data Engineer",
             "current_company_name": "Acme Hiring Ltd",
             "candidate_status": "active",
+            "has_resume_document": True,
+            "source_systems": ["dropbox", "linkedin_helper"],
+            "source_details": [
+                {
+                    "source_system": "dropbox",
+                    "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                },
+                {
+                    "source_system": "linkedin_helper",
+                    "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+                },
+            ],
+            "source_category": "cross_source",
         },
         "skills": [
             {
@@ -366,6 +379,16 @@ def test_candidate_resume_search_route_returns_ranked_results() -> None:
                 "semantic_block_type": "skills",
                 "semantic_block_label": "Core skills",
                 "source_systems": ["dropbox", "linkedin_helper"],
+                "source_details": [
+                    {
+                        "source_system": "dropbox",
+                        "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                    },
+                    {
+                        "source_system": "linkedin_helper",
+                        "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+                    },
+                ],
                 "source_category": "cross_source",
                 "match_excerpt": "<mark>python</mark> data engineer",
             }
@@ -1013,6 +1036,7 @@ def test_uploaded_resume_search_route_returns_ranked_results() -> None:
                 "semantic_block_type": "resume_context",
                 "semantic_block_label": "Resume context",
                 "source_systems": [],
+                "source_details": [],
                 "source_category": "unknown",
                 "match_excerpt": "Python, SQL, AWS, and ETL delivery.",
             }
@@ -1314,6 +1338,16 @@ def test_match_job_description_route_returns_shortlist() -> None:
                     "semantic_block_type": "skills",
                     "semantic_block_label": "Core skills",
                     "source_systems": ["dropbox", "linkedin_helper"],
+                    "source_details": [
+                        {
+                            "source_system": "dropbox",
+                            "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                        },
+                        {
+                            "source_system": "linkedin_helper",
+                            "latest_record_received_at": "2026-07-20T14:30:00+00:00",
+                        },
+                    ],
                     "source_category": "cross_source",
                     "graph_context_score": 0.42,
                     "ranking_input_score": 0.753493,
@@ -1379,6 +1413,7 @@ def test_export_shortlist_route_returns_zip_package() -> None:
         "semantic_block_type": "skills",
         "semantic_block_label": "Core skills",
         "source_systems": ["dropbox"],
+        "source_details": [],
         "source_category": "dropbox_only",
         "graph_context_score": 0.42,
         "ranking_input_score": 0.753493,
@@ -1442,6 +1477,7 @@ def _shortlist_share_candidate_payload() -> dict[str, object]:
         "semantic_block_type": "skills",
         "semantic_block_label": "Core skills",
         "source_systems": ["dropbox"],
+        "source_details": [],
         "source_category": "dropbox_only",
         "graph_context_score": 0.42,
         "ranking_input_score": 0.753493,

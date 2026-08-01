@@ -47,14 +47,73 @@ In this module, that means:
 - we inspect whether `execute(...)` was called correctly
 """
 
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from backend.db.candidates import (
     get_candidate_current_resume_document,
     get_candidate_profile,
     get_candidate_recent_employment,
+    get_candidate_source_details,
+    get_candidate_source_systems,
     search_candidates_by_resume_text,
 )
+
+
+def test_get_candidate_source_details_returns_batched_provenance_and_freshness() -> None:
+    received_at = datetime(2026, 7, 20, 14, 30, tzinfo=UTC)
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = [
+        {
+            "candidate_id": "33333333-3333-3333-3333-333333333331",
+            "source_system": "linkedin_helper",
+            "latest_record_received_at": received_at,
+        }
+    ]
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+        result = get_candidate_source_details(
+            {"33333333-3333-3333-3333-333333333331"}
+        )
+
+    assert result == {
+        "33333333-3333-3333-3333-333333333331": [
+            {
+                "source_system": "linkedin_helper",
+                "latest_record_received_at": received_at,
+            }
+        ]
+    }
+    query, parameters = mock_cursor.execute.call_args.args
+    assert "max(received_at) as latest_record_received_at" in query
+    assert parameters == {
+        "candidate_ids": ["33333333-3333-3333-3333-333333333331"]
+    }
+
+
+def test_get_candidate_source_systems_preserves_legacy_summary(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "backend.db.candidates.get_candidate_source_details",
+        lambda candidate_ids: {
+            "candidate-1": [
+                {
+                    "source_system": "dropbox",
+                    "latest_record_received_at": None,
+                }
+            ]
+        },
+    )
+
+    assert get_candidate_source_systems(["candidate-1"]) == {
+        "candidate-1": ["dropbox"]
+    }
 
 
 def test_get_candidate_profile_returns_none_when_row_is_missing() -> None:
@@ -167,6 +226,7 @@ def test_get_candidate_profile_returns_dictionary_when_row_exists() -> None:
         "resume_updated_at": "2026-04-20T12:00:00+00:00",
         "current_company_id": "11111111-1111-1111-1111-111111111111",
         "current_company_name": "Acme Hiring Ltd",
+        "has_resume_document": True,
     }
 
     # Fake cursor:
