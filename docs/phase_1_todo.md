@@ -28,7 +28,9 @@ kept in a separate deferred lane so they do not block independent delivery.
   preview panel with email, phone, LinkedIn, copy actions, and last-contact context.
 - [x] Improve the presentation of evidence-backed strengths and gaps to clarify
   across comparison, detailed shortlist, and shared-shortlist views.
-- [ ] Add a cleaner pre-export review step.
+- [x] Add a cleaner pre-export review step covering the role title and brief,
+  ranked candidates, evidence categories, CV availability, strengths, gaps, and
+  explicit recruiter confirmations before package generation.
 
 #### Following engineering priorities, in order
 

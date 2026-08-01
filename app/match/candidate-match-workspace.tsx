@@ -17,6 +17,10 @@ import {
 } from "../candidate-evidence-indicator";
 import { CandidateContactRoutes } from "../candidate-contact-routes";
 import { CandidateStrengthsAndGaps } from "../candidate-assessment";
+import {
+  CandidateExportReview,
+  type ExportReviewChecks,
+} from "../candidate-export-review";
 import { CandidateComparison } from "./candidate-comparison";
 
 type RetrievalEvidence = {
@@ -394,6 +398,44 @@ type CandidateProfileResponse = {
 };
 
 type RunMode = "search" | "shortlist" | null;
+
+function createEmptyExportReviewChecks(): ExportReviewChecks {
+  return {
+    roleBrief: false,
+    candidateOrder: false,
+    evidenceAndFiles: false,
+  };
+}
+
+function deriveExportRoleTitle({
+  savedTitle,
+  uploadedFileName,
+  jobDescription,
+}: {
+  savedTitle: string | null;
+  uploadedFileName: string | null;
+  jobDescription: string;
+}): string {
+  const explicitTitle = savedTitle?.trim();
+  if (explicitTitle) {
+    return explicitTitle.slice(0, 200);
+  }
+
+  const fileTitle = uploadedFileName
+    ?.trim()
+    .replace(/\.(pdf|docx?|rtf|txt)$/i, "");
+  if (fileTitle) {
+    return fileTitle.slice(0, 200);
+  }
+
+  const firstLine = jobDescription
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+  return (firstLine || "Candidate shortlist")
+    .replace(/^(job description|role brief)\s*[:\-]?\s*/i, "")
+    .slice(0, 200);
+}
 
 const DEFAULT_JOB_DESCRIPTION = `Senior data engineer with strong Python, SQL, cloud platform, and ETL experience. Ideally someone who has worked with large datasets, modern data pipelines, and production analytics systems.`;
 
@@ -977,6 +1019,7 @@ async function encodeFileAsBase64(file: File): Promise<string> {
 
 export function CandidateMatchWorkspace() {
   const shortlistSectionRef = useRef<HTMLElement | null>(null);
+  const exportReviewSectionRef = useRef<HTMLDivElement | null>(null);
   const searchResultsSectionRef = useRef<HTMLElement | null>(null);
   const uploadedJobDescriptionInputRef = useRef<HTMLInputElement | null>(null);
   const [jobDescription, setJobDescription] = useState(DEFAULT_JOB_DESCRIPTION);
@@ -990,6 +1033,11 @@ export function CandidateMatchWorkspace() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isShortlistLoading, setIsShortlistLoading] = useState(false);
   const [isShortlistExportLoading, setIsShortlistExportLoading] = useState(false);
+  const [isExportReviewOpen, setIsExportReviewOpen] = useState(false);
+  const [exportRoleTitle, setExportRoleTitle] = useState("");
+  const [exportReviewChecks, setExportReviewChecks] = useState<ExportReviewChecks>(
+    createEmptyExportReviewChecks,
+  );
   const [isShortlistShareLoading, setIsShortlistShareLoading] = useState(false);
   const [shortlistExportMessage, setShortlistExportMessage] = useState<
     string | null
@@ -1129,10 +1177,17 @@ export function CandidateMatchWorkspace() {
     void refreshSavedBriefs();
   }, []);
 
+  useEffect(() => {
+    setIsExportReviewOpen(false);
+    setExportReviewChecks(createEmptyExportReviewChecks());
+  }, [matchRunId]);
+
   const loadingMessage = useMemo(
     () => buildLoadingMessage(activeRunMode),
     [activeRunMode],
   );
+  const activeExportJobDescription =
+    submittedJobDescription?.trim() || jobDescription.trim();
   const previewSkillNames = useMemo(() => {
     if (!previewProfile) {
       return [];
@@ -1787,17 +1842,60 @@ export function CandidateMatchWorkspace() {
     }
   }
 
-  async function exportShortlistPackage(): Promise<void> {
-    const activeJobDescription =
-      submittedJobDescription?.trim() || jobDescription.trim();
-
+  function openExportReview(): void {
     if (
       !matchRunId ||
-      activeJobDescription === "" ||
+      activeExportJobDescription === "" ||
       shortlistResults.length === 0
     ) {
       setShortlistExportErrorMessage(
-        "Run the recruiter shortlist before downloading an export package.",
+        "Run the recruiter shortlist before reviewing an export package.",
+      );
+      return;
+    }
+
+    setExportRoleTitle(
+      deriveExportRoleTitle({
+        savedTitle: activeSavedBriefId ? savedBriefTitle : null,
+        uploadedFileName: uploadedJobDescriptionResult?.file_name ?? null,
+        jobDescription: activeExportJobDescription,
+      }),
+    );
+    setExportReviewChecks(createEmptyExportReviewChecks());
+    setShortlistExportMessage(null);
+    setShortlistExportErrorMessage(null);
+    setIsExportReviewOpen(true);
+    window.requestAnimationFrame(() => {
+      exportReviewSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  function updateExportReviewCheck(
+    key: keyof ExportReviewChecks,
+    checked: boolean,
+  ): void {
+    setExportReviewChecks((current) => ({
+      ...current,
+      [key]: checked,
+    }));
+  }
+
+  async function exportShortlistPackage(): Promise<void> {
+    const isReviewConfirmed = Object.values(exportReviewChecks).every(Boolean);
+
+    if (
+      !matchRunId ||
+      activeExportJobDescription === "" ||
+      shortlistResults.length === 0 ||
+      exportRoleTitle.trim() === "" ||
+      !isExportReviewOpen ||
+      !isReviewConfirmed
+    ) {
+      setShortlistExportErrorMessage(
+        "Complete the pre-export review and all confirmations before downloading the package.",
       );
       return;
     }
@@ -1815,8 +1913,8 @@ export function CandidateMatchWorkspace() {
         },
         body: JSON.stringify({
           match_run_id: matchRunId,
-          role_title: uploadedJobDescriptionResult?.file_name ?? null,
-          job_description: activeJobDescription,
+          role_title: exportRoleTitle.trim(),
+          job_description: activeExportJobDescription,
           shortlisted_candidates: shortlistResults,
         }),
       });
@@ -1852,6 +1950,8 @@ export function CandidateMatchWorkspace() {
           ? `Export downloaded with the Word shortlist and ${exportedCvCount} CVs.`
           : `Export downloaded with ${exportedCvCount} CVs; ${unavailableCvCount} unavailable CVs are recorded in the manifest.`,
       );
+      setIsExportReviewOpen(false);
+      setExportReviewChecks(createEmptyExportReviewChecks());
     } catch (error) {
       setShortlistExportErrorMessage(
         error instanceof Error
@@ -3720,7 +3820,9 @@ export function CandidateMatchWorkspace() {
               </button>
               <button
                 type="button"
-                onClick={() => void exportShortlistPackage()}
+                onClick={openExportReview}
+                aria-expanded={isExportReviewOpen}
+                aria-controls="candidate-export-review-panel"
                 disabled={
                   isShortlistExportLoading ||
                   !matchRunId ||
@@ -3728,15 +3830,39 @@ export function CandidateMatchWorkspace() {
                 }
                 className="inline-flex h-11 items-center justify-center rounded-md border border-emerald-800 bg-emerald-800 px-5 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
               >
-                {isShortlistExportLoading
-                  ? "Preparing package..."
-                  : "Download shortlist + CVs"}
+                Review export
               </button>
             </div>
           </div>
         </div>
 
         <CandidateEvidenceLegend />
+
+        {isExportReviewOpen ? (
+          <div id="candidate-export-review-panel" ref={exportReviewSectionRef}>
+            <CandidateExportReview
+              roleTitle={exportRoleTitle}
+              jobDescription={activeExportJobDescription}
+              candidates={shortlistResults}
+              checks={exportReviewChecks}
+              isExporting={isShortlistExportLoading}
+              onRoleTitleChange={(value) => {
+                setExportRoleTitle(value);
+                setExportReviewChecks((current) => ({
+                  ...current,
+                  roleBrief: false,
+                }));
+              }}
+              onCheckChange={updateExportReviewCheck}
+              onCancel={() => {
+                setIsExportReviewOpen(false);
+                setExportReviewChecks(createEmptyExportReviewChecks());
+                setShortlistExportErrorMessage(null);
+              }}
+              onExport={() => void exportShortlistPackage()}
+            />
+          </div>
+        ) : null}
 
         {shortlistShareUrl ? (
           <div className="grid gap-3 rounded-md border border-sky-200 bg-sky-50 p-4">
