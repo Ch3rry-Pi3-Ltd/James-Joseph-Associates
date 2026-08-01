@@ -26,7 +26,8 @@ kept in a separate deferred lane so they do not block independent delivery.
   search, shortlist, comparison, profile preview, and shared-shortlist views.
 - [x] Make candidate contact routes easier to inspect and use through a private
   preview panel with email, phone, LinkedIn, copy actions, and last-contact context.
-- [ ] Improve the presentation of strengths and gaps.
+- [x] Improve the presentation of evidence-backed strengths and gaps to clarify
+  across comparison, detailed shortlist, and shared-shortlist views.
 - [ ] Add a cleaner pre-export review step.
 
 #### Following engineering priorities, in order

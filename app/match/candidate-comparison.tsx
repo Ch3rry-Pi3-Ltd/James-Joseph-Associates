@@ -3,6 +3,7 @@ import {
   CandidateEvidenceProvenance,
   type CandidateSourceDetail,
 } from "../candidate-evidence-indicator";
+import { CandidateAssessmentList } from "../candidate-assessment";
 
 type CandidateEmploymentRole = {
   employment_role_id?: string | null;
@@ -25,6 +26,8 @@ export type CandidateComparisonItem = {
   source_systems: string[];
   source_details: CandidateSourceDetail[];
   source_category: string;
+  strengths: string[];
+  gaps: string[];
   graph_evidence: {
     skill_names: string[];
     recent_employment?: CandidateEmploymentRole[];
@@ -216,7 +219,7 @@ export function CandidateComparison({
               })}
             </tr>
             <tr>
-              <th className="sticky left-0 z-10 border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+              <th className="sticky left-0 z-10 border-b border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
                 Skills evidence
               </th>
               {candidates.map((candidate) => {
@@ -224,7 +227,7 @@ export function CandidateComparison({
                 return (
                   <td
                     key={`${candidate.candidate_id}-comparison-skills`}
-                    className="p-4 align-top"
+                    className="border-b border-zinc-200 p-4 align-top"
                   >
                     {skills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
@@ -245,6 +248,40 @@ export function CandidateComparison({
                   </td>
                 );
               })}
+            </tr>
+            <tr>
+              <th className="sticky left-0 z-10 border-b border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                Strengths
+              </th>
+              {candidates.map((candidate) => (
+                <td
+                  key={`${candidate.candidate_id}-comparison-strengths`}
+                  className="border-b border-zinc-200 p-4 align-top"
+                >
+                  <CandidateAssessmentList
+                    kind="strengths"
+                    items={candidate.strengths}
+                    compact
+                  />
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <th className="sticky left-0 z-10 border-r border-zinc-200 bg-white p-4 align-top text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                Gaps to clarify
+              </th>
+              {candidates.map((candidate) => (
+                <td
+                  key={`${candidate.candidate_id}-comparison-gaps`}
+                  className="p-4 align-top"
+                >
+                  <CandidateAssessmentList
+                    kind="gaps"
+                    items={candidate.gaps}
+                    compact
+                  />
+                </td>
+              ))}
             </tr>
           </tbody>
         </table>

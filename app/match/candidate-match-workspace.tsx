@@ -16,6 +16,7 @@ import {
   type CandidateSourceDetail,
 } from "../candidate-evidence-indicator";
 import { CandidateContactRoutes } from "../candidate-contact-routes";
+import { CandidateStrengthsAndGaps } from "../candidate-assessment";
 import { CandidateComparison } from "./candidate-comparison";
 
 type RetrievalEvidence = {
@@ -4222,34 +4223,11 @@ export function CandidateMatchWorkspace() {
                 </div>
               </dl>
 
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-md border border-zinc-200 bg-[#f8faf8] p-4">
-                  <p className="text-xs font-semibold uppercase text-zinc-500">
-                    Strengths
-                  </p>
-                  <ul className="mt-3 grid gap-2 text-sm leading-6 text-zinc-900">
-                    {result.strengths.length > 0 ? (
-                      result.strengths.map((strength) => (
-                        <li key={strength}>- {strength}</li>
-                      ))
-                    ) : (
-                      <li>No specific strengths returned.</li>
-                    )}
-                  </ul>
-                </div>
-
-                <div className="rounded-md border border-zinc-200 bg-[#fff8f4] p-4">
-                  <p className="text-xs font-semibold uppercase text-zinc-500">
-                    Gaps
-                  </p>
-                  <ul className="mt-3 grid gap-2 text-sm leading-6 text-zinc-900">
-                    {result.gaps.length > 0 ? (
-                      result.gaps.map((gap) => <li key={gap}>- {gap}</li>)
-                    ) : (
-                      <li>No obvious gaps returned.</li>
-                    )}
-                  </ul>
-                </div>
+              <div className="mt-6">
+                <CandidateStrengthsAndGaps
+                  strengths={result.strengths}
+                  gaps={result.gaps}
+                />
               </div>
 
               <div className="mt-6 border-t border-zinc-200 pt-6">

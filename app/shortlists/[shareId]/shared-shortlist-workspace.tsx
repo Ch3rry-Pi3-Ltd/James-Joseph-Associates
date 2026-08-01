@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { CandidateStrengthsAndGaps } from "../../candidate-assessment";
 import {
   CandidateEvidenceIndicator,
   CandidateEvidenceProvenance,
@@ -345,26 +346,10 @@ export function SharedShortlistWorkspace({ shareId }: { shareId: string }) {
               </div>
             </dl>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-md border border-emerald-100 bg-emerald-50/40 p-5">
-                <h4 className="font-semibold text-zinc-950">Strengths</h4>
-                <ul className="mt-3 grid gap-2 text-sm leading-6 text-zinc-700">
-                  {candidate.strengths.map((strength) => (
-                    <li key={strength}>- {strength}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-md border border-rose-100 bg-rose-50/40 p-5">
-                <h4 className="font-semibold text-zinc-950">Gaps</h4>
-                <ul className="mt-3 grid gap-2 text-sm leading-6 text-zinc-700">
-                  {candidate.gaps.length > 0 ? (
-                    candidate.gaps.map((gap) => <li key={gap}>- {gap}</li>)
-                  ) : (
-                    <li>No material gaps recorded.</li>
-                  )}
-                </ul>
-              </div>
-            </div>
+            <CandidateStrengthsAndGaps
+              strengths={candidate.strengths}
+              gaps={candidate.gaps}
+            />
 
             {candidate.graph_evidence ? (
               <div className="rounded-md border border-sky-100 bg-sky-50/40 p-5">
