@@ -55,11 +55,17 @@ Those concerns belong in separate modules that depend on this one.
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+import logging
+from time import perf_counter
 
 import psycopg
 from psycopg.rows import dict_row
 
+from backend.core.performance import current_request_id
 from backend.settings import get_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_postgres_connection() -> psycopg.Connection:
@@ -81,7 +87,7 @@ def get_postgres_connection() -> psycopg.Connection:
     - This function opens a fresh connection each time it is called.
     - It does not cache or pool connections yet.
     - That is acceptable for the current prototype stage.
-    - If connection pooling becomes necessary later, this module is the right 
+    - If connection pooling becomes necessary later, this module is the right
       place to add it.
 
     In plain language:
@@ -121,7 +127,7 @@ def get_postgres_connection() -> psycopg.Connection:
             "Postgres connections."
         )
         raise RuntimeError(msg)
-    
+
     # `dict_row` means later query code can access results like:
     #
     #   row["candidate_id"]
@@ -171,12 +177,21 @@ def postgres_connection() -> Iterator[psycopg.Connection]:
     - always close it afterwards
     """
 
+    started_at = perf_counter()
     connection = get_postgres_connection()
 
     try:
         yield connection
     finally:
         connection.close()
+        duration_ms = max(0.0, (perf_counter() - started_at) * 1000)
+        logger.info(
+            "database_performance request_id=%s operation=postgres_connection "
+            "duration_ms=%.2f",
+            current_request_id() or "background",
+            duration_ms,
+        )
+
 
 __all__ = [
     "get_postgres_connection",

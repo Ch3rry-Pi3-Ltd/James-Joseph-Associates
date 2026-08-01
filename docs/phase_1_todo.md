@@ -34,7 +34,7 @@ kept in a separate deferred lane so they do not block independent delivery.
 
 #### Following engineering priorities, in order
 
-- [ ] Instrument and improve performance across Review, Company, search, and
+- [x] Instrument and improve performance across Review, Company, search, and
   shortlist flows.
 - [ ] Remove repeated database queries and avoidable API calls.
 - [ ] Build automated regression, groundedness, stability, and sensitive-data
@@ -186,7 +186,7 @@ approval remain in the deferred lane below.
   - [ ] add trajectory and stop-condition evaluations when LangGraph workflows
     begin using multi-step loops
 - [ ] Performance and scalability hardening:
-  - [ ] record response times and database timings for the Review, Company,
+  - [x] record response times and database timings for the Review, Company,
     Match search, and Match shortlist workflows
   - [ ] identify and remove repeated database queries and avoidable API round
     trips

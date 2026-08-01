@@ -2171,17 +2171,55 @@ export function CandidateMatchWorkspace() {
         limit: companySearchLimit,
       });
 
-      const response = await fetch(
-        `/api/v1/candidates/discover-by-company?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
+      const requestUrl = searchParams.toString();
+      const requestOptions = {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
         },
-      );
+      };
+      const [
+        response,
+        contactsResponse,
+        interactionsResponse,
+        jobsResponse,
+        opportunitiesResponse,
+      ] = await Promise.all([
+        fetch(
+          `/api/v1/candidates/discover-by-company?${requestUrl}`,
+          requestOptions,
+        ),
+        fetch(
+          `/api/v1/candidates/discover-contacts-by-company?${requestUrl}`,
+          requestOptions,
+        ),
+        fetch(
+          `/api/v1/candidates/discover-interactions-by-company?${requestUrl}`,
+          requestOptions,
+        ),
+        fetch(
+          `/api/v1/candidates/discover-jobs-by-company?${requestUrl}`,
+          requestOptions,
+        ),
+        fetch(
+          `/api/v1/candidates/discover-opportunities-by-company?${requestUrl}`,
+          requestOptions,
+        ),
+      ]);
 
-      const payload = await readJsonResponse(response);
+      const [
+        payload,
+        contactsPayload,
+        interactionsPayload,
+        jobsPayload,
+        opportunitiesPayload,
+      ] = await Promise.all([
+        readJsonResponse(response),
+        readJsonResponse(contactsResponse),
+        readJsonResponse(interactionsResponse),
+        readJsonResponse(jobsResponse),
+        readJsonResponse(opportunitiesResponse),
+      ]);
 
       if (!response.ok) {
         setCompanyDiscoveryResults([]);
@@ -2196,18 +2234,6 @@ export function CandidateMatchWorkspace() {
       const companyDiscoveryResponse = payload as CandidateCompanyDiscoveryResponse;
       setCompanyDiscoveryResults(companyDiscoveryResponse.results);
       setSubmittedCompanyName(companyDiscoveryResponse.company_name);
-
-      const contactsResponse = await fetch(
-        `/api/v1/candidates/discover-contacts-by-company?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
-
-      const contactsPayload = await readJsonResponse(contactsResponse);
 
       if (!contactsResponse.ok) {
         setCompanyContactResults([]);
@@ -2224,18 +2250,6 @@ export function CandidateMatchWorkspace() {
         contactsPayload as CompanyContactDiscoveryResponse;
       setCompanyContactResults(companyContactsResponse.results);
 
-      const interactionsResponse = await fetch(
-        `/api/v1/candidates/discover-interactions-by-company?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
-
-      const interactionsPayload = await readJsonResponse(interactionsResponse);
-
       if (!interactionsResponse.ok) {
         setCompanyInteractionResults([]);
         setCompanyInteractionsErrorMessage(
@@ -2251,18 +2265,6 @@ export function CandidateMatchWorkspace() {
         interactionsPayload as CompanyInteractionDiscoveryResponse;
       setCompanyInteractionResults(companyInteractionsResponse.results);
 
-      const jobsResponse = await fetch(
-        `/api/v1/candidates/discover-jobs-by-company?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
-
-      const jobsPayload = await readJsonResponse(jobsResponse);
-
       if (!jobsResponse.ok) {
         setCompanyJobResults([]);
         setCompanyJobsErrorMessage(
@@ -2274,18 +2276,6 @@ export function CandidateMatchWorkspace() {
 
       const companyJobsResponse = jobsPayload as CompanyJobDiscoveryResponse;
       setCompanyJobResults(companyJobsResponse.results);
-
-      const opportunitiesResponse = await fetch(
-        `/api/v1/candidates/discover-opportunities-by-company?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
-
-      const opportunitiesPayload = await readJsonResponse(opportunitiesResponse);
 
       if (!opportunitiesResponse.ok) {
         setCompanyOpportunityResults([]);

@@ -82,6 +82,7 @@ from fastapi.exceptions import RequestValidationError
 
 from backend.api.router import api_router
 from backend.core.errors import request_validation_exception_handler
+from backend.core.performance import record_request_performance
 from backend.services.mcp_server import mcp_server
 from backend.services.mcp_transport import McpSecurityMiddleware
 from backend.settings import get_settings
@@ -145,9 +146,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.api_version,
-        description=(
-            "Backend API for the GraphRAG recruitment intelligence system."
-        ),
+        description=("Backend API for the GraphRAG recruitment intelligence system."),
         debug=settings.debug,
         lifespan=_application_lifespan,
     )
@@ -160,6 +159,11 @@ def create_app() -> FastAPI:
         RequestValidationError,
         request_validation_exception_handler,
     )
+
+    # Emit one privacy-safe timing record for every HTTP request. The standard
+    # Server-Timing header also makes Review, Company, search, and shortlist
+    # latency visible in browser developer tools without changing API payloads.
+    app.middleware("http")(record_request_performance)
 
     # Register all project API routes in one place
     app.include_router(api_router)
@@ -176,6 +180,7 @@ def create_app() -> FastAPI:
 
     return app
 
+
 # Vercel imports this module-level ASGI app through `api.index`.
 #   - Keeping the app at module scope is the normal deployment pattern
 #     for ASGI applications.
@@ -184,4 +189,3 @@ def create_app() -> FastAPI:
 app = create_app()
 
 __all__ = ["app", "create_app"]
-
