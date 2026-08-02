@@ -635,6 +635,13 @@ class CandidateJobDescriptionShortlistItem(BaseModel):
     fit_summary: str
     strengths: list[str] = Field(default_factory=list)
     gaps: list[str] = Field(default_factory=list)
+    claim_evidence: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Machine-checkable evidence references for the fit summary, "
+            "strengths, and gaps."
+        ),
+    )
     match_excerpt: str | None = None
     graph_evidence: dict[str, Any] | None = Field(
         default=None,

@@ -9,9 +9,15 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from backend.db.candidates import search_candidates_by_resume_text
+from backend.evaluation.quality_checks import stable_payload_fingerprint
+from backend.services.candidate_matching import (
+    retrieve_candidates_with_graph_context,
+)
 from backend.services.candidate_retrieval import search_candidates_hybrid
 
 
@@ -39,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Optional custom role brief. Can be supplied multiple times.",
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path for the compact JSON benchmark artifact.",
+    )
     return parser
 
 
@@ -51,19 +62,68 @@ def main() -> None:
 
     benchmark_rows: list[dict[str, Any]] = []
     for query in queries:
-        benchmark_rows.append(
-            {
-                "query": query,
-                "fts": _compact_results(
-                    search_candidates_by_resume_text(query=query, limit=bounded_limit)
-                ),
-                "hybrid": _compact_results(
-                    search_candidates_hybrid(query=query, limit=bounded_limit)
-                ),
-            }
-        )
+        benchmark_rows.append(_benchmark_query(query=query, limit=bounded_limit))
 
-    print(json.dumps(benchmark_rows, indent=2, default=str))
+    serialized = json.dumps(benchmark_rows, indent=2, default=str)
+    if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(f"{serialized}\n", encoding="utf-8")
+    print(serialized)
+
+
+def _benchmark_query(*, query: str, limit: int) -> dict[str, Any]:
+    """Measure each retrieval layer independently for one role query."""
+
+    stages = {
+        "full_text": _measure_stage(
+            lambda: search_candidates_by_resume_text(query=query, limit=limit)
+        ),
+        "semantic": _measure_stage(
+            lambda: search_candidates_hybrid(
+                query=query,
+                limit=limit,
+                include_text=False,
+                include_semantic=True,
+            )
+        ),
+        "hybrid": _measure_stage(
+            lambda: search_candidates_hybrid(
+                query=query,
+                limit=limit,
+                include_text=True,
+                include_semantic=True,
+            )
+        ),
+        "graph_assisted": _measure_stage(
+            lambda: retrieve_candidates_with_graph_context(
+                query=query,
+                limit=limit,
+            )
+        ),
+    }
+    return {
+        "query_id": sha256_query(query),
+        "limit": limit,
+        "stages": stages,
+    }
+
+
+def _measure_stage(operation) -> dict[str, Any]:
+    started_at = perf_counter()
+    compact_results = _compact_results(operation())
+    duration_ms = max(0.0, (perf_counter() - started_at) * 1000)
+    return {
+        "duration_ms": round(duration_ms, 2),
+        "result_count": len(compact_results),
+        "result_fingerprint": stable_payload_fingerprint(compact_results),
+        "results": compact_results,
+    }
+
+
+def sha256_query(query: str) -> str:
+    """Identify a query without writing its role brief into the artifact."""
+
+    return stable_payload_fingerprint({"query": " ".join(query.split())})[:16]
 
 
 def _compact_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -74,7 +134,7 @@ def _compact_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "current_title": result.get("current_title"),
             "current_company_name": result.get("current_company_name"),
             "match_score": result.get("match_score"),
-            "match_excerpt": (result.get("match_excerpt") or "")[:260],
+            "retrieval_sources": result.get("retrieval_sources", []),
         }
         for result in results
     ]

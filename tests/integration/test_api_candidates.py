@@ -1382,6 +1382,7 @@ def test_match_job_description_route_returns_shortlist() -> None:
                 "fit_summary": "Excellent match for the role.",
                 "strengths": ["Python", "Cloud data pipelines"],
                 "gaps": ["Leadership scope not explicit"],
+                "claim_evidence": {},
                 "match_excerpt": "<mark>python</mark> pipelines cloud",
                 "graph_evidence": None,
             }
@@ -1448,6 +1449,7 @@ def test_export_shortlist_route_returns_zip_package() -> None:
         "fit_summary": "Excellent match for the role.",
         "strengths": ["Python", "Cloud data pipelines"],
         "gaps": ["Leadership scope not explicit"],
+        "claim_evidence": {},
         "match_excerpt": "Python pipelines",
         "graph_evidence": None,
     }
@@ -1512,6 +1514,7 @@ def _shortlist_share_candidate_payload() -> dict[str, object]:
         "fit_summary": "Excellent match for the role.",
         "strengths": ["Python", "Cloud data pipelines"],
         "gaps": ["Leadership scope not explicit"],
+        "claim_evidence": {},
         "match_excerpt": "Python pipelines",
         "graph_evidence": None,
     }

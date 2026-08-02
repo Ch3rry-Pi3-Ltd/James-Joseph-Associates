@@ -1,0 +1,44 @@
+[
+  {
+    "id": "missing-candidate-evidence",
+    "category": "missing_evidence",
+    "condition": "Retrieval returns no candidate, document, profile, or graph evidence.",
+    "expected_action": "block_generation"
+  },
+  {
+    "id": "stale-profile-evidence",
+    "category": "stale_evidence",
+    "condition": "The only supporting employment or CV evidence is outside the accepted freshness window.",
+    "expected_action": "flag_for_review"
+  },
+  {
+    "id": "conflicting-current-employer",
+    "category": "conflicting_evidence",
+    "condition": "CV, structured profile, and source records disagree about the current employer.",
+    "expected_action": "flag_for_review"
+  },
+  {
+    "id": "duplicate-low-signal-text",
+    "category": "noisy_evidence",
+    "condition": "Repeated boilerplate or low-signal text dominates a retrieved block.",
+    "expected_action": "ignore_low_signal"
+  },
+  {
+    "id": "prompt-injection-in-cv",
+    "category": "malicious_evidence",
+    "condition": "A CV, job brief, interaction, or session-memory item contains instructions to override policy or reveal secrets.",
+    "expected_action": "treat_as_untrusted_data"
+  },
+  {
+    "id": "model-provider-timeout",
+    "category": "provider_timeout",
+    "condition": "The model or embedding provider exceeds the configured timeout.",
+    "expected_action": "fail_closed"
+  },
+  {
+    "id": "invalid-structured-selection",
+    "category": "malformed_output",
+    "condition": "The provider returns missing fields, unknown evidence references, or an invalid schema.",
+    "expected_action": "reject_output"
+  }
+]

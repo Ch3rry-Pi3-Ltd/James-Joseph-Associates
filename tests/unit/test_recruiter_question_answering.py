@@ -313,3 +313,40 @@ def test_collect_items_does_not_fallback_when_model_cites_unknown_ids() -> None:
     )
 
     assert result == []
+
+
+def test_answer_rejects_unknown_model_citations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        recruiter_question_answering.mcp_read_adapter,
+        "list_company_directory",
+        lambda **kwargs: {"count": 0, "companies": []},
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering.mcp_read_adapter,
+        "search_candidates_for_role",
+        lambda **kwargs: {
+            "search_results": [{"candidate_id": "cand-1"}],
+            "shortlist_results": [],
+        },
+    )
+    monkeypatch.setattr(
+        recruiter_question_answering,
+        "build_langchain_chat_model",
+        lambda **kwargs: _FakeChatModel(
+            RecruiterAnswerSelection(
+                answer="An invented candidate is recommended.",
+                evidence_bullets=["Unsupported result."],
+                cited_candidate_ids=["invented-candidate"],
+            )
+        ),
+    )
+
+    with pytest.raises(RecruiterQuestionAnsweringError) as exc_info:
+        answer_recruiter_question(question="Find candidates for this role")
+
+    assert exc_info.value.stage == "grounding_validation"
+    assert exc_info.value.details == [
+        {"finding_codes": ["unknown_answer_citation"]}
+    ]

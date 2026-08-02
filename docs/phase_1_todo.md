@@ -37,19 +37,19 @@ kept in a separate deferred lane so they do not block independent delivery.
 - [x] Instrument and improve performance across Review, Company, search, and
   shortlist flows.
 - [x] Remove repeated database queries and avoidable API calls.
-- [ ] Build automated regression, groundedness, stability, and sensitive-data
+- [x] Build automated regression, groundedness, stability, and sensitive-data
   checks that do not depend on recruiter labels:
-  - [ ] benchmark full-text, semantic, hybrid, and graph-assisted retrieval as
+  - [x] benchmark full-text, semantic, hybrid, and graph-assisted retrieval as
     separate stages so each layer earns its latency and complexity
-  - [ ] document and test embedding-model objectives, chunking choices, and
+  - [x] document and test embedding-model objectives, chunking choices, and
     structured-block boundaries against representative recruitment queries
-  - [ ] build a RAG failure matrix covering missing, stale, conflicting, noisy,
+  - [x] build a RAG failure matrix covering missing, stale, conflicting, noisy,
     or malicious evidence, provider timeouts, and malformed structured outputs
-  - [ ] require every generated strength, gap, summary, and recommendation to
+  - [x] require every generated strength, gap, summary, and recommendation to
     map to retrievable evidence
-  - [ ] automate groundedness, stability, schema, and sensitive-data checks
+  - [x] automate groundedness, stability, schema, and sensitive-data checks
     independently of recruiter-labelled relevance judgements
-  - [ ] test MCP authentication, tool boundaries, permissions, timeouts, rate
+  - [x] test MCP authentication, tool boundaries, permissions, timeouts, rate
     limits, and failure responses independently of workspace publication
 - [ ] Finish Recruitly jobs, opportunities, and journal/note ingestion using
   existing access.
@@ -181,7 +181,7 @@ approval remain in the deferred lane below.
     into regression fixtures
   - [ ] use LLM-as-judge only as a secondary, rubric-based check alongside
     deterministic checks and human review
-  - [ ] add groundedness, unsupported-claim, sensitive-data, authentication,
+  - [x] add groundedness, unsupported-claim, sensitive-data, authentication,
     and future write-action safety tests
   - [ ] add trajectory and stop-condition evaluations when LangGraph workflows
     begin using multi-step loops

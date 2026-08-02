@@ -206,6 +206,11 @@ def answer_recruiter_question(
         company_context_result=company_context_result,
         recent_memory=recent_memory,
     )
+    _validate_answer_citations(
+        answer_selection=answer_selection,
+        role_search_result=role_search_result,
+        company_context_result=company_context_result,
+    )
 
     candidates = _collect_candidates(
         role_search_result=role_search_result,
@@ -461,6 +466,71 @@ def _collect_items_by_id(
         ]
 
     return items[:5]
+
+
+def _validate_answer_citations(
+    *,
+    answer_selection: RecruiterAnswerSelection,
+    role_search_result: dict[str, Any] | None,
+    company_context_result: dict[str, Any] | None,
+) -> None:
+    """Reject uncited or invented IDs before returning a generated answer."""
+
+    available_by_kind = {
+        "candidate": {
+            str(item.get("candidate_id"))
+            for item in [
+                *((role_search_result or {}).get("search_results") or []),
+                *((role_search_result or {}).get("shortlist_results") or []),
+            ]
+            if item.get("candidate_id") is not None
+        },
+        "contact": {
+            str(item.get("contact_id"))
+            for item in (company_context_result or {}).get("contacts") or []
+            if item.get("contact_id") is not None
+        },
+        "job": {
+            str(item.get("job_id"))
+            for item in (company_context_result or {}).get("jobs") or []
+            if item.get("job_id") is not None
+        },
+        "opportunity": {
+            str(item.get("opportunity_id"))
+            for item in (company_context_result or {}).get("opportunities") or []
+            if item.get("opportunity_id") is not None
+        },
+        "interaction": {
+            str(item.get("interaction_id"))
+            for item in (company_context_result or {}).get("interactions") or []
+            if item.get("interaction_id") is not None
+        },
+    }
+    cited_by_kind = {
+        "candidate": set(answer_selection.cited_candidate_ids),
+        "contact": set(answer_selection.cited_contact_ids),
+        "job": set(answer_selection.cited_job_ids),
+        "opportunity": set(answer_selection.cited_opportunity_ids),
+        "interaction": set(answer_selection.cited_interaction_ids),
+    }
+
+    finding_codes: list[str] = []
+    if not any(cited_by_kind.values()):
+        finding_codes.append("missing_answer_citation")
+    if any(
+        cited_ids - available_by_kind[kind]
+        for kind, cited_ids in cited_by_kind.items()
+    ):
+        finding_codes.append("unknown_answer_citation")
+
+    if finding_codes:
+        raise RecruiterQuestionAnsweringError(
+            "Recruiter answer generation returned unsupported citations.",
+            stage="grounding_validation",
+            code="grounding_validation_failed",
+            status_code=500,
+            details=[{"finding_codes": finding_codes}],
+        )
 
 
 __all__ = [

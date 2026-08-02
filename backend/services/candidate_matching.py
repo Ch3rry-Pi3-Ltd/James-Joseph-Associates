@@ -24,6 +24,7 @@ from backend.core.llm_safety import (
     MAX_LLM_INPUT_CHARACTERS,
     UNTRUSTED_CONTENT_POLICY,
 )
+from backend.evaluation.quality_checks import validate_claim_evidence
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.services.candidate_profiles import (
@@ -59,6 +60,15 @@ class CandidateMatchingError(RuntimeError):
         self.details = details or []
 
 
+class CandidateEvidenceClaim(BaseModel):
+    """One generated statement tied to retrievable evidence references."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    claim: str = Field(min_length=1)
+    evidence_refs: list[str] = Field(min_length=1)
+
+
 class CandidateShortlistAssessment(BaseModel):
     """
     One candidate selected by the LLM shortlist step.
@@ -68,9 +78,9 @@ class CandidateShortlistAssessment(BaseModel):
 
     candidate_id: str = Field(min_length=1)
     fit_score: int = Field(ge=0, le=100)
-    fit_summary: str = Field(min_length=1)
-    strengths: list[str] = Field(default_factory=list)
-    gaps: list[str] = Field(default_factory=list)
+    fit_summary: CandidateEvidenceClaim
+    strengths: list[CandidateEvidenceClaim] = Field(default_factory=list)
+    gaps: list[CandidateEvidenceClaim] = Field(default_factory=list)
 
 
 class CandidateShortlistSelection(BaseModel):
@@ -118,11 +128,9 @@ def build_candidate_job_description_shortlist(
     bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
     match_run_id = str(uuid4())
 
-    retrieved_candidates = search_candidates_hybrid(
+    retrieved_candidates = retrieve_candidates_with_graph_context(
         query=normalized_job_description,
         limit=bounded_retrieval_limit,
-        include_text=True,
-        include_semantic=True,
     )
     if not retrieved_candidates:
         return {
@@ -133,16 +141,6 @@ def build_candidate_job_description_shortlist(
             "retrieved_candidate_count": 0,
             "shortlisted_candidates": [],
         }
-
-    # Provenance is one batched read for the whole retrieval pool. Graph
-    # profile assembly reuses it instead of issuing another source lookup per
-    # candidate and then repeating the batch after ranking.
-    retrieved_candidates = attach_candidate_source_metadata(retrieved_candidates)
-    retrieved_candidates = _attach_graph_evidence_to_candidates(
-        retrieved_candidates,
-        per_candidate_limit=3,
-    )
-    retrieved_candidates = _score_candidates_with_graph_context(retrieved_candidates)
 
     shortlist_assessments = _rank_retrieved_candidates_for_job_description(
         job_description=normalized_job_description,
@@ -224,9 +222,16 @@ def build_candidate_job_description_shortlist(
                     matched_candidate.get("ranking_input_score")
                 ),
                 "fit_score": assessment.fit_score,
-                "fit_summary": assessment.fit_summary,
-                "strengths": list(assessment.strengths),
-                "gaps": list(assessment.gaps),
+                "fit_summary": assessment.fit_summary.claim,
+                "strengths": [claim.claim for claim in assessment.strengths],
+                "gaps": [claim.claim for claim in assessment.gaps],
+                "claim_evidence": {
+                    "fit_summary": assessment.fit_summary.model_dump(),
+                    "strengths": [
+                        claim.model_dump() for claim in assessment.strengths
+                    ],
+                    "gaps": [claim.model_dump() for claim in assessment.gaps],
+                },
                 "match_excerpt": _json_safe_value(
                     matched_candidate.get("match_excerpt")
                 ),
@@ -248,6 +253,33 @@ def build_candidate_job_description_shortlist(
         "retrieved_candidate_count": len(retrieved_candidates),
         "shortlisted_candidates": shortlisted_candidates,
     }
+
+
+def retrieve_candidates_with_graph_context(
+    *,
+    query: str,
+    limit: int = 25,
+) -> list[dict[str, Any]]:
+    """Return the deterministic pre-LLM graph-assisted retrieval stage."""
+
+    retrieved_candidates = search_candidates_hybrid(
+        query=query,
+        limit=limit,
+        include_text=True,
+        include_semantic=True,
+    )
+    if not retrieved_candidates:
+        return []
+
+    # Provenance is one batched read for the whole retrieval pool. Graph
+    # profile assembly reuses it instead of issuing another source lookup per
+    # candidate and then repeating the batch after ranking.
+    retrieved_candidates = attach_candidate_source_metadata(retrieved_candidates)
+    retrieved_candidates = _attach_graph_evidence_to_candidates(
+        retrieved_candidates,
+        per_candidate_limit=3,
+    )
+    return _score_candidates_with_graph_context(retrieved_candidates)
 
 
 def _rank_retrieved_candidates_for_job_description(
@@ -307,7 +339,7 @@ def _rank_retrieved_candidates_for_job_description(
                 candidate.get("ranking_input_score")
             ),
             "match_excerpt": _json_safe_value(candidate.get("match_excerpt")),
-            "graph_evidence": _json_safe_value(candidate.get("graph_evidence")),
+            "evidence_catalog": _build_candidate_evidence_catalog(candidate),
         }
         for candidate in retrieved_candidates
     ]
@@ -323,9 +355,10 @@ def _rank_retrieved_candidates_for_job_description(
         "For each shortlisted candidate:\n"
         "- use the exact candidate_id from the supplied list\n"
         "- assign a fit_score from 0 to 100\n"
-        "- write one brief fit_summary grounded in the retrieved evidence\n"
-        "- list concrete strengths as short evidence-backed bullet phrases\n"
-        "- list any obvious gaps only when they are genuinely missing or unclear from the evidence\n"
+        "- write one brief fit_summary claim grounded in the evidence_catalog\n"
+        "- list concrete strengths as short evidence-backed claims\n"
+        "- list gaps only when they are missing or unclear in the evidence\n"
+        "- attach one or more exact evidence_refs from that candidate's evidence_catalog to every fit_summary, strength, and gap claim\n"
         "- avoid generic filler such as 'strong background' unless you name the actual area\n"
     )
 
@@ -353,16 +386,159 @@ def _rank_retrieved_candidates_for_job_description(
         ) from exc
 
     if isinstance(raw_result, CandidateShortlistSelection):
-        return raw_result.shortlisted_candidates
+        assessments = raw_result.shortlisted_candidates
+    elif isinstance(raw_result, dict):
+        assessments = CandidateShortlistSelection(**raw_result).shortlisted_candidates
+    else:
+        raise CandidateMatchingError(
+            "Candidate shortlisting returned an unexpected response shape.",
+            stage="llm_ranking",
+            details=[{"result_type": raw_result.__class__.__name__}],
+        )
 
-    if isinstance(raw_result, dict):
-        return CandidateShortlistSelection(**raw_result).shortlisted_candidates
-
-    raise CandidateMatchingError(
-        "Candidate shortlisting returned an unexpected response shape.",
-        stage="llm_ranking",
-        details=[{"result_type": raw_result.__class__.__name__}],
+    _validate_assessment_grounding(
+        assessments=assessments,
+        retrieved_candidates=retrieved_candidates,
     )
+    return assessments
+
+
+def _build_candidate_evidence_catalog(
+    candidate: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Return bounded, referenceable ranking evidence without contact routes."""
+
+    candidate_id = str(candidate["candidate_id"])
+    catalog: list[dict[str, Any]] = []
+
+    def add(reference: str, label: str, value: Any) -> None:
+        safe_value = _json_safe_value(value)
+        if safe_value in (None, "", [], {}):
+            return
+        catalog.append(
+            {
+                "evidence_ref": reference,
+                "label": label,
+                "value": safe_value,
+            }
+        )
+
+    add(
+        f"candidate:{candidate_id}:retrieval",
+        "Retrieved match evidence",
+        candidate.get("match_excerpt"),
+    )
+    add(
+        f"candidate:{candidate_id}:current_title",
+        "Current title",
+        candidate.get("current_title"),
+    )
+    add(
+        f"candidate:{candidate_id}:current_company",
+        "Current company",
+        candidate.get("current_company_name"),
+    )
+    add(
+        f"candidate:{candidate_id}:provenance",
+        "Evidence provenance",
+        {
+            "source_category": candidate.get("source_category"),
+            "source_systems": candidate.get("source_systems") or [],
+        },
+    )
+
+    document_id = candidate.get("document_id")
+    if document_id:
+        add(
+            f"document:{document_id}",
+            "Current CV document",
+            {
+                "title": candidate.get("document_title"),
+                "resume_updated_at": candidate.get("resume_updated_at"),
+            },
+        )
+
+    graph_evidence = candidate.get("graph_evidence") or {}
+    profile_evidence = graph_evidence.get("profile_evidence") or {}
+    for field_name in (
+        "headline",
+        "summary",
+        "location",
+        "skill_names",
+        "recent_employment",
+    ):
+        add(
+            f"candidate:{candidate_id}:profile:{field_name}",
+            f"Profile {field_name.replace('_', ' ')}",
+            profile_evidence.get(field_name),
+        )
+
+    entity_specs = (
+        ("contacts", "contact", "contact_id", ("full_name", "role_title", "seniority", "is_hiring_manager")),
+        ("interactions", "interaction", "interaction_id", ("interaction_type", "occurred_at", "subject", "summary")),
+        ("jobs", "job", "job_id", ("title", "status", "location", "employment_type")),
+        ("opportunities", "opportunity", "opportunity_id", ("title", "stage", "smart_summary", "last_contact_at")),
+    )
+    for collection_name, entity_name, id_field, safe_fields in entity_specs:
+        for item in graph_evidence.get(collection_name) or []:
+            entity_id = item.get(id_field)
+            if not entity_id:
+                continue
+            add(
+                f"{entity_name}:{entity_id}",
+                f"Linked {entity_name}",
+                {field: item.get(field) for field in safe_fields},
+            )
+
+    return catalog
+
+
+def _validate_assessment_grounding(
+    *,
+    assessments: list[CandidateShortlistAssessment],
+    retrieved_candidates: list[dict[str, Any]],
+) -> None:
+    catalogs_by_candidate = {
+        str(candidate["candidate_id"]): _build_candidate_evidence_catalog(candidate)
+        for candidate in retrieved_candidates
+    }
+
+    failures: list[dict[str, Any]] = []
+    for assessment in assessments:
+        catalog = catalogs_by_candidate.get(assessment.candidate_id)
+        if catalog is None:
+            failures.append(
+                {
+                    "candidate_id": assessment.candidate_id,
+                    "finding_codes": ["unknown_candidate_id"],
+                }
+            )
+            continue
+
+        findings = validate_claim_evidence(
+            claim_groups={
+                "fit_summary": [assessment.fit_summary.model_dump()],
+                "strengths": [claim.model_dump() for claim in assessment.strengths],
+                "gaps": [claim.model_dump() for claim in assessment.gaps],
+            },
+            allowed_evidence_refs={
+                str(item["evidence_ref"]) for item in catalog
+            },
+        )
+        if findings:
+            failures.append(
+                {
+                    "candidate_id": assessment.candidate_id,
+                    "finding_codes": sorted({finding.code for finding in findings}),
+                }
+            )
+
+    if failures:
+        raise CandidateMatchingError(
+            "Candidate shortlisting returned claims without retrievable evidence.",
+            stage="grounding_validation",
+            details=failures,
+        )
 
 
 def _json_safe_value(value: Any) -> Any:
@@ -630,8 +806,10 @@ def _bounded_optional_text(value: Any, *, limit: int) -> str | None:
 
 
 __all__ = [
+    "CandidateEvidenceClaim",
     "CandidateMatchingError",
     "CandidateShortlistAssessment",
     "CandidateShortlistSelection",
     "build_candidate_job_description_shortlist",
+    "retrieve_candidates_with_graph_context",
 ]

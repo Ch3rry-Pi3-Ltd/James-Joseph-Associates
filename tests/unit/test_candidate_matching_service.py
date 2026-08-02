@@ -8,11 +8,19 @@ import pytest
 from backend.core.llm_safety import MAX_LLM_INPUT_CHARACTERS
 from backend.services import candidate_matching
 from backend.services.candidate_matching import (
+    CandidateEvidenceClaim,
     CandidateMatchingError,
     CandidateShortlistAssessment,
     CandidateShortlistSelection,
     build_candidate_job_description_shortlist,
 )
+
+
+def _claim(text: str, *, candidate_id: str = "cand-1") -> CandidateEvidenceClaim:
+    return CandidateEvidenceClaim(
+        claim=text,
+        evidence_refs=[f"candidate:{candidate_id}:retrieval"],
+    )
 
 
 def test_build_candidate_job_description_shortlist_returns_empty_when_no_candidates(
@@ -212,16 +220,24 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
             CandidateShortlistAssessment(
                 candidate_id="cand-2",
                 fit_score=89,
-                fit_summary="Strong fit for platform leadership and SQL depth.",
-                strengths=["Platform leadership", "SQL"],
-                gaps=["Less explicit Python depth"],
+                fit_summary=_claim(
+                    "Strong fit for platform leadership and SQL depth.",
+                    candidate_id="cand-2",
+                ),
+                strengths=[
+                    _claim("Platform leadership", candidate_id="cand-2"),
+                    _claim("SQL", candidate_id="cand-2"),
+                ],
+                gaps=[
+                    _claim("Less explicit Python depth", candidate_id="cand-2")
+                ],
             ),
             CandidateShortlistAssessment(
                 candidate_id="cand-1",
                 fit_score=84,
-                fit_summary="Strong hands-on pipeline experience.",
-                strengths=["Python", "Cloud pipelines"],
-                gaps=["Leadership less explicit"],
+                fit_summary=_claim("Strong hands-on pipeline experience."),
+                strengths=[_claim("Python"), _claim("Cloud pipelines")],
+                gaps=[_claim("Leadership less explicit")],
             ),
         ],
     )
@@ -242,6 +258,28 @@ def test_build_candidate_job_description_shortlist_merges_retrieval_and_ranking(
     assert result["shortlisted_candidates"][0]["graph_context_score"] == 0.4
     assert result["shortlisted_candidates"][0]["ranking_input_score"] == 0.7
     assert result["shortlisted_candidates"][0]["source_category"] == "cross_source"
+    assert result["shortlisted_candidates"][0]["claim_evidence"] == {
+        "fit_summary": {
+            "claim": "Strong fit for platform leadership and SQL depth.",
+            "evidence_refs": ["candidate:cand-2:retrieval"],
+        },
+        "strengths": [
+            {
+                "claim": "Platform leadership",
+                "evidence_refs": ["candidate:cand-2:retrieval"],
+            },
+            {
+                "claim": "SQL",
+                "evidence_refs": ["candidate:cand-2:retrieval"],
+            },
+        ],
+        "gaps": [
+            {
+                "claim": "Less explicit Python depth",
+                "evidence_refs": ["candidate:cand-2:retrieval"],
+            }
+        ],
+    }
     assert result["shortlisted_candidates"][1]["candidate_id"] == "cand-1"
     assert source_metadata_calls == 1
 
@@ -321,8 +359,8 @@ def test_build_candidate_job_description_shortlist_normalizes_uuid_and_datetime_
             CandidateShortlistAssessment(
                 candidate_id="cand-1",
                 fit_score=91,
-                fit_summary="Strong fit.",
-                strengths=["Finance systems"],
+                fit_summary=_claim("Strong fit."),
+                strengths=[_claim("Finance systems")],
                 gaps=[],
             )
         ],
@@ -669,8 +707,20 @@ def test_rank_retrieved_candidates_for_job_description_accepts_dict_result(
                     {
                         "candidate_id": "cand-1",
                         "fit_score": 91,
-                        "fit_summary": "Excellent match.",
-                        "strengths": ["Python", "ETL"],
+                        "fit_summary": {
+                            "claim": "Excellent match.",
+                            "evidence_refs": ["candidate:cand-1:retrieval"],
+                        },
+                        "strengths": [
+                            {
+                                "claim": "Python",
+                                "evidence_refs": ["candidate:cand-1:retrieval"],
+                            },
+                            {
+                                "claim": "ETL",
+                                "evidence_refs": ["candidate:cand-1:retrieval"],
+                            },
+                        ],
                         "gaps": [],
                     }
                 ]
@@ -729,8 +779,20 @@ def test_rank_retrieved_candidates_for_job_description_serializes_uuid_payload(
                     {
                         "candidate_id": str(candidate_id),
                         "fit_score": 90,
-                        "fit_summary": "Good fit.",
-                        "strengths": ["Python"],
+                        "fit_summary": {
+                            "claim": "Good fit.",
+                            "evidence_refs": [
+                                f"candidate:{candidate_id}:retrieval"
+                            ],
+                        },
+                        "strengths": [
+                            {
+                                "claim": "Python",
+                                "evidence_refs": [
+                                    f"candidate:{candidate_id}:retrieval"
+                                ],
+                            }
+                        ],
                         "gaps": [],
                     }
                 ]
@@ -771,6 +833,82 @@ def test_rank_retrieved_candidates_for_job_description_serializes_uuid_payload(
 
     assert len(result) == 1
     assert result[0].candidate_id == str(candidate_id)
+
+
+def test_rank_rejects_claims_with_unknown_evidence_references(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeStructuredModel:
+        def __call__(self, _: object) -> dict[str, object]:
+            return {
+                "shortlisted_candidates": [
+                    {
+                        "candidate_id": "cand-1",
+                        "fit_score": 90,
+                        "fit_summary": {
+                            "claim": "Unsupported claim.",
+                            "evidence_refs": ["document:invented"],
+                        },
+                        "strengths": [],
+                        "gaps": [],
+                    }
+                ]
+            }
+
+    class FakeChatModel:
+        def with_structured_output(self, _: object) -> FakeStructuredModel:
+            return FakeStructuredModel()
+
+    monkeypatch.setattr(
+        candidate_matching,
+        "build_langchain_chat_model",
+        lambda **kwargs: FakeChatModel(),
+    )
+
+    with pytest.raises(CandidateMatchingError) as exc_info:
+        candidate_matching._rank_retrieved_candidates_for_job_description(
+            job_description="python engineer",
+            retrieved_candidates=[
+                {
+                    "candidate_id": "cand-1",
+                    "match_excerpt": "Python production delivery",
+                }
+            ],
+            shortlist_limit=3,
+        )
+
+    assert exc_info.value.stage == "grounding_validation"
+    assert exc_info.value.details == [
+        {
+            "candidate_id": "cand-1",
+            "finding_codes": ["unknown_evidence_reference"],
+        }
+    ]
+
+
+def test_ranking_evidence_catalog_excludes_contact_routes() -> None:
+    catalog = candidate_matching._build_candidate_evidence_catalog(
+        {
+            "candidate_id": "cand-1",
+            "match_excerpt": "Python delivery",
+            "graph_evidence": {
+                "contacts": [
+                    {
+                        "contact_id": "contact-1",
+                        "full_name": "Hiring Manager",
+                        "role_title": "CTO",
+                        "primary_email": "private@example.test",
+                        "primary_phone": "+447700900000",
+                    }
+                ]
+            },
+        }
+    )
+
+    serialized = str(catalog)
+    assert "contact:contact-1" in serialized
+    assert "private@example.test" not in serialized
+    assert "+447700900000" not in serialized
 
 
 def test_rank_prompt_treats_job_and_resume_text_as_untrusted(

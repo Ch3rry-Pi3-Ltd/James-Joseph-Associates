@@ -266,3 +266,70 @@ def test_remote_mcp_returns_429_when_shared_limit_is_exhausted(
     assert response.headers["retry-after"] == "23"
     assert response.headers["x-ratelimit-remaining"] == "0"
     assert response.json()["error"]["code"] == "rate_limit_exceeded"
+
+
+def test_remote_mcp_fails_closed_when_rate_controls_are_unavailable(
+    mcp_client: TestClient,
+) -> None:
+    with (
+        patch(
+            "backend.services.mcp_transport.enforce_mcp_rate_limit",
+            side_effect=RuntimeError("database unavailable"),
+        ),
+        patch(
+            "backend.services.mcp_transport.audit_mcp_event_best_effort"
+        ),
+    ):
+        response = _mcp_request(
+            mcp_client,
+            method="tools/list",
+            request_id=7,
+        )
+
+    assert response.status_code == 503
+    assert response.json()["error"] == {
+        "code": "service_unavailable",
+        "message": "MCP request controls are temporarily unavailable.",
+    }
+
+
+def test_remote_mcp_returns_safe_failure_when_read_tool_times_out(
+    mcp_client: TestClient,
+) -> None:
+    private_error = "timeout while reading private-candidate@example.test"
+    with (
+        patch(
+            "backend.services.mcp_transport.enforce_mcp_rate_limit",
+            return_value=_allowed_rate_limit(),
+        ),
+        patch(
+            "backend.services.mcp_transport.audit_mcp_event_best_effort"
+        ),
+        patch(
+            "backend.services.mcp_server.audit_mcp_event_best_effort"
+        ) as mock_audit,
+        patch(
+            "backend.services.mcp_server.mcp_read_adapter."
+            "search_candidates_for_role",
+            side_effect=TimeoutError(private_error),
+        ),
+    ):
+        response = _mcp_request(
+            mcp_client,
+            method="tools/call",
+            request_id=8,
+            params={
+                "name": "search_candidates_for_role",
+                "arguments": {
+                    "role_brief": "Data engineer",
+                    "include_shortlist": False,
+                },
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["result"]["isError"] is True
+    assert private_error not in response.text
+    audit_event = mock_audit.call_args.kwargs
+    assert audit_event["outcome"] == "error"
+    assert audit_event["error_code"] == "internal_error"
