@@ -78,10 +78,12 @@ This is the practical engineering backlog as of Thursday, July 30, 2026.
   - [ ] promote the remaining native-backup profiles in controlled slices
   - [ ] run semantic refresh for imported candidates after each slice
   - [ ] webhook path if the vendor payload shape is good enough
-- [ ] Finish the next Recruitly ingestion slice:
-  - [ ] jobs into canonical `jobs`
-  - [ ] opportunities into canonical `opportunities`
-  - [ ] journal / note-style interactions into canonical `interactions`
+- [x] Finish the next Recruitly ingestion slice:
+  - [x] jobs into canonical `jobs` (`4` live records persisted and linked)
+  - [x] opportunities into canonical `opportunities` (live source verified at
+    `0` records on 2 August 2026)
+  - [x] journal / note-style interactions into canonical `interactions` (all
+    available job/opportunity journals swept; live source returned `0` entries)
 - [ ] Stabilize the client-owned infrastructure path:
   - [ ] short-term Supabase continuity plan under the current billing pressure
   - [ ] documented migration/export plan into a future Tom-owned Vercel/Supabase setup

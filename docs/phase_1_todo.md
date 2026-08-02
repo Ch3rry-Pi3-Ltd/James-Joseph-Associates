@@ -51,8 +51,16 @@ kept in a separate deferred lane so they do not block independent delivery.
     independently of recruiter-labelled relevance judgements
   - [x] test MCP authentication, tool boundaries, permissions, timeouts, rate
     limits, and failure responses independently of workspace publication
-- [ ] Finish Recruitly jobs, opportunities, and journal/note ingestion using
-  existing access.
+- [x] Finish Recruitly jobs, opportunities, and journal/note ingestion using
+  existing access:
+  - [x] persist all `4` jobs currently returned by Recruitly and verify all
+    `4` source records link one-to-one to canonical `jobs`
+  - [x] sweep opportunities and record the verified empty source result
+    (`0` records returned on 2 August 2026)
+  - [x] sweep journals for all returned jobs and opportunities and record the
+    verified empty source result (`0` journal entries returned)
+  - [x] retain the idempotent bulk runner and compact live audit artifact for
+    future source refreshes
 - [ ] Build and test the database export and restore path.
 - [ ] Harden API rate limiting, caching, Content Security Policy, and database
   permissions:
@@ -240,10 +248,11 @@ approval remain in the deferred lane below.
   - [ ] decide privacy and retention rules before importing chats/messages as
     canonical interactions
   - [ ] webhook path if payload support is good enough
-- [ ] Finish Recruitly canonical ingest beyond people/contacts/companies:
-  - [ ] jobs
-  - [ ] opportunities
-  - [ ] journal / note interactions
+- [x] Finish Recruitly canonical ingest beyond people/contacts/companies:
+  - [x] jobs (`4` live source rows persisted and canonically linked)
+  - [x] opportunities (ingestion path verified; live source currently returns `0`)
+  - [x] journal / note interactions (all available job/opportunity journals
+    swept; live source currently returns `0`)
 - [ ] Keep Supabase service live while ownership/billing is sorted.
 - [ ] Write and verify a controlled database export / migration path into a future Tom-owned setup.
 - [ ] Complete production auth cutover:

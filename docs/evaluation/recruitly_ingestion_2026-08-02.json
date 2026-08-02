@@ -1,0 +1,129 @@
+{
+  "started_at": "2026-08-02T07:08:34.375650+00:00",
+  "finished_at": "2026-08-02T07:08:44.706111+00:00",
+  "resources": [
+    "jobs",
+    "opportunities"
+  ],
+  "query": null,
+  "page_size": 100,
+  "include_journals": true,
+  "journal_resources": [
+    "jobs",
+    "opportunities"
+  ],
+  "import_run_prefix": "recruitly-priority-20260802",
+  "collection_summaries": [
+    {
+      "resource": "jobs",
+      "query": null,
+      "start_page": 0,
+      "pages_requested": 1,
+      "persisted_rows": 4,
+      "imported_record_ids": [
+        "jamee78d41d296ae44609618784321e33220",
+        "jame3025453b5133400ca7770f5ae56ea1e7",
+        "jamec55e155ca9074d818b6e1239a6a65962",
+        "jamed1f926742c1a421ab34e1a1626a3e845"
+      ],
+      "pages": [
+        {
+          "page": 0,
+          "item_count": 4,
+          "total_count": 4,
+          "persisted_count": 4,
+          "record_ids": [
+            "jamee78d41d296ae44609618784321e33220",
+            "jame3025453b5133400ca7770f5ae56ea1e7",
+            "jamec55e155ca9074d818b6e1239a6a65962",
+            "jamed1f926742c1a421ab34e1a1626a3e845"
+          ]
+        }
+      ]
+    },
+    {
+      "resource": "opportunities",
+      "query": null,
+      "start_page": 0,
+      "pages_requested": 1,
+      "persisted_rows": 0,
+      "imported_record_ids": [],
+      "pages": [
+        {
+          "page": 0,
+          "item_count": 0,
+          "total_count": 0,
+          "persisted_count": 0,
+          "record_ids": []
+        }
+      ]
+    }
+  ],
+  "journal_summaries": [
+    {
+      "resource": "jobs",
+      "record_type": "job",
+      "records_requested": 4,
+      "interactions_persisted": 0,
+      "records": [
+        {
+          "record_id": "jamee78d41d296ae44609618784321e33220",
+          "pages_requested": 1,
+          "pages": [
+            {
+              "page": 0,
+              "item_count": 0,
+              "total_count": 0,
+              "interaction_count": 0
+            }
+          ]
+        },
+        {
+          "record_id": "jame3025453b5133400ca7770f5ae56ea1e7",
+          "pages_requested": 1,
+          "pages": [
+            {
+              "page": 0,
+              "item_count": 0,
+              "total_count": 0,
+              "interaction_count": 0
+            }
+          ]
+        },
+        {
+          "record_id": "jamec55e155ca9074d818b6e1239a6a65962",
+          "pages_requested": 1,
+          "pages": [
+            {
+              "page": 0,
+              "item_count": 0,
+              "total_count": 0,
+              "interaction_count": 0
+            }
+          ]
+        },
+        {
+          "record_id": "jamed1f926742c1a421ab34e1a1626a3e845",
+          "pages_requested": 1,
+          "pages": [
+            {
+              "page": 0,
+              "item_count": 0,
+              "total_count": 0,
+              "interaction_count": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": "opportunities",
+      "record_type": "opportunity",
+      "records_requested": 0,
+      "interactions_persisted": 0,
+      "records": []
+    }
+  ],
+  "total_rows_persisted": 4,
+  "total_journal_interactions_persisted": 0
+}
