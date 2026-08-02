@@ -86,7 +86,8 @@ This is the practical engineering backlog as of Thursday, July 30, 2026.
     available job/opportunity journals swept; live source returned `0` entries)
 - [ ] Stabilize the client-owned infrastructure path:
   - [ ] short-term Supabase continuity plan under the current billing pressure
-  - [ ] documented migration/export plan into a future Tom-owned Vercel/Supabase setup
+  - [x] documented and synthetically recovery-tested migration/export path into
+    a future owner-controlled Vercel/Supabase setup
   - [ ] complete production auth cutover once the real DNS-backed domain is ready
 
 ### Retrieval And Workflow Build-Out

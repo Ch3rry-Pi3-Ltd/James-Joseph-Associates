@@ -65,3 +65,6 @@ supabase/remote_public_schema.sql
 temp/*_env.tmp
 temp/*.checkpoint.json
 temp/*_checkpoint.json
+
+# Database recovery artifacts contain private recruitment data.
+/temp/database_backups/

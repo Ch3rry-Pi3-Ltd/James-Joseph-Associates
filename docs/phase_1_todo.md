@@ -61,7 +61,13 @@ kept in a separate deferred lane so they do not block independent delivery.
     verified empty source result (`0` journal entries returned)
   - [x] retain the idempotent bulk runner and compact live audit artifact for
     future source refreshes
-- [ ] Build and test the database export and restore path.
+- [x] Build and test the database export and restore path:
+  - [x] export `public` data separately from the tracked migration-owned schema
+  - [x] checksum archives and record migration fingerprints plus exact table counts
+  - [x] require a distinct, empty, explicitly confirmed restore target
+  - [x] restore atomically and verify all post-restore table counts
+  - [x] exercise the real path against disposable PostgreSQL 17/pgvector source
+    and target databases using all tracked migrations and synthetic data
 - [ ] Harden API rate limiting, caching, Content Security Policy, and database
   permissions:
   - [ ] inventory context-window, token, truncation, latency, and cost budgets
@@ -254,7 +260,9 @@ approval remain in the deferred lane below.
   - [x] journal / note interactions (all available job/opportunity journals
     swept; live source currently returns `0`)
 - [ ] Keep Supabase service live while ownership/billing is sorted.
-- [ ] Write and verify a controlled database export / migration path into a future Tom-owned setup.
+- [x] Write and verify a controlled database export / migration path into a
+  future owner-controlled setup; the transfer runner is ready independently,
+  while actual target provisioning and ownership remain externally deferred.
 - [ ] Complete production auth cutover:
   - [ ] Tom to provide/control a real DNS-backed subdomain for the app
     (recommended: `app.jamesjosephassociates.co.uk`)
@@ -638,7 +646,8 @@ Supabase should be treated as the **canonical data platform**, not merely a vect
   - [ ] Read/write boundaries.
   - [ ] Future row-level security assumptions.
 - [x] Document Supabase connection variables required by Vercel.
-- [ ] Define initial backup and recovery expectations.
+- [x] Define initial backup and recovery expectations in
+  `docs/database_export_restore.md` and enforce them in the controlled runner.
 
 </details>
 
