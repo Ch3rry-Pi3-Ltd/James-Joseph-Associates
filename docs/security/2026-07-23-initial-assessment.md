@@ -34,13 +34,14 @@ Search, parsing, and LLM reranking can consume database, CPU, and provider
 resources. Authentication reduces exposure but does not limit abuse by a
 compromised or malfunctioning account.
 
-**Status:** Implemented but activation is pending on 3 August 2026. Preview and
-production can use a shared Postgres minute window keyed by a one-way principal
-fingerprint and privacy-safe route group. It fails closed if the active control
-store is unavailable, returns standard `429` responses with retry metadata, and
-keeps health checks exempt. Apply migration `0014`, then set
-`API_RATE_LIMIT_ENABLED=true`; it defaults to false so application deployment
-cannot race the schema change. Vercel Firewall remains useful defence in depth.
+**Status:** Remediated at the application layer on 3 August 2026. Migration
+`0014` is applied and `API_RATE_LIMIT_ENABLED=true` is active in Vercel
+Production and the current branch Preview environment. The shared Postgres
+minute window uses a one-way principal fingerprint and privacy-safe route group,
+fails closed if its control store is unavailable, returns standard `429`
+responses with retry metadata, and keeps health checks exempt. A live protected
+route returned limit `120` and remaining count `119`. Vercel Firewall remains
+useful defence in depth.
 
 ### Medium - Supabase least privilege is not demonstrated in migrations
 
@@ -49,12 +50,12 @@ not contain row-level-security policies. This is not a browser-direct exposure,
 but compromise of a broad runtime database credential would have a large blast
 radius.
 
-**Status:** Migration-ready on 3 August 2026. Migration `0014` defines
+**Status:** Partially remediated on 3 August 2026. Applied migration `0014` defines
 no-login `jja_app_readonly` and `jja_app_writer` roles, removes schema-create
 access from `PUBLIC`, and grants current/default table and sequence privileges.
-It has not been applied to the live database. After explicit production-change
-approval, apply it, make the deployed login a member of the writer role, and
-rotate away from any owner/superuser credential.
+Live verification confirmed the table, roles and intended grants. The deployed
+login must still be made a member of the writer role and rotated away from any
+owner/superuser credential.
 
 ### Low - browser security headers were incomplete
 
@@ -98,10 +99,9 @@ edge and remain protected by their existing FastAPI bearer-token checks.
 1. Configure `SECURITY_TEST_BASE_URL` for a synthetic-data staging deployment.
 2. Add Vercel Firewall rules as defence in depth for upload, search, shortlist,
    and operator endpoints.
-3. With explicit production-change approval, apply migration `0014`, assign and
-   rotate the runtime login into `jja_app_writer`, confirm it cannot create or
-   alter schema objects, retain a separate migration role, and set
-   `API_RATE_LIMIT_ENABLED=true`.
+3. With explicit credential-change approval, assign and rotate the runtime login
+   into `jja_app_writer`, confirm it cannot create or alter schema objects, and
+   retain a separate migration role.
 4. Monitor enforced CSP reports/browser failures after deployment and extend only
    the narrow directive that a verified Clerk or application flow requires.
 5. Complete the first authenticated manual test using the runbook and retain a
