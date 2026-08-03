@@ -403,9 +403,9 @@ export default async function ReviewPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#eef1ec_0%,#f6f6f1_40%,#fbfbf8_100%)] text-zinc-950">
+    <main className="app-canvas min-h-screen text-zinc-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-8 sm:px-8 lg:px-10">
-        <header className="grid gap-6 rounded-md border border-zinc-900 bg-[#101714] px-6 py-8 text-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] sm:px-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:px-10 lg:py-10">
+        <header className="workspace-hero grid gap-6 px-6 py-8 text-white sm:px-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:px-10 lg:py-10">
           <div className="max-w-4xl">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
               Internal review

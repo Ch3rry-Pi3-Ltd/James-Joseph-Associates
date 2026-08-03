@@ -2,9 +2,9 @@ import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
   return (
-    <main className="min-h-screen bg-[#0b1110] px-6 py-10 text-zinc-50 sm:px-8 lg:px-10">
-      <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.1fr)_420px]">
-        <div className="grid content-start gap-6 rounded-md border border-white/10 bg-[#101714] p-8 shadow-2xl">
+    <main className="app-canvas min-h-screen px-6 py-10 text-zinc-50 sm:px-8 lg:px-10">
+      <section className="mx-auto grid w-full min-w-0 max-w-6xl grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.1fr)_420px]">
+        <div className="workspace-hero grid min-w-0 content-start gap-6 p-6 sm:p-8">
           <div className="inline-flex w-fit rounded-md border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
             Secure access
           </div>
@@ -48,7 +48,7 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <div className="flex items-start justify-center rounded-md border border-white/10 bg-white p-4 shadow-2xl">
+        <div className="auth-shell flex min-w-0 items-start justify-center overflow-hidden rounded-md border border-white/10 bg-white p-2 shadow-2xl sm:p-4">
           <SignIn
             routing="path"
             path="/sign-in"

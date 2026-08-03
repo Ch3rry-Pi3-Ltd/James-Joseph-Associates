@@ -13,7 +13,7 @@ export default async function SharedShortlistPage({
   const { shareId } = await params;
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#edf2ef_0%,#f7f8f5_42%,#fbfbf8_100%)] text-zinc-950">
+    <main className="app-canvas min-h-screen text-zinc-950">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-6 py-8 sm:px-8 lg:px-10">
         <header className="workspace-hero">
           <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:px-10 lg:py-10">

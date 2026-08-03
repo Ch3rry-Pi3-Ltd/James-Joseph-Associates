@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function UnauthorizedPage() {
   return (
-    <main className="min-h-screen bg-[#0b1110] px-6 py-10 text-zinc-50 sm:px-8 lg:px-10">
-      <section className="mx-auto grid w-full max-w-3xl gap-6 rounded-md border border-white/10 bg-[#101714] p-8 shadow-2xl">
+    <main className="app-canvas min-h-screen px-6 py-10 text-zinc-50 sm:px-8 lg:px-10">
+      <section className="workspace-hero mx-auto grid w-full max-w-3xl gap-6 p-8">
         <div className="inline-flex w-fit rounded-md border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
           Access blocked
         </div>

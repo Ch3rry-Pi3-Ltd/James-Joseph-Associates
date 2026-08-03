@@ -1,66 +1,18 @@
-/*
-Global styles for the James Joseph Associates intelligence app.
-
-This file is imported once from `app/layout.tsx`.
-
-It gives the frontend a stable place to configure:
-
-- Tailwind CSS
-- app-wide colour tokens
-- app-wide font tokens
-- default body styling
-
-In plain language:
-
-- this file answers the question:
-
-    "What base styling should every page inherit?"
-
-- it does not define page-specific layout
-- it does not define component-specific styling
-- it does not fetch assets
-- it should stay small and focused on global defaults
-*/
-
-/*
-Load Tailwind CSS.
-
-Tailwind provides the utility classes used throughout `app/page.tsx`, such as:
-
-- flex
-- grid
-- rounded-lg
-- text-zinc-700
-- bg-white
-*/
 @import "tailwindcss";
 
-/*
-Default colour tokens.
-
-These CSS variables define the baseline app foreground and background colours.
-They are also exposed to Tailwind through the `@theme inline` block below.
-
-In plain language:
-
-- `--background` is the page background colour
-- `--foreground` is the default text colour
-*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8f6f1;
+  --foreground: #071b2a;
+  --jja-ink: #071b2a;
+  --jja-navy: #081a2b;
+  --jja-teal: #0d6b6d;
+  --jja-cyan: #58d5df;
+  --jja-blue: #2859e8;
+  --jja-violet: #7b3ff2;
+  --jja-paper: #f8f6f1;
+  --jja-line: rgba(7, 27, 42, 0.12);
 }
 
-/*
-Expose local CSS variables to Tailwind's theme system.
-
-The font variables come from `app/layout.tsx`, where `next/font` creates:
-
-- `--font-geist-sans`
-- `--font-geist-mono`
-
-Those variables become available through Tailwind's font utilities.
-*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -68,34 +20,16 @@ Those variables become available through Tailwind's font utilities.
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
-/*
-Respect the user's operating-system dark-mode preference.
-
-The first UI shell currently uses explicit light colours in `app/page.tsx`, so
-this block mostly preserves the starter app's global dark-mode baseline.
-
-Later, if we want a fully themed dark UI, we should make page and component
-colours consume shared tokens rather than hardcoding every colour class.
-*/
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
-/*
-Base body styling.
+html {
+  background: var(--jja-paper);
+}
 
-Every page is rendered inside this body element from `app/layout.tsx`.
-
-Notes:
-
-- `background` and `color` use the global tokens above.
-- The explicit fallback font keeps text readable if the custom font fails.
-- Page-specific layout still belongs in page or component files.
-*/
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -104,88 +38,278 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+::selection {
+  background: rgba(88, 213, 223, 0.34);
+  color: var(--jja-ink);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(40, 89, 232, 0.24);
+  outline-offset: 2px;
+}
+
+.app-canvas {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 6% 3%, rgba(88, 213, 223, 0.18), transparent 24rem),
+    radial-gradient(circle at 96% 88%, rgba(123, 63, 242, 0.1), transparent 28rem),
+    linear-gradient(180deg, #faf8f3 0%, #f7f5ef 54%, #fbfaf7 100%) !important;
+  color: var(--jja-ink);
+}
+
+.app-canvas .rounded-md {
+  border-radius: 0.95rem;
+}
+
+.app-canvas .rounded-lg {
+  border-radius: 1.2rem;
+}
+
+.auth-shell :is(.cl-rootBox, .cl-cardBox, .cl-card) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .workspace-section {
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8f9f7 100%);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--jja-line);
+  border-radius: 1.45rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 70px rgba(7, 27, 42, 0.07);
+  backdrop-filter: blur(14px);
 }
 
 .workspace-card {
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 8px;
+  border: 1px solid var(--jja-line);
+  border-radius: 1.2rem;
   background: #ffffff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 16px 45px rgba(7, 27, 42, 0.06);
 }
 
 .workspace-card-soft {
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 8px;
-  background: linear-gradient(180deg, #f7faf8 0%, #ffffff 100%);
+  border: 1px solid rgba(13, 107, 109, 0.14);
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(145deg, rgba(230, 249, 248, 0.78), rgba(255, 255, 255, 0.94) 62%);
 }
 
 .workspace-card-contrast {
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
 }
 
 .workspace-kpi {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--jja-line);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(7, 27, 42, 0.065);
 }
 
 .workspace-kpi::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 3px;
-  background: linear-gradient(90deg, #10b981 0%, #22d3ee 52%, #38bdf8 100%);
+  height: 4px;
+  background: linear-gradient(90deg, var(--jja-blue), var(--jja-cyan) 52%, var(--jja-violet));
 }
 
 .workspace-hero {
+  position: relative;
   overflow: hidden;
-  border: 1px solid rgba(24, 24, 27, 0.5);
-  border-radius: 8px;
+  border: 1px solid rgba(7, 27, 42, 0.38);
+  border-radius: 2.4rem 2.4rem 0.8rem 2.4rem;
   background:
-    linear-gradient(135deg, rgba(16, 24, 20, 0.88) 0%, rgba(18, 28, 23, 0.74) 38%, rgba(12, 18, 15, 0.82) 100%),
-    radial-gradient(circle at top left, rgba(52, 211, 153, 0.16) 0%, transparent 34%),
-    #101714;
+    radial-gradient(circle at 78% 15%, rgba(88, 213, 223, 0.2), transparent 23rem),
+    radial-gradient(circle at 7% 92%, rgba(40, 89, 232, 0.24), transparent 22rem),
+    linear-gradient(135deg, #071827 0%, #0a2033 58%, #101a35 100%);
   color: #ffffff;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 30px 85px rgba(7, 24, 39, 0.2);
+}
+
+.workspace-hero::after {
+  content: "";
+  position: absolute;
+  right: -8rem;
+  bottom: -11rem;
+  width: 24rem;
+  height: 24rem;
+  border: 1px solid rgba(88, 213, 223, 0.18);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.workspace-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.workspace-hero .text-emerald-300,
+.workspace-hero .text-emerald-200 {
+  color: #7ce8ed;
 }
 
 .workspace-highlight {
-  border: 1px solid rgba(16, 185, 129, 0.22);
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(236, 253, 245, 0.9) 100%);
+  border: 1px solid rgba(13, 107, 109, 0.2);
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, rgba(218, 246, 246, 0.95), rgba(239, 244, 255, 0.9));
 }
 
 .workspace-empty {
-  border: 1px dashed rgba(63, 63, 70, 0.28);
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffffff 0%, #f5f7f4 100%);
+  border: 1px dashed rgba(7, 27, 42, 0.24);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .workspace-input,
 .workspace-select,
 .workspace-textarea {
-  border: 1px solid rgba(63, 63, 70, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(7, 27, 42, 0.18);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .workspace-input:focus,
 .workspace-select:focus,
 .workspace-textarea:focus {
   outline: none;
-  border-color: rgba(20, 184, 166, 0.75);
+  border-color: rgba(40, 89, 232, 0.7);
   box-shadow:
-    0 0 0 3px rgba(20, 184, 166, 0.12),
+    0 0 0 4px rgba(40, 89, 232, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.app-primary-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border-radius: 999px;
+  background: linear-gradient(100deg, var(--jja-blue), var(--jja-violet));
+  padding: 0.75rem 1.35rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 14px 30px rgba(40, 89, 232, 0.2);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.app-primary-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(40, 89, 232, 0.27);
+}
+
+.app-secondary-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid rgba(7, 27, 42, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.75rem 1.35rem;
+  color: var(--jja-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.app-secondary-action:hover {
+  border-color: rgba(40, 89, 232, 0.55);
+  background: #ffffff;
+}
+
+.home-hero {
+  display: grid;
+  min-height: 39rem;
+  align-items: center;
+  gap: 4rem;
+  padding: clamp(2.5rem, 5vw, 5rem) 0;
+}
+
+.home-display {
+  max-width: 11ch;
+  font-size: clamp(3.8rem, 8vw, 7rem);
+  font-weight: 650;
+  letter-spacing: -0.065em;
+  line-height: 0.96;
+}
+
+.home-display-accent {
+  display: block;
+  background: linear-gradient(95deg, #d72e42 0%, #9b36c8 52%, #3f58ee 100%);
+  background-clip: text;
+  color: transparent;
+}
+
+.home-portal {
+  position: relative;
+  overflow: hidden;
+  min-height: 38rem;
+  border: 1px solid rgba(88, 213, 223, 0.22);
+  border-radius: 15rem 15rem 2rem 2rem;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(88, 213, 223, 0.17), transparent 8rem),
+    repeating-radial-gradient(circle at 50% 38%, transparent 0 4.2rem, rgba(88, 213, 223, 0.07) 4.25rem 4.32rem),
+    linear-gradient(145deg, #071827, #10193a);
+  box-shadow: 0 35px 80px rgba(7, 24, 39, 0.2);
+}
+
+.home-portal-mark {
+  display: grid;
+  width: 7.5rem;
+  height: 7.5rem;
+  place-items: center;
+  border: 1px solid rgba(88, 213, 223, 0.3);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(123, 63, 242, 0.5), rgba(7, 24, 39, 0.92) 68%);
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  box-shadow: 0 0 45px rgba(88, 213, 223, 0.22);
+}
+
+@media (min-width: 1024px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1.02fr) minmax(28rem, 0.98fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-hero {
+    border-radius: 1.6rem 1.6rem 0.7rem 1.6rem;
+  }
+
+  .home-portal {
+    min-height: 34rem;
+    border-radius: 9rem 9rem 1.5rem 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

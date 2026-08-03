@@ -4,12 +4,7 @@ import { ClerkLoaded, ClerkLoading, UserButton, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type NavigationItem = {
-  href: string;
-  label: string;
-};
-
-const navigationItems: NavigationItem[] = [
+const navigationItems = [
   { href: "/", label: "Home" },
   { href: "/review", label: "Review" },
   { href: "/company", label: "Company" },
@@ -17,11 +12,9 @@ const navigationItems: NavigationItem[] = [
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/") {
-    return pathname === "/";
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function WorkspaceNav() {
@@ -29,89 +22,77 @@ export function WorkspaceNav() {
   const { userId } = useAuth();
 
   return (
-    <div className="border-b border-zinc-800 bg-[#101714] text-zinc-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 sm:px-8 lg:px-10">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="grid h-11 w-11 place-items-center rounded-md border border-emerald-400/30 bg-emerald-400/10 text-sm font-semibold text-emerald-200">
-              RI
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                Recruitment intelligence
-              </p>
-              <p className="text-sm text-zinc-300">
-                Canonical search and workflow platform
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-1 text-sm text-zinc-400 sm:text-right">
-            <p>Canonical data, retrieval, review, and workflow execution</p>
-            <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">
-              Restricted operator workspace
-            </p>
-          </div>
+    <header className="sticky top-0 z-50 border-b border-slate-950/10 bg-[#fbfaf7]/95 text-[#071b2a] shadow-[0_10px_35px_rgba(7,27,42,0.06)] backdrop-blur-xl">
+      <div className="bg-[#071827] text-white">
+        <div className="mx-auto flex min-h-8 w-full max-w-7xl items-center justify-between gap-4 px-6 text-[11px] font-semibold tracking-[0.05em] sm:px-8 lg:px-10">
+          <span>Recruitment intelligence, grounded in evidence.</span>
+          <span className="hidden text-cyan-200 sm:inline">
+            Restricted operator workspace
+          </span>
         </div>
-
-        <nav
-          aria-label="Primary"
-          className="flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#161f1b] p-2 md:flex-row md:items-center md:justify-between"
-        >
-          <div className="flex flex-wrap gap-2">
-            {navigationItems.map((item) => {
-              const isActive = isActivePath(pathname, item.href);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold transition ${
-                    isActive
-                      ? "bg-white text-zinc-950 shadow-sm"
-                      : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <ClerkLoading>
-              <div className="h-10 w-10 rounded-full border border-zinc-700 bg-zinc-900/60" />
-            </ClerkLoading>
-
-            <ClerkLoaded>
-              {userId ? (
-                <>
-                  <div className="hidden text-right md:block">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                      Auth
-                    </p>
-                    <p className="text-sm text-zinc-300">Restricted access</p>
-                  </div>
-                  <UserButton
-                    appearance={{
-                      elements: {
-                        userButtonAvatarBox: "h-10 w-10",
-                      },
-                    }}
-                  />
-                </>
-              ) : (
-                <Link
-                  href="/sign-in"
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800 hover:text-white"
-                >
-                  Sign in
-                </Link>
-              )}
-            </ClerkLoaded>
-          </div>
-        </nav>
       </div>
-    </div>
+
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4 sm:px-8 lg:px-10">
+        <Link href="/" className="group flex items-center gap-3" aria-label="JJA workspace home">
+          <span className="grid h-12 w-12 place-items-center rounded-[1.05rem] bg-[linear-gradient(145deg,#0d6b6d,#2859e8)] text-xs font-extrabold tracking-[0.12em] text-white shadow-[0_12px_28px_rgba(40,89,232,0.2)] transition group-hover:-translate-y-0.5">
+            JJA
+          </span>
+          <span className="hidden sm:block">
+            <span className="block text-base font-bold leading-tight tracking-[-0.02em]">
+              James Joseph Associates
+            </span>
+            <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-[0.19em] text-[#0d6b6d]">
+              Recruitment intelligence
+            </span>
+          </span>
+        </Link>
+
+        <nav aria-label="Primary" className="order-3 grid w-full min-w-0 basis-full grid-cols-4 gap-1 rounded-full border border-slate-900/10 bg-white/72 p-1.5 shadow-sm lg:order-none lg:flex lg:w-auto lg:basis-auto lg:items-center lg:justify-center">
+          {navigationItems.map((item) => {
+            const isActive = isActivePath(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`inline-flex min-h-10 min-w-0 items-center justify-center rounded-full px-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${
+                  isActive
+                    ? "bg-[#071827] text-white shadow-md"
+                    : "text-slate-600 hover:bg-cyan-50 hover:text-[#071b2a]"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <ClerkLoading>
+            <div className="h-11 w-11 rounded-full border border-slate-200 bg-slate-100" />
+          </ClerkLoading>
+          <ClerkLoaded>
+            {userId ? (
+              <>
+                <span className="hidden text-right xl:block">
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Workspace
+                  </span>
+                  <span className="block text-sm font-semibold text-slate-700">
+                    Secure access
+                  </span>
+                </span>
+                <UserButton
+                  appearance={{ elements: { userButtonAvatarBox: "h-11 w-11" } }}
+                />
+              </>
+            ) : (
+              <Link href="/sign-in" className="app-primary-action min-h-11 px-4 sm:px-5">
+                Sign in <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </ClerkLoaded>
+        </div>
+      </div>
+    </header>
   );
 }
