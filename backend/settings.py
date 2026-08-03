@@ -316,7 +316,7 @@ class Settings(BaseSettings):
     #     `if os.getenv("VERCEL_ENV") == ...` through application code later.
     environment: EnvironmentName = Field(
         default="development",
-        validation_alias="ENVIRONMENT",
+        validation_alias=AliasChoices("ENVIRONMENT", "VERCEL_ENV"),
     )
 
     # Debug mode is intentionally opt-in
@@ -384,6 +384,34 @@ class Settings(BaseSettings):
         ge=1,
         le=1000,
         validation_alias="MCP_RATE_LIMIT_PER_MINUTE",
+    )
+
+    # Durable per-principal request ceiling for the main API. The middleware is
+    # enabled only in preview and production; local and test runs stay isolated
+    # from the deployment database.
+    api_rate_limit_per_minute: int = Field(
+        default=120,
+        ge=1,
+        le=5000,
+        validation_alias="API_RATE_LIMIT_PER_MINUTE",
+    )
+
+    # Activate only after migration 0014 has been applied to the target database.
+    # Keeping this off by default prevents an application deployment from racing
+    # its required control-table migration.
+    api_rate_limit_enabled: bool = Field(
+        default=False,
+        validation_alias="API_RATE_LIMIT_ENABLED",
+    )
+
+    # Warm-instance cache lifetime for stable, private read models. A short TTL
+    # reduces repeated database work without turning a serverless process into a
+    # source of truth.
+    stable_read_cache_ttl_seconds: int = Field(
+        default=30,
+        ge=0,
+        le=300,
+        validation_alias="STABLE_READ_CACHE_TTL_SECONDS",
     )
 
     # Comma-separated exact Host values accepted by the MCP transport.

@@ -70,8 +70,20 @@ kept in a separate deferred lane so they do not block independent delivery.
     and target databases using all tracked migrations and synthetic data
 - [ ] Harden API rate limiting, caching, Content Security Policy, and database
   permissions:
-  - [ ] inventory context-window, token, truncation, latency, and cost budgets
-    for every model-backed workflow
+  - [x] add a shared database-backed per-principal rate limit for the main API,
+    keep health checks exempt, fail closed when the control store is unavailable,
+    and prevent private API responses from being cached by browsers or CDNs;
+    activation is gated until migration `0014` is explicitly applied
+  - [x] add short, bounded warm-instance caching for the stable company directory
+    and review overview reads without treating serverless memory as durable state
+  - [x] enforce a per-request nonce Content Security Policy through the installed
+    Clerk/Next.js middleware contract, including explicit object, base, framing,
+    image, font, and worker boundaries
+  - [x] add migration-owned read-only and writer database roles, remove public
+    schema-create access, and grant least-privilege current/default table and
+    sequence permissions; runtime credential membership remains a deployment step
+  - [x] inventory context-window, token, truncation, latency, and cost budgets
+    for every model-backed workflow in `docs/llm_operational_budgets.md`
   - [ ] measure end-to-end model latency and, where streaming/provider telemetry
     permits, time to first token, inter-token latency, token throughput, queue
     time, and prompt/prefill versus generation/decode time

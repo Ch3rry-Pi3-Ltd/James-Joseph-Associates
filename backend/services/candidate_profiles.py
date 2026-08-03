@@ -33,6 +33,8 @@ In plain language:
 from datetime import date, datetime
 from typing import Any
 
+from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
+
 from backend.db.candidates import (
     get_candidate_profile,
     get_candidate_recent_employment,
@@ -168,16 +170,28 @@ def search_candidate_resumes(
     }
 
 
+_company_directory_cache: BoundedTtlCache[dict[str, Any]] = BoundedTtlCache(
+    max_entries=1
+)
+
+
 def list_company_directory() -> dict[str, Any]:
     """
     Return the canonical company directory used by recruiter-facing lookup UIs.
     """
 
-    companies = list_canonical_company_names()
-    return {
-        "count": len(companies),
-        "companies": companies,
-    }
+    def load_directory() -> dict[str, Any]:
+        companies = list_canonical_company_names()
+        return {
+            "count": len(companies),
+            "companies": companies,
+        }
+
+    return _company_directory_cache.get_or_compute(
+        "company-directory",
+        ttl_seconds=stable_read_cache_ttl_seconds(),
+        loader=load_directory,
+    )
 
 
 def discover_candidates_by_company(

@@ -23,7 +23,13 @@ In plain language:
 
 from typing import Any
 
+from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
 from backend.db.review import get_review_overview
+
+
+_review_overview_cache: BoundedTtlCache[dict[str, Any]] = BoundedTtlCache(
+    max_entries=10
+)
 
 
 def build_review_overview(limit: int = 10) -> dict[str, Any]:
@@ -61,7 +67,11 @@ def build_review_overview(limit: int = 10) -> dict[str, Any]:
     - return it unchanged for the API and UI
     """
 
-    return get_review_overview(limit=limit)
+    return _review_overview_cache.get_or_compute(
+        f"review-overview:{limit}",
+        ttl_seconds=stable_read_cache_ttl_seconds(),
+        loader=lambda: get_review_overview(limit=limit),
+    )
 
 
 __all__ = ["build_review_overview"]

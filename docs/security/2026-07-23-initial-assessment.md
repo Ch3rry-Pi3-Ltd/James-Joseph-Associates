@@ -34,8 +34,13 @@ Search, parsing, and LLM reranking can consume database, CPU, and provider
 resources. Authentication reduces exposure but does not limit abuse by a
 compromised or malfunctioning account.
 
-**Status:** Open. Configure Vercel Firewall rate rules first, then add durable
-per-user limits if the product expands beyond the small allow-list.
+**Status:** Implemented but activation is pending on 3 August 2026. Preview and
+production can use a shared Postgres minute window keyed by a one-way principal
+fingerprint and privacy-safe route group. It fails closed if the active control
+store is unavailable, returns standard `429` responses with retry metadata, and
+keeps health checks exempt. Apply migration `0014`, then set
+`API_RATE_LIMIT_ENABLED=true`; it defaults to false so application deployment
+cannot race the schema change. Vercel Firewall remains useful defence in depth.
 
 ### Medium - Supabase least privilege is not demonstrated in migrations
 
@@ -44,8 +49,12 @@ not contain row-level-security policies. This is not a browser-direct exposure,
 but compromise of a broad runtime database credential would have a large blast
 radius.
 
-**Status:** Open. Audit the production role, create a least-privileged runtime
-role, and document backup/restore and credential rotation.
+**Status:** Migration-ready on 3 August 2026. Migration `0014` defines
+no-login `jja_app_readonly` and `jja_app_writer` roles, removes schema-create
+access from `PUBLIC`, and grants current/default table and sequence privileges.
+It has not been applied to the live database. After explicit production-change
+approval, apply it, make the deployed login a member of the writer role, and
+rotate away from any owner/superuser credential.
 
 ### Low - browser security headers were incomplete
 
@@ -53,9 +62,9 @@ Production already supplied HSTS, but did not return explicit anti-framing,
 MIME-sniffing, referrer-policy, or permissions-policy headers and disclosed the
 Next.js powered-by header.
 
-**Status:** Remediated in this change. A carefully tested Content Security
-Policy remains a follow-up because Clerk and embedded provider flows need to be
-included correctly.
+**Status:** Remediated. The existing headers remain and Clerk's installed Next.js
+middleware now enforces its strict, nonce-based CSP contract with additional
+object, base, framing, image and font boundaries.
 
 ### Low - resume filenames were used in response headers
 
@@ -87,8 +96,13 @@ edge and remain protected by their existing FastAPI bearer-token checks.
 ## Next actions
 
 1. Configure `SECURITY_TEST_BASE_URL` for a synthetic-data staging deployment.
-2. Add Vercel rate rules for upload, search, shortlist, and operator endpoints.
-3. Audit and reduce the production Postgres role's privileges.
-4. Add a report-only Content Security Policy, observe violations, then enforce.
+2. Add Vercel Firewall rules as defence in depth for upload, search, shortlist,
+   and operator endpoints.
+3. With explicit production-change approval, apply migration `0014`, assign and
+   rotate the runtime login into `jja_app_writer`, confirm it cannot create or
+   alter schema objects, retain a separate migration role, and set
+   `API_RATE_LIMIT_ENABLED=true`.
+4. Monitor enforced CSP reports/browser failures after deployment and extend only
+   the narrow directive that a verified Clerk or application flow requires.
 5. Complete the first authenticated manual test using the runbook and retain a
    redacted report under this directory.

@@ -81,6 +81,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
 from backend.api.router import api_router
+from backend.core.api_security import enforce_api_security
 from backend.core.errors import request_validation_exception_handler
 from backend.core.performance import record_request_performance
 from backend.services.mcp_server import mcp_server
@@ -164,6 +165,7 @@ def create_app() -> FastAPI:
     # Server-Timing header also makes Review, Company, search, and shortlist
     # latency visible in browser developer tools without changing API payloads.
     app.middleware("http")(record_request_performance)
+    app.middleware("http")(enforce_api_security)
 
     # Register all project API routes in one place
     app.include_router(api_router)

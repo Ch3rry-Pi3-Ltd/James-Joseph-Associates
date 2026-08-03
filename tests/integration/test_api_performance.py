@@ -17,6 +17,8 @@ def test_api_response_exposes_standard_request_timing() -> None:
     assert re.fullmatch(r"app;dur=\d+\.\d{2}", response.headers["server-timing"])
     assert re.fullmatch(r"\d+\.\d{2}", response.headers["x-response-time-ms"])
     assert re.fullmatch(r"[0-9a-f]{32}", response.headers["x-request-id"])
+    assert response.headers["cache-control"] == "private, no-store"
+    assert response.headers["pragma"] == "no-cache"
 
 
 def test_request_performance_log_omits_query_values(caplog) -> None:

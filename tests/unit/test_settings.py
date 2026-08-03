@@ -99,6 +99,9 @@ def test_settings_load_default_values(monkeypatch) -> None:
     assert settings.operator_session_memory_max_turns == 4
     assert settings.mcp_api_token == ""
     assert settings.mcp_rate_limit_per_minute == 60
+    assert settings.api_rate_limit_enabled is False
+    assert settings.api_rate_limit_per_minute == 120
+    assert settings.stable_read_cache_ttl_seconds == 30
     assert "james-joseph-associates.vercel.app" in settings.mcp_allowed_hosts
     assert settings.jobadder_client_id == ""
     assert settings.jobadder_client_secret == ""
@@ -152,6 +155,9 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("ADMIN_API_TOKEN", "fake-admin-token")
     monkeypatch.setenv("MCP_API_TOKEN", "fake-mcp-token")
     monkeypatch.setenv("MCP_RATE_LIMIT_PER_MINUTE", "75")
+    monkeypatch.setenv("API_RATE_LIMIT_ENABLED", "true")
+    monkeypatch.setenv("API_RATE_LIMIT_PER_MINUTE", "250")
+    monkeypatch.setenv("STABLE_READ_CACHE_TTL_SECONDS", "45")
     monkeypatch.setenv(
         "MCP_ALLOWED_HOSTS",
         "localhost:*,recruitment.example.com",
@@ -184,6 +190,9 @@ def test_settings_can_be_overridden_from_environment(monkeypatch) -> None:
     assert settings.admin_api_token == "fake-admin-token"
     assert settings.mcp_api_token == "fake-mcp-token"
     assert settings.mcp_rate_limit_per_minute == 75
+    assert settings.api_rate_limit_enabled is True
+    assert settings.api_rate_limit_per_minute == 250
+    assert settings.stable_read_cache_ttl_seconds == 45
     assert settings.mcp_allowed_hosts == (
         "localhost:*,recruitment.example.com"
     )

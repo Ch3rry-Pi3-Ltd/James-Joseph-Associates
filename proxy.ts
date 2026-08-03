@@ -87,6 +87,20 @@ export default clerkMiddleware(async (auth, request) => {
       "Authorization could not be verified.",
     );
   }
+}, {
+  // Clerk's installed middleware owns nonce generation and injects the CSP on
+  // both the request and response. This keeps Next.js framework scripts and
+  // Clerk's loader on the same per-request nonce contract.
+  contentSecurityPolicy: {
+    strict: true,
+    directives: {
+      "base-uri": ["self"],
+      "font-src": ["self", "data:"],
+      "frame-ancestors": ["none"],
+      "img-src": ["data:", "blob:"],
+      "object-src": ["none"],
+    },
+  },
 });
 
 export const config = {
