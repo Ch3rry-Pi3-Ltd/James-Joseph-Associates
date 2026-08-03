@@ -50,12 +50,18 @@ not contain row-level-security policies. This is not a browser-direct exposure,
 but compromise of a broad runtime database credential would have a large blast
 radius.
 
-**Status:** Partially remediated on 3 August 2026. Applied migration `0014` defines
+**Status:** Remediated for the production application on 3 August 2026. Applied
+migration `0014` defines
 no-login `jja_app_readonly` and `jja_app_writer` roles, removes schema-create
 access from `PUBLIC`, and grants current/default table and sequence privileges.
-Live verification confirmed the table, roles and intended grants. The deployed
-login must still be made a member of the writer role and rotated away from any
-owner/superuser credential.
+Production now connects as a dedicated `jja_app_runtime` login that inherits
+only `jja_app_writer`; it is not a superuser and cannot create roles, databases,
+or schema objects. Before cutover, the credential passed canonical read and
+rate-limit write smoke tests and was denied a probe table creation. After the
+Vercel deployment, an authenticated live request returned `200`, canonical
+company data, and active `120`/`119` rate-limit headers. The broader `postgres`
+credential remains an administration/migration credential and is no longer used
+by the Production application URLs.
 
 ### Low - browser security headers were incomplete
 
@@ -99,10 +105,7 @@ edge and remain protected by their existing FastAPI bearer-token checks.
 1. Configure `SECURITY_TEST_BASE_URL` for a synthetic-data staging deployment.
 2. Add Vercel Firewall rules as defence in depth for upload, search, shortlist,
    and operator endpoints.
-3. With explicit credential-change approval, assign and rotate the runtime login
-   into `jja_app_writer`, confirm it cannot create or alter schema objects, and
-   retain a separate migration role.
-4. Monitor enforced CSP reports/browser failures after deployment and extend only
+3. Monitor enforced CSP reports/browser failures after deployment and extend only
    the narrow directive that a verified Clerk or application flow requires.
-5. Complete the first authenticated manual test using the runbook and retain a
+4. Complete the first authenticated manual test using the runbook and retain a
    redacted report under this directory.

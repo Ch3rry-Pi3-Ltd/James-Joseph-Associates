@@ -82,8 +82,8 @@ kept in a separate deferred lane so they do not block independent delivery.
     image, font, and worker boundaries
   - [x] add migration-owned read-only and writer database roles, remove public
     schema-create access, and grant least-privilege current/default table and
-    sequence permissions; migration `0014` is applied, while runtime credential
-    membership and rotation remain a separate deployment step
+    sequence permissions; migration `0014` is applied and Production now uses a
+    dedicated `jja_app_runtime` login that inherits only `jja_app_writer`
   - [x] inventory context-window, token, truncation, latency, and cost budgets
     for every model-backed workflow in `docs/llm_operational_budgets.md`
   - [ ] measure end-to-end model latency and, where streaming/provider telemetry
