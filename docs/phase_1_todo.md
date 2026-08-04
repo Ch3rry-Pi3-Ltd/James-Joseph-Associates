@@ -89,7 +89,7 @@ kept in a separate deferred lane so they do not block independent delivery.
   - [x] measure end-to-end model latency and, where streaming/provider telemetry
     permits, time to first token, inter-token latency, token throughput, queue
     time, and prompt/prefill versus generation/decode time
-  - [ ] benchmark representative short and long prompts, output limits, and
+  - [x] benchmark representative short and long prompts, output limits, and
     concurrency so latency and cost regressions are visible
   - [ ] evaluate provider prompt caching for repeated system instructions and
     stable retrieval context, including cache-hit, latency, and cost effects

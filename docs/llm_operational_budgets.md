@@ -74,6 +74,12 @@ and provider-stage timing remain unavailable rather than inferred. The compact
 evidence artifact is
 `docs/evaluation/model_latency_smoke_2026-08-04.json`.
 
+Representative synthetic short, long, output-ceiling, concurrency, query
+embedding, and batch-embedding workloads are now versioned separately in
+`docs/model_workload_benchmarking.md`. The first live baseline passed all fixed
+latency and estimated-cost gates; future runs can also fail on relative changes
+against the committed baseline.
+
 ## Prompt caching decision
 
 OpenAI prompt caching is automatic for eligible prompts at least 1,024 tokens
