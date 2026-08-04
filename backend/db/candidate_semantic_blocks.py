@@ -33,7 +33,11 @@ def list_candidates_for_semantic_block_backfill(
     # Allow large controlled backfills in one run.
     # The caller still has to opt into the requested size explicitly.
     bounded_limit = max(1, int(limit))
-    normalized_candidate_ids = [candidate_id.strip() for candidate_id in (candidate_ids or []) if candidate_id.strip()]
+    normalized_candidate_ids = [
+        candidate_id.strip()
+        for candidate_id in (candidate_ids or [])
+        if candidate_id.strip()
+    ]
 
     query = """
         select
@@ -131,7 +135,9 @@ def backfill_candidate_semantic_blocks(
         candidate_ids=candidate_ids,
         include_already_indexed=include_already_indexed,
     )
-    candidate_ids_in_scope = [str(candidate["candidate_id"]) for candidate in candidates]
+    candidate_ids_in_scope = [
+        str(candidate["candidate_id"]) for candidate in candidates
+    ]
     skills_by_candidate_id = _get_skills_by_candidate_ids(candidate_ids_in_scope)
 
     candidate_summaries: list[dict[str, Any]] = []
@@ -449,7 +455,10 @@ def _embed_pending_rows(
 ) -> None:
     for start in range(0, len(pending_rows), embedding_batch_size):
         batch = pending_rows[start : start + embedding_batch_size]
-        vectors = embed_texts([row["block_text"] for row in batch])
+        vectors = embed_texts(
+            [row["block_text"] for row in batch],
+            workflow="candidate_semantic_block_embedding_batch",
+        )
         if len(vectors) != len(batch):
             raise RuntimeError("Embedding provider returned a mismatched vector count.")
         for row, vector in zip(batch, vectors, strict=True):

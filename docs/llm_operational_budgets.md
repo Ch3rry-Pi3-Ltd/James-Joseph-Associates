@@ -32,9 +32,47 @@ well below the provider output maximum.
 | Recruiterflow CV extraction | Same shared extraction contract | 2,200 normally, 4,000 retry / 60s | $0.02 per call | Notes remain unbounded by explicit preservation policy |
 | Candidate query embedding | One validated query; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per call | Add an explicit embedding timeout |
 | Document chunk embedding | Default batch of 25; 1,200 characters per chunk with 150-character overlap; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per batch | Add an explicit embedding timeout |
+| Candidate semantic-block embedding | Default batch of 25 bounded profile, skills, and experience blocks; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per batch | Add an explicit embedding timeout |
 
 The executable registry is `backend/llm/budgets.py`; tests prevent duplicate
 workflow names and keep chat output limits within the provider contract.
+
+## Latency measurement
+
+All active provider-backed paths now pass through the content-free measurement
+contract in `backend/llm/telemetry.py`:
+
+- candidate shortlist reranking
+- recruiter Q&A synthesis
+- JobAdder, Dropbox, Outlook, and Recruiterflow CV extraction attempts
+- candidate query, document chunk, and candidate semantic-block embeddings
+
+Each call records end-to-end and provider-request duration, framework overhead,
+status, workflow, run ID, attempt, provider, model, and the token counts returned
+by the provider. If a streaming call emits token callbacks, the same contract
+also calculates time to first token, mean and p95 inter-token latency, and
+streamed output throughput. If the provider returns queue, prefill/prompt, or
+decode/completion timings, those are normalized to milliseconds. Missing
+provider metrics remain explicit `null` values rather than estimates.
+
+Telemetry is written as one structured `model_latency` log record and never
+contains prompts, responses, CV text, candidate names, or retrieved evidence.
+Failures are measured and re-raised unchanged.
+
+The repeatable smoke command is:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.measure_model_latency
+```
+
+The content-free live smoke on 4 August 2026 measured 1,935.100 ms end to end
+for a one-token `gpt-4.1-mini` response and 1,596.519 ms for one 1,536-dimension
+`text-embedding-3-large` request. This proves the instrumentation path; it is
+not a representative benchmark. Current production calls are non-streaming,
+and OpenAI returned no queue, prefill, or decode timing fields, so TTFT, ITL,
+and provider-stage timing remain unavailable rather than inferred. The compact
+evidence artifact is
+`docs/evaluation/model_latency_smoke_2026-08-04.json`.
 
 ## Prompt caching decision
 
@@ -49,8 +87,8 @@ material cache-hit benefit without harming groundedness.
 
 ## Follow-on acceptance criteria
 
-- Record input, cached-input and output tokens, model/profile version, duration,
-  run ID and calculated cost without storing prompt or candidate content.
+- Calculate cost from the captured input, cached-input, and output tokens using
+  a versioned rate card.
 - Alert when a single request crosses the workflow cost threshold above.
 - Add total assembled-prompt token ceilings for shortlist and Q&A.
 - Add a bounded embedding timeout.

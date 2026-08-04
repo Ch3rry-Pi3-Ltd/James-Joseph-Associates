@@ -160,6 +160,7 @@ In plain language:
 from dataclasses import asdict
 import json
 from typing import Any
+from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -167,6 +168,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from backend.llm.models import ModelProfile, ModelProvider, ModelPurpose
 from backend.llm.providers import build_langchain_chat_model
+from backend.llm.telemetry import invoke_with_model_telemetry
 from backend.services.jobadder_ingest import (
     extract_latest_jobadder_resume_text_for_candidate,
 )
@@ -909,6 +911,8 @@ def extract_structured_candidate_profile_from_resume_bundle(
     )
 
     active_model_profile = model_profile
+    model_run_id = str(uuid4())
+    telemetry_workflow = f"resume_extraction_{extraction_input['source_system']}"
     extraction_chain = _build_langchain_resume_extraction_chain(
         chat_model=chat_model,
         system_prompt=prompt_bundle["system_prompt"],
@@ -932,7 +936,15 @@ def extract_structured_candidate_profile_from_resume_bundle(
     # - future refactors where the chain may stop returning a fully validated
     #   Pydantic object directly
     try:
-        raw_result = extraction_chain.invoke({})
+        raw_result, _ = invoke_with_model_telemetry(
+            extraction_chain,
+            {},
+            workflow=telemetry_workflow,
+            provider=model_profile.provider.value,
+            model=model_profile.model_name,
+            run_id=model_run_id,
+            attempt="native_structured_output",
+        )
     except Exception as exc:
         if _should_retry_with_json_fallback(exc, model_profile):
             fallback_chain = _build_langchain_resume_extraction_chain(
@@ -943,7 +955,15 @@ def extract_structured_candidate_profile_from_resume_bundle(
             )
 
             try:
-                raw_result = fallback_chain.invoke({})
+                raw_result, _ = invoke_with_model_telemetry(
+                    fallback_chain,
+                    {},
+                    workflow=telemetry_workflow,
+                    provider=model_profile.provider.value,
+                    model=model_profile.model_name,
+                    run_id=model_run_id,
+                    attempt="json_text_fallback",
+                )
             except Exception as fallback_exc:
                 raise ResumeExtractionError(
                     "The resume extraction model call failed.",
@@ -987,7 +1007,15 @@ def extract_structured_candidate_profile_from_resume_bundle(
             )
 
             try:
-                raw_result = retry_chain.invoke({})
+                raw_result, _ = invoke_with_model_telemetry(
+                    retry_chain,
+                    {},
+                    workflow=telemetry_workflow,
+                    provider=retry_model_profile.provider.value,
+                    model=retry_model_profile.model_name,
+                    run_id=model_run_id,
+                    attempt="larger_output_budget",
+                )
             except Exception as retry_exc:
                 raise ResumeExtractionError(
                     "The resume extraction model call failed.",
@@ -1176,7 +1204,10 @@ def build_resume_extraction_input_from_resume_bundle(
     # does not break the whole flow unnecessarily.
     resume_text_for_prompt = cleaned_resume_text or raw_resume_text
 
-    if not isinstance(resume_text_for_prompt, str) or resume_text_for_prompt.strip() == "":
+    if (
+        not isinstance(resume_text_for_prompt, str)
+        or resume_text_for_prompt.strip() == ""
+    ):
         raise ResumeExtractionError(
             "The prepared resume bundle does not contain usable resume text.",
             stage="input_validation",
@@ -1567,9 +1598,7 @@ def _build_langchain_resume_extraction_chain(
         # The important design point is that the rest of this service does not
         # need to know the provider-specific mechanics of how structured output
         # is requested. It only needs a runnable chain that honors the schema.
-        structured_model = chat_model.with_structured_output(
-            ResumeStructuredExtraction
-        )
+        structured_model = chat_model.with_structured_output(ResumeStructuredExtraction)
         return prompt | structured_model
 
     # Some provider/model routes can answer normal chat prompts but do not
@@ -1603,7 +1632,9 @@ def _build_langchain_resume_extraction_chain(
     return fallback_prompt | chat_model
 
 
-def _should_retry_with_json_fallback(exc: Exception, model_profile: ModelProfile) -> bool:
+def _should_retry_with_json_fallback(
+    exc: Exception, model_profile: ModelProfile
+) -> bool:
     """
     Return whether a failed extraction call should retry via JSON-text fallback.
 
@@ -1666,7 +1697,8 @@ def _should_retry_with_larger_output_budget(
     return (
         "lengthfinishreasonerror" in exception_type_name
         or "length limit was reached" in error_text
-        or "finish_reason" in error_text and "length" in error_text
+        or "finish_reason" in error_text
+        and "length" in error_text
     )
 
 
@@ -1712,7 +1744,8 @@ def _build_retry_model_profile_for_length_failure(
 
     retry_max_output_tokens = min(
         max(
-            model_profile.max_output_tokens + DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_INCREMENT,
+            model_profile.max_output_tokens
+            + DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_INCREMENT,
             int(model_profile.max_output_tokens * 1.5),
         ),
         DEFAULT_LENGTH_RETRY_OUTPUT_TOKEN_CAP,
@@ -1730,7 +1763,9 @@ def _build_retry_model_profile_for_length_failure(
     )
 
 
-def _coerce_model_result_to_resume_structured_extraction(raw_result: Any) -> ResumeStructuredExtraction:
+def _coerce_model_result_to_resume_structured_extraction(
+    raw_result: Any,
+) -> ResumeStructuredExtraction:
     """
     Convert a raw model result into `ResumeStructuredExtraction`.
 
@@ -1800,10 +1835,7 @@ def _normalise_resume_structured_extraction(
         if skill_key in _SKILL_SOFT_EXCLUSIONS:
             continue
 
-        if (
-            skill_key in _SKILL_TECHNOLOGY_REHOMES
-            or skill_key in normalised_tool_keys
-        ):
+        if skill_key in _SKILL_TECHNOLOGY_REHOMES or skill_key in normalised_tool_keys:
             if skill_key not in normalised_tool_keys:
                 normalised_tools.append(stripped_skill)
                 normalised_tool_keys.add(skill_key)
@@ -1981,8 +2013,10 @@ def _build_resume_context_snapshot(
 
     return {
         "attachment_id": latest_resume.get("attachmentId"),
-        "file_name": downloaded_resume.get("file_name") or latest_resume.get("fileName"),
-        "mime_type": downloaded_resume.get("content_type") or latest_resume.get("fileType"),
+        "file_name": downloaded_resume.get("file_name")
+        or latest_resume.get("fileName"),
+        "mime_type": downloaded_resume.get("content_type")
+        or latest_resume.get("fileType"),
         "created_at": latest_resume.get("createdAt"),
         "page_count": extracted_resume_text.get("page_count"),
         "character_count": extracted_resume_text.get("character_count"),
@@ -2178,7 +2212,8 @@ def _build_prompt_input_metrics(
         "resume_file_name": (latest_resume or {}).get("fileName"),
         "resume_original_characters": len(resume_text_for_prompt),
         "resume_prompt_characters": len(truncated_resume_text),
-        "resume_was_truncated": len(truncated_resume_text) < len(resume_text_for_prompt),
+        "resume_was_truncated": len(truncated_resume_text)
+        < len(resume_text_for_prompt),
         "available_note_count": len(cleaned_note_items),
         "prompt_note_count": len(prompt_ready_notes),
         "available_note_characters": available_note_characters,

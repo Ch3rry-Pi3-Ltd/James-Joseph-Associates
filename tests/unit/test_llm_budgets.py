@@ -17,6 +17,7 @@ def test_every_active_model_workflow_has_one_unique_budget() -> None:
         "resume_extraction_recruiterflow",
         "candidate_query_embedding",
         "document_chunk_embedding_batch",
+        "candidate_semantic_block_embedding_batch",
     }
     names = [budget.workflow for budget in MODEL_WORKFLOW_BUDGETS]
 

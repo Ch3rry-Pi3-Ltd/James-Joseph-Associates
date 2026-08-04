@@ -27,6 +27,7 @@ from backend.core.llm_safety import (
 from backend.evaluation.quality_checks import validate_claim_evidence
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
+from backend.llm.telemetry import invoke_with_model_telemetry
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_company_context,
@@ -146,6 +147,7 @@ def build_candidate_job_description_shortlist(
         job_description=normalized_job_description,
         retrieved_candidates=retrieved_candidates,
         shortlist_limit=bounded_shortlist_limit,
+        run_id=match_run_id,
     )
 
     candidates_by_id = {
@@ -227,9 +229,7 @@ def build_candidate_job_description_shortlist(
                 "gaps": [claim.claim for claim in assessment.gaps],
                 "claim_evidence": {
                     "fit_summary": assessment.fit_summary.model_dump(),
-                    "strengths": [
-                        claim.model_dump() for claim in assessment.strengths
-                    ],
+                    "strengths": [claim.model_dump() for claim in assessment.strengths],
                     "gaps": [claim.model_dump() for claim in assessment.gaps],
                 },
                 "match_excerpt": _json_safe_value(
@@ -287,6 +287,7 @@ def _rank_retrieved_candidates_for_job_description(
     job_description: str,
     retrieved_candidates: list[dict[str, Any]],
     shortlist_limit: int,
+    run_id: str | None = None,
 ) -> list[CandidateShortlistAssessment]:
     """
     Ask the reasoning model to choose the strongest candidates from retrieval.
@@ -377,7 +378,14 @@ def _rank_retrieved_candidates_for_job_description(
             CandidateShortlistSelection
         )
         chain = prompt | structured_model
-        raw_result = chain.invoke({})
+        raw_result, _ = invoke_with_model_telemetry(
+            chain,
+            {},
+            workflow="candidate_shortlist_reranking",
+            provider=DEFAULT_REASONING_MODEL_PROFILE.provider.value,
+            model=DEFAULT_REASONING_MODEL_PROFILE.model_name,
+            run_id=run_id,
+        )
     except Exception as exc:  # pragma: no cover - exercised via service tests
         raise CandidateMatchingError(
             "Candidate shortlisting failed during LLM ranking.",
@@ -474,10 +482,25 @@ def _build_candidate_evidence_catalog(
         )
 
     entity_specs = (
-        ("contacts", "contact", "contact_id", ("full_name", "role_title", "seniority", "is_hiring_manager")),
-        ("interactions", "interaction", "interaction_id", ("interaction_type", "occurred_at", "subject", "summary")),
+        (
+            "contacts",
+            "contact",
+            "contact_id",
+            ("full_name", "role_title", "seniority", "is_hiring_manager"),
+        ),
+        (
+            "interactions",
+            "interaction",
+            "interaction_id",
+            ("interaction_type", "occurred_at", "subject", "summary"),
+        ),
         ("jobs", "job", "job_id", ("title", "status", "location", "employment_type")),
-        ("opportunities", "opportunity", "opportunity_id", ("title", "stage", "smart_summary", "last_contact_at")),
+        (
+            "opportunities",
+            "opportunity",
+            "opportunity_id",
+            ("title", "stage", "smart_summary", "last_contact_at"),
+        ),
     )
     for collection_name, entity_name, id_field, safe_fields in entity_specs:
         for item in graph_evidence.get(collection_name) or []:
@@ -521,9 +544,7 @@ def _validate_assessment_grounding(
                 "strengths": [claim.model_dump() for claim in assessment.strengths],
                 "gaps": [claim.model_dump() for claim in assessment.gaps],
             },
-            allowed_evidence_refs={
-                str(item["evidence_ref"]) for item in catalog
-            },
+            allowed_evidence_refs={str(item["evidence_ref"]) for item in catalog},
         )
         if findings:
             failures.append(

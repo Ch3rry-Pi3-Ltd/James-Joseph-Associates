@@ -104,6 +104,19 @@ MODEL_WORKFLOW_BUDGETS = (
         cost_alert_usd=0.005,
         known_gap="The embedding client does not yet set an explicit request timeout.",
     ),
+    ModelWorkflowBudget(
+        workflow="candidate_semantic_block_embedding_batch",
+        model="text-embedding-3-large",
+        provider_context_tokens=None,
+        local_input_budget="25 structured candidate blocks per default provider batch.",
+        max_output_tokens=None,
+        timeout_seconds=None,
+        truncation_policy=(
+            "Build bounded profile, skills, and experience blocks before batching."
+        ),
+        cost_alert_usd=0.005,
+        known_gap="The embedding client does not yet set an explicit request timeout.",
+    ),
 )
 
 

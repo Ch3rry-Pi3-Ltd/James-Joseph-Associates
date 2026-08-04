@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import re
 from typing import Any, Literal
+from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -18,6 +19,7 @@ from backend.core.llm_safety import (
 )
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
+from backend.llm.telemetry import invoke_with_model_telemetry
 from backend.services import mcp_read_adapter
 from backend.services.mcp_read_adapter import McpReadAdapterError
 from backend.services.operator_session_memory import (
@@ -125,6 +127,7 @@ def answer_recruiter_question(
             ],
         )
 
+    answer_run_id = str(uuid4())
     retrieval_plan = _build_retrieval_plan(normalized_question)
     normalized_user_id = _normalize_optional_identifier(user_id)
     normalized_conversation_id = _normalize_optional_identifier(conversation_id)
@@ -205,6 +208,7 @@ def answer_recruiter_question(
         role_search_result=role_search_result,
         company_context_result=company_context_result,
         recent_memory=recent_memory,
+        run_id=answer_run_id,
     )
     _validate_answer_citations(
         answer_selection=answer_selection,
@@ -274,9 +278,8 @@ def _build_retrieval_plan(question: str) -> dict[str, Any]:
     detected_company_name = _detect_company_name(question)
 
     wants_role_search = any(term in normalized_question for term in _ROLE_SEARCH_TERMS)
-    wants_company_context = (
-        detected_company_name is not None
-        and any(term in normalized_question for term in _COMPANY_CONTEXT_TERMS)
+    wants_company_context = detected_company_name is not None and any(
+        term in normalized_question for term in _COMPANY_CONTEXT_TERMS
     )
 
     if wants_role_search and detected_company_name is not None:
@@ -299,9 +302,7 @@ def _detect_company_name(question: str) -> str | None:
     normalized_question = question.lower()
 
     matched_companies = [
-        company
-        for company in companies
-        if company.lower() in normalized_question
+        company for company in companies if company.lower() in normalized_question
     ]
     if matched_companies:
         return max(matched_companies, key=len)
@@ -346,6 +347,7 @@ def _generate_grounded_answer(
     role_search_result: dict[str, Any] | None,
     company_context_result: dict[str, Any] | None,
     recent_memory: list[dict[str, Any]],
+    run_id: str | None = None,
 ) -> RecruiterAnswerSelection:
     system_prompt = (
         "You are a recruiter operations assistant. "
@@ -388,11 +390,16 @@ def _generate_grounded_answer(
         chat_model = build_langchain_chat_model(
             profile=DEFAULT_REASONING_MODEL_PROFILE,
         )
-        structured_model = chat_model.with_structured_output(
-            RecruiterAnswerSelection
-        )
+        structured_model = chat_model.with_structured_output(RecruiterAnswerSelection)
         chain = prompt | structured_model
-        raw_result = chain.invoke({})
+        raw_result, _ = invoke_with_model_telemetry(
+            chain,
+            {},
+            workflow="recruiter_qa_synthesis",
+            provider=DEFAULT_REASONING_MODEL_PROFILE.provider.value,
+            model=DEFAULT_REASONING_MODEL_PROFILE.model_name,
+            run_id=run_id,
+        )
     except Exception as exc:  # pragma: no cover - exercised via service tests
         raise RecruiterQuestionAnsweringError(
             "Recruiter answer generation failed during LLM synthesis.",
@@ -454,16 +461,10 @@ def _collect_items_by_id(
         return []
 
     items_by_id = {
-        str(item.get(key)): item
-        for item in items
-        if item.get(key) is not None
+        str(item.get(key)): item for item in items if item.get(key) is not None
     }
     if cited_ids:
-        return [
-            items_by_id[item_id]
-            for item_id in cited_ids
-            if item_id in items_by_id
-        ]
+        return [items_by_id[item_id] for item_id in cited_ids if item_id in items_by_id]
 
     return items[:5]
 
@@ -518,8 +519,7 @@ def _validate_answer_citations(
     if not any(cited_by_kind.values()):
         finding_codes.append("missing_answer_citation")
     if any(
-        cited_ids - available_by_kind[kind]
-        for kind, cited_ids in cited_by_kind.items()
+        cited_ids - available_by_kind[kind] for kind, cited_ids in cited_by_kind.items()
     ):
         finding_codes.append("unknown_answer_citation")
 

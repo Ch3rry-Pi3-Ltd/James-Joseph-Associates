@@ -74,8 +74,7 @@ def list_chunks_missing_embeddings(
               )
             """
             query_parameters["source_record_id_patterns"] = [
-                f"{prefix}%"
-                for prefix in normalized_prefixes
+                f"{prefix}%" for prefix in normalized_prefixes
             ]
 
     query += """
@@ -139,7 +138,10 @@ def backfill_chunk_embeddings(
             for start in range(0, len(chunks), normalized_batch_size):
                 batch = chunks[start : start + normalized_batch_size]
                 texts = [chunk["chunk_text"] for chunk in batch]
-                vectors = embed_texts(texts)
+                vectors = embed_texts(
+                    texts,
+                    workflow="document_chunk_embedding_batch",
+                )
                 if len(vectors) != len(batch):
                     raise RuntimeError(
                         "Embedding provider returned a mismatched vector count."

@@ -86,7 +86,7 @@ kept in a separate deferred lane so they do not block independent delivery.
     dedicated `jja_app_runtime` login that inherits only `jja_app_writer`
   - [x] inventory context-window, token, truncation, latency, and cost budgets
     for every model-backed workflow in `docs/llm_operational_budgets.md`
-  - [ ] measure end-to-end model latency and, where streaming/provider telemetry
+  - [x] measure end-to-end model latency and, where streaming/provider telemetry
     permits, time to first token, inter-token latency, token throughput, queue
     time, and prompt/prefill versus generation/decode time
   - [ ] benchmark representative short and long prompts, output limits, and

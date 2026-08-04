@@ -1,0 +1,45 @@
+{
+  "measured_at": "2026-08-04T00:34:02.999606+00:00",
+  "purpose": "content-free provider latency smoke measurement",
+  "representative_benchmark": false,
+  "chat": {
+    "workflow": "model_latency_smoke_chat",
+    "provider": "openai",
+    "model": "gpt-4.1-mini",
+    "status": "success",
+    "end_to_end_ms": 1935.1,
+    "provider_request_ms": 1922.384,
+    "framework_overhead_ms": 12.716,
+    "input_tokens": 14,
+    "cached_input_tokens": 0,
+    "output_tokens": 1,
+    "total_tokens": 15,
+    "end_to_end_output_tokens_per_second": 0.517,
+    "time_to_first_token_ms": null,
+    "mean_inter_token_latency_ms": null,
+    "p95_inter_token_latency_ms": null,
+    "provider_queue_ms": null,
+    "provider_prefill_ms": null,
+    "provider_decode_ms": null
+  },
+  "embedding": {
+    "workflow": "model_latency_smoke_embedding",
+    "provider": "openai",
+    "model": "text-embedding-3-large",
+    "status": "success",
+    "end_to_end_ms": 1596.519,
+    "provider_request_ms": 1596.519,
+    "input_tokens": 5,
+    "total_tokens": 5,
+    "embedding_dimensions": 1536,
+    "provider_queue_ms": null,
+    "provider_prefill_ms": null,
+    "provider_decode_ms": null
+  },
+  "notes": [
+    "This proves the telemetry path only; it is not a representative performance benchmark.",
+    "Active production calls are non-streaming, so TTFT and inter-token latency are unavailable.",
+    "The provider did not return queue, prefill or decode timing fields for either request.",
+    "No prompt, response, CV or candidate content is stored in the telemetry record."
+  ]
+}
