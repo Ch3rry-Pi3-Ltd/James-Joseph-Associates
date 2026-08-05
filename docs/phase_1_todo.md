@@ -118,11 +118,17 @@ kept in a separate deferred lane so they do not block independent delivery.
     alternatives, operating rules, measurable reconsideration gates, and
     explicit LangGraph and multi-agent adoption criteria in
     `docs/architecture_decisions/`
-  - [ ] define a self-hosted inference decision gate based on privacy, workload,
-    latency, cost, scale, and provider-dependency evidence
-  - [ ] only if that gate is met, benchmark a representative workload across a
-    suitable engine such as vLLM, SGLang, or llama.cpp and document the relevant
-    hardware, quantization, KV-cache, attention, batching, and parallelism choices
+  - [x] define and execute a fail-closed self-hosted inference benchmark gate
+    covering representative workload, evaluation readiness, privacy/residency,
+    volume, managed cost versus fully loaded TCO, latency, hardware/KV-cache
+    headroom, licensing, operations ownership, and provider continuity; the
+    5 August 2026 assessment meets no material-benefit trigger and authorises no
+    engine benchmark
+  - [x] apply the conditional engine-benchmark rule: because the gate is not
+    met, do not download models or benchmark vLLM, SGLang, llama.cpp, hardware,
+    quantization, KV-cache, attention, batching, or parallelism yet; reassess
+    from a rolling content-free production window or an approved privacy or
+    continuity requirement
 - [ ] Reconcile outdated documentation, environment-variable contracts, and
   checklist statuses.
 

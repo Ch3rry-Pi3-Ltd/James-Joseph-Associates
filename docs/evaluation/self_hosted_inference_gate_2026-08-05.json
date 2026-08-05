@@ -1,0 +1,85 @@
+{
+  "assessment": {
+    "benchmark_authorized": false,
+    "benefit_triggers": {
+      "economic_break_even": false,
+      "privacy_or_residency_requirement": false,
+      "provider_continuity_gap": false,
+      "provider_dominated_latency_gap": false,
+      "sustained_volume": false
+    },
+    "decision": "do_not_benchmark",
+    "derived_metrics": {
+      "p95_latency_to_budget_ratio": 0.199624,
+      "self_hosted_to_provider_cost_ratio": null
+    },
+    "failed_prerequisites": [
+      "representative_workload_ready",
+      "evaluation_suite_approved",
+      "candidate_model_license_approved",
+      "security_and_data_boundary_approved",
+      "operations_owner_assigned",
+      "benchmark_hardware_ready",
+      "tco_estimate_ready"
+    ],
+    "gate_version": "1.0",
+    "met_benefit_triggers": [],
+    "prerequisites": {
+      "benchmark_hardware_ready": false,
+      "candidate_model_license_approved": false,
+      "evaluation_suite_approved": false,
+      "operations_owner_assigned": false,
+      "representative_workload_ready": false,
+      "security_and_data_boundary_approved": false,
+      "tco_estimate_ready": false
+    },
+    "thresholds": {
+      "maximum_required_provider_outage_rto_minutes": 15,
+      "maximum_self_hosted_tco_ratio": 0.7,
+      "minimum_hardware_capacity_headroom_ratio": 0.2,
+      "minimum_latency_budget_overrun_ratio": 1.25,
+      "minimum_monthly_billable_tokens": 50000000,
+      "minimum_monthly_provider_cost_usd": 1000.0,
+      "minimum_peak_sustained_requests_per_second_15m": 1.0,
+      "minimum_provider_latency_share": 0.7,
+      "minimum_representative_workload_samples": 100
+    }
+  },
+  "content_policy": {
+    "candidate_or_cv_data_in_artifact": false,
+    "credentials_in_artifact": false,
+    "prompts_or_responses_in_artifact": false
+  },
+  "evaluated_at": "2026-08-05",
+  "evidence": {
+    "active_workflow_count": 9,
+    "active_workflows_covered": 0,
+    "benchmark_hardware_available": false,
+    "candidate_model_license_approved": false,
+    "evaluation_suite_approved": false,
+    "hardware_capacity_headroom_ratio": null,
+    "monthly_billable_tokens": null,
+    "monthly_provider_cost_usd": null,
+    "monthly_self_hosted_tco_usd": null,
+    "operations_owner_assigned": false,
+    "p95_latency_budget_ms": 30000,
+    "p95_latency_ms": 5988.712,
+    "peak_sustained_requests_per_second_15m": null,
+    "provider_continuity_requirement_unmet": false,
+    "provider_latency_share": null,
+    "representative_workload_data": false,
+    "representative_workload_samples": 12,
+    "required_provider_outage_rto_minutes": null,
+    "security_and_data_boundary_approved": false,
+    "third_party_processing_prohibited": false
+  },
+  "evidence_notes": [
+    "The 12-request workload baseline is synthetic and not representative production data.",
+    "All five fixed workload latency and cost gates passed.",
+    "The 5988.712 ms long-chat p95 is compared with its 30000 ms alert ceiling.",
+    "No trailing production token, request-rate, or provider-spend aggregate exists yet.",
+    "No approved third-party-processing prohibition or unmet provider-outage RTO exists.",
+    "No candidate model licence, serving hardware, capacity calculation, security review, operations owner, or TCO quote has been approved."
+  ]
+}
+
