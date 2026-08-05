@@ -113,8 +113,11 @@ kept in a separate deferred lane so they do not block independent delivery.
     stampedes and stale in-flight repopulation, add a capped local ASGI load
     probe, and document the remaining cross-provider, durable-ingestion,
     distributed-job, and preview-capacity boundaries
-  - [ ] record architecture decisions for RAG versus fine-tuning and for
-    bounded workflows versus multi-agent designs before adding either complexity
+  - [x] record architecture decisions for grounded RAG over task-specific
+    fine-tuning and bounded workflows over multi-agent designs, including
+    alternatives, operating rules, measurable reconsideration gates, and
+    explicit LangGraph and multi-agent adoption criteria in
+    `docs/architecture_decisions/`
   - [ ] define a self-hosted inference decision gate based on privacy, workload,
     latency, cost, scale, and provider-dependency evidence
   - [ ] only if that gate is met, benchmark a representative workload across a
@@ -833,18 +836,15 @@ LangChain and LangGraph should support controlled backend workflows, not unconst
   - [ ] Tool abstraction.
   - [ ] Retriever abstraction.
   - [ ] Structured output parsing.
-- [ ] Define where **LangGraph** is used:
-  - [ ] Retrieval orchestration.
-  - [ ] Candidate/job matching workflow.
-  - [ ] Evidence assembly.
-  - [ ] Action proposal workflow.
-  - [ ] Human approval checkpoints.
-- [ ] Define bounded workflow-loop behaviour:
-  - [ ] explicit plan, retrieve, verify, and stop states
-  - [ ] retry and iteration budgets
-  - [ ] deterministic completion and failure conditions
-  - [ ] persisted trajectory metadata for debugging and evaluation
-- [ ] Introduce multiple specialised agents only where separate tool access,
+- [x] Define where **LangGraph** is used: only for production workflows that
+  meet the durable state, approval, branching, recovery, or shared-state gate
+  recorded in ADR-0002; working direct service pipelines remain unchanged.
+- [x] Define bounded workflow-loop behaviour:
+  - [x] explicit plan, retrieve, verify, and stop states
+  - [x] retry and iteration budgets
+  - [x] deterministic completion and failure conditions
+  - [x] privacy-safe trajectory metadata for debugging and evaluation
+- [x] Introduce multiple specialised agents only where separate tool access,
   data ownership, or approval boundaries justify the added complexity.
 - [x] Define foundation graph/workflow state.
 - [ ] Define Phase 1 graph/workflow states.
@@ -852,7 +852,10 @@ LangChain and LangGraph should support controlled backend workflows, not unconst
 - [ ] Define tool permissions.
 - [ ] Define which actions require human approval.
 - [x] Define initial model provider/purpose/profile assumptions.
-- [ ] Define model provider fallback assumptions.
+- [x] Define model provider fallback assumptions: retain only the existing
+  explicit compatibility, output-length, quality-gate, and OAuth refresh paths;
+  do not enable generic cross-provider LLM failover without a separately
+  evaluated output, privacy, cost, and equivalence policy.
 
 Current status:
 

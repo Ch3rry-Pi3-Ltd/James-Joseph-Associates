@@ -832,6 +832,17 @@ Recommended conceptual pattern:
 
 Avoid early overuse of **agent autonomy**. The first useful version should behave more like a **grounded workflow engine with LLM reasoning** than an unconstrained agent.
 
+The current accepted implementation policy is recorded in:
+
+- [ADR-0001: Grounded RAG over task-specific fine-tuning](architecture_decisions/0001-rag-over-fine-tuning.md)
+- [ADR-0002: Bounded workflows over multi-agent orchestration](architecture_decisions/0002-bounded-workflows-over-multi-agent.md)
+
+These records define the measurable evidence required before fine-tuning,
+production LangGraph adoption, generic provider failover, or multi-agent
+orchestration can be proposed. Until a gate is met, direct typed service
+workflows with bounded retrieval, validated model output, and deterministic stop
+conditions are the default.
+
 
 </details>
 <details>
