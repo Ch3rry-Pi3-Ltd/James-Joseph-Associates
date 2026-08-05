@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import logging
+
 import pytest
 
 from backend.core.llm_safety import MAX_LLM_INPUT_CHARACTERS
@@ -60,6 +63,7 @@ def test_answer_recruiter_question_rejects_oversized_input() -> None:
 
 def test_answer_recruiter_question_routes_role_brief_and_returns_grounded_result(
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     monkeypatch.setattr(
         recruiter_question_answering.mcp_read_adapter,
@@ -87,13 +91,28 @@ def test_answer_recruiter_question_routes_role_brief_and_returns_grounded_result
         ),
     )
 
-    result = answer_recruiter_question(
-        question="Which candidates best fit this Rust trading role?",
-    )
+    private_question = "Which candidates best fit this Rust trading role?"
+    caplog.set_level(logging.INFO, logger="backend.core.observability")
+    result = answer_recruiter_question(question=private_question)
 
     assert result["route_intent"] == "role_search"
     assert result["answer"] == "Alice is the strongest fit."
     assert result["candidates"] == [{"candidate_id": "cand-1", "fit_score": 94}]
+    stage_payloads = [
+        json.loads(record.message.removeprefix("workflow_stage "))
+        for record in caplog.records
+        if record.name == "backend.core.observability"
+        and record.message.startswith("workflow_stage ")
+    ]
+    assert [payload["stage_kind"] for payload in stage_payloads] == [
+        "validation",
+        "retrieval",
+        "model",
+        "validation",
+        "response",
+    ]
+    assert len({payload["run_id"] for payload in stage_payloads}) == 1
+    assert private_question not in caplog.text
 
 
 def test_answer_recruiter_question_merges_company_context_when_company_detected(

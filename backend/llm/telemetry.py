@@ -14,6 +14,13 @@ from uuid import uuid4
 
 from langchain_core.callbacks import BaseCallbackHandler
 
+from backend.core.observability import (
+    current_workflow_observation,
+    record_completed_stage,
+)
+from backend.core.performance import current_request_id
+from backend.llm.benchmarking import estimate_openai_cost_usd
+
 
 LOGGER = logging.getLogger("backend.llm.telemetry")
 T = TypeVar("T")
@@ -30,6 +37,9 @@ class ModelLatencyTelemetry:
     operation: str
     attempt: str
     measured_at: str
+    request_id: str | None = None
+    prompt_version: str | None = None
+    model_profile_version: str | None = None
     status: str = "success"
     end_to_end_ms: float | None = None
     provider_request_ms: float | None = None
@@ -42,6 +52,7 @@ class ModelLatencyTelemetry:
     cached_input_tokens: int | None = None
     output_tokens: int | None = None
     total_tokens: int | None = None
+    estimated_cost_usd: float | None = None
     end_to_end_output_tokens_per_second: float | None = None
     streamed_output_tokens_per_second: float | None = None
     provider_queue_ms: float | None = None
@@ -159,6 +170,8 @@ def invoke_with_model_telemetry(
     model: str,
     run_id: str | None = None,
     attempt: str = "primary",
+    prompt_version: str | None = None,
+    model_profile_version: str | None = None,
 ) -> tuple[Any, dict[str, Any]]:
     """Invoke a LangChain runnable and emit one content-free latency record."""
 
@@ -170,6 +183,8 @@ def invoke_with_model_telemetry(
         operation="chat",
         run_id=run_id,
         attempt=attempt,
+        prompt_version=prompt_version,
+        model_profile_version=model_profile_version,
     )
     started_at = perf_counter()
     configured_runnable = runnable
@@ -197,6 +212,7 @@ def invoke_with_model_telemetry(
             error=exc,
         )
         _emit_telemetry(telemetry)
+        _record_model_workflow_stage(telemetry)
         raise
 
     _finalize_telemetry(
@@ -205,6 +221,7 @@ def invoke_with_model_telemetry(
         started_at=started_at,
     )
     _emit_telemetry(telemetry)
+    _record_model_workflow_stage(telemetry)
     return result, telemetry.to_dict()
 
 
@@ -216,6 +233,8 @@ def invoke_provider_with_telemetry(
     model: str,
     run_id: str | None = None,
     attempt: str = "primary",
+    prompt_version: str | None = None,
+    model_profile_version: str | None = None,
     usage_extractor: Callable[[T], Mapping[str, Any]] | None = None,
 ) -> tuple[T, dict[str, Any]]:
     """Measure a direct provider SDK operation such as an embedding request."""
@@ -227,6 +246,8 @@ def invoke_provider_with_telemetry(
         operation="embedding",
         run_id=run_id,
         attempt=attempt,
+        prompt_version=prompt_version,
+        model_profile_version=model_profile_version,
     )
     started_at = perf_counter()
     try:
@@ -237,6 +258,7 @@ def invoke_provider_with_telemetry(
         telemetry.end_to_end_ms = _milliseconds(perf_counter() - started_at)
         telemetry.provider_request_ms = telemetry.end_to_end_ms
         _emit_telemetry(telemetry)
+        _record_model_workflow_stage(telemetry)
         raise
 
     telemetry.end_to_end_ms = _milliseconds(perf_counter() - started_at)
@@ -251,7 +273,9 @@ def invoke_provider_with_telemetry(
         )
         telemetry.total_tokens = _first_int(usage, "total_tokens")
     _derive_throughput(telemetry)
+    telemetry.estimated_cost_usd = estimate_openai_cost_usd(telemetry.to_dict())
     _emit_telemetry(telemetry)
+    _record_model_workflow_stage(telemetry)
     return result, telemetry.to_dict()
 
 
@@ -263,6 +287,8 @@ def _new_telemetry(
     operation: str,
     run_id: str | None,
     attempt: str,
+    prompt_version: str | None,
+    model_profile_version: str | None,
 ) -> ModelLatencyTelemetry:
     return ModelLatencyTelemetry(
         workflow=workflow,
@@ -272,6 +298,9 @@ def _new_telemetry(
         operation=operation,
         attempt=attempt,
         measured_at=datetime.now(timezone.utc).isoformat(),
+        request_id=current_request_id(),
+        prompt_version=prompt_version,
+        model_profile_version=model_profile_version,
     )
 
 
@@ -342,6 +371,7 @@ def _finalize_telemetry(
         telemetry.status = "error"
         telemetry.error_type = error.__class__.__name__
     _derive_throughput(telemetry)
+    telemetry.estimated_cost_usd = estimate_openai_cost_usd(telemetry.to_dict())
 
 
 def _derive_throughput(telemetry: ModelLatencyTelemetry) -> None:
@@ -415,6 +445,37 @@ def _emit_telemetry(telemetry: ModelLatencyTelemetry) -> None:
     LOGGER.info(
         "model_latency %s",
         json.dumps(telemetry.to_dict(), sort_keys=True, separators=(",", ":")),
+    )
+
+
+def _record_model_workflow_stage(telemetry: ModelLatencyTelemetry) -> None:
+    observation = current_workflow_observation()
+    if observation is None or observation.run_id != telemetry.run_id:
+        return
+    metrics: dict[str, int | float | bool | str | None] = {
+        "provider": telemetry.provider,
+        "model": telemetry.model,
+        "operation": telemetry.operation,
+        "attempt": telemetry.attempt,
+        "prompt_version": telemetry.prompt_version,
+        "model_profile_version": telemetry.model_profile_version,
+        "input_tokens": telemetry.input_tokens,
+        "cached_input_tokens": telemetry.cached_input_tokens,
+        "output_tokens": telemetry.output_tokens,
+        "total_tokens": telemetry.total_tokens,
+        "estimated_cost_usd": telemetry.estimated_cost_usd,
+        "cache_hit": (
+            telemetry.cached_input_tokens is not None
+            and telemetry.cached_input_tokens > 0
+        ),
+    }
+    record_completed_stage(
+        name=telemetry.workflow,
+        kind="model",
+        duration_ms=telemetry.end_to_end_ms or 0.0,
+        status=telemetry.status,
+        error_type=telemetry.error_type,
+        metrics=metrics,
     )
 
 

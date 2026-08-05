@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
+import logging
 from uuid import UUID, uuid4
 
 import pytest
@@ -25,6 +27,7 @@ def _claim(text: str, *, candidate_id: str = "cand-1") -> CandidateEvidenceClaim
 
 def test_build_candidate_job_description_shortlist_returns_empty_when_no_candidates(
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """
     Verify that no LLM call is made when retrieval returns no candidates.
@@ -51,6 +54,7 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
         fail_if_called,
     )
 
+    caplog.set_level(logging.INFO, logger="backend.core.observability")
     result = build_candidate_job_description_shortlist(
         job_description="python data engineer",
         retrieval_limit=25,
@@ -72,6 +76,19 @@ def test_build_candidate_job_description_shortlist_returns_empty_when_no_candida
         "include_text": True,
         "include_semantic": True,
     }
+    stage_payloads = [
+        json.loads(record.message.removeprefix("workflow_stage "))
+        for record in caplog.records
+        if record.name == "backend.core.observability"
+        and record.message.startswith("workflow_stage ")
+    ]
+    assert [payload["stage_kind"] for payload in stage_payloads] == [
+        "validation",
+        "retrieval",
+        "response",
+    ]
+    assert all(payload["run_id"] == match_run_id for payload in stage_payloads)
+    assert "python data engineer" not in caplog.text
 
 
 def test_build_candidate_job_description_shortlist_rejects_oversized_input() -> None:

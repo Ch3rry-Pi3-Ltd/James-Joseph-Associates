@@ -8,6 +8,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 import pytest
 
+from backend.core.observability import observe_workflow
 from backend.llm import telemetry
 
 
@@ -64,15 +65,23 @@ def test_invoke_with_model_telemetry_measures_streaming_and_provider_metadata(
     clock = iter([0.0, 0.1, 0.3, 0.5, 0.9, 1.0])
     monkeypatch.setattr(telemetry, "perf_counter", lambda: next(clock))
     caplog.set_level(logging.INFO, logger="backend.llm.telemetry")
+    caplog.set_level(logging.INFO, logger="backend.core.observability")
 
-    result, measurement = telemetry.invoke_with_model_telemetry(
-        _StreamingRunnable(),
-        {"private": "do-not-log"},
-        workflow="candidate_shortlist_reranking",
-        provider="openai",
-        model="gpt-4.1-mini",
+    with observe_workflow(
+        workflow="candidate_shortlist",
+        workflow_version="1.0",
         run_id="run-123",
-    )
+    ):
+        result, measurement = telemetry.invoke_with_model_telemetry(
+            _StreamingRunnable(),
+            {"private": "do-not-log"},
+            workflow="candidate_shortlist_reranking",
+            provider="openai",
+            model="gpt-4.1-mini",
+            run_id="run-123",
+            prompt_version="candidate-shortlist-v1.0",
+            model_profile_version="default-reasoning-v1",
+        )
 
     assert result == {"ok": True}
     assert measurement["run_id"] == "run-123"
@@ -88,8 +97,14 @@ def test_invoke_with_model_telemetry_measures_streaming_and_provider_metadata(
     assert measurement["provider_queue_ms"] == 12.0
     assert measurement["provider_prefill_ms"] == 250.0
     assert measurement["provider_decode_ms"] == 400.0
+    assert measurement["estimated_cost_usd"] == 0.000006
+    assert measurement["prompt_version"] == "candidate-shortlist-v1.0"
+    assert measurement["model_profile_version"] == "default-reasoning-v1"
     assert measurement["streaming_timing_available"] is True
     assert measurement["provider_timing_available"] is True
+    assert '"stage_kind":"model"' in caplog.text
+    assert '"estimated_cost_usd":6e-06' in caplog.text
+    assert '"cached_input_tokens":4' in caplog.text
     assert "do-not-log" not in caplog.text
 
 

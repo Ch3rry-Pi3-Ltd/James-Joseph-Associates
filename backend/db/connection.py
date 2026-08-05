@@ -62,6 +62,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from backend.core.performance import current_request_id
+from backend.core.observability import observe_stage
 from backend.settings import get_settings
 
 
@@ -177,20 +178,25 @@ def postgres_connection() -> Iterator[psycopg.Connection]:
     - always close it afterwards
     """
 
-    started_at = perf_counter()
-    connection = get_postgres_connection()
+    with observe_stage(
+        "postgres_connection",
+        "database",
+        metrics={"operation": "connection"},
+    ):
+        started_at = perf_counter()
+        connection = get_postgres_connection()
 
-    try:
-        yield connection
-    finally:
-        connection.close()
-        duration_ms = max(0.0, (perf_counter() - started_at) * 1000)
-        logger.info(
-            "database_performance request_id=%s operation=postgres_connection "
-            "duration_ms=%.2f",
-            current_request_id() or "background",
-            duration_ms,
-        )
+        try:
+            yield connection
+        finally:
+            connection.close()
+            duration_ms = max(0.0, (perf_counter() - started_at) * 1000)
+            logger.info(
+                "database_performance request_id=%s operation=postgres_connection "
+                "duration_ms=%.2f",
+                current_request_id() or "background",
+                duration_ms,
+            )
 
 
 __all__ = [

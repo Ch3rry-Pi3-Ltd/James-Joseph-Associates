@@ -102,8 +102,11 @@ kept in a separate deferred lane so they do not block independent delivery.
     roughly `90.3%` cached warm input tokens, and about `59.3%` total input-cost
     reduction, while a cache key showed no material advantage over automatic
     routing at the current low volume
-  - [ ] add stage-level observability for latency, token usage, cost, model and
-    prompt versions, retrieval inputs, and run identifiers
+  - [x] add privacy-safe stage-level observability for validation, retrieval,
+    database, model, and response work, correlated by request/run/parent IDs and
+    reporting prompt/model versions, latency, token and cached-token usage,
+    estimated cost, bounded counts, and outcomes without storing prompts,
+    queries, CV text, identifiers, or returned recruitment records
   - [ ] exercise retries, fallbacks, idempotency, caching, background jobs, and
     load behaviour
   - [ ] record architecture decisions for RAG versus fine-tuning and for

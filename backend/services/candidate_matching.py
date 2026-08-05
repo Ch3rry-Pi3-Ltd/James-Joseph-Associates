@@ -24,6 +24,7 @@ from backend.core.llm_safety import (
     MAX_LLM_INPUT_CHARACTERS,
     UNTRUSTED_CONTENT_POLICY,
 )
+from backend.core.observability import observe_stage, observe_workflow
 from backend.evaluation.quality_checks import validate_claim_evidence
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
@@ -41,6 +42,9 @@ from backend.services.candidate_source_metadata import (
 _PROFILE_SUMMARY_CHARACTER_LIMIT = 1200
 _PROFILE_HEADLINE_CHARACTER_LIMIT = 400
 _PROFILE_SKILL_LIMIT = 24
+_SHORTLIST_WORKFLOW_VERSION = "1.0"
+_SHORTLIST_PROMPT_VERSION = "candidate-shortlist-v1.0"
+_REASONING_MODEL_PROFILE_VERSION = "default-reasoning-v1"
 
 
 class CandidateMatchingError(RuntimeError):
@@ -106,42 +110,85 @@ def build_candidate_job_description_shortlist(
     Return a recruiter-facing shortlist for one free-text job description.
     """
 
-    normalized_job_description = job_description.strip()
-    if normalized_job_description == "":
-        raise CandidateMatchingError(
-            "Job description must not be blank.",
-            stage="validation",
-            details=[{"field": "job_description"}],
-        )
-    if len(normalized_job_description) > MAX_LLM_INPUT_CHARACTERS:
-        raise CandidateMatchingError(
-            "Job description is too long.",
-            stage="validation",
-            details=[
-                {
-                    "field": "job_description",
-                    "max_length": MAX_LLM_INPUT_CHARACTERS,
-                }
-            ],
-        )
-
-    bounded_retrieval_limit = max(1, min(int(retrieval_limit), 100))
-    bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
     match_run_id = str(uuid4())
+    with observe_workflow(
+        workflow="candidate_shortlist",
+        workflow_version=_SHORTLIST_WORKFLOW_VERSION,
+        run_id=match_run_id,
+    ):
+        return _build_candidate_job_description_shortlist(
+            job_description=job_description,
+            retrieval_limit=retrieval_limit,
+            shortlist_limit=shortlist_limit,
+            match_run_id=match_run_id,
+        )
 
-    retrieved_candidates = retrieve_candidates_with_graph_context(
-        query=normalized_job_description,
-        limit=bounded_retrieval_limit,
-    )
-    if not retrieved_candidates:
-        return {
-            "match_run_id": match_run_id,
-            "job_description": normalized_job_description,
+
+def _build_candidate_job_description_shortlist(
+    *,
+    job_description: str,
+    retrieval_limit: int,
+    shortlist_limit: int,
+    match_run_id: str,
+) -> dict[str, Any]:
+    """Execute the observed shortlist stages for one established run ID."""
+
+    with observe_stage("input_validation", "validation") as validation_stage:
+        normalized_job_description = job_description.strip()
+        if normalized_job_description == "":
+            raise CandidateMatchingError(
+                "Job description must not be blank.",
+                stage="validation",
+                details=[{"field": "job_description"}],
+            )
+        if len(normalized_job_description) > MAX_LLM_INPUT_CHARACTERS:
+            raise CandidateMatchingError(
+                "Job description is too long.",
+                stage="validation",
+                details=[
+                    {
+                        "field": "job_description",
+                        "max_length": MAX_LLM_INPUT_CHARACTERS,
+                    }
+                ],
+            )
+
+        bounded_retrieval_limit = max(1, min(int(retrieval_limit), 100))
+        bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
+        validation_stage.set_metrics(
+            input_items=1,
+            validation_rule_count=4,
+            retrieval_limit=bounded_retrieval_limit,
+            shortlist_limit=bounded_shortlist_limit,
+        )
+
+    with observe_stage(
+        "hybrid_graph_retrieval",
+        "retrieval",
+        metrics={
+            "retrieval_mode": "hybrid_graph",
             "retrieval_limit": bounded_retrieval_limit,
-            "shortlist_limit": bounded_shortlist_limit,
-            "retrieved_candidate_count": 0,
-            "shortlisted_candidates": [],
-        }
+        },
+    ) as retrieval_stage:
+        retrieved_candidates = retrieve_candidates_with_graph_context(
+            query=normalized_job_description,
+            limit=bounded_retrieval_limit,
+        )
+        retrieval_stage.set_metrics(candidate_count=len(retrieved_candidates))
+    if not retrieved_candidates:
+        with observe_stage(
+            "response_assembly",
+            "response",
+            metrics={"candidate_count": 0, "output_items": 0},
+        ):
+            return {
+                "match_run_id": match_run_id,
+                "job_description": normalized_job_description,
+                "retrieval_limit": bounded_retrieval_limit,
+                "shortlist_limit": bounded_shortlist_limit,
+                "retrieved_candidate_count": 0,
+                "shortlisted_candidates": [],
+            }
 
     shortlist_assessments = _rank_retrieved_candidates_for_job_description(
         job_description=normalized_job_description,
@@ -245,14 +292,22 @@ def build_candidate_job_description_shortlist(
         if len(shortlisted_candidates) >= bounded_shortlist_limit:
             break
 
-    return {
-        "match_run_id": match_run_id,
-        "job_description": normalized_job_description,
-        "retrieval_limit": bounded_retrieval_limit,
-        "shortlist_limit": bounded_shortlist_limit,
-        "retrieved_candidate_count": len(retrieved_candidates),
-        "shortlisted_candidates": shortlisted_candidates,
-    }
+    with observe_stage(
+        "response_assembly",
+        "response",
+        metrics={
+            "candidate_count": len(retrieved_candidates),
+            "output_items": len(shortlisted_candidates),
+        },
+    ):
+        return {
+            "match_run_id": match_run_id,
+            "job_description": normalized_job_description,
+            "retrieval_limit": bounded_retrieval_limit,
+            "shortlist_limit": bounded_shortlist_limit,
+            "retrieved_candidate_count": len(retrieved_candidates),
+            "shortlisted_candidates": shortlisted_candidates,
+        }
 
 
 def retrieve_candidates_with_graph_context(
@@ -385,6 +440,8 @@ def _rank_retrieved_candidates_for_job_description(
             provider=DEFAULT_REASONING_MODEL_PROFILE.provider.value,
             model=DEFAULT_REASONING_MODEL_PROFILE.model_name,
             run_id=run_id,
+            prompt_version=_SHORTLIST_PROMPT_VERSION,
+            model_profile_version=_REASONING_MODEL_PROFILE_VERSION,
         )
     except Exception as exc:  # pragma: no cover - exercised via service tests
         raise CandidateMatchingError(
@@ -404,10 +461,19 @@ def _rank_retrieved_candidates_for_job_description(
             details=[{"result_type": raw_result.__class__.__name__}],
         )
 
-    _validate_assessment_grounding(
-        assessments=assessments,
-        retrieved_candidates=retrieved_candidates,
-    )
+    with observe_stage(
+        "grounding_validation",
+        "validation",
+        metrics={
+            "input_items": len(assessments),
+            "validation_rule_count": 3,
+        },
+    ) as validation_stage:
+        _validate_assessment_grounding(
+            assessments=assessments,
+            retrieved_candidates=retrieved_candidates,
+        )
+        validation_stage.set_metrics(output_items=len(assessments))
     return assessments
 
 

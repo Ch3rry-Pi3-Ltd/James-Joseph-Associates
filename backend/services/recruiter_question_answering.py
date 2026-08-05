@@ -17,6 +17,7 @@ from backend.core.llm_safety import (
     MAX_LLM_INPUT_CHARACTERS,
     UNTRUSTED_CONTENT_POLICY,
 )
+from backend.core.observability import observe_stage, observe_workflow
 from backend.llm.models import DEFAULT_REASONING_MODEL_PROFILE
 from backend.llm.providers import build_langchain_chat_model
 from backend.llm.telemetry import invoke_with_model_telemetry
@@ -49,6 +50,9 @@ _COMPANY_CONTEXT_TERMS = (
     "opportunities at",
     "company",
 )
+_RECRUITER_QA_WORKFLOW_VERSION = "1.0"
+_RECRUITER_QA_PROMPT_VERSION = "recruiter-qa-v1.0"
+_REASONING_MODEL_PROFILE_VERSION = "default-reasoning-v1"
 
 
 class RecruiterQuestionAnsweringError(RuntimeError):
@@ -104,72 +108,112 @@ def answer_recruiter_question(
     Return one grounded recruiter-facing answer over bounded canonical evidence.
     """
 
-    normalized_question = question.strip()
-    if normalized_question == "":
-        raise RecruiterQuestionAnsweringError(
-            "Question must not be blank.",
-            stage="validation",
-            code="validation_error",
-            status_code=400,
-            details=[{"field": "question"}],
-        )
-    if len(normalized_question) > MAX_LLM_INPUT_CHARACTERS:
-        raise RecruiterQuestionAnsweringError(
-            "Question is too long.",
-            stage="validation",
-            code="validation_error",
-            status_code=400,
-            details=[
-                {
-                    "field": "question",
-                    "max_length": MAX_LLM_INPUT_CHARACTERS,
-                }
-            ],
-        )
-
     answer_run_id = str(uuid4())
-    retrieval_plan = _build_retrieval_plan(normalized_question)
-    normalized_user_id = _normalize_optional_identifier(user_id)
-    normalized_conversation_id = _normalize_optional_identifier(conversation_id)
-    recent_memory: list[dict[str, Any]] = []
-    if normalized_user_id is not None:
-        recent_memory = get_recent_operator_memory(
-            user_id=normalized_user_id,
-            conversation_id=normalized_conversation_id,
+    with observe_workflow(
+        workflow="recruiter_qa",
+        workflow_version=_RECRUITER_QA_WORKFLOW_VERSION,
+        run_id=answer_run_id,
+    ):
+        return _answer_recruiter_question(
+            question=question,
+            search_limit=search_limit,
+            candidate_pool_limit=candidate_pool_limit,
+            shortlist_limit=shortlist_limit,
+            company_context_limit=company_context_limit,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            answer_run_id=answer_run_id,
         )
 
-    role_search_result: dict[str, Any] | None = None
-    company_context_result: dict[str, Any] | None = None
 
-    try:
-        if retrieval_plan["run_role_search"]:
-            role_search_result = mcp_read_adapter.search_candidates_for_role(
-                role_brief=normalized_question,
-                search_limit=search_limit,
-                candidate_pool_limit=candidate_pool_limit,
-                shortlist_limit=shortlist_limit,
-                include_shortlist=True,
+def _answer_recruiter_question(
+    *,
+    question: str,
+    search_limit: int,
+    candidate_pool_limit: int,
+    shortlist_limit: int,
+    company_context_limit: int,
+    user_id: str | None,
+    conversation_id: str | None,
+    answer_run_id: str,
+) -> dict[str, Any]:
+    """Execute one observed recruiter Q&A workflow."""
+
+    with observe_stage("input_validation", "validation") as validation_stage:
+        normalized_question = question.strip()
+        if normalized_question == "":
+            raise RecruiterQuestionAnsweringError(
+                "Question must not be blank.",
+                stage="validation",
+                code="validation_error",
+                status_code=400,
+                details=[{"field": "question"}],
             )
-        if retrieval_plan["company_name"] is not None:
-            company_context_result = mcp_read_adapter.search_company_context(
-                company_name=retrieval_plan["company_name"],
-                candidate_limit=company_context_limit,
-                contact_limit=company_context_limit,
-                interaction_limit=company_context_limit,
-                job_limit=company_context_limit,
-                opportunity_limit=company_context_limit,
+        if len(normalized_question) > MAX_LLM_INPUT_CHARACTERS:
+            raise RecruiterQuestionAnsweringError(
+                "Question is too long.",
+                stage="validation",
+                code="validation_error",
+                status_code=400,
+                details=[
+                    {
+                        "field": "question",
+                        "max_length": MAX_LLM_INPUT_CHARACTERS,
+                    }
+                ],
             )
-    except McpReadAdapterError as exc:
-        raise RecruiterQuestionAnsweringError(
-            "Recruiter question retrieval failed.",
-            stage="retrieval",
-            code=exc.code,
-            status_code=exc.status_code,
-            details=[
-                {"tool": exc.tool},
-                *exc.details,
-            ],
-        ) from exc
+        validation_stage.set_metrics(input_items=1, validation_rule_count=2)
+
+    with observe_stage("evidence_retrieval", "retrieval") as retrieval_stage:
+        retrieval_plan = _build_retrieval_plan(normalized_question)
+        normalized_user_id = _normalize_optional_identifier(user_id)
+        normalized_conversation_id = _normalize_optional_identifier(conversation_id)
+        recent_memory: list[dict[str, Any]] = []
+        if normalized_user_id is not None:
+            recent_memory = get_recent_operator_memory(
+                user_id=normalized_user_id,
+                conversation_id=normalized_conversation_id,
+            )
+
+        role_search_result: dict[str, Any] | None = None
+        company_context_result: dict[str, Any] | None = None
+
+        try:
+            if retrieval_plan["run_role_search"]:
+                role_search_result = mcp_read_adapter.search_candidates_for_role(
+                    role_brief=normalized_question,
+                    search_limit=search_limit,
+                    candidate_pool_limit=candidate_pool_limit,
+                    shortlist_limit=shortlist_limit,
+                    include_shortlist=True,
+                )
+            if retrieval_plan["company_name"] is not None:
+                company_context_result = mcp_read_adapter.search_company_context(
+                    company_name=retrieval_plan["company_name"],
+                    candidate_limit=company_context_limit,
+                    contact_limit=company_context_limit,
+                    interaction_limit=company_context_limit,
+                    job_limit=company_context_limit,
+                    opportunity_limit=company_context_limit,
+                )
+        except McpReadAdapterError as exc:
+            raise RecruiterQuestionAnsweringError(
+                "Recruiter question retrieval failed.",
+                stage="retrieval",
+                code=exc.code,
+                status_code=exc.status_code,
+                details=[
+                    {"tool": exc.tool},
+                    *exc.details,
+                ],
+            ) from exc
+        retrieval_stage.set_metrics(
+            route_intent=retrieval_plan["route_intent"],
+            output_items=_count_retrieved_evidence(
+                role_search_result=role_search_result,
+                company_context_result=company_context_result,
+            ),
+        )
 
     if not _has_any_evidence(
         role_search_result=role_search_result,
@@ -200,7 +244,12 @@ def answer_recruiter_question(
                 answer=result_payload["answer"],
                 metadata={"route_intent": retrieval_plan["route_intent"]},
             )
-        return result_payload
+        with observe_stage(
+            "response_assembly",
+            "response",
+            metrics={"output_items": 0},
+        ):
+            return result_payload
 
     answer_selection = _generate_grounded_answer(
         question=normalized_question,
@@ -210,11 +259,28 @@ def answer_recruiter_question(
         recent_memory=recent_memory,
         run_id=answer_run_id,
     )
-    _validate_answer_citations(
-        answer_selection=answer_selection,
-        role_search_result=role_search_result,
-        company_context_result=company_context_result,
-    )
+    with observe_stage(
+        "citation_validation",
+        "validation",
+        metrics={"validation_rule_count": 1},
+    ) as validation_stage:
+        _validate_answer_citations(
+            answer_selection=answer_selection,
+            role_search_result=role_search_result,
+            company_context_result=company_context_result,
+        )
+        validation_stage.set_metrics(
+            input_items=sum(
+                len(values)
+                for values in (
+                    answer_selection.cited_candidate_ids,
+                    answer_selection.cited_contact_ids,
+                    answer_selection.cited_job_ids,
+                    answer_selection.cited_opportunity_ids,
+                    answer_selection.cited_interaction_ids,
+                )
+            )
+        )
 
     candidates = _collect_candidates(
         role_search_result=role_search_result,
@@ -241,20 +307,29 @@ def answer_recruiter_question(
         key="interaction_id",
     )
 
-    result_payload = {
-        "question": normalized_question,
-        "route_intent": retrieval_plan["route_intent"],
-        "retrieval_plan": retrieval_plan,
-        "session_memory_turns_used": len(recent_memory),
-        "answer": answer_selection.answer,
-        "evidence_bullets": list(answer_selection.evidence_bullets),
-        "candidates": candidates,
-        "contacts": contacts,
-        "jobs": jobs,
-        "opportunities": opportunities,
-        "interactions": interactions,
-        "follow_up_questions": list(answer_selection.follow_up_questions),
-    }
+    output_items = sum(
+        len(values)
+        for values in (candidates, contacts, jobs, opportunities, interactions)
+    )
+    with observe_stage(
+        "response_assembly",
+        "response",
+        metrics={"output_items": output_items},
+    ):
+        result_payload = {
+            "question": normalized_question,
+            "route_intent": retrieval_plan["route_intent"],
+            "retrieval_plan": retrieval_plan,
+            "session_memory_turns_used": len(recent_memory),
+            "answer": answer_selection.answer,
+            "evidence_bullets": list(answer_selection.evidence_bullets),
+            "candidates": candidates,
+            "contacts": contacts,
+            "jobs": jobs,
+            "opportunities": opportunities,
+            "interactions": interactions,
+            "follow_up_questions": list(answer_selection.follow_up_questions),
+        }
     if normalized_user_id is not None:
         append_operator_memory_turn(
             user_id=normalized_user_id,
@@ -340,6 +415,35 @@ def _has_any_evidence(
     return False
 
 
+def _count_retrieved_evidence(
+    *,
+    role_search_result: dict[str, Any] | None,
+    company_context_result: dict[str, Any] | None,
+) -> int:
+    """Count bounded result objects without logging their content or IDs."""
+
+    count = 0
+    if role_search_result is not None:
+        role_candidates = (
+            role_search_result.get("shortlist_results")
+            or role_search_result.get("search_results")
+            or []
+        )
+        count += len(role_candidates)
+    if company_context_result is not None:
+        count += sum(
+            len(company_context_result.get(field_name) or [])
+            for field_name in (
+                "candidates",
+                "contacts",
+                "interactions",
+                "jobs",
+                "opportunities",
+            )
+        )
+    return count
+
+
 def _generate_grounded_answer(
     *,
     question: str,
@@ -399,6 +503,8 @@ def _generate_grounded_answer(
             provider=DEFAULT_REASONING_MODEL_PROFILE.provider.value,
             model=DEFAULT_REASONING_MODEL_PROFILE.model_name,
             run_id=run_id,
+            prompt_version=_RECRUITER_QA_PROMPT_VERSION,
+            model_profile_version=_REASONING_MODEL_PROFILE_VERSION,
         )
     except Exception as exc:  # pragma: no cover - exercised via service tests
         raise RecruiterQuestionAnsweringError(
