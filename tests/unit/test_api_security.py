@@ -105,3 +105,31 @@ def test_deployed_api_rejects_exhausted_rate_limit() -> None:
     assert response.status_code == 429
     assert response.headers["retry-after"] == "41"
     assert response.json()["error"]["code"] == "rate_limit_exceeded"
+
+
+def test_deployed_api_fails_closed_when_rate_limit_database_is_unavailable() -> None:
+    """A control-plane database failure must not silently disable protection."""
+
+    settings = SimpleNamespace(
+        environment="production",
+        api_rate_limit_enabled=True,
+        api_rate_limit_per_minute=120,
+    )
+    with (
+        patch("backend.core.api_security.get_settings", return_value=settings),
+        patch(
+            "backend.core.api_security.consume_api_rate_limit",
+            side_effect=RuntimeError("database unavailable"),
+        ),
+    ):
+        response = _secured_test_client().get("/api/v1/candidates")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "error": {
+            "code": "rate_limit_unavailable",
+            "message": "API request controls are temporarily unavailable.",
+            "details": [],
+        }
+    }
+    assert response.headers["cache-control"] == "private, no-store"

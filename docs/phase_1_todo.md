@@ -107,8 +107,12 @@ kept in a separate deferred lane so they do not block independent delivery.
     reporting prompt/model versions, latency, token and cached-token usage,
     estimated cost, bounded counts, and outcomes without storing prompts,
     queries, CV text, identifiers, or returned recruitment records
-  - [ ] exercise retries, fallbacks, idempotency, caching, background jobs, and
-    load behaviour
+  - [x] exercise retries, bounded provider/model fallbacks, idempotency
+    fingerprints, cache failures and concurrent misses, restartable batch work,
+    degraded rate-limit storage, and concurrent API load; fix same-key cache
+    stampedes and stale in-flight repopulation, add a capped local ASGI load
+    probe, and document the remaining cross-provider, durable-ingestion,
+    distributed-job, and preview-capacity boundaries
   - [ ] record architecture decisions for RAG versus fine-tuning and for
     bounded workflows versus multi-agent designs before adding either complexity
   - [ ] define a self-hosted inference decision gate based on privacy, workload,
