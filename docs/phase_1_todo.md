@@ -84,6 +84,11 @@ kept in a separate deferred lane so they do not block independent delivery.
     schema-create access, and grant least-privilege current/default table and
     sequence permissions; migration `0014` is applied and Production now uses a
     dedicated `jja_app_runtime` login that inherits only `jja_app_writer`
+  - [x] remove Supabase `anon` and `authenticated` access to the server-only
+    `public` schema, enable RLS on all `31` application tables, and retain row
+    policies only for the private backend roles; migration `0015` was applied
+    and live-verified on 5 August 2026, including anonymous REST denial and a
+    successful bounded Production backend read
   - [x] inventory context-window, token, truncation, latency, and cost budgets
     for every model-backed workflow in `docs/llm_operational_budgets.md`
   - [x] measure end-to-end model latency and, where streaming/provider telemetry
@@ -655,10 +660,11 @@ Supabase should be treated as the **canonical data platform**, not merely a vect
   - [x] Development database.
   - [x] Preview/staging database.
   - [x] Production database.
-- [ ] Define initial database access policy:
-  - [ ] Backend service role access.
-  - [ ] Read/write boundaries.
-  - [ ] Future row-level security assumptions.
+- [x] Define and enforce the initial database access policy:
+  - [x] Backend-only application-role access.
+  - [x] Read/write boundaries through `jja_app_readonly` and `jja_app_writer`.
+  - [x] RLS on every current public table with no `anon` or `authenticated`
+    table privileges.
 - [x] Document Supabase connection variables required by Vercel.
 - [x] Define initial backup and recovery expectations in
   `docs/database_export_restore.md` and enforce them in the controlled runner.

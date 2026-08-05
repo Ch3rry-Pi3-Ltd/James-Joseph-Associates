@@ -43,25 +43,32 @@ responses with retry metadata, and keeps health checks exempt. A live protected
 route returned limit `120` and remaining count `119`. Vercel Firewall remains
 useful defence in depth.
 
-### Medium - Supabase least privilege is not demonstrated in migrations
+### Critical - Supabase public API roles retained automatic table access
 
-The application uses server-side Postgres connections, and the repository does
-not contain row-level-security policies. This is not a browser-direct exposure,
-but compromise of a broad runtime database credential would have a large blast
-radius.
+The application uses server-side Postgres connections, but the initial
+least-privilege work covered only the dedicated application login. A live audit
+on 5 August 2026 found that all `31` tables in the API-exposed `public` schema
+still had RLS disabled and retained Supabase's automatic data privileges for
+the `anon` and `authenticated` roles. That meant the public Supabase URL and
+anonymous key could reach recruitment records without going through Clerk or
+the backend.
 
-**Status:** Remediated for the production application on 3 August 2026. Applied
-migration `0014` defines
-no-login `jja_app_readonly` and `jja_app_writer` roles, removes schema-create
-access from `PUBLIC`, and grants current/default table and sequence privileges.
-Production now connects as a dedicated `jja_app_runtime` login that inherits
-only `jja_app_writer`; it is not a superuser and cannot create roles, databases,
-or schema objects. Before cutover, the credential passed canonical read and
-rate-limit write smoke tests and was denied a probe table creation. After the
-Vercel deployment, an authenticated live request returned `200`, canonical
-company data, and active `120`/`119` rate-limit headers. The broader `postgres`
-credential remains an administration/migration credential and is no longer used
-by the Production application URLs.
+**Status:** Remediated in Production on 5 August 2026. Migration `0015` revoked
+current and default table, sequence, and function privileges from `anon` and
+`authenticated`, enabled RLS on all public tables, and created unrestricted row
+policies only for the existing no-login `jja_app_readonly` and
+`jja_app_writer` roles. The earlier migration `0014` and dedicated
+`jja_app_runtime` login remain the server-side access boundary. Live
+verification found `0` RLS-disabled tables, `0` tables accessible by either
+Supabase API role, and all `124` expected backend policies. An anonymous
+PostgREST request returned `401`, while a bounded read through the deployed MCP
+backend returned `200`.
+
+No credentials or OAuth tokens were rotated as part of this remediation, by
+explicit owner decision. The privilege and RLS changes close the reported
+database access path without changing those credentials. See
+`docs/security/2026-08-05-supabase-public-schema-lockdown.md` for the detailed
+record and residual limitations.
 
 ### Low - browser security headers were incomplete
 
