@@ -42,10 +42,12 @@ The first bounded run passed all five scenario gates with no provider failures:
 | 25-item embedding batch | 442.379 ms | 808.665 ms | $0.000549250 |
 
 The entire 12-request baseline cost an estimated $0.003122980. The second long
-chat request reported 2,176 cached input tokens, which is useful evidence for
-the next prompt-caching evaluation but is not yet enough to claim a durable
-latency or cost benefit. Provider queue, prefill, decode, TTFT, and ITL remained
-unavailable for these non-streaming calls.
+chat request reported 2,176 cached input tokens. That observation has now been
+followed by the dedicated 16-request evaluation in
+`docs/prompt_caching_evaluation.md`: all 14 warm requests hit the cache and the
+overall estimated input-cost reduction was about 59.3%. Provider queue,
+prefill, decode, TTFT, and ITL remained unavailable for these non-streaming
+calls.
 
 The committed machine-readable baseline is
 `docs/evaluation/model_workload_benchmark_2026-08-04.json`.

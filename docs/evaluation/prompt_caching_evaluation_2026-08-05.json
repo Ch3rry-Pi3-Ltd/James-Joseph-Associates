@@ -1,0 +1,329 @@
+{
+  "content_policy": {
+    "cache_keys_in_artifact": false,
+    "candidate_or_cv_data_used": false,
+    "prompts_in_artifact": false,
+    "recorded_fields": "variant, phase, sample index, latency, token usage, estimated cost, cache-hit aggregates, and completion status",
+    "responses_in_artifact": false,
+    "synthetic_input_only": true
+  },
+  "evaluation_complete": true,
+  "evaluation_version": "1.0",
+  "keyed_vs_automatic": {
+    "keyed_minus_automatic_cache_hit_rate": 0.0,
+    "keyed_minus_automatic_cached_token_ratio": 0.000709,
+    "keyed_to_automatic_input_cost_ratio": 0.998075,
+    "keyed_to_automatic_warm_latency_ratio": 0.958844
+  },
+  "measured_at": "2026-08-05T08:13:58.276527+00:00",
+  "model": "gpt-4.1-mini",
+  "price_card": {
+    "currency": "USD",
+    "effective_date": "2026-08-03",
+    "per_million_tokens": {
+      "cached_input": 0.1,
+      "input": 0.4,
+      "output": 1.6
+    }
+  },
+  "provider": "openai",
+  "request_count": 16,
+  "variants": [
+    {
+      "cold": {
+        "cached_input_tokens": 0,
+        "estimated_input_cost_usd": 0.0010196,
+        "input_tokens": 2549,
+        "latency_ms": 1238.388
+      },
+      "comparison": {
+        "actual_input_cost_usd": 0.0033184,
+        "input_cost_reduction_ratio": 0.593174,
+        "input_cost_saved_usd": 0.0048384,
+        "total_estimated_cost_usd": 0.0034336,
+        "uncached_input_cost_usd": 0.0081568,
+        "warm_average_latency_reduction_ratio": 0.39959
+      },
+      "completion_reasons": [],
+      "evaluation_complete": true,
+      "failed_sample_count": 0,
+      "name": "stable_prefix_with_cache_key",
+      "prompt_cache_key_supplied": true,
+      "sample_count": 8,
+      "samples": [
+        {
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.001034,
+          "estimated_input_cost_usd": 0.0010196,
+          "input_tokens": 2549,
+          "latency_ms": 1238.388,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "cold",
+          "sample_index": 1,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 697.366,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 2,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 1121.809,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 3,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 624.861,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 4,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 755.346,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 5,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 651.266,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 6,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 675.855,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 7,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003428,
+          "estimated_input_cost_usd": 0.0003284,
+          "input_tokens": 2549,
+          "latency_ms": 678.277,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 8,
+          "status": "success",
+          "total_tokens": 2558,
+          "uncached_input_cost_usd": 0.0010196
+        }
+      ],
+      "successful_sample_count": 8,
+      "warm": {
+        "average_latency_ms": 743.54,
+        "cache_hit_count": 7,
+        "cache_hit_rate": 1.0,
+        "cached_token_ratio": 0.903884,
+        "p50_latency_ms": 678.277,
+        "p95_latency_ms": 1121.809,
+        "sample_count": 7,
+        "total_cached_input_tokens": 16128,
+        "total_input_tokens": 17843
+      }
+    },
+    {
+      "cold": {
+        "cached_input_tokens": 0,
+        "estimated_input_cost_usd": 0.0010204,
+        "input_tokens": 2551,
+        "latency_ms": 864.266
+      },
+      "comparison": {
+        "actual_input_cost_usd": 0.0033248,
+        "input_cost_reduction_ratio": 0.592709,
+        "input_cost_saved_usd": 0.0048384,
+        "total_estimated_cost_usd": 0.00344,
+        "uncached_input_cost_usd": 0.0081632,
+        "warm_average_latency_reduction_ratio": 0.102759
+      },
+      "completion_reasons": [],
+      "evaluation_complete": true,
+      "failed_sample_count": 0,
+      "name": "stable_prefix_automatic_routing",
+      "prompt_cache_key_supplied": false,
+      "sample_count": 8,
+      "samples": [
+        {
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0010348,
+          "estimated_input_cost_usd": 0.0010204,
+          "input_tokens": 2551,
+          "latency_ms": 864.266,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "cold",
+          "sample_index": 1,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 951.884,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 2,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 625.044,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 3,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 650.78,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 4,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 760.958,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 5,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 818.924,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 6,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 636.607,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 7,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        },
+        {
+          "cached_input_tokens": 2304,
+          "estimated_cost_usd": 0.0003436,
+          "estimated_input_cost_usd": 0.0003292,
+          "input_tokens": 2551,
+          "latency_ms": 983.987,
+          "model": "gpt-4.1-mini",
+          "output_tokens": 9,
+          "phase": "warm",
+          "sample_index": 8,
+          "status": "success",
+          "total_tokens": 2560,
+          "uncached_input_cost_usd": 0.0010204
+        }
+      ],
+      "successful_sample_count": 8,
+      "warm": {
+        "average_latency_ms": 775.455,
+        "cache_hit_count": 7,
+        "cache_hit_rate": 1.0,
+        "cached_token_ratio": 0.903175,
+        "p50_latency_ms": 760.958,
+        "p95_latency_ms": 983.987,
+        "sample_count": 7,
+        "total_cached_input_tokens": 16128,
+        "total_input_tokens": 17857
+      }
+    }
+  ]
+}

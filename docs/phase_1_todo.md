@@ -96,8 +96,12 @@ kept in a separate deferred lane so they do not block independent delivery.
     time, and prompt/prefill versus generation/decode time
   - [x] benchmark representative short and long prompts, output limits, and
     concurrency so latency and cost regressions are visible
-  - [ ] evaluate provider prompt caching for repeated system instructions and
-    stable retrieval context, including cache-hit, latency, and cost effects
+  - [x] evaluate provider prompt caching for repeated system instructions and
+    stable retrieval context, including cache-hit, latency, and cost effects;
+    the 5 August 2026 synthetic live run achieved `14/14` warm cache hits,
+    roughly `90.3%` cached warm input tokens, and about `59.3%` total input-cost
+    reduction, while a cache key showed no material advantage over automatic
+    routing at the current low volume
   - [ ] add stage-level observability for latency, token usage, cost, model and
     prompt versions, retrieval inputs, and run identifiers
   - [ ] exercise retries, fallbacks, idempotency, caching, background jobs, and
