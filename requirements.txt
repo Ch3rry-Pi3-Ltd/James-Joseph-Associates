@@ -3,7 +3,7 @@ defusedxml
 pydantic-settings
 pytest
 httpx
-ruff==0.15.10
+ruff==0.16.3
 uvicorn
 langgraph
 mcp>=1.23.2,<2
