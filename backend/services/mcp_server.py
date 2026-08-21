@@ -80,7 +80,14 @@ async def search_candidates_for_role(
     role_brief: str,
     ctx: Context,
     search_limit: int = 10,
+    candidate_pool_limit: int = 25,
+    shortlist_limit: int = 5,
+    include_shortlist: bool = False,
 ) -> dict[str, Any]:
+    # Keep accepting the previous public tool arguments until the ChatGPT app
+    # has been rescanned. They are intentionally ignored: MCP search is now a
+    # bounded retrieval operation and never invokes model-backed shortlisting.
+    del candidate_pool_limit, shortlist_limit, include_shortlist
     arguments = {
         "role_brief": role_brief,
         "search_limit": search_limit,

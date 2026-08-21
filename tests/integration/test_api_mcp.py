@@ -236,6 +236,58 @@ def test_remote_mcp_executes_bounded_candidate_search(
     assert "Rust quantitative developer" not in str(audit_event["metadata"])
 
 
+def test_remote_mcp_accepts_legacy_shortlist_arguments_without_using_them(
+    mcp_client: TestClient,
+) -> None:
+    service_result = {
+        "role_brief": "Senior data engineer",
+        "search_results": [],
+    }
+
+    with (
+        patch(
+            "backend.services.mcp_transport.enforce_mcp_rate_limit",
+            return_value=_allowed_rate_limit(),
+        ),
+        patch(
+            "backend.services.mcp_transport.audit_mcp_event_best_effort"
+        ),
+        patch(
+            "backend.services.mcp_server.audit_mcp_event_best_effort"
+        ),
+        patch(
+            "backend.services.mcp_server.mcp_read_adapter."
+            "search_candidates_for_role",
+            return_value=service_result,
+        ) as mock_search,
+    ):
+        response = _mcp_request(
+            mcp_client,
+            method="tools/call",
+            request_id=51,
+            params={
+                "name": "search_candidates_for_role",
+                "arguments": {
+                    "role_brief": "Senior data engineer",
+                    "search_limit": 5,
+                    "candidate_pool_limit": 100,
+                    "shortlist_limit": 10,
+                    "include_shortlist": True,
+                },
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["result"]["isError"] is False
+    mock_search.assert_called_once_with(
+        role_brief="Senior data engineer",
+        search_limit=5,
+        candidate_pool_limit=25,
+        shortlist_limit=5,
+        include_shortlist=False,
+    )
+
+
 def test_remote_mcp_returns_429_when_shared_limit_is_exhausted(
     mcp_client: TestClient,
 ) -> None:
