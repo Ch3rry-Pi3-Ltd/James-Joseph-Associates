@@ -8,7 +8,7 @@ The application now exposes a remote, read-only MCP endpoint:
 
 It provides six bounded tools:
 
-1. Search candidates for a role.
+1. Search candidates for a role using fast evidence retrieval.
 2. Inspect one candidate profile and linked company context.
 3. Retrieve a candidate's current CV reference and provenance.
 4. Search candidates, contacts, interactions, jobs, and opportunities for a company.
@@ -24,6 +24,7 @@ Before connecting ChatGPT, production must contain:
 
 - `MCP_API_TOKEN`: a unique, high-entropy server-side credential.
 - `MCP_RATE_LIMIT_PER_MINUTE`: defaults to `60`.
+- `MCP_TOOL_TIMEOUT_SECONDS`: defaults to `30` and bounds a complete tool call.
 - `MCP_ALLOWED_HOSTS`: include the stable production hostname.
 - Supabase migration `0009_mcp_operational_controls.sql`.
 
@@ -52,6 +53,22 @@ backend as the next rollout step.
 ChatGPT Business may require an app to be recreated or republished after MCP
 tool definitions change. Rescan and verify the tool list after each release.
 
+The August 2026 live recruiter test prompted a material schema refinement to
+the candidate-search and company-directory tools. After that release is
+deployed, the workspace owner must rescan and republish the app snapshot before
+testing the revised behavior.
+
+After deploying or changing a tool contract, run the authenticated read-only
+smoke test before asking a workspace user to retry:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\smoke_mcp_endpoint.py
+```
+
+The runner verifies authentication rejection, the exact six-tool read-only
+surface, company prefix/quality metadata, bounded candidate evidence, and tool
+timings. It performs no writes and does not print returned recruitment content.
+
 ## UAT Prompts
 
 Use these prompts after the connection succeeds:
@@ -60,7 +77,7 @@ Use these prompts after the connection succeeds:
 2. `Show the current profile and CV reference for the strongest candidate. Do not invent missing details.`
 3. `What contacts, prior interactions, jobs, and opportunities do we have for GSR? Cite the returned record IDs.`
 4. `For the selected candidate, identify useful contacts at the target company and explain the relationship evidence.`
-5. `List companies containing "insurance" in their canonical name, limited to 20 results.`
+5. `List companies whose canonical names begin with "A", limited to 20 results. Include company IDs, provenance, and any quality warnings.`
 
 ## Acceptance Checks
 
@@ -68,6 +85,7 @@ Use these prompts after the connection succeeds:
 - Excess requests return `429`.
 - Tool discovery shows read-only and non-destructive annotations.
 - Responses contain bounded canonical evidence rather than unrestricted database rows.
-- Audit rows contain tool name, outcome, duration, and argument field names only.
+- Audit rows contain tool name, outcome, duration, argument field names, and
+  bounded failure stage/category only.
 - No prompt text, CV text, candidate payload, database credential, or bearer token is
   written to the MCP audit table.

@@ -85,10 +85,10 @@ MODEL_WORKFLOW_BUDGETS = (
         provider_context_tokens=None,
         local_input_budget="One validated search query per request.",
         max_output_tokens=None,
-        timeout_seconds=None,
+        timeout_seconds=10.0,
         truncation_policy="Reject blank input; upstream route/schema ceilings apply.",
         cost_alert_usd=0.005,
-        known_gap="The embedding client does not yet set an explicit request timeout.",
+        known_gap="Full-text fallback is used when candidate query embedding fails.",
     ),
     ModelWorkflowBudget(
         workflow="document_chunk_embedding_batch",
@@ -99,10 +99,10 @@ MODEL_WORKFLOW_BUDGETS = (
             "with 150-character overlap"
         ),
         max_output_tokens=None,
-        timeout_seconds=None,
+        timeout_seconds=10.0,
         truncation_policy="Split documents deterministically before batching embeddings.",
         cost_alert_usd=0.005,
-        known_gap="The embedding client does not yet set an explicit request timeout.",
+        known_gap="The batch runner must own any deliberate retry policy.",
     ),
     ModelWorkflowBudget(
         workflow="candidate_semantic_block_embedding_batch",
@@ -110,12 +110,12 @@ MODEL_WORKFLOW_BUDGETS = (
         provider_context_tokens=None,
         local_input_budget="25 structured candidate blocks per default provider batch.",
         max_output_tokens=None,
-        timeout_seconds=None,
+        timeout_seconds=10.0,
         truncation_policy=(
             "Build bounded profile, skills, and experience blocks before batching."
         ),
         cost_alert_usd=0.005,
-        known_gap="The embedding client does not yet set an explicit request timeout.",
+        known_gap="The batch runner must own any deliberate retry policy.",
     ),
 )
 

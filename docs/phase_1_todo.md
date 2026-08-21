@@ -18,6 +18,77 @@ kept in a separate deferred lane so they do not block independent delivery.
 - [x] Surface clear recent-employment and structured skills evidence in the
   comparison and candidate profile views.
 
+#### Immediate MCP stabilisation priorities from live recruiter testing
+
+Tom's first live ChatGPT workspace test on 20 August 2026 proved that the
+published read-only app can authenticate, search the company directory, find
+candidates, retrieve profiles, and return evidence-backed results. It also
+exposed the following independent engineering work, which now takes priority
+over the remaining general backlog:
+
+- [x] Improve company-directory quality and traceability:
+  - [x] return canonical company IDs and bounded source provenance with names
+  - [x] make the `prefix` filter enforce a true case-insensitive "begins with"
+    match rather than a substring match
+  - [x] flag likely placeholder/extraction-fragment company names
+    without deleting or silently rewriting source-backed canonical records
+- [x] Harden candidate-search latency and failure handling:
+  - [x] add explicit bounded timeouts around query-embedding and other provider
+    calls used by MCP candidate search
+  - [x] fall back quickly to deterministic full-text retrieval when semantic
+    retrieval is unavailable or times out
+  - [x] prevent optional model-backed shortlisting from holding the basic MCP
+    candidate-search response open for several minutes
+- [x] Reduce sequential MCP profile lookups by returning enough bounded skills,
+  recent-employment, CV/provenance, and freshness evidence in the initial search,
+  avoiding a new batch-profile tool unless deployed measurements still justify it.
+- [x] Improve privacy-safe MCP failure telemetry so an audit event identifies
+  the failed stage and bounded error category without recording role briefs,
+  candidate content, identifiers, or credentials.
+- [ ] Repeat the same company-directory and Senior Data Engineer prompts at
+  least three times, record end-to-end/tool timings and fallback behaviour, and
+  only then return the results to Tom for recruiter relevance review.
+  - [x] run the revised retrieval path three times locally against configured
+    live services (`19,998`-`24,034 ms`, five results each, no failures)
+  - [ ] repeat through the deployed ChatGPT app after its changed tool snapshot
+    has been rescanned and republished
+
+#### Second MCP hardening sequence
+
+These improvements can proceed without recruiter input and are prioritised in
+the following order:
+
+- [x] Reduce revised candidate-search latency further:
+  - [x] combine source provenance, skills, and employment enrichment into one
+    bounded database read
+  - [x] run independent full-text and semantic retrieval concurrently without
+    hiding either stage's failure
+  - [x] add a short semantic-provider circuit breaker after repeated failures
+  - [x] enforce a whole-tool response deadline in addition to provider timeouts
+- [x] Reduce candidate-search response size and model-processing overhead:
+  - [x] rank bounded skill evidence deterministically against the role brief
+  - [x] cap repeated evidence text and total skills per candidate
+  - [x] record content-free response-size metrics
+- [x] Expand MCP operational measurement with retrieval mode, semantic fallback,
+  response size, candidate counts, per-tool success/failure rates, and p50/p95
+  latency reporting.
+- [x] Add an authenticated, read-only deployed MCP smoke-test runner covering
+  tool discovery, company prefix results, candidate evidence, timeouts, and the
+  absence of write-capable tools.
+- [x] Move company-name quality checks into one shared deterministic policy and
+  provide a non-destructive review report for suspicious canonical labels and
+  their provenance.
+- [x] Inspect the revised live SQL with query plans and add indexes only where
+  measured database work, rather than connection/provider time, justifies them.
+- [ ] After explicit production-database approval, apply migration `0016`, rerun
+  the three query plans, and repeat the deployed search benchmark.
+- [x] Keep a bounded batch-profile MCP tool behind a measurement gate; implement
+  it only if deployed ChatGPT testing still makes redundant sequential profile
+  calls after receiving the richer initial result.
+  - [x] retain the existing six-tool surface for this release; the historical
+    `1.5` profile calls per search does not yet justify a seventh tool before the
+    richer deployed response is tested
+
 #### Immediate UI priorities, in agreed order
 
 - [x] Make CV-backed, profile-only, and cross-source indicators clearer across

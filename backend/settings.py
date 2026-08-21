@@ -386,6 +386,15 @@ class Settings(BaseSettings):
         validation_alias="MCP_RATE_LIMIT_PER_MINUTE",
     )
 
+    # End-to-end ceiling for one MCP tool execution. Provider-specific calls
+    # retain their own tighter limits inside this outer operator deadline.
+    mcp_tool_timeout_seconds: float = Field(
+        default=30.0,
+        gt=0,
+        le=120,
+        validation_alias="MCP_TOOL_TIMEOUT_SECONDS",
+    )
+
     # Durable per-principal request ceiling for the main API. The middleware is
     # enabled only in preview and production; local and test runs stay isolated
     # from the deployment database.
@@ -577,6 +586,19 @@ class Settings(BaseSettings):
     openai_embedding_dimensions: int = Field(
         default=1536,
         validation_alias="OPENAI_EMBEDDING_DIMENSIONS",
+    )
+
+    # Candidate-query embeddings must fail quickly so hybrid retrieval can
+    # return deterministic full-text results instead of holding an MCP request
+    # open through the provider client's long default timeout/retry policy.
+    openai_embedding_timeout_seconds: float = Field(
+        default=10.0,
+        validation_alias="OPENAI_EMBEDDING_TIMEOUT_SECONDS",
+    )
+
+    openai_embedding_max_retries: int = Field(
+        default=0,
+        validation_alias="OPENAI_EMBEDDING_MAX_RETRIES",
     )
 
     # Shared OpenRouter API key for the backend LLM provider layer.

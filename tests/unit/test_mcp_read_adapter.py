@@ -48,6 +48,23 @@ def test_search_candidates_for_role_combines_search_and_shortlist(
     assert result["shortlist_results"] == [{"candidate_id": "cand-1", "fit_score": 91}]
 
 
+def test_search_candidates_for_role_classifies_retrieval_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_search(**kwargs):
+        raise TimeoutError("private role brief must not escape")
+
+    monkeypatch.setattr(mcp_read_adapter, "search_candidate_resumes", fail_search)
+
+    with pytest.raises(McpReadAdapterError) as exc_info:
+        search_candidates_for_role(role_brief="Senior data engineer")
+
+    assert exc_info.value.code == "retrieval_error"
+    assert exc_info.value.stage == "retrieval"
+    assert exc_info.value.status_code == 503
+    assert "private role brief" not in exc_info.value.message
+
+
 def test_get_candidate_profile_returns_bounded_company_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -141,19 +158,97 @@ def test_list_company_directory_filters_case_insensitively(
 ) -> None:
     monkeypatch.setattr(
         mcp_read_adapter,
-        "list_company_directory_service",
-        lambda: {
-            "count": 3,
-            "companies": ["Acme Markets", "Goldman Sachs", "Micro Focus"],
-        },
+        "list_canonical_company_records",
+        lambda: [
+            {
+                "company_id": "company-1",
+                "name": "Acme Markets",
+                "source_systems": ["recruitly"],
+                "source_record_types": ["recruitly_company"],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+            {
+                "company_id": "company-2",
+                "name": "Goldman Sachs",
+                "source_systems": [],
+                "source_record_types": [],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+            {
+                "company_id": "company-3",
+                "name": "Micro Focus",
+                "source_systems": ["dropbox"],
+                "source_record_types": ["dropbox_resume_extraction"],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+            {
+                "company_id": "company-4",
+                "name": "Micromarket Ltd",
+                "source_systems": [],
+                "source_record_types": [],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+        ],
     )
 
     result = list_company_directory(prefix="micro", limit=10)
 
-    assert result == {
-        "count": 1,
-        "companies": ["Micro Focus"],
+    assert result["count"] == 2
+    assert result["companies"] == ["Micro Focus", "Micromarket Ltd"]
+    assert result["company_records"][0] == {
+        "company_id": "company-3",
+        "name": "Micro Focus",
+        "source_systems": ["dropbox"],
+        "source_record_types": ["dropbox_resume_extraction"],
+        "updated_at": "2026-08-20T12:00:00+00:00",
+        "quality_flags": [],
+        "needs_review": False,
     }
+
+
+def test_list_company_directory_flags_suspicious_source_labels(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        mcp_read_adapter,
+        "list_canonical_company_records",
+        lambda: [
+            {
+                "company_id": "company-1",
+                "name": "A financial services company",
+                "domain": None,
+                "website_url": None,
+                "linkedin_url": "https://www.linkedin.com/company/2150990/",
+                "source_systems": ["linkedin_helper"],
+                "source_record_types": ["linkedin_helper_person_export"],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+            {
+                "company_id": "company-2",
+                "name": "A ID:Tech",
+                "domain": None,
+                "website_url": None,
+                "linkedin_url": None,
+                "source_systems": ["dropbox"],
+                "source_record_types": ["dropbox_resume_extraction"],
+                "updated_at": "2026-08-20T12:00:00+00:00",
+            },
+        ],
+    )
+
+    result = list_company_directory(prefix="A ", limit=10)
+
+    assert result["companies"] == [
+        "A financial services company",
+        "A ID:Tech",
+    ]
+    assert result["company_records"][0]["quality_flags"] == [
+        "possible_generic_description"
+    ]
+    assert result["company_records"][1]["quality_flags"] == [
+        "possible_extraction_fragment"
+    ]
+    assert all(record["needs_review"] for record in result["company_records"])
 
 
 def test_search_company_context_assembles_all_linked_views(

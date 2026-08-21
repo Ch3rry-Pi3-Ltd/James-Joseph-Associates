@@ -171,3 +171,81 @@ def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
     assert attempted_queries == [
         "data engineer python sql cloud platform etl",
     ]
+
+
+def test_search_candidates_hybrid_returns_text_results_when_semantic_fails(
+    monkeypatch,
+) -> None:
+    text_result = {
+        "candidate_id": "cand-1",
+        "person_id": "person-1",
+        "document_id": "doc-1",
+        "match_score": 0.9,
+        "match_excerpt": "python sql data engineering",
+    }
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        lambda **kwargs: [text_result],
+    )
+
+    def fail_semantic_search(**kwargs):
+        raise TimeoutError("embedding provider timed out")
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_semantic_blocks",
+        fail_semantic_search,
+    )
+
+    result = search_candidates_hybrid(
+        query="Senior data engineer with Python and SQL",
+        limit=5,
+    )
+
+    assert [row["candidate_id"] for row in result] == ["cand-1"]
+    assert result[0]["retrieval_sources"] == ["text"]
+
+
+def test_semantic_circuit_opens_after_repeated_failures(monkeypatch) -> None:
+    monkeypatch.setattr(candidate_retrieval, "_semantic_consecutive_failures", 0)
+    monkeypatch.setattr(candidate_retrieval, "_semantic_circuit_open_until", 0.0)
+    attempts = 0
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        lambda **kwargs: [
+            {
+                "candidate_id": "cand-1",
+                "person_id": "person-1",
+                "match_score": 0.8,
+            }
+        ],
+    )
+
+    def fail_semantic(**kwargs):
+        nonlocal attempts
+        attempts += 1
+        raise TimeoutError("provider timeout")
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_semantic_blocks",
+        fail_semantic,
+    )
+
+    diagnostics: list[dict[str, object]] = []
+    for _ in range(3):
+        current: dict[str, object] = {}
+        search_candidates_hybrid(
+            query="senior data engineer",
+            limit=5,
+            diagnostics=current,
+        )
+        diagnostics.append(current)
+
+    assert attempts == 2
+    assert diagnostics[0]["semantic_fallback_used"] is True
+    assert diagnostics[1]["semantic_fallback_used"] is True
+    assert diagnostics[2]["semantic_circuit_open"] is True

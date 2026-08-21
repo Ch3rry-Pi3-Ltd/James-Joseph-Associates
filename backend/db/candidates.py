@@ -72,6 +72,172 @@ def get_candidate_source_systems(
     }
 
 
+def get_candidate_search_evidence(
+    candidate_ids: list[str] | set[str] | tuple[str, ...],
+    *,
+    skill_limit: int = 16,
+    employment_limit: int = 3,
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """Return bounded skills and recent employment for candidates in one read."""
+
+    normalized_candidate_ids = sorted(
+        {
+            str(candidate_id).strip()
+            for candidate_id in candidate_ids
+            if str(candidate_id).strip()
+        }
+    )
+    if not normalized_candidate_ids:
+        return {}
+
+    bounded_skill_limit = max(1, min(int(skill_limit), 24))
+    bounded_employment_limit = max(1, min(int(employment_limit), 5))
+    query = """
+        with requested_candidates as (
+            select id, person_id
+            from candidates
+            where id = any(%(candidate_ids)s::uuid[])
+        )
+        select
+            requested.id::text as candidate_id,
+            coalesce(skills.items, '[]'::jsonb) as skills,
+            coalesce(employment.items, '[]'::jsonb) as recent_employment,
+            coalesce(sources.items, '[]'::jsonb) as source_details
+        from requested_candidates requested
+        left join lateral (
+            select jsonb_agg(to_jsonb(ranked_skills) order by ranked_skills.canonical_name)
+                as items
+            from (
+                select distinct on (combined.skill_id)
+                    combined.skill_id::text as skill_id,
+                    combined.skill_name,
+                    combined.canonical_name,
+                    combined.skill_type,
+                    combined.confidence,
+                    combined.evidence_text
+                from (
+                    select
+                        s.id as skill_id,
+                        s.name as skill_name,
+                        s.canonical_name,
+                        s.skill_type,
+                        cs.confidence,
+                        cs.evidence_text,
+                        0 as source_priority
+                    from candidate_skills cs
+                    join skills s on s.id = cs.skill_id
+                    where cs.candidate_id = requested.id
+
+                    union all
+
+                    select
+                        s.id as skill_id,
+                        s.name as skill_name,
+                        s.canonical_name,
+                        s.skill_type,
+                        null::numeric as confidence,
+                        null::text as evidence_text,
+                        1 as source_priority
+                    from person_skills ps
+                    join skills s on s.id = ps.skill_id
+                    where ps.person_id = requested.person_id
+                ) combined
+                order by
+                    combined.skill_id,
+                    combined.source_priority,
+                    combined.canonical_name nulls last,
+                    combined.skill_name
+                limit %(skill_limit)s
+            ) ranked_skills
+        ) skills on true
+        left join lateral (
+            select jsonb_agg(
+                to_jsonb(recent_roles) - 'sort_order'
+                order by recent_roles.sort_order
+            )
+                as items
+            from (
+                select
+                    pcr.id::text as employment_role_id,
+                    pcr.company_id::text as company_id,
+                    co.name as company_name,
+                    pcr.role_title,
+                    pcr.start_date,
+                    pcr.end_date,
+                    pcr.is_current,
+                    row_number() over (
+                        order by
+                            pcr.is_current desc,
+                            coalesce(pcr.end_date, pcr.start_date) desc nulls last,
+                            pcr.start_date desc nulls last,
+                            pcr.created_at desc,
+                            pcr.id desc
+                    ) as sort_order
+                from person_company_roles pcr
+                join companies co on co.id = pcr.company_id
+                where pcr.person_id = requested.person_id
+                order by
+                    pcr.is_current desc,
+                    coalesce(pcr.end_date, pcr.start_date) desc nulls last,
+                    pcr.start_date desc nulls last,
+                    pcr.created_at desc,
+                    pcr.id desc
+                limit %(employment_limit)s
+            ) recent_roles
+        ) employment on true
+        left join lateral (
+            select jsonb_agg(
+                jsonb_build_object(
+                    'source_system', grouped_sources.source_system,
+                    'latest_record_received_at', grouped_sources.latest_received_at
+                )
+                order by grouped_sources.source_system
+            ) as items
+            from (
+                select
+                    linked_sources.source_system,
+                    max(linked_sources.received_at) as latest_received_at
+                from (
+                    select source.source_system, source.received_at
+                    from source_record_links link
+                    join source_records source on source.id = link.source_record_id
+                    where link.candidate_id = requested.id
+
+                    union all
+
+                    select source.source_system, source.received_at
+                    from source_record_links link
+                    join source_records source on source.id = link.source_record_id
+                    where link.person_id = requested.person_id
+                ) linked_sources
+                group by linked_sources.source_system
+            ) grouped_sources
+        ) sources on true
+        order by requested.id
+    """
+
+    with postgres_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                {
+                    "candidate_ids": normalized_candidate_ids,
+                    "skill_limit": bounded_skill_limit,
+                    "employment_limit": bounded_employment_limit,
+                },
+            )
+            rows = cursor.fetchall()
+
+    return {
+        str(row["candidate_id"]): {
+            "skills": list(row.get("skills") or []),
+            "recent_employment": list(row.get("recent_employment") or []),
+            "source_details": list(row.get("source_details") or []),
+        }
+        for row in rows
+    }
+
+
 def get_candidate_source_details(
     candidate_ids: list[str] | set[str] | tuple[str, ...],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -683,6 +849,7 @@ __all__ = [
     "get_candidate_current_resume_document",
     "get_candidate_profile",
     "get_candidate_recent_employment",
+    "get_candidate_search_evidence",
     "get_candidate_source_details",
     "get_candidate_source_systems",
     "search_candidates_by_company_name",

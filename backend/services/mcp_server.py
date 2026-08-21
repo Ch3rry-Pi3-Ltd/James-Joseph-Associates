@@ -4,7 +4,9 @@ Production remote MCP server exposing bounded read-only recruiter tools.
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
+import json
 from time import perf_counter
 from typing import Any
 
@@ -65,10 +67,11 @@ mcp_server = _build_mcp_server()
 
 
 @mcp_server.tool(
-    title="Search candidates for a role",
+    title="Search candidates for a role (fast retrieval)",
     description=(
-        "Search the canonical current-resume corpus for candidates matching a role "
-        "brief. Optionally include the bounded recruiter shortlist."
+        "Quickly retrieve evidence-backed candidates from the canonical corpus "
+        "using hybrid full-text and semantic search. This tool does not run the "
+        "slower model-backed shortlist; assess only the returned evidence."
     ),
     annotations=_READ_ONLY_ANNOTATIONS,
     structured_output=True,
@@ -77,18 +80,14 @@ async def search_candidates_for_role(
     role_brief: str,
     ctx: Context,
     search_limit: int = 10,
-    candidate_pool_limit: int = 25,
-    shortlist_limit: int = 5,
-    include_shortlist: bool = False,
 ) -> dict[str, Any]:
     arguments = {
         "role_brief": role_brief,
         "search_limit": search_limit,
-        "candidate_pool_limit": candidate_pool_limit,
-        "shortlist_limit": shortlist_limit,
-        "include_shortlist": include_shortlist,
     }
-    request = OperatorSearchCandidatesRequest.model_validate(arguments)
+    request = OperatorSearchCandidatesRequest.model_validate(
+        {**arguments, "include_shortlist": False}
+    )
     return await _execute_read_tool(
         ctx=ctx,
         tool_name="search_candidates_for_role",
@@ -199,8 +198,10 @@ async def search_company_context(
 @mcp_server.tool(
     title="List company directory",
     description=(
-        "List a bounded alphabetical company directory, optionally filtered by a "
-        "case-insensitive name fragment."
+        "List a bounded alphabetical company directory with canonical IDs, "
+        "source provenance, and data-quality flags, optionally filtered by a "
+        "case-insensitive name prefix. Treat records marked needs_review as "
+        "unverified source labels rather than confirmed employer names."
     ),
     annotations=_READ_ONLY_ANNOTATIONS,
     structured_output=True,
@@ -273,8 +274,16 @@ async def _execute_read_tool(
     metadata = build_mcp_argument_metadata(arguments)
 
     try:
-        result = await run_in_threadpool(operation)
+        result = await asyncio.wait_for(
+            run_in_threadpool(operation),
+            timeout=get_settings().mcp_tool_timeout_seconds,
+        )
     except ValidationError as exc:
+        failure_metadata = {
+            **metadata,
+            "failure_stage": "validation",
+            "failure_category": "invalid_arguments",
+        }
         await _audit_tool_event(
             principal_hash=principal_hash,
             request_id=request_id,
@@ -284,10 +293,15 @@ async def _execute_read_tool(
             error_code="validation_error",
             client_name=client_name,
             client_version=client_version,
-            metadata=metadata,
+            metadata=failure_metadata,
         )
         raise ToolError("The supplied tool arguments are invalid.") from exc
     except McpReadAdapterError as exc:
+        failure_metadata = {
+            **metadata,
+            "failure_stage": exc.stage,
+            "failure_category": exc.code,
+        }
         await _audit_tool_event(
             principal_hash=principal_hash,
             request_id=request_id,
@@ -297,12 +311,36 @@ async def _execute_read_tool(
             error_code=exc.code,
             client_name=client_name,
             client_version=client_version,
-            metadata=metadata,
+            metadata=failure_metadata,
         )
         raise ToolError(exc.message) from exc
     except ToolError:
         raise
+    except TimeoutError as exc:
+        failure_metadata = {
+            **metadata,
+            "failure_stage": "tool_execution",
+            "failure_category": "timeout",
+        }
+        await _audit_tool_event(
+            principal_hash=principal_hash,
+            request_id=request_id,
+            tool_name=tool_name,
+            outcome="error",
+            duration_ms=_duration_ms(started_at),
+            error_code="tool_timeout",
+            client_name=client_name,
+            client_version=client_version,
+            metadata=failure_metadata,
+        )
+        raise ToolError("The read-only recruiter tool timed out.") from exc
     except Exception as exc:
+        failure_stage, failure_category = _classify_unexpected_tool_error(exc)
+        failure_metadata = {
+            **metadata,
+            "failure_stage": failure_stage,
+            "failure_category": failure_category,
+        }
         await _audit_tool_event(
             principal_hash=principal_hash,
             request_id=request_id,
@@ -312,10 +350,11 @@ async def _execute_read_tool(
             error_code="internal_error",
             client_name=client_name,
             client_version=client_version,
-            metadata=metadata,
+            metadata=failure_metadata,
         )
         raise ToolError("The read-only recruiter tool could not complete.") from exc
 
+    success_metadata = {**metadata, **_build_mcp_result_metadata(result)}
     await _audit_tool_event(
         principal_hash=principal_hash,
         request_id=request_id,
@@ -325,7 +364,7 @@ async def _execute_read_tool(
         error_code=None,
         client_name=client_name,
         client_version=client_version,
-        metadata=metadata,
+        metadata=success_metadata,
     )
     return result
 
@@ -336,6 +375,59 @@ async def _audit_tool_event(**event: Any) -> None:
         event_type="tool_call",
         **event,
     )
+
+
+def _classify_unexpected_tool_error(exc: BaseException) -> tuple[str, str]:
+    """Return bounded, content-free failure metadata for an exception chain."""
+
+    current: BaseException | None = exc
+    class_names: list[str] = []
+    module_names: list[str] = []
+    while current is not None and len(class_names) < 5:
+        class_names.append(current.__class__.__name__.lower())
+        module_names.append(current.__class__.__module__.lower())
+        current = current.__cause__ or current.__context__
+
+    joined_names = " ".join(class_names)
+    joined_modules = " ".join(module_names)
+    if "timeout" in joined_names:
+        return "tool_execution", "timeout"
+    if "psycopg" in joined_modules or any(
+        marker in joined_names for marker in ("operationalerror", "databaseerror")
+    ):
+        return "database", "database_error"
+    if "openai" in joined_modules or "httpx" in joined_modules:
+        return "provider", "provider_error"
+    return "tool_execution", "internal_error"
+
+
+def _build_mcp_result_metadata(result: dict[str, Any]) -> dict[str, Any]:
+    """Return bounded result-shape metrics without retaining returned content."""
+
+    metadata: dict[str, Any] = {
+        "response_character_count": len(
+            json.dumps(result, default=str, separators=(",", ":"))
+        )
+    }
+    search_results = result.get("search_results")
+    if isinstance(search_results, list):
+        metadata["candidate_count"] = len(search_results)
+    company_records = result.get("company_records")
+    if isinstance(company_records, list):
+        metadata["company_count"] = len(company_records)
+    retrieval = result.get("retrieval_metadata")
+    if isinstance(retrieval, dict):
+        retrieval_mode = retrieval.get("retrieval_mode")
+        if retrieval_mode in {"none", "text", "semantic", "hybrid"}:
+            metadata["retrieval_mode"] = retrieval_mode
+        for field in (
+            "semantic_attempted",
+            "semantic_fallback_used",
+            "semantic_circuit_open",
+        ):
+            if isinstance(retrieval.get(field), bool):
+                metadata[field] = retrieval[field]
+    return metadata
 
 
 def _duration_ms(started_at: float) -> int:

@@ -127,18 +127,18 @@ existing backend routes/services wherever possible.
 Purpose:
 
 - take a role brief
-- retrieve an initial candidate pool
-- optionally produce a ranked shortlist
+- quickly retrieve an initial candidate pool with bounded skills, recent
+  employment, CV availability, provenance, freshness, and match evidence
+- fall back to full-text retrieval when semantic embedding is unavailable
+- leave evidence assessment to ChatGPT rather than running the slower backend
+  model shortlist inside the same MCP call
 
 Input:
 
 ```json
 {
   "role_brief": "string",
-  "search_limit": 10,
-  "candidate_pool_limit": 25,
-  "shortlist_limit": 5,
-  "include_shortlist": true
+  "search_limit": 10
 }
 ```
 
@@ -148,7 +148,7 @@ Output:
 {
   "retrieval_query": "string",
   "detected_target_company": "string | null",
-  "candidate_pool_size": 25,
+  "candidate_pool_size": 10,
   "search_results": [],
   "shortlist_results": []
 }
@@ -253,7 +253,10 @@ Output:
 
 Purpose:
 
-- provide a typeahead/searchable list of known canonical companies
+- provide an alphabetical list of known canonical companies
+- apply `prefix` as a true case-insensitive starts-with filter
+- return canonical IDs, source provenance, freshness, and conservative quality
+  flags without rewriting the source-backed company records
 
 Input:
 
@@ -272,6 +275,17 @@ Output:
   "companies": [
     "Company A",
     "Company B"
+  ],
+  "company_records": [
+    {
+      "company_id": "uuid",
+      "name": "Company A",
+      "source_systems": ["recruitly"],
+      "source_record_types": ["recruitly_company"],
+      "updated_at": "ISO-8601 timestamp",
+      "quality_flags": [],
+      "needs_review": false
+    }
   ]
 }
 ```

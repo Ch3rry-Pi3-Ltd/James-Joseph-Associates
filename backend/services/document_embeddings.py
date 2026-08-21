@@ -32,7 +32,15 @@ def get_openai_embedding_client(api_key: str | None = None) -> OpenAI:
         raise RuntimeError(
             "OpenAI API key is required before generating document embeddings."
         )
-    return OpenAI(api_key=resolved_api_key)
+    if settings.openai_embedding_timeout_seconds <= 0:
+        raise RuntimeError("OpenAI embedding timeout must be greater than zero.")
+    if settings.openai_embedding_max_retries < 0:
+        raise RuntimeError("OpenAI embedding retries must not be negative.")
+    return OpenAI(
+        api_key=resolved_api_key,
+        timeout=settings.openai_embedding_timeout_seconds,
+        max_retries=settings.openai_embedding_max_retries,
+    )
 
 
 def embed_texts(

@@ -25,14 +25,24 @@ def test_vector_to_pgvector_literal_rejects_empty_vectors() -> None:
 def test_get_openai_embedding_client_strips_surrounding_key_whitespace(
     monkeypatch,
 ) -> None:
-    captured: dict[str, str] = {}
+    captured: dict[str, object] = {}
 
     class FakeSettings:
         openai_api_key = "  sk-test-value\r\n"
+        openai_embedding_timeout_seconds = 10.0
+        openai_embedding_max_retries = 0
 
     class FakeOpenAI:
-        def __init__(self, *, api_key: str) -> None:
+        def __init__(
+            self,
+            *,
+            api_key: str,
+            timeout: float,
+            max_retries: int,
+        ) -> None:
             captured["api_key"] = api_key
+            captured["timeout"] = timeout
+            captured["max_retries"] = max_retries
 
     monkeypatch.setattr(document_embeddings, "get_settings", lambda: FakeSettings())
     monkeypatch.setattr(document_embeddings, "OpenAI", FakeOpenAI)
@@ -41,3 +51,5 @@ def test_get_openai_embedding_client_strips_surrounding_key_whitespace(
 
     assert isinstance(client, FakeOpenAI)
     assert captured["api_key"] == "sk-test-value"
+    assert captured["timeout"] == 10.0
+    assert captured["max_retries"] == 0

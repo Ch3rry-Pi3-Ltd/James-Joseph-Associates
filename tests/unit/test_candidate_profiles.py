@@ -52,6 +52,7 @@ from unittest.mock import patch
 from uuid import UUID
 
 from backend.services.candidate_profiles import (
+    _select_role_relevant_skills,
     build_candidate_profile,
     discover_candidates_by_company,
     discover_company_context,
@@ -60,6 +61,35 @@ from backend.services.candidate_profiles import (
     discover_opportunities_by_company,
     search_candidate_resumes,
 )
+
+
+def test_role_relevant_skills_are_ranked_and_bounded() -> None:
+    skills = [
+        {
+            "canonical_name": f"Unrelated {index}",
+            "evidence_text": "x" * 300,
+        }
+        for index in range(15)
+    ]
+    skills.extend(
+        [
+            {"canonical_name": "Python"},
+            {"canonical_name": "Apache Airflow"},
+        ]
+    )
+
+    result = _select_role_relevant_skills(
+        skills,
+        query="Senior data engineer using Python and Airflow",
+        limit=12,
+    )
+
+    assert [item["canonical_name"] for item in result[:2]] == [
+        "Python",
+        "Apache Airflow",
+    ]
+    assert len(result) == 12
+    assert all(len(item.get("evidence_text", "")) <= 240 for item in result)
 
 
 def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> None:
@@ -120,8 +150,8 @@ def test_build_candidate_profile_returns_none_when_candidate_is_missing() -> Non
             "backend.services.candidate_profiles.get_candidate_profile",
             return_value=None,
         ) as mock_get_candidate_profile,
-        patch(
-            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            patch(
+                "backend.services.candidate_profiles.attach_candidate_source_metadata",
         ) as mock_attach_candidate_source_metadata,
         patch(
             "backend.services.candidate_profiles.get_candidate_skills",
@@ -405,10 +435,45 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
                         },
                     ],
                     "source_category": "cross_source",
-                }
-            ],
-        ),
-    ):
+                    }
+                ],
+            ),
+            patch(
+                "backend.services.candidate_profiles.get_candidate_search_evidence",
+                return_value={
+                    "33333333-3333-3333-3333-333333333331": {
+                        "skills": [
+                            {
+                                "canonical_name": "python",
+                                "skill_name": "Python",
+                                "confidence": 0.95,
+                            }
+                        ],
+                        "recent_employment": [
+                            {
+                                "company_name": "Acme Hiring Ltd",
+                                "role_title": "Senior Data Engineer",
+                                "is_current": True,
+                            }
+                        ],
+                        "source_details": [
+                            {
+                                "source_system": "dropbox",
+                                "latest_record_received_at": datetime(
+                                    2026, 6, 10, 9, 0, tzinfo=UTC
+                                ),
+                            },
+                            {
+                                "source_system": "linkedin_helper",
+                                "latest_record_received_at": datetime(
+                                    2026, 7, 20, 14, 30, tzinfo=UTC
+                                ),
+                            },
+                        ],
+                    }
+                },
+            ),
+        ):
         result = search_candidate_resumes(
             query=" python data engineer ",
             limit=5,
@@ -417,6 +482,7 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
     assert result == {
         "query": "python data engineer",
         "limit": 5,
+        "retrieval_metadata": {},
         "results": [
             {
                 "candidate_id": "33333333-3333-3333-3333-333333333331",
@@ -449,6 +515,21 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
                     },
                 ],
                 "source_category": "cross_source",
+                "has_current_resume": True,
+                "skills": [
+                    {
+                        "canonical_name": "python",
+                        "skill_name": "Python",
+                        "confidence": 0.95,
+                    }
+                ],
+                "recent_employment": [
+                    {
+                        "company_name": "Acme Hiring Ltd",
+                        "role_title": "Senior Data Engineer",
+                        "is_current": True,
+                    }
+                ],
                 "match_excerpt": "<mark>python</mark> data engineer",
             }
         ],
@@ -458,6 +539,7 @@ def test_search_candidate_resumes_normalizes_raw_hybrid_rows() -> None:
         limit=5,
         include_text=True,
         include_semantic=True,
+        diagnostics={},
     )
 
 
@@ -485,8 +567,8 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
             "backend.services.candidate_profiles.search_candidates_hybrid",
             return_value=[profile_only_result],
         ),
-        patch(
-            "backend.services.candidate_profiles.attach_candidate_source_metadata",
+            patch(
+                "backend.services.candidate_profiles.attach_candidate_source_metadata",
             return_value=[
                 {
                     **profile_only_result,
@@ -498,10 +580,27 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
                         }
                     ],
                     "source_category": "linkedin_helper_only",
-                }
-            ],
-        ),
-    ):
+                    }
+                ],
+            ),
+            patch(
+                "backend.services.candidate_profiles.get_candidate_search_evidence",
+                return_value={
+                    "candidate-1": {
+                        "skills": [{"canonical_name": "rust"}],
+                        "recent_employment": [],
+                        "source_details": [
+                            {
+                                "source_system": "linkedin_helper",
+                                "latest_record_received_at": (
+                                    "2026-07-21T14:30:00+00:00"
+                                ),
+                            }
+                        ],
+                    }
+                },
+            ),
+        ):
         result = search_candidate_resumes(
             query="rust low latency engineer",
             limit=5,
@@ -513,7 +612,9 @@ def test_search_candidate_resumes_keeps_profile_only_results() -> None:
     assert result["results"][0]["source_details"][0]["source_system"] == (
         "linkedin_helper"
     )
-    assert result["results"][0]["source_category"] == "linkedin_helper_only"
+    assert result["results"][0]["source_category"] == "profile_only"
+    assert result["results"][0]["has_current_resume"] is False
+    assert result["results"][0]["skills"] == [{"canonical_name": "rust"}]
 
 
 def test_discover_candidates_by_company_normalizes_raw_rows() -> None:

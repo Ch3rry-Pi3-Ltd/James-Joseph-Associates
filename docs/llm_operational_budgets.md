@@ -30,9 +30,9 @@ well below the provider output maximum.
 | Dropbox CV extraction | Same shared extraction contract | 2,200 normally, 4,000 retry / 60s | $0.02 per call | Notes remain unbounded by explicit preservation policy |
 | Outlook CV extraction | Same shared extraction contract | 2,200 normally, 4,000 retry / 60s | $0.02 per call | Notes remain unbounded by explicit preservation policy |
 | Recruiterflow CV extraction | Same shared extraction contract | 2,200 normally, 4,000 retry / 60s | $0.02 per call | Notes remain unbounded by explicit preservation policy |
-| Candidate query embedding | One validated query; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per call | Add an explicit embedding timeout |
-| Document chunk embedding | Default batch of 25; 1,200 characters per chunk with 150-character overlap; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per batch | Add an explicit embedding timeout |
-| Candidate semantic-block embedding | Default batch of 25 bounded profile, skills, and experience blocks; 1,536 output dimensions | Provider-determined / no explicit timeout | $0.005 per batch | Add an explicit embedding timeout |
+| Candidate query embedding | One validated query; 1,536 output dimensions | 10s / zero automatic retries | $0.005 per call | Full-text retrieval remains available after failure |
+| Document chunk embedding | Default batch of 25; 1,200 characters per chunk with 150-character overlap; 1,536 output dimensions | 10s / zero automatic retries | $0.005 per batch | Batch runner owns any deliberate retry |
+| Candidate semantic-block embedding | Default batch of 25 bounded profile, skills, and experience blocks; 1,536 output dimensions | 10s / zero automatic retries | $0.005 per batch | Batch runner owns any deliberate retry |
 
 The executable registry is `backend/llm/budgets.py`; tests prevent duplicate
 workflow names and keep chat output limits within the provider contract.
@@ -97,7 +97,8 @@ material cache-hit benefit without harming groundedness.
   a versioned rate card.
 - Alert when a single request crosses the workflow cost threshold above.
 - Add total assembled-prompt token ceilings for shortlist and Q&A.
-- Add a bounded embedding timeout.
+- [x] Add a 10-second embedding timeout with zero hidden SDK retries; candidate
+  search degrades to deterministic full-text retrieval.
 - Benchmark short and long inputs before changing models or prompt layout.
 
 Provider references:

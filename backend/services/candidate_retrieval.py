@@ -14,12 +14,21 @@ from __future__ import annotations
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+from time import monotonic
 from typing import Any
 
 from backend.db.candidate_semantic_blocks import search_candidates_by_semantic_blocks
 from backend.db.candidates import search_candidates_by_resume_text
 
 logger = logging.getLogger(__name__)
+
+_SEMANTIC_FAILURE_THRESHOLD = 2
+_SEMANTIC_CIRCUIT_COOLDOWN_SECONDS = 30.0
+_semantic_circuit_lock = Lock()
+_semantic_consecutive_failures = 0
+_semantic_circuit_open_until = 0.0
 
 
 _TEXT_QUERY_STOP_WORDS = {
@@ -283,6 +292,7 @@ def search_candidates_hybrid(
     fusion_constant: int = 60,
     include_text: bool = True,
     include_semantic: bool = True,
+    diagnostics: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Return hybrid candidate retrieval results for one free-text query.
@@ -300,34 +310,61 @@ def search_candidates_hybrid(
         min(int(semantic_limit or bounded_limit * 3), 100),
     )
 
-    text_results: list[dict[str, Any]] = []
-    semantic_results: list[dict[str, Any]] = []
+    semantic_allowed = include_semantic and _semantic_circuit_allows_request()
+    semantic_failed = include_semantic and not semantic_allowed
 
-    if include_text:
-        for text_query in text_queries:
-            text_results = search_candidates_by_resume_text(
-                query=text_query,
-                limit=resolved_text_limit,
-            )
-            if text_results:
-                break
-
-    if include_semantic:
-        try:
-            semantic_results = search_candidates_by_semantic_blocks(
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="candidate-retrieval") as pool:
+        text_future = (
+            pool.submit(_search_text_candidates, text_queries, resolved_text_limit)
+            if include_text
+            else None
+        )
+        semantic_future = (
+            pool.submit(
+                search_candidates_by_semantic_blocks,
                 query=normalized_query,
                 limit=resolved_semantic_limit,
             )
-        except Exception:
-            logger.exception(
-                "Candidate semantic retrieval failed.",
-                extra={
-                    "query_preview": normalized_query[:120],
-                    "limit": bounded_limit,
-                    "semantic_limit": resolved_semantic_limit,
-                },
-            )
-            semantic_results = []
+            if semantic_allowed
+            else None
+        )
+
+        text_results = text_future.result() if text_future is not None else []
+        semantic_results: list[dict[str, Any]] = []
+        if semantic_future is not None:
+            try:
+                semantic_results = semantic_future.result()
+            except Exception:
+                semantic_failed = True
+                _record_semantic_failure()
+                logger.exception(
+                    "Candidate semantic retrieval failed.",
+                    extra={
+                        "limit": bounded_limit,
+                        "semantic_limit": resolved_semantic_limit,
+                    },
+                )
+            else:
+                _record_semantic_success()
+
+    retrieval_mode = "none"
+    if text_results and semantic_results:
+        retrieval_mode = "hybrid"
+    elif semantic_results:
+        retrieval_mode = "semantic"
+    elif text_results:
+        retrieval_mode = "text"
+    if diagnostics is not None:
+        diagnostics.update(
+            {
+                "retrieval_mode": retrieval_mode,
+                "semantic_attempted": semantic_future is not None,
+                "semantic_fallback_used": bool(semantic_failed),
+                "semantic_circuit_open": bool(
+                    include_semantic and not semantic_allowed
+                ),
+            }
+        )
 
     return fuse_candidate_rankings(
         text_results=text_results,
@@ -335,6 +372,39 @@ def search_candidates_hybrid(
         limit=bounded_limit,
         fusion_constant=fusion_constant,
     )
+
+
+def _search_text_candidates(
+    text_queries: list[str],
+    limit: int,
+) -> list[dict[str, Any]]:
+    for text_query in text_queries:
+        results = search_candidates_by_resume_text(query=text_query, limit=limit)
+        if results:
+            return results
+    return []
+
+
+def _semantic_circuit_allows_request() -> bool:
+    with _semantic_circuit_lock:
+        return monotonic() >= _semantic_circuit_open_until
+
+
+def _record_semantic_failure() -> None:
+    global _semantic_consecutive_failures, _semantic_circuit_open_until
+    with _semantic_circuit_lock:
+        _semantic_consecutive_failures += 1
+        if _semantic_consecutive_failures >= _SEMANTIC_FAILURE_THRESHOLD:
+            _semantic_circuit_open_until = (
+                monotonic() + _SEMANTIC_CIRCUIT_COOLDOWN_SECONDS
+            )
+
+
+def _record_semantic_success() -> None:
+    global _semantic_consecutive_failures, _semantic_circuit_open_until
+    with _semantic_circuit_lock:
+        _semantic_consecutive_failures = 0
+        _semantic_circuit_open_until = 0.0
 
 
 def fuse_candidate_rankings(

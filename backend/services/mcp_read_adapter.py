@@ -11,7 +11,9 @@ from __future__ import annotations
 from typing import Any
 
 from backend.db.candidates import get_candidate_current_resume_document
+from backend.db.companies import list_canonical_company_records
 from backend.services.candidate_matching import build_candidate_job_description_shortlist
+from backend.services.company_name_quality import assess_company_name_quality
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
@@ -20,7 +22,6 @@ from backend.services.candidate_profiles import (
     discover_interactions_by_company,
     discover_jobs_by_company,
     discover_opportunities_by_company,
-    list_company_directory as list_company_directory_service,
     search_candidate_resumes,
 )
 
@@ -37,6 +38,7 @@ class McpReadAdapterError(RuntimeError):
         tool: str,
         code: str = "internal_error",
         status_code: int = 500,
+        stage: str = "tool_execution",
         details: list[dict[str, Any]] | None = None,
     ) -> None:
         super().__init__(message)
@@ -44,6 +46,7 @@ class McpReadAdapterError(RuntimeError):
         self.tool = tool
         self.code = code
         self.status_code = status_code
+        self.stage = stage
         self.details = details or []
 
 
@@ -66,6 +69,7 @@ def search_candidates_for_role(
             tool="search_candidates_for_role",
             code="validation_error",
             status_code=400,
+            stage="validation",
             details=[{"field": "role_brief"}],
         )
 
@@ -73,10 +77,19 @@ def search_candidates_for_role(
     bounded_candidate_pool_limit = max(1, min(int(candidate_pool_limit), 100))
     bounded_shortlist_limit = max(1, min(int(shortlist_limit), 10))
 
-    search_results = search_candidate_resumes(
-        query=normalized_role_brief,
-        limit=bounded_search_limit,
-    )
+    try:
+        search_results = search_candidate_resumes(
+            query=normalized_role_brief,
+            limit=bounded_search_limit,
+        )
+    except Exception as exc:
+        raise McpReadAdapterError(
+            "Candidate retrieval could not complete.",
+            tool="search_candidates_for_role",
+            code="retrieval_error",
+            status_code=503,
+            stage="retrieval",
+        ) from exc
 
     shortlist_results: list[dict[str, Any]] = []
     candidate_pool_size = len(search_results["results"])
@@ -97,6 +110,7 @@ def search_candidates_for_role(
         "search_limit": bounded_search_limit,
         "candidate_pool_limit": bounded_candidate_pool_limit,
         "shortlist_limit": bounded_shortlist_limit,
+        "retrieval_metadata": search_results.get("retrieval_metadata", {}),
         "search_results": search_results["results"],
         "shortlist_results": shortlist_results,
     }
@@ -118,6 +132,7 @@ def get_candidate_profile(
             tool="get_candidate_profile",
             code="not_found",
             status_code=404,
+            stage="retrieval",
             details=[{"candidate_id": candidate_id}],
         )
 
@@ -178,6 +193,7 @@ def get_candidate_current_resume(
             tool="get_candidate_current_resume",
             code="not_found",
             status_code=404,
+            stage="retrieval",
             details=[{"candidate_id": candidate_id}],
         )
 
@@ -221,6 +237,7 @@ def search_company_context(
             tool="search_company_context",
             code="validation_error",
             status_code=400,
+            stage="validation",
             details=[{"field": "company_name"}],
         )
 
@@ -264,22 +281,71 @@ def list_company_directory(
     Return a bounded searchable company directory.
     """
 
-    directory = list_company_directory_service()
-    companies = directory["companies"]
+    try:
+        company_records = [
+            _normalize_company_directory_record(record)
+            for record in list_canonical_company_records()
+        ]
+    except Exception as exc:
+        raise McpReadAdapterError(
+            "Company directory retrieval could not complete.",
+            tool="list_company_directory",
+            code="database_read_error",
+            status_code=503,
+            stage="database",
+        ) from exc
     normalized_limit = max(1, min(int(limit), 500))
 
     if isinstance(prefix, str) and prefix.strip() != "":
         normalized_prefix = prefix.strip().lower()
-        companies = [
+        company_records = [
             company
-            for company in companies
-            if normalized_prefix in company.lower()
+            for company in company_records
+            if company["name"].lower().startswith(normalized_prefix)
         ]
 
-    bounded_companies = companies[:normalized_limit]
+    bounded_records = company_records[:normalized_limit]
     return {
-        "count": len(bounded_companies),
-        "companies": bounded_companies,
+        "count": len(bounded_records),
+        "companies": [record["name"] for record in bounded_records],
+        "company_records": bounded_records,
+    }
+
+
+def _normalize_company_directory_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Attach conservative review flags without rewriting canonical data."""
+
+    name = str(record.get("name") or "").strip()
+    source_systems = sorted(
+        {
+            str(value).strip()
+            for value in record.get("source_systems") or []
+            if str(value).strip()
+        }
+    )
+    source_record_types = sorted(
+        {
+            str(value).strip()
+            for value in record.get("source_record_types") or []
+            if str(value).strip()
+        }
+    )
+
+    quality = assess_company_name_quality(
+        name,
+        domain=record.get("domain"),
+        website_url=record.get("website_url"),
+        linkedin_url=record.get("linkedin_url"),
+    )
+
+    return {
+        "company_id": str(record["company_id"]),
+        "name": name,
+        "source_systems": source_systems,
+        "source_record_types": source_record_types,
+        "updated_at": record.get("updated_at"),
+        "quality_flags": quality["quality_flags"],
+        "needs_review": quality["needs_review"],
     }
 
 
@@ -304,6 +370,7 @@ def discover_company_leads_for_candidate(
             tool="discover_company_leads_for_candidate",
             code="not_found",
             status_code=404,
+            stage="retrieval",
             details=[{"candidate_id": candidate_id}],
         )
     return result

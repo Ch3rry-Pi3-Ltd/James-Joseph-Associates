@@ -35,6 +35,7 @@ class OperatorSearchCandidatesResponse(BaseModel):
     search_limit: int = Field(ge=1)
     candidate_pool_limit: int = Field(ge=1)
     shortlist_limit: int = Field(ge=1)
+    retrieval_metadata: dict[str, Any] = Field(default_factory=dict)
     search_results: list[dict[str, Any]] = Field(default_factory=list)
     shortlist_results: list[dict[str, Any]] = Field(default_factory=list)
 
@@ -95,6 +96,7 @@ class OperatorCompanyDirectoryResponse(BaseModel):
 
     count: int = Field(ge=0)
     companies: list[str] = Field(default_factory=list)
+    company_records: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class OperatorCompanyLeadDiscoveryRequest(BaseModel):

@@ -209,7 +209,6 @@ def test_remote_mcp_executes_bounded_candidate_search(
                 "arguments": {
                     "role_brief": "Rust quantitative developer",
                     "search_limit": 5,
-                    "include_shortlist": False,
                 },
             },
         )
@@ -228,12 +227,11 @@ def test_remote_mcp_executes_bounded_candidate_search(
     audit_event = mock_audit.call_args.kwargs
     assert audit_event["outcome"] == "success"
     assert audit_event["tool_name"] == "search_candidates_for_role"
+    assert audit_event["metadata"]["candidate_count"] == 1
+    assert audit_event["metadata"]["response_character_count"] > 0
     assert audit_event["metadata"]["argument_fields"] == [
-        "candidate_pool_limit",
-        "include_shortlist",
         "role_brief",
         "search_limit",
-        "shortlist_limit",
     ]
     assert "Rust quantitative developer" not in str(audit_event["metadata"])
 
@@ -322,7 +320,6 @@ def test_remote_mcp_returns_safe_failure_when_read_tool_times_out(
                 "name": "search_candidates_for_role",
                 "arguments": {
                     "role_brief": "Data engineer",
-                    "include_shortlist": False,
                 },
             },
         )
@@ -332,4 +329,7 @@ def test_remote_mcp_returns_safe_failure_when_read_tool_times_out(
     assert private_error not in response.text
     audit_event = mock_audit.call_args.kwargs
     assert audit_event["outcome"] == "error"
-    assert audit_event["error_code"] == "internal_error"
+    assert audit_event["error_code"] == "tool_timeout"
+    assert audit_event["metadata"]["failure_stage"] == "tool_execution"
+    assert audit_event["metadata"]["failure_category"] == "timeout"
+    assert private_error not in str(audit_event["metadata"])

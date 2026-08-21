@@ -31,6 +31,8 @@ In plain language:
 """
 
 from datetime import date, datetime
+from decimal import Decimal
+import re
 from typing import Any
 
 from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
@@ -38,6 +40,7 @@ from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
 from backend.db.candidates import (
     get_candidate_profile,
     get_candidate_recent_employment,
+    get_candidate_search_evidence,
     search_candidates_by_company_name,
 )
 from backend.db.companies import list_canonical_company_names
@@ -49,6 +52,7 @@ from backend.db.jobs import search_jobs_by_company_name
 from backend.services.candidate_retrieval import search_candidates_hybrid
 from backend.services.candidate_source_metadata import (
     attach_candidate_source_metadata,
+    classify_candidate_source_category,
 )
 
 
@@ -154,16 +158,44 @@ def search_candidate_resumes(
     """
 
     normalized_query = query.strip()
+    retrieval_diagnostics: dict[str, Any] = {}
     results = search_candidates_hybrid(
         query=normalized_query,
         limit=limit,
         include_text=True,
         include_semantic=True,
+        diagnostics=retrieval_diagnostics,
     )
-    results = attach_candidate_source_metadata(results)
+    evidence_by_candidate = get_candidate_search_evidence(
+        {
+            str(result.get("candidate_id") or "").strip()
+            for result in results
+            if str(result.get("candidate_id") or "").strip()
+        }
+    )
+    for result in results:
+        candidate_id = str(result.get("candidate_id") or "")
+        evidence = evidence_by_candidate.get(candidate_id, {})
+        result["skills"] = _select_role_relevant_skills(
+            evidence.get("skills", []),
+            query=normalized_query,
+            limit=12,
+        )
+        result["recent_employment"] = evidence.get("recent_employment", [])
+        result["source_details"] = evidence.get("source_details", [])
+        result["source_systems"] = [
+            str(detail.get("source_system") or "")
+            for detail in result["source_details"]
+            if str(detail.get("source_system") or "")
+        ]
+        result["source_category"] = classify_candidate_source_category(
+            result["source_systems"],
+            has_resume_document=bool(result.get("document_id")),
+        )
     return {
         "query": normalized_query,
         "limit": limit,
+        "retrieval_metadata": retrieval_diagnostics,
         "results": [
             _normalize_candidate_resume_search_result(result) for result in results
         ],
@@ -492,6 +524,11 @@ def _normalize_candidate_resume_search_result(
         "source_category": _normalize_string_value(
             result.get("source_category") or "unknown"
         ),
+        "has_current_resume": bool(result.get("document_id")),
+        "skills": _normalize_nested_values(result.get("skills")),
+        "recent_employment": _normalize_nested_values(
+            result.get("recent_employment")
+        ),
         "match_excerpt": _normalize_optional_string_value(result.get("match_excerpt")),
     }
 
@@ -750,6 +787,53 @@ def _normalize_optional_datetime_value(value: Any) -> str | None:
     if isinstance(value, date):
         return value.isoformat()
     return str(value)
+
+
+def _normalize_nested_values(value: Any) -> Any:
+    """Convert bounded database evidence into JSON-safe nested values."""
+
+    if isinstance(value, dict):
+        return {
+            str(key): _normalize_nested_values(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_normalize_nested_values(item) for item in value]
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+
+def _select_role_relevant_skills(
+    skills: list[dict[str, Any]],
+    *,
+    query: str,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Return a compact deterministic skill list ranked against the role brief."""
+
+    query_text = query.casefold()
+    query_terms = set(re.findall(r"[a-z0-9+#.]+", query_text))
+    ranked: list[tuple[int, int, dict[str, Any]]] = []
+    for index, raw_skill in enumerate(skills):
+        skill = dict(raw_skill)
+        name = str(
+            skill.get("canonical_name") or skill.get("skill_name") or ""
+        ).strip()
+        normalized_name = name.casefold()
+        skill_terms = set(re.findall(r"[a-z0-9+#.]+", normalized_name))
+        score = len(skill_terms & query_terms)
+        if normalized_name and normalized_name in query_text:
+            score += 10
+        evidence_text = skill.get("evidence_text")
+        if isinstance(evidence_text, str) and len(evidence_text) > 240:
+            skill["evidence_text"] = evidence_text[:237].rstrip() + "..."
+        ranked.append((score, -index, skill))
+
+    ranked.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    return [item[2] for item in ranked[: max(1, min(int(limit), 16))]]
 
 
 __all__ = [
