@@ -27,6 +27,8 @@ Before connecting ChatGPT, production must contain:
 - `MCP_TOOL_TIMEOUT_SECONDS`: defaults to `30` and bounds a complete tool call.
 - `MCP_ALLOWED_HOSTS`: include the stable production hostname.
 - Supabase migration `0009_mcp_operational_controls.sql`.
+- Supabase migration `0016_mcp_read_path_indexes.sql` for the measured MCP
+  provenance and recent-employment read paths.
 
 Do not place the bearer credential in source control, screenshots, chat
 messages, or client-side environment variables.
@@ -57,6 +59,11 @@ The August 2026 live recruiter test prompted a material schema refinement to
 the candidate-search and company-directory tools. After that release is
 deployed, the workspace owner must rescan and republish the app snapshot before
 testing the revised behavior.
+
+That hardened release and migration `0016` were deployed and independently
+smoke-tested on 22 August 2026. The remaining rollout action is the workspace
+owner's **Scan tools** and republish step followed by the documented ChatGPT UAT
+prompts; no new credential is required for that rescan.
 
 After deploying or changing a tool contract, run the authenticated read-only
 smoke test before asking a workspace user to retry:

@@ -50,8 +50,11 @@ over the remaining general backlog:
   only then return the results to Tom for recruiter relevance review.
   - [x] run the revised retrieval path three times locally against configured
     live services (`19,998`-`24,034 ms`, five results each, no failures)
-  - [ ] repeat through the deployed ChatGPT app after its changed tool snapshot
-    has been rescanned and republished
+  - [x] repeat against the deployed production MCP endpoint three times after
+    release (`16,165`-`19,942 ms` candidate search, five results each, hybrid
+    retrieval, no semantic fallback, no writes)
+  - [ ] repeat through the ChatGPT workspace app after its changed tool snapshot
+    has been rescanned and republished by the workspace owner
 
 #### Second MCP hardening sequence
 
@@ -80,8 +83,13 @@ the following order:
   their provenance.
 - [x] Inspect the revised live SQL with query plans and add indexes only where
   measured database work, rather than connection/provider time, justifies them.
-- [ ] After explicit production-database approval, apply migration `0016`, rerun
+- [x] After explicit production-database approval, apply migration `0016`, rerun
   the three query plans, and repeat the deployed search benchmark.
+  - [x] applied and verified all three indexes in live Supabase on 22 August 2026
+  - [x] verified index-only scans at `3.311`-`4.915 ms`, touching only `3`-`4`
+    shared blocks across the three measured read paths
+  - [x] deployed the hardened MCP release and passed three authenticated,
+    read-only production smoke repetitions
 - [x] Keep a bounded batch-profile MCP tool behind a measurement gate; implement
   it only if deployed ChatGPT testing still makes redundant sequential profile
   calls after receiving the richer initial result.
@@ -211,7 +219,8 @@ approval remain in the deferred lane below.
 
 - [ ] Recruiter-labelled UAT, known-strong-candidate identification, and final
   shortlist-quality approval.
-- [ ] ChatGPT Business workspace publication and workspace-user validation.
+- [ ] ChatGPT Business workspace tool rescan/republish and post-change
+  workspace-user validation.
 - [ ] LinkedHelper chat/message privacy and retention decisions.
 - [ ] Supabase ownership, billing, and future client-owned infrastructure decisions.
 - [ ] DNS-backed production domain and Clerk production-instance cutover.
@@ -238,24 +247,26 @@ approval remain in the deferred lane below.
   - [x] dedicated bearer authentication, DNS-rebinding protection, shared
     database-backed rate limiting, and metadata-only audit logging
 - [ ] Complete ChatGPT Business workspace rollout:
-  - [ ] Prepare and send the workspace owner a short connection guide covering
+  - [x] Prepare and send the workspace owner a short connection guide covering
     the exact ChatGPT Business setup steps below.
-  - [ ] Confirm the person completing setup is an Admin or Owner of the intended
+  - [x] Confirm the person completing setup is an Admin or Owner of the intended
     ChatGPT Business workspace; members cannot publish custom MCP apps.
-  - [ ] In ChatGPT web, enable Developer mode for that admin account from
+  - [x] In ChatGPT web, enable Developer mode for that admin account from
     Workspace settings -> Apps -> Create, or User settings -> Apps ->
     Advanced settings.
-  - [ ] Create a custom MCP app using the production endpoint:
+  - [x] Create a custom MCP app using the production endpoint:
     `https://james-joseph-associates.vercel.app/mcp`.
   - [ ] Select the supported authentication mechanism:
-    - [ ] use the existing dedicated bearer credential if ChatGPT offers that
+    - [x] use the existing dedicated bearer credential if ChatGPT offers that
       option during app creation
     - [ ] otherwise implement OAuth before connecting it; never publish the
       endpoint without authentication
     - [ ] transfer the required credential through a secure channel rather
       than WhatsApp, email, screenshots, or documentation
-  - [ ] Run **Scan tools** and confirm only the six intended bounded read-only
-    recruitment tools are exposed.
+  - [x] Run the initial **Scan tools** and confirm the app can call the intended
+    bounded read-only recruitment tools.
+  - [ ] Rescan and republish the six-tool snapshot after the 22 August hardened
+    MCP deployment, then repeat the documented prompts in ChatGPT.
   - [ ] Create the app as a draft and test it before publication:
     - [ ] search candidates from a realistic role brief
     - [ ] retrieve one candidate profile and its CV reference
@@ -271,7 +282,7 @@ approval remain in the deferred lane below.
     Supabase credentials or database access.
   - [ ] Run and record the documented recruiter UAT prompts, returned evidence,
     CV retrieval, failure cases, and response times.
-  - [ ] Add an operator note explaining that Business workspaces use a frozen
+  - [x] Add an operator note explaining that Business workspaces use a frozen
     snapshot of approved MCP tools; material tool changes require review and
     republishing rather than appearing automatically.
   - [ ] Document token rotation, app recreation/republishing, access removal,
