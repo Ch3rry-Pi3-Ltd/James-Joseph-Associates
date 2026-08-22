@@ -1,0 +1,13 @@
+.git/
+.next/
+.pytest_cache/
+.ruff_cache/
+.venv/
+coverage/
+node_modules/
+temp/
+tests/
+*.py[cod]
+*.tsbuildinfo
+.env*
+!.env.example
