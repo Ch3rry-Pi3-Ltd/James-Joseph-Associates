@@ -17,6 +17,6 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "pypdf>=6.10.2",
     "pytest>=9.0.3",
-    "ruff==0.15.10",
+    "ruff==0.16.4",
     "uvicorn>=0.44.0",
 ]
