@@ -19,7 +19,7 @@ The previous August smoke results did not establish October reliability.
   use indexed CV mentions alongside current-employer matches.
 - Semantic nearest-neighbour ordering can use the existing vector index; final
   candidate ordering retains deterministic tie-breaking.
-- Search workers share a deadline, with an 8-second maximum SQL statement budget,
+- Search workers share a deadline, with a 12-second maximum SQL statement budget,
   connection timeout, and database cancellation at the shared deadline. Expired
   operations do not open another managed connection. Semantic failure still falls
   back to full-text evidence rather than claiming there are no candidates.
@@ -32,7 +32,7 @@ The previous August smoke results did not establish October reliability.
 
 ## Verification before deployment
 
-- 752 Python tests passed; two opt-in SQL tests excluded from the default suite.
+- 753 Python tests passed; two opt-in SQL tests excluded from the default suite.
 - Both opt-in SQL tests passed against session-local synthetic tables rolled back
   afterwards: phrases, OR, exclusions, cross-field matching, current-CV scope,
   automatic vector refresh, and employer/CV-mention lookups.
@@ -79,3 +79,18 @@ data-explorer enhancement, not a five-candidate database restriction.
 - Recruiter relevance and evidence usefulness for the returned candidates.
 - Agree the scope of exhaustive text search/pagination across historical/source
   data before presenting it as existing functionality.
+
+## Release checks and follow-up
+
+Commit `8245818` built successfully in Vercel. The staged hostname was correctly
+rejected by MCP's host allowlist (421), so full MCP tests needed the live hostname.
+After promotion, authentication/discovery/directory passed but Data Engineer
+search returned a tool error: a SQL statement reached the original eight-second
+budget. The release was immediately rolled back to `dpl_Hun8yHVE2vBQExvhWYhFriJq9ftX`.
+Migration `0017` remains applied and is compatible with the old application.
+
+Follow-up removes unnecessary default-weight reapplication to large stored CV
+vectors and allows 12 seconds per statement, still bounded by the 24-second
+search deadline. The broader Data Engineer query returned five hybrid results
+in 8.36 seconds locally against live services. SQL/deadline/cache checks passed
+again (six tests). Both role briefs are now included in the repeat benchmark.

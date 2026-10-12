@@ -50,6 +50,9 @@ def _post_rpc(
     payload = response.json()
     if "error" in payload:
         raise RuntimeError(f"MCP {method} returned an error response.")
+    if payload.get("result", {}).get("isError"):
+        # Do not echo tool content: errors may contain source/customer details.
+        raise RuntimeError(f"MCP {params.get('name', method)} returned a tool error.")
     return payload, duration_ms
 
 

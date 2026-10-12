@@ -195,7 +195,7 @@ def postgres_connection() -> Iterator[psycopg.Connection]:
             if remaining is not None:
                 connection.execute(
                     "select set_config('statement_timeout', %s, true)",
-                    (str(max(1, min(8000, int(remaining * 1000)))),),
+                    (str(max(1, min(12000, int(remaining * 1000)))),),
                 )
                 def cancel_read():
                     try:

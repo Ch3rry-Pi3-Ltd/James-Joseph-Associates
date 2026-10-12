@@ -655,10 +655,9 @@ def search_candidates_by_resume_text(
                     to_tsvector('simple', coalesce(d.title, '')),
                     'C'
                 )
-                || setweight(
-                    d.resume_search_vector,
-                    'D'
-                ) as search_vector
+                -- Stored vectors already have default weight D. Avoid copying
+                -- every large CV vector just to reapply that same weight.
+                || d.resume_search_vector as search_vector
             from eligible_resumes er
             join candidates c on c.id = er.candidate_id
             join people p

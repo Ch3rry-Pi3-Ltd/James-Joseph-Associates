@@ -22,6 +22,10 @@ def main():
     args = parser.parse_args()
     cases = [
         ("securities", "search_candidates_for_role", {"role_brief": ROLE_BRIEF, "search_limit": 5}),
+        ("data_engineer", "search_candidates_for_role", {
+            "role_brief": "Senior Data Engineer with Python, SQL, ETL, cloud data platforms, Databricks, Airflow and team leadership",
+            "search_limit": 5,
+        }),
         ("pirum", "search_company_context", {"company_name": "Pirum", "candidate_limit": 5}),
         ("equilend", "search_company_context", {"company_name": "EquiLend", "candidate_limit": 5}),
     ]
@@ -41,7 +45,7 @@ def main():
                     result = result["structuredContent"]
                 elif tool == "search_candidates_for_role":
                     from backend.services.candidate_profiles import search_candidate_resumes
-                    result = search_candidate_resumes(query=ROLE_BRIEF, limit=5)
+                    result = search_candidate_resumes(query=arguments["role_brief"], limit=5)
                 else:
                     from backend.services.mcp_read_adapter import search_company_context
                     result = search_company_context(**arguments)
