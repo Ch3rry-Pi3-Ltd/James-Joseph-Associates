@@ -36,6 +36,7 @@ import re
 from typing import Any
 
 from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
+from backend.core.read_budget import bounded_read
 
 from backend.db.candidates import (
     get_candidate_profile,
@@ -140,6 +141,7 @@ def build_candidate_profile(
     }
 
 
+@bounded_read
 def search_candidate_resumes(
     *,
     query: str,
@@ -343,6 +345,7 @@ def discover_opportunities_by_company(
     }
 
 
+@bounded_read
 def discover_company_context(
     *,
     company_name: str,

@@ -603,7 +603,33 @@ def search_candidates_by_resume_text(
 
     search_sql = """
         with search_input as (
-            select websearch_to_tsquery('simple', %(query)s) as search_query
+            select websearch_to_tsquery('simple', %(query)s) as search_query,
+                to_tsquery('simple', (
+                    select string_agg(quote_literal(term), ' | ')
+                    from unnest(tsvector_to_array(to_tsvector('simple', %(query)s))) term
+                )) as any_term_query
+        ),
+        eligible_resumes as materialized (
+            -- Indexed CV matches plus metadata matches preserve searches whose
+            -- terms span CV + title, without loading every CV with ANY term.
+            select dl.candidate_id, d.id as document_id
+            from documents d
+            join document_links dl on dl.document_id = d.id
+                and dl.relationship_type = 'current_resume'
+            cross join search_input si
+            where d.document_type = 'resume'
+                and d.resume_search_vector @@ si.search_query
+            union
+            select c.id, dl.document_id
+            from candidates c
+            join people p on p.id = c.person_id
+            left join companies co on co.id = c.current_company_id
+            join document_links dl on dl.candidate_id = c.id
+                and dl.relationship_type = 'current_resume'
+            join documents d on d.id = dl.document_id and d.document_type = 'resume'
+            cross join search_input si
+            where to_tsvector('simple', concat_ws(' ', p.full_name,
+                c.current_title, co.name, d.title)) @@ si.any_term_query
         ),
         candidate_resume_search as (
             select
@@ -630,19 +656,17 @@ def search_candidates_by_resume_text(
                     'C'
                 )
                 || setweight(
-                    to_tsvector('simple', coalesce(d.extracted_text, '')),
+                    d.resume_search_vector,
                     'D'
                 ) as search_vector
-            from candidates c
+            from eligible_resumes er
+            join candidates c on c.id = er.candidate_id
             join people p
               on p.id = c.person_id
             left join companies co
               on co.id = c.current_company_id
-            join document_links dl
-              on dl.candidate_id = c.id
-             and dl.relationship_type = 'current_resume'
             join documents d
-              on d.id = dl.document_id
+              on d.id = er.document_id
              and d.document_type = 'resume'
         )
         select
@@ -722,6 +746,23 @@ def search_candidates_by_company_name(
                 lower(%(company_name)s) as normalized_company_name,
                 websearch_to_tsquery('simple', %(company_name)s) as search_query
         ),
+        eligible_resumes as materialized (
+            select dl.candidate_id, d.id as document_id
+            from documents d
+            join document_links dl on dl.document_id = d.id
+                and dl.relationship_type = 'current_resume'
+            cross join search_input si
+            where d.document_type = 'resume'
+                and d.resume_search_vector @@ si.search_query
+            union
+            select c.id, dl.document_id
+            from candidates c
+            join companies co on co.id = c.current_company_id
+            join document_links dl on dl.candidate_id = c.id
+                and dl.relationship_type = 'current_resume'
+            cross join search_input si
+            where lower(co.name) like ('%%' || si.normalized_company_name || '%%')
+        ),
         candidate_resume_search as (
             select
                 c.id as candidate_id,
@@ -737,19 +778,17 @@ def search_candidates_by_company_name(
                 d.resume_updated_at as document_resume_updated_at,
                 d.extracted_text,
                 setweight(
-                    to_tsvector('simple', coalesce(d.extracted_text, '')),
+                    d.resume_search_vector,
                     'A'
                 ) as resume_search_vector
-            from candidates c
+            from eligible_resumes er
+            join candidates c on c.id = er.candidate_id
             join people p
               on p.id = c.person_id
             left join companies co
               on co.id = c.current_company_id
-            join document_links dl
-              on dl.candidate_id = c.id
-             and dl.relationship_type = 'current_resume'
             join documents d
-              on d.id = dl.document_id
+              on d.id = er.document_id
              and d.document_type = 'resume'
         )
         select

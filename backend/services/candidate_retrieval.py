@@ -15,12 +15,14 @@ from __future__ import annotations
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from threading import Lock
 from time import monotonic
 from typing import Any
 
 from backend.db.candidate_semantic_blocks import search_candidates_by_semantic_blocks
 from backend.db.candidates import search_candidates_by_resume_text
+from backend.core.read_budget import bounded_read, remaining_read_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +285,7 @@ def build_text_retrieval_query_variants(
     return [variant for variant in variants if variant.strip()]
 
 
+@bounded_read
 def search_candidates_hybrid(
     *,
     query: str,
@@ -315,12 +318,13 @@ def search_candidates_hybrid(
 
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="candidate-retrieval") as pool:
         text_future = (
-            pool.submit(_search_text_candidates, text_queries, resolved_text_limit)
+            pool.submit(copy_context().run, _search_text_candidates, text_queries, resolved_text_limit)
             if include_text
             else None
         )
         semantic_future = (
             pool.submit(
+                copy_context().run,
                 search_candidates_by_semantic_blocks,
                 query=normalized_query,
                 limit=resolved_semantic_limit,
@@ -379,6 +383,7 @@ def _search_text_candidates(
     limit: int,
 ) -> list[dict[str, Any]]:
     for text_query in text_queries:
+        remaining_read_seconds()
         results = search_candidates_by_resume_text(query=text_query, limit=limit)
         if results:
             return results

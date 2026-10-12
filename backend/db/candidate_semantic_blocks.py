@@ -289,7 +289,7 @@ def search_candidates_by_semantic_blocks(
                 (csb.embedding <=> %(query_vector)s::vector) as cosine_distance
             from candidate_semantic_blocks csb
             where csb.embedding is not null
-            order by csb.embedding <=> %(query_vector)s::vector asc, csb.id asc
+            order by csb.embedding <=> %(query_vector)s::vector asc
             limit %(block_candidate_pool_limit)s
         ),
         scored_blocks as (

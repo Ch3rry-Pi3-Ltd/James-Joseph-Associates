@@ -56,6 +56,7 @@ Those concerns belong in separate modules that depend on this one.
 from collections.abc import Iterator
 from contextlib import contextmanager
 import logging
+from threading import Timer
 from time import perf_counter
 
 import psycopg
@@ -64,6 +65,7 @@ from psycopg.rows import dict_row
 from backend.core.performance import current_request_id
 from backend.core.observability import observe_stage
 from backend.settings import get_settings
+from backend.core.read_budget import remaining_read_seconds
 
 
 logger = logging.getLogger(__name__)
@@ -138,6 +140,7 @@ def get_postgres_connection() -> psycopg.Connection:
     return psycopg.connect(
         conninfo=settings.postgres_url,
         row_factory=dict_row,
+        connect_timeout=5,
     )
 
 
@@ -184,11 +187,29 @@ def postgres_connection() -> Iterator[psycopg.Connection]:
         metrics={"operation": "connection"},
     ):
         started_at = perf_counter()
+        remaining_read_seconds()
         connection = get_postgres_connection()
-
+        deadline_timer = None
         try:
+            remaining = remaining_read_seconds()
+            if remaining is not None:
+                connection.execute(
+                    "select set_config('statement_timeout', %s, true)",
+                    (str(max(1, min(8000, int(remaining * 1000)))),),
+                )
+                def cancel_read():
+                    try:
+                        connection.cancel_safe(timeout=1)
+                    except Exception:
+                        logger.warning("Read deadline cancellation could not complete.")
+                deadline_timer = Timer(remaining, cancel_read)
+                deadline_timer.daemon = True
+                deadline_timer.start()
             yield connection
         finally:
+            if deadline_timer is not None:
+                deadline_timer.cancel()
+                deadline_timer.join(timeout=1.1)
             connection.close()
             duration_ms = max(0.0, (perf_counter() - started_at) * 1000)
             logger.info(

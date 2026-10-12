@@ -20,6 +20,20 @@ kept in a separate deferred lane so they do not block independent delivery.
 
 #### Immediate MCP stabilisation priorities from live recruiter testing
 
+**12 October 2026: priority regression recovery.** Tom's October securities-finance
+search timed out despite the August success below. See
+[`search-timeout-recovery`](evaluation/2026-10-12-search-timeout-recovery.md).
+
+- [x] Diagnose candidate/company database latency and work continuing after MCP timeout.
+- [x] Apply migration `0017` for indexed current-CV retrieval and verify SQL semantics.
+- [x] Propagate read deadlines/cancellation and retain explicit semantic fallback.
+- [x] Repeat local-code/live-service securities-finance, Pirum, and EquiLend checks.
+- [ ] Release and verify the revised production MCP path before asking Tom to retry.
+- [ ] Verify Tom's existing web-app login and walk through Match > Search corpus and
+  Company; use the app as the primary data-access route, not Supabase admin access.
+- [ ] Scope exhaustive paginated search across source/historical records separately
+  from the existing bounded current-CV/profile retrieval.
+
 Tom's first live ChatGPT workspace test on 20 August 2026 proved that the
 published read-only app can authenticate, search the company directory, find
 candidates, retrieve profiles, and return evidence-backed results. It also

@@ -9,6 +9,7 @@ layer without talking to raw database helpers directly.
 from __future__ import annotations
 
 from typing import Any
+from backend.core.read_budget import bounded_read
 
 from backend.db.candidates import get_candidate_current_resume_document
 from backend.db.companies import list_canonical_company_records
@@ -217,6 +218,7 @@ def get_candidate_current_resume(
     }
 
 
+@bounded_read
 def search_company_context(
     *,
     company_name: str,

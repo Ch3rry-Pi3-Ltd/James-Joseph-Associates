@@ -5,12 +5,15 @@ Production remote MCP server exposing bounded read-only recruiter tools.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 from collections.abc import Callable
 import json
 from time import perf_counter
 from typing import Any
 
 from fastapi.concurrency import run_in_threadpool
+from backend.core.read_budget import read_budget
+from backend.core.cache import BoundedTtlCache, stable_read_cache_ttl_seconds
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
@@ -64,6 +67,7 @@ def _build_mcp_server() -> FastMCP:
 
 
 mcp_server = _build_mcp_server()
+_search_cache: BoundedTtlCache[dict[str, Any]] = BoundedTtlCache(max_entries=16)
 
 
 @mcp_server.tool(
@@ -71,7 +75,8 @@ mcp_server = _build_mcp_server()
     description=(
         "Quickly retrieve evidence-backed candidates from the canonical corpus "
         "using hybrid full-text and semantic search. This tool does not run the "
-        "slower model-backed shortlist; assess only the returned evidence."
+        "slower model-backed shortlist; assess only the returned evidence. "
+        "Run one search at a time. Do not repeatedly retry a timed-out search."
     ),
     annotations=_READ_ONLY_ANNOTATIONS,
     structured_output=True,
@@ -169,7 +174,7 @@ async def get_candidate_current_resume(
     title="Search company context",
     description=(
         "Return bounded candidates, contacts, interactions, jobs, and opportunities "
-        "linked to a named company."
+        "linked to a named company. Run one company lookup at a time."
     ),
     annotations=_READ_ONLY_ANNOTATIONS,
     structured_output=True,
@@ -280,9 +285,21 @@ async def _execute_read_tool(
     client_version = getattr(client_info, "version", None)
     metadata = build_mcp_argument_metadata(arguments)
 
+    def bounded_operation():
+        with read_budget(max(0.1, get_settings().mcp_tool_timeout_seconds - 2)):
+            if tool_name in {"search_candidates_for_role", "search_company_context"}:
+                key = hashlib.sha256(json.dumps(
+                    [principal_hash, tool_name, arguments], sort_keys=True,
+                ).encode()).hexdigest()
+                return _search_cache.get_or_compute(
+                    key, ttl_seconds=min(15, stable_read_cache_ttl_seconds()),
+                    loader=operation,
+                )
+            return operation()
+
     try:
         result = await asyncio.wait_for(
-            run_in_threadpool(operation),
+            run_in_threadpool(bounded_operation),
             timeout=get_settings().mcp_tool_timeout_seconds,
         )
     except ValidationError as exc:
