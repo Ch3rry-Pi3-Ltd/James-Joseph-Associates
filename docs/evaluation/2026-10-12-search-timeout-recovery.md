@@ -121,6 +121,9 @@ and the production npm dependency audit reported zero vulnerabilities.
 
 ### GitHub Actions distinction
 
+The paragraphs below record the state observed during the search release. The
+branch/CI housekeeping was subsequently resolved; see the follow-up at the end.
+
 The code is pushed to `feat/candidate-evidence-contact-routes`. Recent scheduled
 security failures still target stale `main` (`1642e15`): run `37326997103` failed
 the old production npm audit (five advisories, including one critical). The
@@ -131,3 +134,19 @@ Normal CI/security push triggers cover `main` and PRs, not direct feature-branch
 pushes. Therefore there is no new automatic GitHub CI result for `2bde339` to
 claim: release verification above was local testing plus Vercel build/live checks.
 Reconcile the release branch/main and CI coverage as a separate tracked task.
+
+### Branch and CI follow-up, 12 October 2026
+
+After approval, `main` was fast-forwarded from `1642e15` to `8fb5bb1` without
+rewriting history. The application code matches the verified `2bde339` release;
+subsequent changes were workflow/documentation only. Before advancing `main`,
+the working branch passed GitHub CI (run `38235391599`), Security checks (run
+`38235391955`), and Vercel's preview build. The optional passive staging scan
+was skipped because no staging target is configured, not counted as passed.
+
+Both workflows now run on every branch push and can be started manually; weekly
+security checks continue to use default branch `main`. The temporary exception
+for high-severity production Node findings has been removed. Vercel's linked
+production branch is confirmed as `main`; pushes trigger an independent build,
+not a deployment gated by GitHub Actions. No branch-protection enforcement was
+added. Historical failed runs are preserved as evidence rather than deleted.

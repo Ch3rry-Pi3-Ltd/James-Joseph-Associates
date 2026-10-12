@@ -35,9 +35,11 @@ search timed out despite the August success below. See
   Company; use the app as the primary data-access route, not Supabase admin access.
 - [ ] Scope exhaustive paginated search across source/historical records separately
   from the existing bounded current-CV/profile retrieval.
-- [ ] Reconcile the released feature branch with stale `main` and CI triggers:
-  scheduled checks still audit `1642e15`; feature pushes do not run ordinary CI.
-  Do not mistake historical main/Dependabot failures for checks on this release.
+- [x] Reconcile the released feature branch with stale `main` and CI triggers:
+  fast-forwarded `main` on 12 October 2026 after working-branch CI/security and
+  Vercel preview checks passed. All branch pushes now run both workflows;
+  scheduled checks use current `main`, and high/critical Node audits block again.
+  Historical failed runs remain visible but are not results for the new revision.
 
 Tom's first live ChatGPT workspace test on 20 August 2026 proved that the
 published read-only app can authenticate, search the company directory, find
