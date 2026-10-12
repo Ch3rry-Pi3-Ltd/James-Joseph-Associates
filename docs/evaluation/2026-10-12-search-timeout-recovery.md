@@ -73,7 +73,6 @@ data-explorer enhancement, not a five-candidate database restriction.
 
 ## Still to verify
 
-- Staged and promoted production MCP benchmarks and authentication checks.
 - Tom's authorised browser sign-in and complete Match/Company workflow: no claim
   of testing his account or ChatGPT workspace is made by server-side benchmarks.
 - Recruiter relevance and evidence usefulness for the returned candidates.
@@ -94,3 +93,41 @@ vectors and allows 12 seconds per statement, still bounded by the 24-second
 search deadline. The broader Data Engineer query returned five hybrid results
 in 8.36 seconds locally against live services. SQL/deadline/cache checks passed
 again (six tests). Both role briefs are now included in the repeat benchmark.
+
+### Final production verification
+
+Commit `2bde339` was built and promoted successfully on 12 October 2026:
+`dpl_8an45aDQqKUbCK4LJsHgWfqmUhyf`. The public production hostname resolves to this
+release. Three sequential repetitions per case returned five candidate records
+each; no tool errors or semantic fallbacks occurred in this final sample.
+
+| Production MCP call | First | Second | Third |
+| --- | ---: | ---: | ---: |
+| Securities finance | 14,471 ms | 12,748 ms | 12,287 ms |
+| Data Engineer | 9,422 ms | 10,046 ms | 10,897 ms |
+| Pirum context | 6,367 ms | 6,077 ms | 5,193 ms |
+| EquiLend context | 5,730 ms | 5,327 ms | 5,197 ms |
+
+An additional deployed smoke check passed unauthenticated rejection, protocol
+initialisation, all six read-only tool contracts, company prefix/ID/provenance,
+and candidate evidence (search 9,301 ms). Unauthenticated Match and Company pages
+both redirected to sign-in (307). No error-level logs were found for the final
+deployment in the inspected 15-minute window. This is point-in-time verification,
+not a load test or proof of Tom's workspace/browser session.
+
+Final full regression: 753 passed, two opt-in tests skipped; both opt-in SQL tests
+also passed separately. Repository-wide Ruff passed, production build passed,
+and the production npm dependency audit reported zero vulnerabilities.
+
+### GitHub Actions distinction
+
+The code is pushed to `feat/candidate-evidence-contact-routes`. Recent scheduled
+security failures still target stale `main` (`1642e15`): run `37326997103` failed
+the old production npm audit (five advisories, including one critical). The
+current released lockfile passes that audit. Dependabot CI run `37267455403`
+failed Python lint while its Next.js build passed; it is not this release's SHA.
+
+Normal CI/security push triggers cover `main` and PRs, not direct feature-branch
+pushes. Therefore there is no new automatic GitHub CI result for `2bde339` to
+claim: release verification above was local testing plus Vercel build/live checks.
+Reconcile the release branch/main and CI coverage as a separate tracked task.
