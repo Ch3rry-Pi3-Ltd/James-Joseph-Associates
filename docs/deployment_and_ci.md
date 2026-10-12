@@ -245,6 +245,8 @@ It currently runs on:
 ```text
 pull_request
 push to main
+push to any other branch
+workflow_dispatch (manual run)
 ```
 
 The workflow has two jobs:
@@ -284,40 +286,42 @@ In plain language:
 - the frontend shell must still build
 - otherwise the CI run should fail
 
-## Node 24 GitHub Actions Setting
+The workflow grants read-only repository access. The runtime used internally by
+checkout/setup actions is separate from the Node.js 22 app-build runtime; no
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` override is configured.
 
-The workflow sets:
-
-```yaml
-FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-```
-
-This setting affects the JavaScript runtime used internally by GitHub Actions such as:
-
-- `actions/checkout`
-- `actions/setup-python`
-- `actions/setup-node`
-
-It is separate from the Node.js version used to build the Next.js app.
-
-The Next.js build still uses the Node version configured in the workflow job.
+The `Security checks` workflow runs on the same branch/PR events, manual requests,
+and a weekly schedule against default branch `main`. Its Node production audit
+blocks high/critical findings; Python audit and Bandit findings also fail the job.
+The optional passive staging scan is skipped unless its target is configured.
 
 </details>
 
 <details>
 <summary><strong>5. Vercel Deployment Flow</strong></summary>
 
-The expected deployment flow is:
+The release verification flow is:
 
 ```text
 local change
     -> git commit
-    -> git push
-    -> GitHub Actions CI
-    -> Vercel deployment
+    -> push working branch
+    -> verify GitHub Actions CI + Security checks
+    -> fast-forward main to the verified revision
+    -> verify main checks and the production deployment
 ```
 
-Vercel receives changes from GitHub.
+With Git integration enabled, Vercel can build a push independently of GitHub
+Actions. A successful push or Vercel build is not proof that CI passed, and no
+enforced deployment-check gate or branch protection is currently claimed here.
+Check each system explicitly. A CLI release may also run a committed feature
+revision: bring `main` up to that verified revision so scheduled checks are not
+left auditing old dependencies.
+
+For this sole-developer repository, a pull request is optional. Use a clean
+working tree, fetch remote refs, check for divergence, and prefer `git merge
+--ff-only` when updating `main`. Do not force-push or discard unrelated changes.
+Keep the previous production deployment available until live smoke checks pass.
 
 The current Vercel project should continue to build the Next.js application and expose the Python API entrypoint through the configured rewrite.
 

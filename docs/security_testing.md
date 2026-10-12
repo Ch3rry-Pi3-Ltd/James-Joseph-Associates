@@ -11,7 +11,7 @@ manual penetration testing.
 
 | Frequency | Test | Target | Expected outcome |
 | --- | --- | --- | --- |
-| Every pull request and main push | Python and Node dependency audit, Bandit static analysis | Repository | Blocks high-severity dependency and high-confidence source findings |
+| Every pull request and branch push | Python and Node dependency audit, Bandit static analysis | Repository | Python audit findings, high/critical production Node findings, and high-confidence medium/high source findings fail the job |
 | Weekly | Dependabot review and passive OWASP ZAP baseline | Repository and staging | Opens dependency updates and stores a web-scan report |
 | Monthly | Authenticated application smoke test | Staging | Confirms Clerk access, email allow-listing, API rejection, upload limits, and CV authorization |
 | Quarterly and before a major release | Manual OWASP Web/API penetration test | Staging clone with synthetic data | Tests authorization, business logic, injection, document handling, LLM boundaries, and abuse cases |
@@ -29,6 +29,12 @@ manual penetration testing.
 
 The ZAP job is deliberately non-blocking at first. Once expected warnings are
 documented, it should be changed to fail on new medium/high findings.
+
+Weekly scheduled runs use the default branch (`main`), so keep it aligned with
+the verified release. Both workflows also support manual runs. Ordinary branch
+pushes now receive CI/security checks without needing a pull request. The old
+temporary high-severity Node audit exception was removed on 12 October 2026
+after patched production dependencies became available.
 
 ## Authenticated monthly checks
 
