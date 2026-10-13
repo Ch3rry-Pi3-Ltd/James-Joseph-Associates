@@ -207,6 +207,44 @@ def test_search_candidates_hybrid_returns_text_results_when_semantic_fails(
     assert result[0]["retrieval_sources"] == ["text"]
 
 
+def test_search_candidates_hybrid_returns_semantic_results_when_text_fails(
+    monkeypatch,
+) -> None:
+    semantic_result = {
+        "candidate_id": "cand-2",
+        "person_id": "person-2",
+        "document_id": "doc-2",
+        "match_score": 0.85,
+        "match_excerpt": "data platform engineering",
+    }
+
+    def fail_text_search(**kwargs):
+        raise TimeoutError("database statement timed out")
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        fail_text_search,
+    )
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_semantic_blocks",
+        lambda **kwargs: [semantic_result],
+    )
+    diagnostics: dict[str, object] = {}
+
+    result = search_candidates_hybrid(
+        query="Senior data engineer with Python and SQL",
+        limit=5,
+        diagnostics=diagnostics,
+    )
+
+    assert [row["candidate_id"] for row in result] == ["cand-2"]
+    assert result[0]["retrieval_sources"] == ["semantic"]
+    assert diagnostics["text_fallback_used"] is True
+    assert diagnostics["semantic_fallback_used"] is False
+
+
 def test_semantic_circuit_opens_after_repeated_failures(monkeypatch) -> None:
     monkeypatch.setattr(candidate_retrieval, "_semantic_consecutive_failures", 0)
     monkeypatch.setattr(candidate_retrieval, "_semantic_circuit_open_until", 0.0)

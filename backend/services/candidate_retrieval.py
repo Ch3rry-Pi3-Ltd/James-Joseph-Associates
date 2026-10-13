@@ -333,8 +333,24 @@ def search_candidates_hybrid(
             else None
         )
 
-        text_results = text_future.result() if text_future is not None else []
+        text_results: list[dict[str, Any]] = []
+        text_failed = False
+        text_failure: Exception | None = None
+        if text_future is not None:
+            try:
+                text_results = text_future.result()
+            except Exception as exc:
+                text_failed = True
+                text_failure = exc
+                logger.exception(
+                    "Candidate text retrieval failed; using semantic fallback.",
+                    extra={
+                        "limit": bounded_limit,
+                        "text_limit": resolved_text_limit,
+                    },
+                )
         semantic_results: list[dict[str, Any]] = []
+        semantic_succeeded = False
         if semantic_future is not None:
             try:
                 semantic_results = semantic_future.result()
@@ -349,7 +365,11 @@ def search_candidates_hybrid(
                     },
                 )
             else:
+                semantic_succeeded = True
                 _record_semantic_success()
+
+    if text_failed and not semantic_succeeded:
+        raise RuntimeError("Candidate retrieval sources could not complete.") from text_failure
 
     retrieval_mode = "none"
     if text_results and semantic_results:
@@ -362,6 +382,7 @@ def search_candidates_hybrid(
         diagnostics.update(
             {
                 "retrieval_mode": retrieval_mode,
+                "text_fallback_used": bool(text_failed),
                 "semantic_attempted": semantic_future is not None,
                 "semantic_fallback_used": bool(semantic_failed),
                 "semantic_circuit_open": bool(
