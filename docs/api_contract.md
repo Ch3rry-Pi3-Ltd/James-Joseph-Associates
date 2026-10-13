@@ -689,3 +689,40 @@ Before implementing non-health routes, resolve:
 - Should matching be synchronous in Phase 1 or accepted as async work?
 
 </details>
+
+<details open>
+<summary><strong>14. Exhaustive current-CV search</strong></summary>
+
+## `GET /api/v1/candidates/search-documents`
+
+Runs indexed exact full-text search over every searchable canonical current CV.
+It accepts `query`, `page_size` (1-100), and an opaque `cursor`. The response
+contains deterministic result pages plus complete corpus coverage:
+
+```json
+{
+  "query": "\"securities lending\" OR SFTR OR repo",
+  "scope": "current_resume",
+  "page_size": 50,
+  "returned_result_count": 50,
+  "has_more": true,
+  "next_cursor": "opaque-cursor",
+  "coverage": {
+    "eligible_document_count": 12000,
+    "searched_document_count": 11990,
+    "excluded_missing_text_count": 10,
+    "matched_document_count": 74,
+    "matched_candidate_count": 61,
+    "coverage_status": "complete_with_exclusions",
+    "is_exhaustive": false
+  },
+  "results": []
+}
+```
+
+## `GET /api/v1/candidates/search-documents/export`
+
+Streams every matching current CV as formula-safe CSV. It uses the same query
+semantics and performs no LLM or embedding-provider calls.
+
+</details>

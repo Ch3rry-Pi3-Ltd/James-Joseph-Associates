@@ -453,6 +453,88 @@ def test_candidate_company_discovery_route_returns_ranked_results() -> None:
     )
 
 
+def test_candidate_document_search_route_returns_coverage_and_page() -> None:
+    service_result = {
+        "query": "SFTR OR repo",
+        "scope": "current_resume",
+        "page_size": 50,
+        "returned_result_count": 1,
+        "has_more": False,
+        "next_cursor": None,
+        "coverage": {
+            "total_candidates": 12,
+            "eligible_document_count": 10,
+            "searchable_document_count": 9,
+            "searched_document_count": 9,
+            "excluded_missing_text_count": 1,
+            "candidates_without_current_resume_count": 2,
+            "matched_document_count": 1,
+            "matched_candidate_count": 1,
+            "coverage_status": "complete_with_exclusions",
+            "is_exhaustive": False,
+        },
+        "results": [
+            {
+                "candidate_id": "33333333-3333-3333-3333-333333333331",
+                "person_id": "22222222-2222-2222-2222-222222222221",
+                "full_name": "Sarah Jones",
+                "current_title": "Securities Finance Analyst",
+                "candidate_status": "active",
+                "current_company_name": "Acme Hiring Ltd",
+                "resume_updated_at": "2026-04-20T12:00:00+00:00",
+                "document_id": "11111111-1111-1111-1111-111111111111",
+                "document_title": "Sarah-Jones-CV.pdf",
+                "document_source_uri": "dropbox:///cv/Sarah-Jones-CV.pdf",
+                "match_score": 0.812345,
+                "match_excerpt": "<mark>SFTR</mark> delivery",
+                "source_systems": ["dropbox"],
+                "source_details": [
+                    {
+                        "source_system": "dropbox",
+                        "latest_record_received_at": "2026-06-10T09:00:00+00:00",
+                    }
+                ],
+                "source_category": "cv_backed",
+                "download_url": (
+                    "/api/v1/candidates/"
+                    "33333333-3333-3333-3333-333333333331/current-resume"
+                ),
+            }
+        ],
+    }
+
+    with patch(
+        "backend.api.v1.candidates.search_candidate_documents",
+        return_value=service_result,
+    ) as mock_search:
+        response = make_client().get(
+            "/api/v1/candidates/search-documents?query=SFTR%20OR%20repo&page_size=50"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == service_result
+    mock_search.assert_called_once_with(
+        query="SFTR OR repo",
+        page_size=50,
+        cursor=None,
+    )
+
+
+def test_candidate_document_search_export_streams_csv() -> None:
+    with patch(
+        "backend.api.v1.candidates.stream_candidate_document_search_csv",
+        return_value=iter(["candidate_id,candidate_name\n", "candidate-1,Sarah\n"]),
+    ) as mock_export:
+        response = make_client().get(
+            "/api/v1/candidates/search-documents/export?query=SFTR"
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.headers["content-type"].startswith("text/csv")
+    assert response.text == "candidate_id,candidate_name\ncandidate-1,Sarah\n"
+    mock_export.assert_called_once_with(query="SFTR")
+
+
 def test_company_directory_route_returns_alphabetical_company_names() -> None:
     """
     Verify that the company directory route returns canonical company suggestions.

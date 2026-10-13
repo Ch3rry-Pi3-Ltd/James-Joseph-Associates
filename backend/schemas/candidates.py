@@ -186,6 +186,61 @@ class CandidateResumeSearchResponse(BaseModel):
     )
 
 
+class CandidateDocumentSearchCoverage(BaseModel):
+    """Auditable coverage figures for one exhaustive current-CV search."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    total_candidates: int = Field(ge=0)
+    eligible_document_count: int = Field(ge=0)
+    searchable_document_count: int = Field(ge=0)
+    searched_document_count: int = Field(ge=0)
+    excluded_missing_text_count: int = Field(ge=0)
+    candidates_without_current_resume_count: int = Field(ge=0)
+    matched_document_count: int = Field(ge=0)
+    matched_candidate_count: int = Field(ge=0)
+    coverage_status: Literal["complete", "complete_with_exclusions"]
+    is_exhaustive: bool
+
+
+class CandidateDocumentSearchResult(BaseModel):
+    """One exact full-text match from the canonical current-CV corpus."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    person_id: str
+    full_name: str | None = None
+    current_title: str | None = None
+    candidate_status: str | None = None
+    current_company_name: str | None = None
+    resume_updated_at: str | None = None
+    document_id: str
+    document_title: str | None = None
+    document_source_uri: str | None = None
+    match_score: float = Field(ge=0)
+    match_excerpt: str | None = None
+    source_systems: list[str] = Field(default_factory=list)
+    source_details: list[CandidateSourceDetail] = Field(default_factory=list)
+    source_category: str = "cv_backed"
+    download_url: str
+
+
+class CandidateDocumentSearchResponse(BaseModel):
+    """One paginated exhaustive-search response with corpus coverage."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str
+    scope: Literal["current_resume"]
+    page_size: int = Field(ge=1, le=100)
+    returned_result_count: int = Field(ge=0)
+    has_more: bool
+    next_cursor: str | None = None
+    coverage: CandidateDocumentSearchCoverage
+    results: list[CandidateDocumentSearchResult] = Field(default_factory=list)
+
+
 class CompanyDirectoryResponse(BaseModel):
     """
     Response envelope for canonical company lookup suggestions.
@@ -861,6 +916,9 @@ class CandidateMatchFeedbackResponse(BaseModel):
 
 
 __all__ = [
+    "CandidateDocumentSearchCoverage",
+    "CandidateDocumentSearchResponse",
+    "CandidateDocumentSearchResult",
     "CandidateCompanyDiscoveryResponse",
     "CandidateCompanyDiscoveryResult",
     "CandidateCompanyLeadDiscoveryResponse",

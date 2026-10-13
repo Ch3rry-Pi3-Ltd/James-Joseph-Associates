@@ -142,6 +142,29 @@ Input:
 }
 ```
 
+### `search_candidate_documents`
+
+Purpose:
+
+- search the complete extracted text of every searchable canonical current CV
+- return exact matches through stable cursor pagination rather than a top-K pool
+- report eligible, searched, excluded, and matched document counts
+- avoid per-document LLM and embedding-provider calls
+
+Input:
+
+```json
+{
+  "query": "\"securities lending\" OR SFTR OR repo",
+  "page_size": 50,
+  "cursor": "opaque cursor | null"
+}
+```
+
+Callers may claim a complete match list only after following `next_cursor` until
+`has_more` is false. They may claim exhaustive document coverage only when
+`coverage.is_exhaustive` is true.
+
 Output:
 
 ```json
@@ -367,6 +390,15 @@ The first MCP layer should reuse existing routes/services as far as possible.
 Maps to:
 
 - `search_candidates_for_role`
+
+#### Exhaustive current-CV text search
+
+- `GET /api/v1/candidates/search-documents`
+- `GET /api/v1/candidates/search-documents/export`
+
+Maps to:
+
+- `search_candidate_documents`
 
 #### Candidate profile
 

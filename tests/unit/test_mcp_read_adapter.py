@@ -8,6 +8,7 @@ from backend.services.mcp_read_adapter import (
     get_candidate_current_resume,
     get_candidate_profile,
     list_company_directory,
+    search_candidate_documents,
     search_candidates_for_role,
     search_company_context,
 )
@@ -63,6 +64,29 @@ def test_search_candidates_for_role_classifies_retrieval_failure(
     assert exc_info.value.stage == "retrieval"
     assert exc_info.value.status_code == 503
     assert "private role brief" not in exc_info.value.message
+
+
+def test_search_candidate_documents_reuses_paginated_database_service(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = {"query": "SFTR OR repo", "results": [], "coverage": {}}
+    monkeypatch.setattr(
+        mcp_read_adapter,
+        "search_candidate_documents_service",
+        lambda **kwargs: {**expected, "arguments": kwargs},
+    )
+
+    result = search_candidate_documents(
+        query=" SFTR OR repo ",
+        page_size=99,
+        cursor="next-page",
+    )
+
+    assert result["arguments"] == {
+        "query": "SFTR OR repo",
+        "page_size": 50,
+        "cursor": "next-page",
+    }
 
 
 def test_get_candidate_profile_returns_bounded_company_context(

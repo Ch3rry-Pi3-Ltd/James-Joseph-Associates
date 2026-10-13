@@ -148,6 +148,7 @@ def test_remote_mcp_initialize_and_tool_discovery_are_read_only(
         "get_candidate_current_resume",
         "get_candidate_profile",
         "list_company_directory",
+        "search_candidate_documents",
         "search_candidates_for_role",
         "search_company_context",
     }
@@ -234,6 +235,65 @@ def test_remote_mcp_executes_bounded_candidate_search(
         "search_limit",
     ]
     assert "Rust quantitative developer" not in str(audit_event["metadata"])
+
+
+def test_remote_mcp_executes_paginated_exhaustive_document_search(
+    mcp_client: TestClient,
+) -> None:
+    service_result = {
+        "query": "SFTR OR repo",
+        "scope": "current_resume",
+        "page_size": 25,
+        "returned_result_count": 1,
+        "has_more": False,
+        "next_cursor": None,
+        "coverage": {
+            "eligible_document_count": 12000,
+            "searched_document_count": 11990,
+            "excluded_missing_text_count": 10,
+            "matched_document_count": 29,
+            "matched_candidate_count": 22,
+        },
+        "results": [{"candidate_id": "candidate-1"}],
+    }
+
+    with (
+        patch(
+            "backend.services.mcp_transport.enforce_mcp_rate_limit",
+            return_value=_allowed_rate_limit(),
+        ),
+        patch("backend.services.mcp_transport.audit_mcp_event_best_effort"),
+        patch(
+            "backend.services.mcp_server.audit_mcp_event_best_effort"
+        ) as mock_audit,
+        patch(
+            "backend.services.mcp_server.mcp_read_adapter."
+            "search_candidate_documents",
+            return_value=service_result,
+        ) as mock_search,
+    ):
+        response = _mcp_request(
+            mcp_client,
+            method="tools/call",
+            request_id=52,
+            params={
+                "name": "search_candidate_documents",
+                "arguments": {"query": "SFTR OR repo", "page_size": 25},
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["result"]["structuredContent"] == service_result
+    mock_search.assert_called_once_with(
+        query="SFTR OR repo",
+        page_size=25,
+        cursor=None,
+    )
+    metadata = mock_audit.call_args.kwargs["metadata"]
+    assert metadata["document_result_count"] == 1
+    assert metadata["matched_document_count"] == 29
+    assert metadata["matched_candidate_count"] == 22
+    assert "SFTR OR repo" not in str(metadata)
 
 
 def test_remote_mcp_accepts_legacy_shortlist_arguments_without_using_them(

@@ -37,12 +37,13 @@ from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Query, status
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import ValidationError
 
 from backend.schemas.candidates import (
     CandidateCompanyDiscoveryResponse,
     CandidateCompanyLeadDiscoveryResponse,
+    CandidateDocumentSearchResponse,
     CandidateJobDescriptionMatchRequest,
     CandidateJobDescriptionMatchResponse,
     CandidateMatchFeedbackRequest,
@@ -74,6 +75,11 @@ from backend.services.candidate_matching import (
     build_candidate_job_description_shortlist,
 )
 from backend.services.candidate_match_feedback import save_candidate_match_feedback
+from backend.services.candidate_document_search import (
+    CandidateDocumentSearchCursorError,
+    search_candidate_documents,
+    stream_candidate_document_search_csv,
+)
 from backend.services.candidate_profiles import (
     build_candidate_profile,
     discover_candidates_by_company,
@@ -732,6 +738,103 @@ def search_candidate_resumes_route(
         limit=limit,
     )
     return CandidateResumeSearchResponse(**result)
+
+
+@router.get(
+    "/search-documents",
+    response_model=CandidateDocumentSearchResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Document search query or cursor was invalid.",
+        }
+    },
+)
+def search_candidate_documents_route(
+    query: str = Query(
+        min_length=1,
+        max_length=4000,
+        description=(
+            "Exact full-text query for all searchable canonical current CVs. "
+            "Supports quoted phrases, OR, and minus-prefixed exclusions."
+        ),
+    ),
+    page_size: int = Query(
+        default=50,
+        ge=1,
+        le=100,
+        description="Maximum current-CV matches returned in this page.",
+    ),
+    cursor: str | None = Query(
+        default=None,
+        max_length=1000,
+        description="Opaque cursor returned by the preceding result page.",
+    ),
+) -> CandidateDocumentSearchResponse | JSONResponse:
+    """Return a complete-coverage, keyset-paginated current-CV search page."""
+
+    normalized_query = query.strip()
+    if not normalized_query:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Document search query must not be blank.",
+            details=[{"query": query}],
+        )
+
+    try:
+        result = search_candidate_documents(
+            query=normalized_query,
+            page_size=page_size,
+            cursor=cursor,
+        )
+    except CandidateDocumentSearchCursorError as exc:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="invalid_cursor",
+            message=str(exc),
+            details=[],
+        )
+    return CandidateDocumentSearchResponse(**result)
+
+
+@router.get(
+    "/search-documents/export",
+    response_class=StreamingResponse,
+    responses={
+        400: {
+            "model": ApiErrorResponse,
+            "description": "Document search query was invalid.",
+        }
+    },
+)
+def export_candidate_document_search_route(
+    query: str = Query(
+        min_length=1,
+        max_length=4000,
+        description="Exact full-text query to export across current CVs.",
+    ),
+) -> Response:
+    """Stream every exact current-CV match without an LLM processing pass."""
+
+    normalized_query = query.strip()
+    if not normalized_query:
+        return build_error_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="validation_error",
+            message="Document search query must not be blank.",
+            details=[{"query": query}],
+        )
+
+    return StreamingResponse(
+        stream_candidate_document_search_csv(query=normalized_query),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="candidate-document-search.csv"'
+            )
+        },
+    )
 
 
 @router.post(

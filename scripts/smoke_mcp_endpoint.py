@@ -16,6 +16,7 @@ EXPECTED_TOOLS = {
     "get_candidate_current_resume",
     "get_candidate_profile",
     "list_company_directory",
+    "search_candidate_documents",
     "search_candidates_for_role",
     "search_company_context",
 }
@@ -157,6 +158,34 @@ def run_smoke(*, endpoint: str, token: str, timeout_seconds: float) -> dict[str,
         ):
             raise RuntimeError("Candidate search omitted or exceeded bounded evidence.")
 
+        exhaustive_payload, exhaustive_ms = _post_rpc(
+            client,
+            endpoint=endpoint,
+            token=token,
+            request_id=6,
+            method="tools/call",
+            params={
+                "name": "search_candidate_documents",
+                "arguments": {"query": "SFTR OR repo", "page_size": 1},
+            },
+        )
+        exhaustive_result = exhaustive_payload["result"]["structuredContent"]
+        coverage = exhaustive_result.get("coverage") or {}
+        document_results = exhaustive_result.get("results") or []
+        required_coverage_fields = {
+            "eligible_document_count",
+            "searched_document_count",
+            "excluded_missing_text_count",
+            "matched_document_count",
+            "matched_candidate_count",
+            "is_exhaustive",
+        }
+        if (
+            not required_coverage_fields.issubset(coverage)
+            or len(document_results) > 1
+        ):
+            raise RuntimeError("Exhaustive CV search omitted coverage or page bounds.")
+
     return {
         "ok": True,
         "server_name_present": bool(
@@ -165,12 +194,18 @@ def run_smoke(*, endpoint: str, token: str, timeout_seconds: float) -> dict[str,
         "tool_count": len(tool_names),
         "company_count": len(company_records),
         "candidate_count": len(candidates),
+        "document_result_count": len(document_results),
+        "document_coverage": {
+            field: coverage.get(field)
+            for field in sorted(required_coverage_fields)
+        },
         "retrieval_metadata": candidate_result.get("retrieval_metadata") or {},
         "duration_ms": {
             "initialize": initialize_ms,
             "tools_list": tools_ms,
             "company_directory": company_ms,
             "candidate_search": candidate_ms,
+            "exhaustive_document_search": exhaustive_ms,
         },
         "writes_performed": 0,
     }

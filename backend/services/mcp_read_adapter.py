@@ -14,6 +14,10 @@ from backend.core.read_budget import bounded_read
 from backend.db.candidates import get_candidate_current_resume_document
 from backend.db.companies import list_canonical_company_records
 from backend.services.candidate_matching import build_candidate_job_description_shortlist
+from backend.services.candidate_document_search import (
+    CandidateDocumentSearchCursorError,
+    search_candidate_documents as search_candidate_documents_service,
+)
 from backend.services.company_name_quality import assess_company_name_quality
 from backend.services.candidate_profiles import (
     build_candidate_profile,
@@ -115,6 +119,41 @@ def search_candidates_for_role(
         "search_results": search_results["results"],
         "shortlist_results": shortlist_results,
     }
+
+
+def search_candidate_documents(
+    *,
+    query: str,
+    page_size: int = 25,
+    cursor: str | None = None,
+) -> dict[str, Any]:
+    """Return one exact full-text page plus auditable current-CV coverage."""
+
+    normalized_query = query.strip()
+    if not normalized_query:
+        raise McpReadAdapterError(
+            "Document search query must not be blank.",
+            tool="search_candidate_documents",
+            code="validation_error",
+            status_code=400,
+            stage="validation",
+            details=[{"field": "query"}],
+        )
+
+    try:
+        return search_candidate_documents_service(
+            query=normalized_query,
+            page_size=max(1, min(int(page_size), 50)),
+            cursor=cursor,
+        )
+    except CandidateDocumentSearchCursorError as exc:
+        raise McpReadAdapterError(
+            str(exc),
+            tool="search_candidate_documents",
+            code="invalid_cursor",
+            status_code=400,
+            stage="validation",
+        ) from exc
 
 
 def get_candidate_profile(
@@ -385,5 +424,6 @@ __all__ = [
     "get_candidate_profile",
     "list_company_directory",
     "search_candidates_for_role",
+    "search_candidate_documents",
     "search_company_context",
 ]

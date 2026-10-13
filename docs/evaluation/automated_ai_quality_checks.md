@@ -80,6 +80,6 @@ never treated as an instruction.
 ## MCP boundary
 
 MCP integration tests run independently of ChatGPT workspace publication. They
-verify bearer authentication, the exact six read-only tools and their annotations,
+verify bearer authentication, the exact seven read-only tools and their annotations,
 bounded arguments, shared rate limiting, rate-control failure, safe tool failures,
 and metadata-only audit events.

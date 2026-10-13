@@ -33,8 +33,17 @@ search timed out despite the August success below. See
   each role/company case), plus authenticated tool/evidence smoke checks.
 - [ ] Verify Tom's existing web-app login and walk through Match > Search corpus and
   Company; use the app as the primary data-access route, not Supabase admin access.
-- [ ] Scope exhaustive paginated search across source/historical records separately
-  from the existing bounded current-CV/profile retrieval.
+- [x] Implement exhaustive, deterministic search over all canonical current CVs,
+  separately from the existing bounded hybrid retrieval:
+  - [x] search complete extracted CV text without per-document LLM calls
+  - [x] report eligible, searched, matched, missing-text, and missing-CV coverage
+  - [x] add stable keyset pagination and complete formula-safe CSV export
+  - [x] expose the same contract in the Vercel UI/API and one read-only MCP tool
+  - [x] preserve the fast ranked Match workflow unchanged
+- [ ] Deploy the exhaustive current-CV release, run its authenticated production
+  smoke check, and have Tom rescan/republish the seven-tool ChatGPT app snapshot.
+- [ ] Decide with Tom whether a later search scope should include historical CV
+  versions or other document types; do not mix them into current-CV results by default.
 - [x] Reconcile the released feature branch with stale `main` and CI triggers:
   fast-forwarded `main` on 12 October 2026 after working-branch CI/security and
   Vercel preview checks passed. All branch pushes now run both workflows;
@@ -114,9 +123,11 @@ the following order:
 - [x] Keep a bounded batch-profile MCP tool behind a measurement gate; implement
   it only if deployed ChatGPT testing still makes redundant sequential profile
   calls after receiving the richer initial result.
-  - [x] retain the existing six-tool surface for this release; the historical
+  - [x] retain the existing six-tool surface for that release; the historical
     `1.5` profile calls per search does not yet justify a seventh tool before the
     richer deployed response is tested
+  - [x] add a seventh read-only tool only after Tom's later explicit requirement
+    for exhaustive, paginated current-CV document search justified it
 
 #### Immediate UI priorities, in agreed order
 
@@ -286,7 +297,7 @@ approval remain in the deferred lane below.
       than WhatsApp, email, screenshots, or documentation
   - [x] Run the initial **Scan tools** and confirm the app can call the intended
     bounded read-only recruitment tools.
-  - [ ] Rescan and republish the six-tool snapshot after the 22 August hardened
+  - [ ] Rescan and republish the seven-tool snapshot after the exhaustive-search
     MCP deployment, then repeat the documented prompts in ChatGPT.
   - [ ] Create the app as a draft and test it before publication:
     - [ ] search candidates from a realistic role brief

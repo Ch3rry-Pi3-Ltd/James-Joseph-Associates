@@ -6,7 +6,7 @@ The application now exposes a remote, read-only MCP endpoint:
 
 `https://james-joseph-associates.vercel.app/mcp`
 
-It provides six bounded tools:
+It provides seven read-only tools:
 
 1. Search candidates for a role using fast evidence retrieval.
 2. Inspect one candidate profile and linked company context.
@@ -14,6 +14,8 @@ It provides six bounded tools:
 4. Search candidates, contacts, interactions, jobs, and opportunities for a company.
 5. Search the canonical company directory.
 6. Discover company contacts and relationship evidence for a candidate.
+7. Search every searchable current CV using exact full text, coverage counts,
+   and cursor-based pagination without per-document LLM calls.
 
 The endpoint does not expose SQL, arbitrary tables, record updates, deletes,
 outreach actions, or CRM writes.
@@ -45,7 +47,7 @@ the ChatGPT web application.
 5. Select API-key or bearer authentication if that option is available, then
    provide the production `MCP_API_TOKEN`.
 6. Run **Scan tools**.
-7. Confirm that exactly the six read-only tools listed above are discovered.
+7. Confirm that exactly the seven read-only tools listed above are discovered.
 8. Publish the app only to the approved workspace users.
 
 If the workspace setup offers only OAuth or no authentication, stop. Do not
@@ -72,9 +74,10 @@ smoke test before asking a workspace user to retry:
 .\.venv\Scripts\python.exe scripts\smoke_mcp_endpoint.py
 ```
 
-The runner verifies authentication rejection, the exact six-tool read-only
+The runner verifies authentication rejection, the exact seven-tool read-only
 surface, company prefix/quality metadata, bounded candidate evidence, and tool
-timings. It performs no writes and does not print returned recruitment content.
+timings. It also checks exhaustive-search coverage and page bounds. It performs
+no writes and does not print returned recruitment content.
 
 ## UAT Prompts
 
@@ -85,6 +88,7 @@ Use these prompts after the connection succeeds:
 3. `What contacts, prior interactions, jobs, and opportunities do we have for GSR? Cite the returned record IDs.`
 4. `For the selected candidate, identify useful contacts at the target company and explain the relationship evidence.`
 5. `List companies whose canonical names begin with "A", limited to 20 results. Include company IDs, provenance, and any quality warnings.`
+6. `Search every current CV for "securities lending" OR SFTR OR repo. Report corpus coverage and exclusions, then follow pagination until every match has been returned. Do not claim exhaustive coverage if the tool says is_exhaustive is false.`
 
 ## Acceptance Checks
 

@@ -23,6 +23,7 @@ from pydantic import ValidationError
 from backend.schemas.operator import (
     OperatorCompanyContextRequest,
     OperatorCompanyLeadDiscoveryRequest,
+    OperatorDocumentSearchRequest,
     OperatorSearchCandidatesRequest,
 )
 from backend.services import mcp_read_adapter
@@ -105,6 +106,41 @@ async def search_candidates_for_role(
         tool_name="search_candidates_for_role",
         arguments=arguments,
         operation=lambda: mcp_read_adapter.search_candidates_for_role(
+            **request.model_dump()
+        ),
+    )
+
+
+@mcp_server.tool(
+    title="Search every current CV (paginated exact text)",
+    description=(
+        "Run deterministic full-text search across every searchable canonical "
+        "current CV, with total coverage and exclusion counts. Results are "
+        "keyset-paginated; when a complete list is requested, follow next_cursor "
+        "until has_more is false. Do not call the search exhaustive when "
+        "coverage.is_exhaustive is false. This tool performs no per-document "
+        "LLM scoring."
+    ),
+    annotations=_READ_ONLY_ANNOTATIONS,
+    structured_output=True,
+)
+async def search_candidate_documents(
+    query: str,
+    ctx: Context,
+    page_size: int = 25,
+    cursor: str | None = None,
+) -> dict[str, Any]:
+    arguments = {
+        "query": query,
+        "page_size": page_size,
+        "cursor": cursor,
+    }
+    request = OperatorDocumentSearchRequest.model_validate(arguments)
+    return await _execute_read_tool(
+        ctx=ctx,
+        tool_name="search_candidate_documents",
+        arguments=arguments,
+        operation=lambda: mcp_read_adapter.search_candidate_documents(
             **request.model_dump()
         ),
     )
@@ -436,6 +472,21 @@ def _build_mcp_result_metadata(result: dict[str, Any]) -> dict[str, Any]:
     search_results = result.get("search_results")
     if isinstance(search_results, list):
         metadata["candidate_count"] = len(search_results)
+    document_results = result.get("results")
+    if isinstance(document_results, list):
+        metadata["document_result_count"] = len(document_results)
+    coverage = result.get("coverage")
+    if isinstance(coverage, dict):
+        for field in (
+            "eligible_document_count",
+            "searched_document_count",
+            "excluded_missing_text_count",
+            "matched_document_count",
+            "matched_candidate_count",
+        ):
+            value = coverage.get(field)
+            if isinstance(value, int):
+                metadata[field] = value
     company_records = result.get("company_records")
     if isinstance(company_records, list):
         metadata["company_count"] = len(company_records)

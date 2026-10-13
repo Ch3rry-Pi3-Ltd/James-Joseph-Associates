@@ -40,6 +40,16 @@ class OperatorSearchCandidatesResponse(BaseModel):
     shortlist_results: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class OperatorDocumentSearchRequest(BaseModel):
+    """One exact, paginated current-CV search requested through MCP."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1, max_length=4000)
+    page_size: int = Field(default=25, ge=1, le=50)
+    cursor: str | None = Field(default=None, max_length=1000)
+
+
 class OperatorCandidateProfileResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

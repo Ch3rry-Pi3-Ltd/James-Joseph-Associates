@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from backend.db import candidates
+from backend.db import candidate_document_search, candidates
 from backend.db.connection import get_postgres_connection
 
 pytestmark = pytest.mark.skipif(
@@ -59,6 +59,11 @@ def search_db(monkeypatch):
             yield db
 
         monkeypatch.setattr(candidates, "postgres_connection", connection)
+        monkeypatch.setattr(
+            candidate_document_search,
+            "postgres_connection",
+            connection,
+        )
         yield db, ids
     finally:
         db.rollback()
@@ -89,3 +94,37 @@ def test_search_vector_updates_automatically_and_company_lookup_works(search_db)
     assert {str(row["candidate_id"]) for row in employer} == set(ids[:2])
     mentions = candidates.search_candidates_by_company_name(company_name="EquiLend", limit=5)
     assert [str(row["candidate_id"]) for row in mentions] == [ids[1]]
+
+
+def test_exhaustive_document_search_reports_coverage_and_keyset_pages(search_db):
+    _, ids = search_db
+    first_page = candidate_document_search.search_current_resume_documents(
+        query="SFTR OR python",
+        limit=1,
+    )
+
+    assert first_page["coverage"] == {
+        "total_candidates": 3,
+        "eligible_document_count": 2,
+        "searchable_document_count": 2,
+        "excluded_missing_text_count": 0,
+        "candidates_without_current_resume_count": 1,
+        "matched_document_count": 2,
+        "matched_candidate_count": 2,
+    }
+    assert len(first_page["results"]) == 1
+
+    first = first_page["results"][0]
+    second_page = candidate_document_search.search_current_resume_documents(
+        query="SFTR OR python",
+        limit=1,
+        after_score=first["match_score"],
+        after_updated_at=first["sort_resume_updated_at"],
+        after_candidate_id=str(first["candidate_id"]),
+        after_document_id=str(first["document_id"]),
+    )
+    returned_ids = {
+        str(first["candidate_id"]),
+        str(second_page["results"][0]["candidate_id"]),
+    }
+    assert returned_ids == set(ids[:2])

@@ -9,6 +9,7 @@ const navigationItems = [
   { href: "/review", label: "Review" },
   { href: "/company", label: "Company" },
   { href: "/match", label: "Match" },
+  { href: "/cv-search", label: "CV search" },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -47,7 +48,7 @@ export function WorkspaceNav() {
           </span>
         </Link>
 
-        <nav aria-label="Primary" className="order-3 grid w-full min-w-0 basis-full grid-cols-4 gap-1 rounded-full border border-slate-900/10 bg-white/72 p-1.5 shadow-sm lg:order-none lg:flex lg:w-auto lg:basis-auto lg:items-center lg:justify-center">
+        <nav aria-label="Primary" className="order-3 grid w-full min-w-0 basis-full grid-cols-5 gap-1 rounded-full border border-slate-900/10 bg-white/72 p-1.5 shadow-sm lg:order-none lg:flex lg:w-auto lg:basis-auto lg:items-center lg:justify-center">
           {navigationItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
             return (

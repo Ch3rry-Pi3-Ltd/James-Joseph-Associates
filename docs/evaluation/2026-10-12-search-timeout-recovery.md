@@ -66,10 +66,12 @@ The ChatGPT MCP app is an alternative interface, not a prerequisite for website
 access. Neither route requires Tom to receive database/service-role credentials.
 Do not bypass authentication or loosen database permissions to enable access.
 
-Existing retrieval searches indexed current resumes and semantic profile blocks;
-it returns a bounded result pool. It is not yet an exhaustive, paginated browser
-of every raw record, historical document, and source table. That is a separate
-data-explorer enhancement, not a five-candidate database restriction.
+The fast retrieval path searches indexed current resumes and semantic profile
+blocks and returns a bounded ranked pool. A later release added a separate
+deterministic current-CV search workspace, API, CSV export, and paginated MCP
+tool; see [`exhaustive_current_cv_search`](../exhaustive_current_cv_search.md).
+Historical documents, raw records, and unrelated source tables remain outside
+that deliberate current-CV scope.
 
 ## Still to verify
 

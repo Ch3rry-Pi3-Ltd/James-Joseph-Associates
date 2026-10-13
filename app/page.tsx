@@ -30,6 +30,15 @@ const workspaces = [
     action: "Start matching",
     accent: "from-violet-500 to-blue-500",
   },
+  {
+    number: "04",
+    title: "Exhaustive CV search",
+    description:
+      "Search inside every current CV, inspect complete coverage, page through all exact matches, and export the result set.",
+    href: "/cv-search",
+    action: "Search every CV",
+    accent: "from-amber-400 to-orange-500",
+  },
 ];
 
 const foundationItems = [
@@ -114,7 +123,7 @@ export default async function Home() {
                 Connected workspaces
               </p>
               <h2 className="mt-4 max-w-md text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-[#071b2a] sm:text-5xl">
-                Three views. One source of truth.
+                Four views. One source of truth.
               </h2>
               <p className="mt-5 max-w-lg text-base leading-7 text-slate-600">
                 Move between company context, source review, and candidate
@@ -122,7 +131,7 @@ export default async function Home() {
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {workspaces.map((workspace) => (
                 <article
                   key={workspace.title}
