@@ -40,8 +40,11 @@ search timed out despite the August success below. See
   - [x] add stable keyset pagination and complete formula-safe CSV export
   - [x] expose the same contract in the Vercel UI/API and one read-only MCP tool
   - [x] preserve the fast ranked Match workflow unchanged
-- [ ] Deploy the exhaustive current-CV release, run its authenticated production
-  smoke check, and have Tom rescan/republish the seven-tool ChatGPT app snapshot.
+- [x] Deploy the exhaustive current-CV release and run its authenticated production
+  smoke check: commits `d3012b0` and `43317c9`; all seven read-only tools passed,
+  including complete indexed coverage of `32,204` current-CV documents, with zero writes.
+- [ ] Have Tom rescan/republish the seven-tool ChatGPT app snapshot and repeat the
+  documented recruiter prompts through ChatGPT Business.
 - [ ] Decide with Tom whether a later search scope should include historical CV
   versions or other document types; do not mix them into current-CV results by default.
 - [x] Reconcile the released feature branch with stale `main` and CI triggers:
