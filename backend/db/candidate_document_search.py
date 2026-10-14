@@ -22,6 +22,7 @@ _SEARCH_INPUT_CTE = """
         join document_links link
           on link.document_id = d.id
          and link.relationship_type = 'current_resume'
+         and link.candidate_id is not null
         cross join search_input search
         where d.document_type = 'resume'
           and d.resume_search_vector @@ search.search_query
@@ -108,6 +109,7 @@ def search_current_resume_documents(
                 join document_links link
                   on link.document_id = document.id
                  and link.relationship_type = 'current_resume'
+                 and link.candidate_id is not null
                 where document.document_type = 'resume'
             )::integer as eligible_document_count,
             (
@@ -116,6 +118,7 @@ def search_current_resume_documents(
                 join document_links link
                   on link.document_id = document.id
                  and link.relationship_type = 'current_resume'
+                 and link.candidate_id is not null
                 where document.document_type = 'resume'
                   and document.extracted_text is not null
                   and octet_length(document.extracted_text) > 0
@@ -126,6 +129,7 @@ def search_current_resume_documents(
                 join document_links link
                   on link.document_id = document.id
                  and link.relationship_type = 'current_resume'
+                 and link.candidate_id is not null
                 where document.document_type = 'resume'
                   and (
                       document.extracted_text is null
@@ -140,6 +144,7 @@ def search_current_resume_documents(
                     join document_links link
                       on link.document_id = document.id
                      and link.relationship_type = 'current_resume'
+                     and link.candidate_id is not null
                     where document.document_type = 'resume'
                 )
             )::integer as candidates_without_current_resume_count,
@@ -149,6 +154,7 @@ def search_current_resume_documents(
                 join document_links link
                   on link.document_id = document.id
                  and link.relationship_type = 'current_resume'
+                 and link.candidate_id is not null
                 where document.document_type = 'resume'
                   and document.resume_search_vector
                       @@ websearch_to_tsquery('simple', %(query)s)
@@ -159,6 +165,7 @@ def search_current_resume_documents(
                 join document_links link
                   on link.document_id = document.id
                  and link.relationship_type = 'current_resume'
+                 and link.candidate_id is not null
                 where document.document_type = 'resume'
                   and document.resume_search_vector
                       @@ websearch_to_tsquery('simple', %(query)s)

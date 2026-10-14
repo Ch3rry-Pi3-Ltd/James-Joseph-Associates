@@ -73,8 +73,11 @@ passed in 46 seconds:
 - exactly seven approved read-only tools were exposed
 - candidate search returned five results in `12,261 ms` using indexed-CV hybrid
   retrieval without cross-field or semantic fallback
-- exhaustive search completed in `6,362 ms` and searched all `32,204` eligible
-  current-CV documents
+- exhaustive search completed in `6,362 ms`; its then-reported `32,204`
+  eligible count included both candidate and mirrored person links. The
+  14 October data-quality audit established that this represented `16,102`
+  distinct candidate-linked current-CV documents, and the coverage query was
+  corrected without changing the documents searched
 - the smoke runner performed zero candidate or CRM writes
 
 Both measured searches remained inside their enforced regression budgets.

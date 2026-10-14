@@ -30,8 +30,8 @@ def search_db(monkeypatch):
             CREATE TEMP TABLE documents (id uuid PRIMARY KEY, title text,
                 source_uri text, resume_updated_at timestamptz,
                 extracted_text text, document_type text);
-            CREATE TEMP TABLE document_links (candidate_id uuid, document_id uuid,
-                relationship_type text);
+            CREATE TEMP TABLE document_links (candidate_id uuid, person_id uuid,
+                document_id uuid, relationship_type text);
         """)
         migration = Path("supabase/migrations/0017_indexed_resume_search.sql").read_text()
         db.execute(migration.replace("public.", "pg_temp.")
@@ -51,8 +51,17 @@ def search_db(monkeypatch):
                        (candidate_id, person_id, company_id, title))
             db.execute("INSERT INTO documents (id,title,extracted_text,document_type) VALUES (%s,%s,%s,'resume')",
                        (document_id, name + " CV", body))
-            db.execute("INSERT INTO document_links VALUES (%s,%s,%s)",
-                       (candidate_id, document_id, relationship))
+            db.execute(
+                "INSERT INTO document_links (candidate_id, document_id, relationship_type) "
+                "VALUES (%s,%s,%s)",
+                (candidate_id, document_id, relationship),
+            )
+            if relationship == "current_resume":
+                db.execute(
+                    "INSERT INTO document_links "
+                    "(person_id, document_id, relationship_type) VALUES (%s,%s,%s)",
+                    (person_id, document_id, relationship),
+                )
 
         @contextmanager
         def connection():

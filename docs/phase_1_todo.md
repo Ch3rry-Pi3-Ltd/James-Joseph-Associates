@@ -42,7 +42,10 @@ search timed out despite the August success below. See
   - [x] preserve the fast ranked Match workflow unchanged
 - [x] Deploy the exhaustive current-CV release and run its authenticated production
   smoke check: commits `d3012b0` and `43317c9`; all seven read-only tools passed,
-  including complete indexed coverage of `32,204` current-CV documents, with zero writes.
+  with zero candidate/CRM writes. A later data-quality audit established that
+  the reported `32,204` figure double-counted candidate and mirrored person
+  links; the true searched corpus was `16,102` distinct candidate-linked current
+  CVs, and the coverage query has been corrected.
 - [ ] Have Tom rescan/republish the seven-tool ChatGPT app snapshot and repeat the
   documented recruiter prompts through ChatGPT Business.
 - [ ] Decide with Tom whether a later search scope should include historical CV
@@ -122,6 +125,20 @@ the following order:
     bearer credential into the `MCP_API_TOKEN` repository secret, and pass the
     first manual run (`38519279842`, 14 October 2026; candidate search
     `12,261 ms`, exhaustive search `6,362 ms`, zero candidate/CRM writes)
+- [x] Audit live current-CV data quality with aggregate-only, read-only checks:
+  - [x] verify current-link uniqueness, person mirroring, resume-history links,
+    text/search-vector coverage, provenance, semantic readiness, freshness,
+    structured evidence, and download-locator recoverability
+  - [x] document the `16,102`-document corpus, `62.36%` candidate CV coverage,
+    complete text/search/provenance/semantic coverage, and bounded gaps in
+    [`2026-10-14-current-cv-data-quality-audit`](evaluation/2026-10-14-current-cv-data-quality-audit.md)
+  - [x] correct the exhaustive-coverage query so mirrored person links do not
+    double-count the document corpus, with a PostgreSQL regression test
+  - [ ] deploy and production-smoke the corrected coverage count
+  - [ ] privately review five very short extractions, thirteen shared source-URI
+    groups, and 291 searchable-but-not-downloadable Recruiterflow CVs
+  - [ ] backfill structured employment history, then missing current title,
+    company, and skills, from provenance-backed persisted evidence
 - [x] Move company-name quality checks into one shared deterministic policy and
   provide a non-destructive review report for suspicious canonical labels and
   their provenance.
