@@ -120,15 +120,27 @@ This is not a current retrieval failure: all `16,102` current-CV candidates have
 the newer candidate semantic blocks and embeddings used by hybrid search.
 Backfilling the older chunk store solely to improve this metric is not justified.
 
+## Production release verification
+
+Commit `65afb30` deployed successfully to Vercel after both CI and security
+checks passed. Authenticated read-only production smoke run `38568146497`
+then verified all seven MCP tools against that exact commit. The exhaustive
+document search reported `16,102` eligible and searched current CVs, zero
+missing-text exclusions, `854` matched documents/candidates for the smoke
+query, and `is_exhaustive: true`.
+
+The bounded hybrid candidate search completed in `14,181 ms`; the exhaustive
+document search completed in `6,684 ms`, within their respective `20,000 ms`
+and `10,000 ms` smoke budgets. The run performed zero candidate or CRM writes.
+
 ## Independent follow-up priorities
 
-1. Deploy and production-smoke the corrected `16,102`-document coverage count.
-2. Privately inspect the five very short extractions and decide whether their
+1. Privately inspect the five very short extractions and decide whether their
    source files should be re-extracted.
-3. Review the thirteen shared source-URI groups without destructive merging.
-4. Represent the `291` Recruiterflow documents as searchable but not currently
+2. Review the thirteen shared source-URI groups without destructive merging.
+3. Represent the `291` Recruiterflow documents as searchable but not currently
    downloadable; recover source references only if a trustworthy source exists.
-5. Backfill structured employment history, followed by missing current title,
+4. Backfill structured employment history, followed by missing current title,
    company, and skills, from already persisted evidence with provenance and
    deterministic verification.
 

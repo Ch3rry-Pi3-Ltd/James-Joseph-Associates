@@ -134,7 +134,11 @@ the following order:
     [`2026-10-14-current-cv-data-quality-audit`](evaluation/2026-10-14-current-cv-data-quality-audit.md)
   - [x] correct the exhaustive-coverage query so mirrored person links do not
     double-count the document corpus, with a PostgreSQL regression test
-  - [ ] deploy and production-smoke the corrected coverage count
+  - [x] deploy and production-smoke the corrected coverage count: commit
+    `65afb30`; CI, security checks, and Vercel deployment passed; authenticated
+    production smoke run `38568146497` exhaustively searched all `16,102`
+    candidate-linked current CVs with zero missing-text exclusions and zero
+    candidate/CRM writes
   - [ ] privately review five very short extractions, thirteen shared source-URI
     groups, and 291 searchable-but-not-downloadable Recruiterflow CVs
   - [ ] backfill structured employment history, then missing current title,
