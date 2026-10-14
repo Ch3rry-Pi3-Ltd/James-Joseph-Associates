@@ -60,3 +60,21 @@ five candidates every time with no candidate-data writes or retrieval fallback:
 Data Engineer used the indexed branch on its first text attempt. Securities
 finance used the indexed branch after five progressively broader variants; its
 cold first run remained within the 20-second release budget.
+
+## Automated production gate
+
+Commit `fb76b1e` added a `main`-only GitHub Actions workflow with manual dispatch
+and a Tuesday 07:30 UTC schedule. The existing production bearer credential was
+copied into the protected `MCP_API_TOKEN` repository secret without rotation.
+
+The first manual run, GitHub Actions run `38519279842` on 14 October 2026,
+passed in 46 seconds:
+
+- exactly seven approved read-only tools were exposed
+- candidate search returned five results in `12,261 ms` using indexed-CV hybrid
+  retrieval without cross-field or semantic fallback
+- exhaustive search completed in `6,362 ms` and searched all `32,204` eligible
+  current-CV documents
+- the smoke runner performed zero candidate or CRM writes
+
+Both measured searches remained inside their enforced regression budgets.

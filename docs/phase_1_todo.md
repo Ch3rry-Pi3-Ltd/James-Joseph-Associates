@@ -114,13 +114,14 @@ the following order:
 - [x] Add an authenticated, read-only deployed MCP smoke-test runner covering
   tool discovery, company prefix results, candidate evidence, timeouts, and the
   absence of write-capable tools.
-- [ ] Activate automated production MCP smoke testing:
+- [x] Activate automated production MCP smoke testing:
   - [x] add a `main`-only GitHub Actions workflow with a weekly low-frequency
     schedule, manual dispatch, seven-tool contract checks, and
     candidate/exhaustive-search latency budgets
-  - [ ] push the workflow, explicitly approve copying the existing production
+  - [x] push the workflow, explicitly approve copying the existing production
     bearer credential into the `MCP_API_TOKEN` repository secret, and pass the
-    first manual run
+    first manual run (`38519279842`, 14 October 2026; candidate search
+    `12,261 ms`, exhaustive search `6,362 ms`, zero candidate/CRM writes)
 - [x] Move company-name quality checks into one shared deterministic policy and
   provide a non-destructive review report for suspicious canonical labels and
   their provenance.
