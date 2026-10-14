@@ -91,9 +91,15 @@ def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_quer
 ) -> None:
     captured: dict[str, object] = {}
 
-    def fake_text_search(*, query: str, limit: int) -> list[dict[str, object]]:
+    def fake_text_search(
+        *,
+        query: str,
+        limit: int,
+        include_cross_field_matches: bool,
+    ) -> list[dict[str, object]]:
         captured["text_query"] = query
         captured["text_limit"] = limit
+        captured["include_cross_field_matches"] = include_cross_field_matches
         return []
 
     def fake_semantic_search(*, query: str, limit: int) -> list[dict[str, object]]:
@@ -122,6 +128,7 @@ def test_search_candidates_hybrid_uses_compact_text_query_and_full_semantic_quer
 
     assert result == []
     assert captured["text_query"] == "data engineer python"
+    assert captured["include_cross_field_matches"] is True
     assert captured["semantic_query"] == (
         "Senior data engineer with strong Python, SQL, cloud platform, and ETL experience."
     )
@@ -132,7 +139,12 @@ def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
 ) -> None:
     attempted_queries: list[str] = []
 
-    def fake_text_search(*, query: str, limit: int) -> list[dict[str, object]]:
+    def fake_text_search(
+        *,
+        query: str,
+        limit: int,
+        include_cross_field_matches: bool,
+    ) -> list[dict[str, object]]:
         attempted_queries.append(query)
         if query == "data engineer python sql cloud platform etl":
             return [
@@ -171,6 +183,48 @@ def test_search_candidates_hybrid_stops_text_backoff_once_it_finds_matches(
     assert attempted_queries == [
         "data engineer python sql cloud platform etl",
     ]
+
+
+def test_search_candidates_hybrid_uses_cross_field_only_after_indexed_misses(
+    monkeypatch,
+) -> None:
+    attempts: list[tuple[str, bool]] = []
+    fallback_result = {
+        "candidate_id": "cand-1",
+        "person_id": "person-1",
+        "document_id": "doc-1",
+        "match_score": 0.7,
+        "match_excerpt": "split metadata and CV evidence",
+    }
+
+    def fake_text_search(
+        *,
+        query: str,
+        limit: int,
+        include_cross_field_matches: bool,
+    ) -> list[dict[str, object]]:
+        attempts.append((query, include_cross_field_matches))
+        return [fallback_result] if include_cross_field_matches else []
+
+    monkeypatch.setattr(
+        candidate_retrieval,
+        "search_candidates_by_resume_text",
+        fake_text_search,
+    )
+
+    diagnostics: dict[str, object] = {}
+    result = search_candidates_hybrid(
+        query="data engineer python sql cloud platform etl",
+        limit=5,
+        include_semantic=False,
+        diagnostics=diagnostics,
+    )
+
+    assert [row["candidate_id"] for row in result] == ["cand-1"]
+    assert all(not include_cross_field for _, include_cross_field in attempts[:-1])
+    assert attempts[-1] == ("data engineer python", True)
+    assert diagnostics["text_query_mode"] == "cross_field_fallback"
+    assert diagnostics["text_cross_field_fallback_used"] is True
 
 
 def test_search_candidates_hybrid_returns_text_results_when_semantic_fails(

@@ -295,6 +295,44 @@ and a weekly schedule against default branch `main`. Its Node production audit
 blocks high/critical findings; Python audit and Bandit findings also fail the job.
 The optional passive staging scan is skipped unless its target is configured.
 
+## Production MCP Smoke Workflow
+
+The production MCP smoke workflow lives at:
+
+```text
+.github/workflows/production-smoke.yaml
+```
+
+Once committed to `main` and configured with its repository secret, it runs on
+manual request and every Tuesday at 07:30 UTC. It does not run on every push
+because each run intentionally exercises the live database and
+embedding-backed candidate search.
+
+The workflow requires this GitHub Actions repository secret:
+
+```text
+MCP_API_TOKEN
+```
+
+The secret must contain the same bearer credential configured for the
+production MCP endpoint. GitHub stores the value; the workflow passes it only
+to the credential preflight and smoke-test steps, and neither step prints it.
+
+The job verifies:
+
+- unauthenticated requests are rejected
+- exactly seven approved read-only tools are exposed
+- company prefix and bounded candidate evidence contracts still hold
+- exhaustive current-CV coverage/page bounds are present
+- bounded candidate search completes within 20 seconds
+- exhaustive current-CV search completes within 10 seconds
+- no candidate or CRM write-capable tool is exposed or called
+
+The server may still create its normal privacy-safe MCP audit and rate-limit
+records while serving these read-only requests. A failed scheduled run should
+be treated as an operational regression and investigated before asking Tom to
+repeat the same flow.
+
 </details>
 
 <details>
@@ -407,6 +445,7 @@ After pushing, the expected GitHub result is:
 ```text
 Python Backend -> passing
 Next.js Build  -> passing
+Production MCP smoke -> passing after deployment, on its manual/weekly run
 ```
 
 After deployment, the expected production smoke check is:

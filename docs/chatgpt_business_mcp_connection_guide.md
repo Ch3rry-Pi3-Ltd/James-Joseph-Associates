@@ -77,7 +77,18 @@ smoke test before asking a workspace user to retry:
 The runner verifies authentication rejection, the exact seven-tool read-only
 surface, company prefix/quality metadata, bounded candidate evidence, and tool
 timings. It also checks exhaustive-search coverage and page bounds. It performs
-no writes and does not print returned recruitment content.
+no candidate or CRM writes and does not print returned recruitment content.
+Normal server-side rate-limit and privacy-safe audit records may still be
+written as part of handling the requests.
+
+Once the workflow is committed to `main` and its repository secret is
+configured, GitHub Actions runs this check every Tuesday at 07:30 UTC and on
+manual request through `.github/workflows/production-smoke.yaml`. The job uses
+the repository secret `MCP_API_TOKEN`, exercises only the approved production
+hostname, and fails if bounded candidate search exceeds 20 seconds or
+exhaustive current-CV search exceeds 10 seconds. It is intentionally not
+triggered by every push so routine development does not create avoidable
+provider/database load.
 
 ## UAT Prompts
 

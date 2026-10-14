@@ -315,10 +315,17 @@ def search_candidates_hybrid(
 
     semantic_allowed = include_semantic and _semantic_circuit_allows_request()
     semantic_failed = include_semantic and not semantic_allowed
+    text_diagnostics: dict[str, Any] = {}
 
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="candidate-retrieval") as pool:
         text_future = (
-            pool.submit(copy_context().run, _search_text_candidates, text_queries, resolved_text_limit)
+            pool.submit(
+                copy_context().run,
+                _search_text_candidates,
+                text_queries,
+                resolved_text_limit,
+                text_diagnostics,
+            )
             if include_text
             else None
         )
@@ -382,6 +389,7 @@ def search_candidates_hybrid(
         diagnostics.update(
             {
                 "retrieval_mode": retrieval_mode,
+                **text_diagnostics,
                 "text_fallback_used": bool(text_failed),
                 "semantic_attempted": semantic_future is not None,
                 "semantic_fallback_used": bool(semantic_failed),
@@ -402,12 +410,53 @@ def search_candidates_hybrid(
 def _search_text_candidates(
     text_queries: list[str],
     limit: int,
+    diagnostics: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    for text_query in text_queries:
+    for attempt, text_query in enumerate(text_queries, start=1):
         remaining_read_seconds()
-        results = search_candidates_by_resume_text(query=text_query, limit=limit)
+        results = search_candidates_by_resume_text(
+            query=text_query,
+            limit=limit,
+            include_cross_field_matches=False,
+        )
         if results:
+            if diagnostics is not None:
+                diagnostics.update(
+                    {
+                        "text_query_mode": "indexed_cv",
+                        "text_query_attempt_count": attempt,
+                        "text_cross_field_fallback_used": False,
+                    }
+                )
             return results
+
+    # Preserve cross-field matching for queries whose required terms are split
+    # between profile metadata and the CV. Run this broader corpus path only
+    # after every indexed-CV variant has returned no evidence.
+    if text_queries:
+        remaining_read_seconds()
+        results = search_candidates_by_resume_text(
+            query=text_queries[-1],
+            limit=limit,
+            include_cross_field_matches=True,
+        )
+        if diagnostics is not None:
+            diagnostics.update(
+                {
+                    "text_query_mode": "cross_field_fallback",
+                    "text_query_attempt_count": len(text_queries) + 1,
+                    "text_cross_field_fallback_used": True,
+                }
+            )
+        return results
+    if diagnostics is not None:
+        diagnostics.update(
+            {
+                "text_query_mode": "none",
+                "text_query_attempt_count": 0,
+                "text_cross_field_fallback_used": False,
+            }
+        )
     return []
 
 

@@ -101,6 +101,9 @@ the following order:
     hiding either stage's failure
   - [x] add a short semantic-provider circuit breaker after repeated failures
   - [x] enforce a whole-tool response deadline in addition to provider timeouts
+  - [x] avoid the full-corpus cross-field path when indexed current-CV evidence
+    already exists; retain cross-field matching as a measured fallback and add
+    content-free path/attempt telemetry
 - [x] Reduce candidate-search response size and model-processing overhead:
   - [x] rank bounded skill evidence deterministically against the role brief
   - [x] cap repeated evidence text and total skills per candidate
@@ -111,6 +114,13 @@ the following order:
 - [x] Add an authenticated, read-only deployed MCP smoke-test runner covering
   tool discovery, company prefix results, candidate evidence, timeouts, and the
   absence of write-capable tools.
+- [ ] Activate automated production MCP smoke testing:
+  - [x] add a `main`-only GitHub Actions workflow with a weekly low-frequency
+    schedule, manual dispatch, seven-tool contract checks, and
+    candidate/exhaustive-search latency budgets
+  - [ ] push the workflow, explicitly approve copying the existing production
+    bearer credential into the `MCP_API_TOKEN` repository secret, and pass the
+    first manual run
 - [x] Move company-name quality checks into one shared deterministic policy and
   provide a non-destructive review report for suspicious canonical labels and
   their provenance.
@@ -369,6 +379,9 @@ approval remain in the deferred lane below.
   - [ ] move long-running imports, embedding backfills, and other bulk work into
     background jobs with progress reporting, safe retries, and idempotency
   - [ ] add performance regression checks for the main operator workflows
+    - [x] enforce production-smoke budgets for bounded candidate search and
+      exhaustive current-CV search
+    - [ ] add equivalent gates for Review, Company, and shortlist generation
 - [x] Add operator output tools:
   - [x] downloadable Word shortlist plus retrievable CV ZIP package
   - [x] authenticated, expiring, revocable shortlist links

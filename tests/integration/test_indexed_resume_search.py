@@ -84,6 +84,20 @@ def test_indexed_search_preserves_cross_field_boolean_and_current_cv_scope(searc
         result = candidates.search_candidates_by_resume_text(query=query, limit=10)
         assert sorted(str(row["candidate_id"]) for row in result) == sorted(expected)
 
+    indexed_only = candidates.search_candidates_by_resume_text(
+        query="SFTR",
+        limit=10,
+        include_cross_field_matches=False,
+    )
+    assert [str(row["candidate_id"]) for row in indexed_only] == [ids[0]]
+
+    cross_field_only = candidates.search_candidates_by_resume_text(
+        query="engineer SFTR",
+        limit=10,
+        include_cross_field_matches=False,
+    )
+    assert cross_field_only == []
+
 
 def test_search_vector_updates_automatically_and_company_lookup_works(search_db):
     db, ids = search_db

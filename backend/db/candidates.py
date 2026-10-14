@@ -566,6 +566,7 @@ def search_candidates_by_resume_text(
     *,
     query: str,
     limit: int = 20,
+    include_cross_field_matches: bool = True,
 ) -> list[dict[str, Any]]:
     """
     Return ranked candidates whose current resume matches one free-text query.
@@ -593,6 +594,10 @@ def search_candidates_by_resume_text(
     - Postgres full-text search is used directly because it is already
       available in Supabase and gives a clean MVP without introducing a new
       retrieval stack yet.
+    - Callers that already have a separate structured/semantic retrieval path
+      can disable cross-field matching for a substantially cheaper indexed-CV
+      first pass. The default preserves the public helper's historical
+      cross-field behaviour.
     """
 
     normalized_query = query.strip()
@@ -601,7 +606,21 @@ def search_candidates_by_resume_text(
 
     bounded_limit = max(1, min(int(limit), 100))
 
-    search_sql = """
+    cross_field_eligibility_sql = """
+            union
+            select c.id, dl.document_id
+            from candidates c
+            join people p on p.id = c.person_id
+            left join companies co on co.id = c.current_company_id
+            join document_links dl on dl.candidate_id = c.id
+                and dl.relationship_type = 'current_resume'
+            join documents d on d.id = dl.document_id and d.document_type = 'resume'
+            cross join search_input si
+            where to_tsvector('simple', concat_ws(' ', p.full_name,
+                c.current_title, co.name, d.title)) @@ si.any_term_query
+    """ if include_cross_field_matches else ""
+
+    search_sql = f"""
         with search_input as (
             select websearch_to_tsquery('simple', %(query)s) as search_query,
                 to_tsquery('simple', (
@@ -619,17 +638,7 @@ def search_candidates_by_resume_text(
             cross join search_input si
             where d.document_type = 'resume'
                 and d.resume_search_vector @@ si.search_query
-            union
-            select c.id, dl.document_id
-            from candidates c
-            join people p on p.id = c.person_id
-            left join companies co on co.id = c.current_company_id
-            join document_links dl on dl.candidate_id = c.id
-                and dl.relationship_type = 'current_resume'
-            join documents d on d.id = dl.document_id and d.document_type = 'resume'
-            cross join search_input si
-            where to_tsvector('simple', concat_ws(' ', p.full_name,
-                c.current_title, co.name, d.title)) @@ si.any_term_query
+            {cross_field_eligibility_sql}
         ),
         candidate_resume_search as (
             select

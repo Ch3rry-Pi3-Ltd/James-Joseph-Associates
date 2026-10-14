@@ -425,6 +425,30 @@ def test_search_candidates_by_resume_text_executes_query_with_normalized_params(
     }
 
 
+def test_search_candidates_by_resume_text_can_use_indexed_cv_only_path() -> None:
+    mock_cursor = MagicMock()
+    mock_cursor.fetchall.return_value = []
+    mock_connection = MagicMock()
+    mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+
+    with patch(
+        "backend.db.candidates.postgres_connection",
+    ) as mock_postgres_connection:
+        mock_postgres_connection.return_value.__enter__.return_value = (
+            mock_connection
+        )
+        search_candidates_by_resume_text(
+            query="python data engineer",
+            limit=5,
+            include_cross_field_matches=False,
+        )
+
+    executed_sql = mock_cursor.execute.call_args.args[0]
+    assert "idx_documents_resume_fts" not in executed_sql
+    assert "d.resume_search_vector @@ si.search_query" in executed_sql
+    assert "concat_ws(' ', p.full_name" not in executed_sql
+
+
 def test_get_candidate_current_resume_document_returns_dictionary_when_row_exists() -> None:
     """
     Verify that the current-resume helper returns a plain dictionary.

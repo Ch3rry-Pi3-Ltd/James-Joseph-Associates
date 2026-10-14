@@ -1,0 +1,59 @@
+name: Production MCP smoke
+
+on:
+  schedule:
+    # Weekly coverage without adding avoidable provider/database load.
+    - cron: "30 7 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-mcp-smoke
+  cancel-in-progress: false
+
+jobs:
+  production-mcp-smoke:
+    name: Seven-tool read-only production smoke
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Confirm production smoke credential is configured
+        shell: bash
+        env:
+          MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN }}
+        run: |
+          if [ -z "${MCP_API_TOKEN:-}" ]; then
+            echo "::error::MCP_API_TOKEN must be configured as a GitHub Actions repository secret."
+            exit 1
+          fi
+
+      - name: Run authenticated production MCP smoke test
+        env:
+          MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN }}
+          MCP_SMOKE_ENDPOINT: https://james-joseph-associates.vercel.app/mcp
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python -m scripts.smoke_mcp_endpoint \
+            --timeout-seconds 60 \
+            --max-candidate-search-ms 20000 \
+            --max-exhaustive-search-ms 10000

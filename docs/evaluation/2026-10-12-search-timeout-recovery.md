@@ -121,6 +121,15 @@ Final full regression: 753 passed, two opt-in tests skipped; both opt-in SQL tes
 also passed separately. Repository-wide Ruff passed, production build passed,
 and the production npm dependency audit reported zero vulnerabilities.
 
+### Follow-up performance hardening, 13 October 2026
+
+The next release keeps cross-field matching but avoids its full-corpus scan when
+the indexed current-CV path already returns evidence. The representative Data
+Engineer SQL plan fell from `8,129.73 ms` to `175.952 ms`; see
+[`2026-10-13-search-performance-hardening`](2026-10-13-search-performance-hardening.md).
+The deployed smoke runner now also enforces candidate-search and exhaustive-CV
+latency budgets instead of recording timings without a release gate.
+
 ### GitHub Actions distinction
 
 The paragraphs below record the state observed during the search release. The

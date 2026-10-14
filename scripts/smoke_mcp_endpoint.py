@@ -21,6 +21,23 @@ EXPECTED_TOOLS = {
     "search_company_context",
 }
 
+DEFAULT_MAX_CANDIDATE_SEARCH_MS = 20_000
+DEFAULT_MAX_EXHAUSTIVE_SEARCH_MS = 10_000
+
+
+def enforce_duration_budget(
+    *,
+    operation: str,
+    duration_ms: int,
+    maximum_ms: int | None,
+) -> None:
+    """Fail a smoke run when a measured operation exceeds its release budget."""
+
+    if maximum_ms is not None and duration_ms > maximum_ms:
+        raise RuntimeError(
+            f"{operation} exceeded its {maximum_ms} ms regression budget."
+        )
+
 
 def _post_rpc(
     client: httpx.Client,
@@ -57,7 +74,14 @@ def _post_rpc(
     return payload, duration_ms
 
 
-def run_smoke(*, endpoint: str, token: str, timeout_seconds: float) -> dict[str, Any]:
+def run_smoke(
+    *,
+    endpoint: str,
+    token: str,
+    timeout_seconds: float,
+    max_candidate_search_ms: int | None = DEFAULT_MAX_CANDIDATE_SEARCH_MS,
+    max_exhaustive_search_ms: int | None = DEFAULT_MAX_EXHAUSTIVE_SEARCH_MS,
+) -> dict[str, Any]:
     """Exercise only bounded read-only MCP operations and return safe metrics."""
 
     with httpx.Client(timeout=timeout_seconds) as client:
@@ -147,6 +171,11 @@ def run_smoke(*, endpoint: str, token: str, timeout_seconds: float) -> dict[str,
             },
         )
         candidate_result = candidate_payload["result"]["structuredContent"]
+        enforce_duration_budget(
+            operation="Candidate search",
+            duration_ms=candidate_ms,
+            maximum_ms=max_candidate_search_ms,
+        )
         candidates = candidate_result.get("search_results") or []
         if not candidates or len(candidates) > 5:
             raise RuntimeError("Candidate search returned an invalid bounded result count.")
@@ -170,6 +199,11 @@ def run_smoke(*, endpoint: str, token: str, timeout_seconds: float) -> dict[str,
             },
         )
         exhaustive_result = exhaustive_payload["result"]["structuredContent"]
+        enforce_duration_budget(
+            operation="Exhaustive CV search",
+            duration_ms=exhaustive_ms,
+            maximum_ms=max_exhaustive_search_ms,
+        )
         coverage = exhaustive_result.get("coverage") or {}
         document_results = exhaustive_result.get("results") or []
         required_coverage_fields = {
@@ -221,6 +255,16 @@ def main() -> int:
         ),
     )
     parser.add_argument("--timeout-seconds", type=float, default=45.0)
+    parser.add_argument(
+        "--max-candidate-search-ms",
+        type=int,
+        default=DEFAULT_MAX_CANDIDATE_SEARCH_MS,
+    )
+    parser.add_argument(
+        "--max-exhaustive-search-ms",
+        type=int,
+        default=DEFAULT_MAX_EXHAUSTIVE_SEARCH_MS,
+    )
     args = parser.parse_args()
     token = os.environ.get("MCP_API_TOKEN", "").strip()
     if not token:
@@ -231,6 +275,8 @@ def main() -> int:
                 endpoint=args.endpoint,
                 token=token,
                 timeout_seconds=args.timeout_seconds,
+                max_candidate_search_ms=args.max_candidate_search_ms,
+                max_exhaustive_search_ms=args.max_exhaustive_search_ms,
             ),
             indent=2,
         )
